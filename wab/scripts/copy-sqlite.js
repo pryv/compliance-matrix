@@ -27,3 +27,13 @@ if (!fs.existsSync(DST_DIR)) fs.mkdirSync(DST_DIR, { recursive: true });
 fs.copyFileSync(SRC, DST);
 const size = fs.statSync(DST).size;
 console.log(`[copy-sqlite] ${path.relative(WAB_ROOT, DST)} (${(size / 1024).toFixed(1)} KB)`);
+
+for (const wname of ['sql-wasm.wasm', 'sql-wasm-browser.wasm']) {
+  const wsrc = path.join(WAB_ROOT, 'node_modules/sql.js/dist', wname);
+  const wdst = path.join(DST_DIR, wname);
+  if (fs.existsSync(wsrc)) {
+    fs.copyFileSync(wsrc, wdst);
+    const wsize = fs.statSync(wdst).size;
+    console.log(`[copy-sqlite] ${path.relative(WAB_ROOT, wdst)} (${(wsize / 1024).toFixed(1)} KB)`);
+  }
+}

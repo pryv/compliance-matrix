@@ -38,7 +38,7 @@ let dbPromise: Promise<Database> | null = null;
 function loadSqlJs (): Promise<SqlJsStatic> {
   if (!sqlPromise) {
     sqlPromise = initSqlJs({
-      locateFile: (file) => `https://sql.js.org/dist/${file}`
+      locateFile: (file) => `${import.meta.env.BASE_URL}${file}`
     });
   }
   return sqlPromise;
@@ -85,10 +85,12 @@ export async function listRequirements (scopeId: string): Promise<Requirement[]>
   const db = await loadDb();
   const raw = rows<any>(
     db,
-    'SELECT * FROM requirements WHERE scope_id = ? ORDER BY ref',
+    'SELECT * FROM requirements WHERE scope_id = ?',
     [scopeId]
   );
-  return raw.map((r) => ({ ...r, draft: !!r.draft }));
+  return raw
+    .map((r) => ({ ...r, draft: !!r.draft }))
+    .sort((a, b) => a.ref.localeCompare(b.ref, undefined, { numeric: true, sensitivity: 'base' }));
 }
 
 export async function coverageHistogram (scopeId: string): Promise<Record<Coverage, number>> {

@@ -23,10 +23,6 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src')
       }
     },
-    // sql.js ships its wasm file as a separate asset.
-    optimizeDeps: {
-      exclude: ['sql.js']
-    },
     assetsInclude: ['**/*.wasm', '**/*.sqlite']
   };
   // Enable backloop.dev (HTTPS + proper hostname) by default in dev mode.
