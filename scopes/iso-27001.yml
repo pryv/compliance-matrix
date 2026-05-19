@@ -243,6 +243,22 @@ requirements:
       decouple log integrity from data-path engine issues. The
       "analysed" element (review cadence, alerting thresholds) is the
       operator's procedure.
+    detail: |
+      "Stored, protected" caveat — the audit log is append-only by
+      convention in the write path, but there is **no software-side
+      tamper-resistance signal** (no hash chain, no per-row
+      signature, no operator-signed checkpoint). Protection of the
+      log rests on the operator's filesystem hardening: immutable
+      mounts, append-only flags (`chattr +a`), file-integrity
+      monitoring (AIDE / Tripwire), out-of-band SIEM forwarding to
+      a WORM store.
+
+      Future direction: chained / signed audit log (per-row prev_hash
+      + periodic operator-signed checkpoints). Tracked at
+      `_plans/XXX-Backlog/AUDIT-LOG-CHAINING.md` and
+      `proposals/audit-log-chaining.md`. When shipped this row's
+      coverage stays Implemented but the cited primitives will
+      include `audit-chain`.
 
   - ref: A.8.16
     title: A.8.16 — Monitoring activities

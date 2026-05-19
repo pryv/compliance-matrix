@@ -459,6 +459,19 @@ requirements:
       anchoring the change to an authenticated actor. Tamper
       detection beyond this (e.g., end-to-end content hashing under
       a customer-held key) is on the implementer or an extension.
+    detail: |
+      Audit-log tamper resistance itself is **voluntarily missing
+      today**: rows are append-only by convention in the audit-write
+      code path, but there is no software-side hash chain or
+      signature. Integrity rests on the operator's filesystem
+      posture (immutable mounts, append-only flags, file-integrity
+      monitoring, out-of-band SIEM forwarding).
+
+      Future direction: chained / signed audit log (per-row prev_hash
+      + periodic operator-signed checkpoints). Tracked at
+      `_plans/XXX-Backlog/AUDIT-LOG-CHAINING.md` and
+      `proposals/audit-log-chaining.md`. When shipped, this row
+      moves from `F: Evidence | Low` to `F: Evidence | Med`.
 
   - ref: 164.312(d)
     title: Person or entity authentication — standard
