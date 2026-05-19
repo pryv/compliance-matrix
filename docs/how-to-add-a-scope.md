@@ -3,6 +3,11 @@
 A "scope" is one regulation, standard, or certification. See
 [glossary.md](./glossary.md).
 
+**Voice.** Every row in a scope YAML is read by the implementer (the
+audience). Speak directly to them ("You decide…", "Pryv gives you…",
+"Your deployment…"). Use "Pryv" when referring to the deployed running
+platform; "open-pryv.io" only for code-paths and version references.
+
 ## 1. Reference document
 
 Create `references/<scope-id>/source.md` with the canonical URL, version,
@@ -56,13 +61,13 @@ excluded_items: []      # for curated scopes only
 ## Authoring tiers
 
 Every requirement row has three optional content fields read by different
-audiences:
+audiences — all from the implementer's perspective:
 
 | Field | Audience | Tone | Length |
 |---|---|---|---|
-| `overview` | auditor / compliance officer | accessible, jargon-free | 2-3 sentences |
-| `detail` | compliance officer + technical lead | functional, may include lists / tables | a few paragraphs |
-| `technical` | engineer | code-grounded, specific | as long as needed |
+| `overview` | auditor / compliance officer | accessible, jargon-free; answers "what does Pryv do for me here?" | 2-3 sentences |
+| `detail` | compliance officer + technical lead | functional, may include lists / tables; covers multi-aspect breakdowns + gotchas | a few paragraphs |
+| `technical` | engineer | code-grounded, specific; references open-pryv.io code paths + API methods + primitive citations | as long as needed |
 
 The WAB renders all three when a row is expanded, with visual hierarchy
 (overview prominent, technical in monospace). A reader stops at the level
@@ -70,6 +75,36 @@ they need.
 
 Always write `overview` for any non-`out-of-scope` row — the validator
 warns when it's missing.
+
+## Coverage status — what to pick
+
+Pick the status that answers the implementer's question "what does Pryv
+do for me on this requirement?":
+
+- `implemented` — works out of the box; no config needed; you can point an
+  auditor at running behaviour + a test code.
+- `configurable` — works when a specific config is set; cite the config
+  keys (`config_keys:`) and a test that exercises that path.
+- `facilitated` — Pryv reduces your work but you still do part of it;
+  describe what's yours in `overview`/`detail`.
+- `documented` — Pryv ships guidance only; cite the doc (`docs:` or
+  `qms_docs:`).
+- `out-of-scope` — RARE. Means: no software contribution AND no implementer
+  obligation flows from this row alone. Do NOT use `out-of-scope` just
+  because the article is declarative or because "Pryv doesn't do it" — most
+  declarative articles still imply something for the implementer (e.g.,
+  GDPR Art.2 puts your whole deployment in material scope; that's not
+  "out-of-scope", it's `facilitated` with an overview explaining the
+  in-scope nature).
+
+## "Pryv" vs "open-pryv.io"
+
+Apply consistently across all authored fields:
+
+- Use **Pryv** in prose about what the deployed platform does
+  ("Pryv stores events", "your Pryv deployment", "the Pryv API").
+- Use **open-pryv.io** for code-paths and version references
+  ("open-pryv.io/components/cmc/", "open-pryv.io 2.0.0-pre.3 ships…").
 
 ## 3. Validate locally
 

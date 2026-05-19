@@ -1,17 +1,20 @@
 # compliance-matrix
 
-The compliance & regulation matrix for **[open-pryv.io](https://github.com/pryv/open-pryv.io)**.
+The compliance & regulation matrix for **Pryv** (the deployed running
+platform; software project: [open-pryv.io](https://github.com/pryv/open-pryv.io)).
 
-For each regulation, standard or certification an implementer must comply with,
-this repository documents:
+**Audience: the implementer.** If you're building on Pryv, every row tells
+you what the platform does for you and what's still on your plate:
 
-- **what** open-pryv.io implements out of the box,
+- **what** Pryv implements out of the box,
 - **what** it makes configurable,
-- **what** it facilitates (but still requires implementer work),
+- **what** it facilitates (but you still do part of the work),
 - **what** it documents as guidance,
-- **what** is fully out of scope (the implementer's own organizational work).
+- **what** is genuinely out of scope (no software contribution, no implementer
+  obligation from this row alone).
 
-Companion to: [Pryv's QMS + an implementer QMS template](./qms/).
+Companion: [Pryv's QMS + an implementer QMS template](./qms/) for the
+organizational side.
 
 ## Scopes covered
 
@@ -41,14 +44,16 @@ dist/           Build output (gitignored): compliance.sqlite + wab build
 
 Every `(scope, requirement)` cell carries one of:
 
-- `implemented` — control shipped in default open-pryv.io build
-- `configurable` — available with specific config keys (cited per row)
-- `facilitated` — feature reduces implementer work; implementer does the rest
-- `documented` — guidance only; implementer implements themselves
-- `out-of-scope` — organizational/process responsibility, not software
+- `implemented` — control shipped out of the box; works with no config
+- `configurable` — available when you set specific config keys (cited per row)
+- `facilitated` — Pryv reduces your work; you still do part
+- `documented` — guidance only; you implement yourself following the doc
+- `out-of-scope` — no software contribution AND no implementer obligation from
+  this row (rare — most articles imply something for you even when Pryv
+  itself doesn't touch them)
 
-**Tests are the proof.** Every `implemented`/`configurable` row must cite a
-test code from the open-pryv.io test suite.
+**Tests are the proof.** Every `implemented`/`configurable` row cites a test
+code from the open-pryv.io test suite — CI checks every cited code resolves.
 
 ## Working with this repo
 
@@ -65,6 +70,16 @@ cd wab && npm install && npm run dev   # WAB locally (via backloop.dev)
 coverage rows are marked `draft: true` until reviewed. See `scopes/*.yml`
 for current state and the GitHub Actions `validate` workflow for what CI
 checks per change.
+
+## "Pryv" vs "open-pryv.io"
+
+Two distinct things:
+
+- **Pryv** — the deployed running platform; what your subjects' apps talk to.
+  Used in all matrix prose ("Pryv stores events").
+- **open-pryv.io** — the upstream software project / source code / version.
+  Used only for code-path or version references ("open-pryv.io 2.0.0-pre.3",
+  "open-pryv.io/components/cmc/").
 
 ## License
 

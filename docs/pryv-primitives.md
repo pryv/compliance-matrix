@@ -148,6 +148,46 @@ across cluster via rqlite, hot-swaps via cluster IPC.
 - **Compliance role**: TLS guaranteed-fresh; encryption-in-transit
   (GDPR Art.32, HIPAA-Security 164.312(e), ISO 27001 A.8.24).
 
+### `data-residency`
+
+Per-user data-residency choice across a Pryv platform that spans multiple
+hostings (different countries / cloud regions / on-premise locations).
+
+- **Hostings model**: a Pryv platform can publish a `hostings` config that
+  groups its cores into zones → hostings. Each core carries a `hosting`
+  label set at bootstrap time (`bin/bootstrap.js --hosting <region-label>`).
+- **Discovery API**: `auth.hostings` (under `/reg/hostings`) returns the
+  available zones / hostings / cores hierarchy so a registration UI can
+  show the choice to the end-user.
+- **Assignment**: at registration, the end-user (or the implementer's app
+  acting on their behalf) picks a hosting. The chosen core hosts that
+  user's data permanently. `system.users.get` exposes the per-user
+  `hosting` field so the implementer can show "your data is in <region>"
+  in the app.
+- **Two policies the implementer chooses between**:
+  1. **End-user choice** — implementer's registration UI presents the
+     available hostings; user picks. Useful for consumer apps where
+     subjects assert their own residency preference (e.g., "store my
+     data in Switzerland").
+  2. **Operator / regulatory routing** — implementer's app auto-routes
+     to a hosting based on contract / jurisdiction / regulatory rules
+     (e.g., EU subjects → EU hosting; French health data → HDS-certified
+     French hosting). End-user doesn't see the choice.
+- **Compliance role**:
+  - **GDPR Art.3 / Ch.V** — data-residency choice satisfies "where is the
+    data" both as territorial-scope determination and as transfer control
+    (no Art.44-50 international transfer if user data never leaves the
+    chosen hosting).
+  - **HDS (France)** — French health data routed to an HDS-certified
+    hosting + French jurisdiction.
+  - **Swiss nLPD** — Swiss data routed to a CH hosting + CH jurisdiction.
+  - **HIPAA-Security** (when applicable) — US data routed to a HIPAA-aware
+    hosting.
+- **Single platform, multiple hostings**: this is the key — it's one
+  logical Pryv platform (one `auth.hostings` namespace, one user
+  registration surface) backed by multiple physically-distributed cores.
+  The implementer doesn't run separate deployments per jurisdiction.
+
 ### `multi-core-mTLS`
 
 Bootstrap CLI issues passphrase-encrypted bundles; new cores join over

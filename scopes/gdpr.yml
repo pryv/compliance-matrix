@@ -11,7 +11,7 @@ curated: false
 
 changelog:
   - date: "2026-05-19"
-    change: initial draft + pryv-primitives lens + overview/detail/technical split
+    change: initial draft + pryv-primitives lens + overview/detail/technical split + implementer-perspective audit (Art.2/3/14/21 upgraded out-of-scope → facilitated; data-residency primitive added; Pryv/open-pryv.io naming separated)
 
 requirements:
 
@@ -27,75 +27,115 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, stream, audit, data-types, CMC]
     overview: |
-      GDPR's purpose is to protect natural persons in how their personal data
-      is processed, while keeping that data freely movable. Pryv's architecture
-      is designed for exactly that — subjects own their data, technical
-      controls enforce the consent they granted, and the API surface is open
-      so data can move without lock-in. The per-article rows below describe
-      how each specific obligation maps to those building blocks.
+      GDPR's purpose is to protect natural persons in how their personal
+      data is processed, while keeping that data freely movable. Pryv is
+      designed for exactly that — your subjects own their data, technical
+      controls enforce the consent they granted, and the API is open so
+      data can move without lock-in. The per-article rows below describe
+      how each obligation maps to the primitives Pryv gives you.
     detail: |
       Protection of natural persons (re: processing of their personal data):
-        - Subject-centric storage — each user has dedicated storage; operator
-          hosts but does not commingle subjects.
-        - Technical access control — permissions per stream enforced at the
-          API surface; processing only happens within the granted scope.
-        - Versioned consent record — access + clientData + consent events form
-          a tamper-evident chain of what was authorised, when, with which
-          contract text.
-        - Accountability by construction — audit rows reference the specific
-          access version used at processing time.
+        - Subject-centric storage — each of your users has dedicated
+          storage; you host but don't commingle subjects.
+        - Technical access control — permissions per stream are enforced
+          at the API surface; processing only happens within the scope
+          the subject granted.
+        - Versioned consent record — access + clientData + consent events
+          form a tamper-evident chain of what was authorised, when, with
+          which contract text.
+        - Accountability by construction — audit rows reference the
+          specific access version used at processing time.
 
       Free movement of personal data:
         - Open HTTP API — events / streams / accesses consumable without
           vendor SDKs.
-        - Canonical event-type schemas — structured JSON payloads with stable
+        - Canonical event-type schemas — structured JSON with stable
           class/format semantics; portable across deployments.
-        - Cross-platform sharing — independent operators can exchange data +
-          consent without shared trust, shared user namespace, or federation
-          auth (same protocol intra-core, intra-cluster, or cross-operator).
-        - No vendor lock-in — implementers can move data + consent contracts
-          between operators using the same primitives an end-user would use to
-          read them.
+        - Cross-platform sharing — independent Pryv operators can
+          exchange data + consent without shared trust, shared user
+          namespace, or federation auth.
+        - No vendor lock-in — you can move data + consent contracts
+          between operators using the same primitives an end-user would
+          use to read them.
 
-      A pryv-based deployment cannot, on its own, make an implementer
-      GDPR-compliant — but it provides the technical substrate on which the
-      per-article obligations below can be discharged.
+      A Pryv deployment cannot, on its own, make you GDPR-compliant —
+      but it gives you the technical substrate on which the per-article
+      obligations below can be discharged.
     technical: |
       Primitives carrying this row:
         - `access` (versioned, immutable per version) — see
           `context/access-versioning.md`
         - `permissions` (per-stream, per-level — enforced in
-          `components/api-server/src/methods/`)
+          `open-pryv.io/components/api-server/src/methods/`)
         - `audit` (per-API-call rows tagged with `accessId` + `accessSerial`)
         - `data-types` (canonical class/format schemas at
           `https://raw.github.com/pryv/data-types/master/dist/event-types.json`)
-        - `CMC` plugin (`components/cmc/`, shipped 2.0.0-pre.3)
+        - `CMC` plugin (`open-pryv.io/components/cmc/`, shipped 2.0.0-pre.3)
 
   - ref: Art.2
     title: Material scope
     text: |
-      Applies to the processing of personal data wholly or partly by automated
-      means and to the processing other than by automated means of personal
-      data which form part of a filing system.
-    coverage: out-of-scope
+      Applies to the processing of personal data wholly or partly by
+      automated means and to the processing other than by automated means
+      of personal data which form part of a filing system.
+    coverage: facilitated
     draft: true
+    pryv_primitives: [access, event, audit]
     overview: |
-      Article 2 defines what processing GDPR covers. Pryv handles only
-      automated processing — there is no "filing system" surface here, so
-      Article 2's filing-system rules don't apply to a pryv-only deployment.
+      Your Pryv deployment is fully inside Article 2's material scope.
+      Every event you store and every API call your apps make is automated
+      processing covered by GDPR. Pryv does not exempt you from any
+      per-article obligation — it gives you the technical primitives that
+      make those obligations addressable (see Art.5+). Branch 2
+      (non-automated processing inside a "filing system" — structured
+      paper records) doesn't surface at the Pryv layer; your own paper
+      records, if any, are outside the software boundary.
+    detail: |
+      GDPR Art.4(6) defines "filing system" as any structured set of
+      personal data accessible by specific criteria — alphabetised
+      customer cards, dated patient folders, indexed application forms.
+      Random unstructured paper or spoken-only data is not in scope.
+
+      Pryv is fully digital, so branch 1 always applies; branch 2 is moot.
+      If you also keep paper records as part of the same business process,
+      those fall under branch 2 but as a separate process you manage
+      outside Pryv.
 
   - ref: Art.3
     title: Territorial scope
     text: |
-      Applies to processing in the context of an establishment in the Union,
-      or where processing relates to data subjects in the Union.
-    coverage: out-of-scope
+      Applies to processing in the context of an establishment in the
+      Union, or where processing relates to data subjects in the Union.
+    coverage: facilitated
     draft: true
+    pryv_primitives: [data-residency]
     overview: |
-      Whether GDPR applies to a deployment depends on the implementer's
-      establishment + customer base, not on the software. Pryv is fully
-      self-hosted; data-residency choices (which jurisdiction the operator
-      hosts in) are implementer-controlled.
+      Whether GDPR applies to your Pryv deployment depends on where you're
+      established and where your data subjects are — not on the software.
+      Pryv is self-hosted, so you control data residency directly: the
+      multi-hosting feature lets you choose which jurisdiction each core
+      runs in, and either let end-users pick their hosting at registration
+      or auto-route them by your policy. If any of your subjects are in
+      the EU/EEA, GDPR applies to your deployment in full.
+    detail: |
+      Pryv supports a single logical platform spanning multiple hostings
+      (different countries / cloud regions / on-premise). Two routing
+      policies you can apply:
+
+      - **End-user choice** — your registration UI presents the available
+        hostings (via `auth.hostings`); user picks. Useful for consumer
+        apps where subjects assert their own residency preference.
+      - **Operator / regulatory routing** — your app auto-routes based on
+        the subject's jurisdiction or contract terms (e.g., EU subjects →
+        EU hosting; French health data → HDS-certified French hosting).
+
+      The chosen hosting binds the user's data to that core permanently.
+      `system.users.get` exposes the per-user hosting so you can surface
+      it in the app ("your data is stored in <region>").
+
+      Note: even with EU-only hosting, if you have a non-EU establishment
+      offering services to EU subjects, Art.3(2) still pulls you into
+      GDPR.
 
   - ref: Art.4
     title: Definitions
@@ -107,197 +147,209 @@ requirements:
     pryv_primitives: [access, permissions, stream, event, system-streams]
     overview: |
       Article 4 defines GDPR vocabulary. Pryv's primitives map cleanly to
-      most of these terms — making it easier for the implementer to point
-      auditors at concrete artefacts rather than abstract concepts.
+      most of these terms — easier for you to point auditors at concrete
+      artefacts rather than abstract concepts.
     detail: |
-      Approximate mapping of key GDPR terms to pryv primitives:
+      Approximate mapping of key GDPR terms to Pryv primitives:
 
       | GDPR term | Pryv primitive |
       |---|---|
       | personal data | `event` content + attachments on a user's account |
       | data subject | the user (account owner) |
-      | controller | typically the implementer organization |
-      | processor | pryv operator (when distinct from controller) |
+      | controller | typically you, the implementer |
+      | processor | the Pryv operator (when distinct from you) |
       | recipient | a counterparty holding an `access` to the data |
       | third party | another deployment / app accessing via shared/app `access` |
       | consent | app/shared `access` with `permissions` + `clientData` carrying the contract (see Art.7) |
       | processing | any API call on `events.*` / `streams.*` / `accesses.*` (audit-recorded) |
-      | filing system | N/A — pryv is fully automated |
+      | filing system | N/A — Pryv is fully automated |
       | personal data breach | event/audit anomaly + post-mortem (see Art.33) |
       | pseudonymisation | system-streams + custom event-type design |
-      | profiling | application-side concern (out for pryv) |
+      | profiling | application-side concern (out for Pryv) |
       | restriction of processing | scope-down via `accesses.update` (see Art.18) |
-      | filing-system controller | N/A |
-      | binding corporate rules | organizational (out) |
 
-      The data subject is always the natural person; the controller decision is
-      organizational. Pryv backs the technical-primitive side of the mapping.
-    technical: |
-      Mapping is by convention — implementers may use `clientData` to record
-      the role assignment explicitly (e.g., `access.clientData.role: "processor"`).
-      No enforcement layer maps "controller" to a database column; the
-      controller/processor distinction is contractual.
+      The controller/processor distinction is contractual — you assign
+      the roles. Pryv lets you record the assignment explicitly in
+      `access.clientData` if you want it traceable.
 
   # ───── Chapter II — Principles ─────
 
   - ref: Art.5
     title: Principles relating to processing of personal data
     text: |
-      Lawfulness, fairness, transparency; purpose limitation; data minimisation;
-      accuracy; storage limitation; integrity and confidentiality (security);
-      accountability.
+      Lawfulness, fairness, transparency; purpose limitation; data
+      minimisation; accuracy; storage limitation; integrity and
+      confidentiality (security); accountability.
     coverage: implemented
     draft: true
     pryv_primitives: [access, permissions, clientData, stream, audit]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [GLHP, U9HQ]
     overview: |
-      Article 5's principles are largely **technically enforced** in pryv rather
-      than policy-only: purpose limitation is technical (permissions per
-      stream); accountability is technical (audit chain to the consent state);
-      accuracy is supported by event versioning. Lawfulness/fairness/transparency
-      remain organizational.
+      Several Art.5 principles are technically enforced for you by Pryv
+      rather than left to policy: purpose limitation (per-stream
+      permissions), accountability (audit chain to the consent state),
+      accuracy (event versioning). Lawfulness, fairness and transparency
+      stay on your shoulders — Pryv stores the notice/consent text you
+      present but doesn't generate it for you.
     detail: |
-      Per-principle breakdown:
+      Per-principle breakdown — what Pryv does for you, what you do:
 
-      - Lawfulness, fairness, transparency (§1(a)) — DOCUMENTED. Implementer
-        responsibility for notice; pryv carries the consent text in
-        `access.clientData` or in `consent/request-cmc` events.
-      - Purpose limitation (§1(b)) — IMPLEMENTED. `permissions` per stream
-        technically restrict reads/writes to the granted scope; an app cannot
-        access streams outside its granted permissions.
-      - Data minimisation (§1(c)) — FACILITATED. Permissions + stream design
-        let apps see only the streams in their scope.
+      - Lawfulness, fairness, transparency (§1(a)) — DOCUMENTED. You
+        write the notice and present it; Pryv carries the text in
+        `access.clientData` or a `consent/request-cmc` event so the
+        same text is recoverable later.
+      - Purpose limitation (§1(b)) — IMPLEMENTED. `permissions` per
+        stream technically restrict reads/writes to the granted scope;
+        an app cannot access streams outside its granted permissions.
+      - Data minimisation (§1(c)) — FACILITATED. Permissions + stream
+        design let apps see only what's in their scope; the rest is
+        invisible to them.
       - Accuracy (§1(d)) — FACILITATED. `events.update` rectifies events
         (Art.16); event versioning preserves the prior value for traceability.
-      - Storage limitation (§1(e)) — CONFIGURABLE. Engine-dependent — see
-        Art.17.
+      - Storage limitation (§1(e)) — CONFIGURABLE. Engine-dependent —
+        see Art.17 for full erasure mechanics.
       - Integrity & confidentiality (§1(f)) — covered separately at Art.32.
-      - Accountability (§2) — IMPLEMENTED. Every API call audited with the
-        access reference + version; access carries the consent state at that
-        version → end-to-end accountability chain.
+      - Accountability (§2) — IMPLEMENTED. Every API call audited with
+        the access reference + version; access carries the consent state
+        at that version → end-to-end accountability chain you can point
+        auditors at.
     technical: |
-      - Purpose limitation: enforcement in `components/api-server/src/methods/`
-        permission-checks before any data access.
-      - Accountability: audit row schema includes `(accessId, accessSerial)`;
-        access-version snapshot includes `clientData` (consent state) — see
-        `context/access-versioning.md`.
+      - Purpose limitation: enforcement in
+        `open-pryv.io/components/api-server/src/methods/` permission-checks.
+      - Accountability: audit row schema includes
+        `(accessId, accessSerial)`; access-version snapshot includes
+        `clientData` (consent state) — see `context/access-versioning.md`.
 
   - ref: Art.6
     title: Lawfulness of processing
     text: |
       Processing lawful only if at least one of six bases applies (consent,
-      contract, legal obligation, vital interests, public interest, legitimate
-      interests).
+      contract, legal obligation, vital interests, public interest,
+      legitimate interests).
     coverage: facilitated
     draft: true
     pryv_primitives: [access, clientData]
     overview: |
-      Pryv does not impose or check a legal basis. The chosen basis can be
-      recorded in `access.clientData.lawful_basis` (implementer convention) so
-      it sits alongside the technical authorization and travels with the
-      consent record.
+      You decide which Art.6 basis you're relying on for each processing
+      activity. Pryv doesn't impose or check the basis. You can record
+      your chosen basis in `access.clientData.lawful_basis` so it travels
+      alongside the technical authorization and lives in the audit trail —
+      handy when an auditor asks "under what basis was this access made?".
     detail: |
-      Recording the basis on the access (or on a `consent/request-cmc` event)
-      gives the implementer a durable, versioned artefact that ties the basis
-      to the specific processing scope it justifies. Determination of which
-      basis applies remains implementer responsibility — pryv neither enforces
-      nor refuses on the basis claim.
+      Recording the basis on the access gives you a durable, versioned
+      artefact tying the basis to the specific processing scope it
+      justifies. Determination of which basis applies remains your
+      responsibility — Pryv neither enforces nor refuses on the basis
+      claim.
 
   - ref: Art.7
     title: Conditions for consent
     text: |
       Where processing is based on consent, controller must be able to
-      demonstrate consent. Request must be in intelligible form, withdrawable.
+      demonstrate consent. Request must be in intelligible form,
+      withdrawable.
     coverage: implemented
     draft: true
     pryv_primitives: [access, permissions, clientData, CMC, event]
     docs: [guides/consent.md]
     tests: [AA01, ACCP, USAD]
     overview: |
-      The access (with its versioned permissions + clientData) IS pryv's
-      durable consent record. Cross-account consent state transitions are
-      carried by the `consent/*` events (CMC plugin). Withdrawal is a single
-      API call. Both the request and the resulting record are immutable per
-      their respective primitives.
+      The access Pryv mints when your user grants permission IS your
+      durable consent record — versioned permissions + clientData
+      together prove what was authorised, with what text, at what time.
+      Withdrawal is a single API call. For cross-account sharing, the
+      `consent/*` events carry the negotiation state transitions. Both
+      records are immutable per their primitive's semantics.
     detail: |
-      Demonstrability (§1) — `accesses.get ?includeHistory=true` returns the
-      full version chain; each version preserves the `permissions` granted
-      and the `clientData` (which can carry the consent contract text) at
-      that point in time. For cross-account flows, the original
+      Demonstrability (§1) — `accesses.get ?includeHistory=true` returns
+      the full version chain; each version preserves the `permissions`
+      granted and the `clientData` (which can carry the consent contract
+      text) at that point in time. For cross-account flows, the original
       `consent/request-cmc` event on the requester's account holds the
       localised consent text presented.
 
       Withdrawal (§3) — `accesses.delete` (full revoke) or `accesses.update`
-      with narrower `permissions` (scope-down). Both bump the access serial +
-      snapshot the pre-mutation state. Cross-account: `consent/revoke-cmc`
-      triggers symmetric teardown on both sides via the CMC plugin.
+      with narrower `permissions` (scope-down). Both bump the access
+      serial + snapshot the pre-mutation state. Cross-account:
+      `consent/revoke-cmc` triggers symmetric teardown on both sides
+      via the CMC plugin.
 
-      Intelligible form (§2) — UX is implementer responsibility (app-web-auth3
-      template provides a starting point). Pryv enforces the technical
-      contract; the UI presents it.
+      Intelligible form (§2) — you write the UX (app-web-auth3 template
+      is a starting point). Pryv enforces the technical contract; your
+      UI presents it.
 
-      Granular consent (§4) — different processing purposes can be expressed
-      as separate accesses with different permissions, each independently
-      withdrawable.
+      Granular consent (§4) — different processing purposes can be
+      expressed as separate accesses with different permissions, each
+      independently withdrawable.
     technical: |
-      - Snapshot semantics: `context/access-versioning.md` (full head clone
-        into history row per update).
+      - Snapshot semantics: `context/access-versioning.md` (full head
+        clone into history row per update).
       - CMC consent state machine: `context/cmc-consent-primitives.md`
         (8 `consent/*` formats on `data-types` master).
-      - `accesses.update` composite-id wire format requires
-        `lib-js@3.1.0+`.
+      - `accesses.update` composite-id wire format requires `lib-js@3.1.0+`.
 
   # ───── Chapter III — Rights of the data subject ─────
 
   - ref: Art.12
     title: Transparent information, communication and modalities
     text: |
-      Controller shall provide concise, transparent, intelligible information
-      and respond to data subject requests within one month.
+      Controller shall provide concise, transparent, intelligible
+      information and respond to data subject requests within one month.
     coverage: facilitated
     draft: true
     pryv_primitives: [access, clientData, event]
     docs: [guides/consent.md, customer-resources/audit-setup.md]
     overview: |
-      Pryv preserves whatever notice / consent text the implementer presented
-      to the user — immutably, versioned, retrievable later. Response
-      operations (Art.15-22) execute in sub-second; the 1-month rule is the
-      implementer's process target.
+      Pryv preserves whatever notice / consent text you presented to
+      the subject — immutably, versioned, retrievable later. The
+      response operations (Art.15-22) execute in sub-second; the
+      1-month rule is your process target, not a software limit.
     detail: |
-      Information artefacts (notice, consent text, lawful-basis explanation)
-      can live in `access.clientData` and/or in `consent/request-cmc` events.
-      Both are immutable / versioned, so the subject sees the same text that
-      was originally presented — addressing the "concise, transparent,
-      intelligible" requirement at the artefact level. Whether the artefact
-      itself is concise + intelligible is the implementer's editorial
-      responsibility.
+      Information artefacts (notice, consent text, lawful-basis
+      explanation) can live in `access.clientData` and/or in
+      `consent/request-cmc` events. Both are immutable / versioned, so
+      the subject sees the same text that was originally presented —
+      addressing the "concise, transparent, intelligible" requirement
+      at the artefact level. Whether the artefact itself is concise +
+      intelligible is your editorial responsibility.
 
   - ref: Art.13
     title: Information to be provided where data are collected from the data subject
     text: |
-      Identity of controller, purposes, legal basis, recipients, retention,
-      rights — must be provided at the time of collection.
+      Identity of controller, purposes, legal basis, recipients,
+      retention, rights — must be provided at the time of collection.
     coverage: facilitated
     draft: true
     pryv_primitives: [access, clientData, event]
     docs: [guides/consent.md]
     overview: |
-      The information items the implementer must show at collection time map
-      naturally to `access.clientData` (or a `consent/request-cmc` event when
-      CMC is in use). Pryv preserves them immutably; the implementer's app
-      surfaces them at the right moment.
+      The information items you must show at collection time map
+      naturally to `access.clientData` (or a `consent/request-cmc` event
+      when using CMC). Pryv preserves them immutably; your app surfaces
+      them at the right moment.
 
   - ref: Art.14
     title: Information to be provided where data have not been obtained from the data subject
     text: |
-      Same disclosures as Art.13, provided within reasonable period (≤1 month).
-    coverage: out-of-scope
+      Same disclosures as Art.13, provided within reasonable period
+      (≤1 month, or at first communication / first disclosure if sooner).
+    coverage: facilitated
     draft: true
+    pryv_primitives: [access, clientData, event, audit]
     overview: |
-      Article 14 applies when data is sourced from third parties rather than
-      from the data subject directly. That is an implementer-process concern
-      and outside what pryv touches.
+      When you ingest data into Pryv from third parties (not directly
+      from the subject), you still owe the same disclosures as Art.13.
+      Pryv lets you record the disclosure artefact alongside the data,
+      same as direct collection (`access.clientData` or a `consent/*`
+      event), and the audit log proves when disclosure happened — useful
+      when the 1-month / first-contact deadlines come into question.
+    detail: |
+      Where the data came from (the source) is an Art.14(2)(f) disclosure
+      item — record it in `event.clientData.source` or in a dedicated
+      provenance stream. Together with the access carrying the
+      disclosure-notice text, you have the full Art.14 artefact set
+      retrievable per subject.
 
   - ref: Art.15
     title: Right of access by the data subject
@@ -311,10 +363,11 @@ requirements:
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [AA01, EGSQ, U9HQ]
     overview: |
-      The data subject, holding a personal token, reads everything via the
-      standard API — events, streams, accesses (with full history), audit
-      records. The supplementary information (purposes, recipients) is in
-      `access.clientData` when the implementer recorded it there.
+      Your subject, holding a personal token, reads everything via the
+      standard Pryv API — events, streams, accesses (with full history),
+      audit records. The supplementary information (purposes, recipients)
+      is in `access.clientData` when you recorded it there. Wrap it in a
+      subject-portal app and you have Art.15 covered end-to-end.
     detail: |
       Subject-side reads via standard endpoints:
         - `events.get` — all events
@@ -323,9 +376,10 @@ requirements:
         - `audit.get` — all audit rows
       Attachments downloadable via the events API.
     technical: |
-      Personal-token scope is the user's full namespace; no special endpoint.
-      The implementer typically wraps this with a small subject-portal app
-      (see `samples/get-a-copy-of-my-data/` proposal in `samples/README.md`).
+      Personal-token scope is the user's full namespace; no special
+      endpoint. Implementers typically wrap this with a small subject-
+      portal app (see `samples/get-a-copy-of-my-data/` proposal in
+      `samples/README.md`).
 
   - ref: Art.16
     title: Right to rectification
@@ -337,46 +391,50 @@ requirements:
     functional_specs: [EVENT.BASE]
     tests: [PTU1]
     overview: |
-      `events.update` rectifies an event; event versioning preserves the prior
-      (inaccurate) value for traceability — addressing the Art.5(1)(d)
-      accuracy principle without losing the audit trail.
+      `events.update` rectifies an event; event versioning preserves the
+      prior (inaccurate) value for traceability — addressing the
+      Art.5(1)(d) accuracy principle without losing the audit trail.
 
   - ref: Art.17
     title: Right to erasure ("right to be forgotten")
     text: |
-      Right to obtain erasure without undue delay where one of six conditions
-      applies (no longer necessary, withdrawn consent, no legal basis, etc.).
+      Right to obtain erasure without undue delay where one of six
+      conditions applies (no longer necessary, withdrawn consent, no
+      legal basis, etc.).
     coverage: configurable
     draft: true
     pryv_primitives: [event, stream, backup-restore]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
     tests: [USAD]
     overview: |
-      Per-user erasure is a single API call (`system.users.delete`). Whether
-      erasure extends to backups depends on the storage engine chosen — SQLite
-      per-user folders are deletable from filesystem backups; PostgreSQL /
-      MongoDB require backup-rotation policy to complete erasure.
+      Per-user erasure is a single API call (`system.users.delete`).
+      Whether erasure extends to your backups depends on the storage
+      engine you chose — SQLite per-user folders are deletable from
+      filesystem backups; PostgreSQL / MongoDB require a backup-rotation
+      policy to complete erasure.
     detail: |
       Per-engine behaviour:
-        - SQLite — each user is a separate file under the user-data directory.
-          File deletion removes the user from filesystem backups (depending
-          on backup tool's per-file semantics).
+        - SQLite — each user is a separate file under the user-data
+          directory. File deletion removes the user from filesystem
+          backups (depending on your backup tool's per-file semantics).
         - PostgreSQL / MongoDB — row-level erasure only. Backups are
-          DB-engine-level snapshots; per-user erasure within a backup file
-          requires either backup rotation (oldest pruned per policy) or a
-          backup-rewriting procedure the operator must build.
+          DB-engine-level snapshots; per-user erasure within a backup
+          file requires either backup rotation (oldest pruned per
+          policy) or a backup-rewriting procedure you build yourself.
 
       `bin/backup.js` supports per-user backup files alongside DB-engine
-      backups; using per-user backups improves erasure semantics.
+      backups; using per-user backups improves erasure semantics
+      regardless of engine.
     technical: |
-      Tested via `[USAD]` (deletion-seq.test.js — exercises the
-      `user-account.delete` config-dependent path).
+      Tested via `[USAD]`
+      (`open-pryv.io/components/api-server/test/deletion-seq.test.js` —
+      exercises the `user-account.delete` config-dependent path).
 
   - ref: Art.18
     title: Right to restriction of processing
     text: |
-      Right to obtain restriction (data stored but not processed) in defined
-      circumstances.
+      Right to obtain restriction (data stored but not processed) in
+      defined circumstances.
     coverage: configurable
     draft: true
     pryv_primitives: [access, permissions]
@@ -385,20 +443,20 @@ requirements:
     overview: |
       Restriction is achieved by mutating the access — scope-down via
       `accesses.update` (narrower permissions) or full revoke via
-      `accesses.delete`. Versioning preserves the pre-restriction state so
-      the change is auditable. No dedicated "restriction flag" — the access
-      mutation IS the restriction primitive.
+      `accesses.delete`. Versioning preserves the pre-restriction state
+      so the change is auditable. No dedicated "restriction flag" — the
+      access mutation IS the restriction primitive.
     detail: |
-      Article 18 envisions restriction as a temporary state where data is
-      stored but not processed. With pryv:
+      Article 18 envisions restriction as a temporary state where data
+      is stored but not processed. With Pryv:
         - Data continues to live in events / streams (unchanged).
         - Processing (= API access through an access token) is restricted
           by lowering the relevant access's `permissions` to `none` on
           affected streams or by deleting the access.
-        - The access-version chain proves when the restriction took effect
-          and what state was in force before.
+        - The access-version chain proves when the restriction took
+          effect and what state was in force before.
 
-      The implementer may also surface a restriction flag in
+      You may also surface a restriction flag in
       `access.clientData.restriction_reason` for record-keeping
       (Art.30 register entry).
 
@@ -406,8 +464,8 @@ requirements:
     title: Right to data portability
     text: |
       Right to receive personal data concerning subject in structured,
-      commonly used, machine-readable format; right to transmit to another
-      controller.
+      commonly used, machine-readable format; right to transmit to
+      another controller.
     coverage: implemented
     draft: true
     pryv_primitives: [event, stream, data-types]
@@ -416,129 +474,154 @@ requirements:
     overview: |
       `events.get` + `streams.get` return canonical JSON validated against
       the data-types schemas — structured, commonly used, machine-readable.
-      Attachments are downloadable. No proprietary lock-in: another open-pryv.io
-      operator can import the data into a new account via standard write APIs.
+      Attachments downloadable. No proprietary lock-in: another Pryv
+      operator can import the data into a new account via standard
+      write APIs.
     detail: |
-      Export shape is the same JSON the data subject (or their delegated app)
-      would see at any time via the API. Implementers can wrap this in a
+      Export shape is the same JSON the data subject (or their delegated
+      app) would see at any time via the API. You can wrap this in a
       "download my data" UI; the underlying primitive needs no special
       export endpoint.
 
-      Direct controller-to-controller transmission (§2) is supported via the
-      CMC capability flow: a single-event-scoped capability access mints a
-      URL the receiving controller can read once.
+      Direct controller-to-controller transmission (§2) is supported via
+      the CMC capability flow: a single-event-scoped capability access
+      mints a URL the receiving controller can read once.
 
   - ref: Art.21
     title: Right to object
     text: |
-      Right to object to processing based on legitimate interests or public
-      interest; absolute right to object to direct marketing.
-    coverage: out-of-scope
+      Right to object to processing based on legitimate interests or
+      public interest; absolute right to object to direct marketing.
+    coverage: facilitated
     draft: true
+    pryv_primitives: [access, permissions, clientData, event]
     overview: |
-      Pryv does not perform marketing/profiling on user data — there is
-      nothing to object to at the pryv layer. Implementer applications that
-      perform profiling must surface their own objection UI.
+      Pryv doesn't do profiling or marketing itself, but if your app
+      does either using Pryv-stored data, your subjects have the right
+      to object. Pryv gives you the primitives to honor objection:
+      revoke or scope-down the access that powers the marketing/
+      profiling job, and record the objection on the access's
+      `clientData` or as a dedicated event for audit.
+    detail: |
+      For direct marketing (absolute right per §2), the typical pattern is:
+        - Subject submits objection (via your app's UI).
+        - You record the objection event (e.g., a custom
+          `consent/object-marketing` event or a flag in
+          `account.clientData.marketing_objection`).
+        - You revoke or narrow the access used by the marketing process
+          → versioned, auditable.
+        - Subsequent marketing-process runs see the access is gone /
+          narrowed → no processing happens.
+
+      For Art.21(1) objections (legitimate interests / public interest),
+      same pattern; you also need a "compelling legitimate grounds"
+      review process before deciding to override the objection.
 
   # ───── Chapter IV — Controller / Processor ─────
 
   - ref: Art.25
     title: Data protection by design and by default
     text: |
-      Controller shall implement technical + organisational measures designed
-      to integrate data-protection principles; default settings shall be
-      privacy-protective.
+      Controller shall implement technical + organisational measures
+      designed to integrate data-protection principles; default settings
+      shall be privacy-protective.
     coverage: facilitated
     draft: true
     pryv_primitives: [access, permissions, stream, system-streams]
     overview: |
-      Pryv's whole architecture leans privacy-by-design — per-user storage
-      isolation, stream-scoped permissions, separate personal/app/shared
-      access types, privileged data on system streams. Defaults (token
-      scopes, audit-on, retention) are operator + implementer choices.
+      Pryv's whole architecture leans privacy-by-design — per-user
+      storage isolation, stream-scoped permissions, separate
+      personal/app/shared access types, privileged data on system
+      streams. Your defaults (token scopes, audit-on, retention) are
+      the part still in your hands.
     detail: |
-      Design alignment:
+      Design alignment Pryv gives you:
         - Per-user storage isolation: each subject's data is operationally
           separable.
-        - Permissions per stream: the smallest-permission default is "none";
-          implementer chooses what to grant.
-        - System streams: privileged user data (account, password, mfa) is
-          technically separated from ordinary content.
+        - Permissions per stream: the smallest-permission default is
+          "none"; you choose what to grant.
+        - System streams: privileged user data (account, password, mfa)
+          is technically separated from ordinary content.
         - Audit-by-default: every API call recorded.
         - Encryption-by-default: TLS in transit; AES-256-GCM for at-rest
           operator secrets.
 
-      Implementer remains responsible for the by-default settings (Art.25 §2):
+      Still in your hands (Art.25 §2 by-default settings):
         - Are app tokens minted with the smallest possible scope?
-        - Is the user's notice-of-collection on by default?
+        - Is your subject's notice-of-collection on by default?
         - Is data retention set to the shortest necessary period?
 
   - ref: Art.30
     title: Records of processing activities
     text: |
       Each controller + processor shall maintain a record of processing
-      activities under its responsibility (purposes, categories, recipients,
-      transfers, retention, security).
+      activities under its responsibility (purposes, categories,
+      recipients, transfers, retention, security).
     coverage: implemented
     draft: true
-    pryv_primitives: [access, clientData, audit, CMC]
+    pryv_primitives: [access, clientData, audit, CMC, data-residency]
     docs: [customer-resources/audit-setup.md, guides/audit-logs.md]
     tests: [U9HQ, QXCH, AA01]
     overview: |
-      The combination of access + clientData + audit + (cross-account) CMC
-      IS the Article 30 register: who, what, why, when, recipients, transfers,
-      retention — all derivable per-subject and per-time-window from primitives
-      pryv records continuously.
+      The combination of access + clientData + audit + (cross-account)
+      CMC + data-residency IS your Article 30 register: who, what, why,
+      when, recipients, transfers, retention — all derivable per-subject
+      and per-time-window from primitives Pryv records continuously.
     detail: |
-      Register field → pryv data source:
+      Register field → Pryv data source:
 
       | Article 30 field | Pryv source |
       |---|---|
-      | Controller / processor identity | implementer's operator metadata + audit user identity |
-      | Purpose | `access.clientData.purpose` (implementer convention) |
+      | Controller / processor identity | your operator metadata + audit user identity |
+      | Purpose | `access.clientData.purpose` (by convention) |
       | Categories of data subjects | derived from user-account metadata |
       | Categories of personal data | event `class/format` from data-types |
       | Categories of recipients | counterparty `access` (CMC pair) |
-      | Transfers to third countries | CMC counterparty `apiEndpoint` host |
+      | Transfers to third countries | CMC counterparty `apiEndpoint` host + chosen hosting |
       | Retention | `access.clientData.retention` + `access.expires` |
       | Security measures | covered in Art.32 |
 
       Audit row → access ref (with serial) → consent state at that moment.
       Recoverable per data-subject + per-time-window + per-purpose.
     technical: |
-      Audit data lives in per-user SQLite (`components/audit/`); `audit.get`
-      API method exposes it with access-time + method + access reference.
+      Audit data lives in per-user SQLite
+      (`open-pryv.io/components/audit/`); `audit.get` API method exposes
+      it with access-time + method + access reference.
 
   - ref: Art.32
     title: Security of processing
     text: |
       Controller + processor shall implement appropriate technical +
-      organisational measures: pseudonymisation, encryption, ongoing CIA,
-      restoration, regular testing.
+      organisational measures: pseudonymisation, encryption, ongoing
+      CIA, restoration, regular testing.
     coverage: facilitated
     draft: true
-    pryv_primitives: [permissions, system-streams, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-secrets, backup-restore, MFA]
+    pryv_primitives: [permissions, system-streams, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-secrets, backup-restore, MFA, data-residency]
     overview: |
-      Multi-aspect article — pryv contributes implementations for several
-      aspects (access control, encryption-in-transit, restoration) and
-      configurable controls for others (encryption-at-rest, pseudonymisation).
-      Organizational measures (regular testing, incident response procedures)
-      remain implementer-side.
+      Multi-aspect article — Pryv implements several aspects for you
+      (access control, encryption-in-transit, restoration) and provides
+      configurable controls for others (encryption-at-rest,
+      pseudonymisation, data residency). Organizational measures
+      (regular testing, incident response procedures) stay in your court.
     detail: |
       Per-aspect:
-        - Encryption in transit: IMPLEMENTED — TLS 1.3 via built-in Let's
-          Encrypt integration; mTLS between cores in a cluster.
-        - Encryption at rest: CONFIGURABLE — operator filesystem encryption
-          (out-of-band) + AES-256-GCM for at-rest operator secrets in
-          PlatformDB.
-        - Pseudonymisation: FACILITATED — system streams + custom event-type
-          design; pseudonyms live in `clientData` or dedicated streams.
-        - Access control: IMPLEMENTED — `permissions` enforce stream-level
-          scope at every API call (technical control, not policy).
-        - Authentication strength: IMPLEMENTED — `mfa.*` API methods, opt-in
-          per `services.mfa.mode`.
-        - Ability to ensure ongoing CIA (§1(b)): FACILITATED — multi-core HA
-          via rqlite cluster, health-checks, audit log.
+        - Encryption in transit: IMPLEMENTED — TLS 1.3 via built-in
+          Let's Encrypt integration; mTLS between cores in a cluster.
+        - Encryption at rest: CONFIGURABLE — you enable operator
+          filesystem encryption (out-of-band) + AES-256-GCM for at-rest
+          operator secrets in PlatformDB.
+        - Pseudonymisation: FACILITATED — system streams + custom
+          event-type design; pseudonyms live in `clientData` or
+          dedicated streams.
+        - Access control: IMPLEMENTED — `permissions` enforce stream-
+          level scope at every API call (technical control, not policy).
+        - Authentication strength: IMPLEMENTED — `mfa.*` API methods,
+          opt-in per `services.mfa.mode`.
+        - Data residency: CONFIGURABLE — multi-hosting puts data where
+          your subjects (or your policy) require, bounding exposure
+          surface.
+        - Ability to ensure ongoing CIA (§1(b)): FACILITATED — multi-core
+          HA via rqlite cluster, health-checks, audit log.
         - Restoration (§1(c)): IMPLEMENTED — `bin/backup.js --restore`
           per-user.
         - Regular testing (§1(d)): DOCUMENTED — multi-engine test matrix
@@ -554,31 +637,31 @@ requirements:
     pryv_primitives: [audit, encryption-at-rest-secrets]
     docs: [customer-resources/audit-setup.md]
     overview: |
-      Pryv's audit log helps determine the scope of a breach (which data,
-      which users, by which access). Encryption-at-rest may scope the
-      "unsecured personal data" definition relevant to the notification
-      decision. The 72-hour process itself is operational.
+      Pryv's audit log helps you determine the scope of a breach (which
+      data, which users, by which access). Encryption-at-rest may scope
+      the "unsecured personal data" definition relevant to the
+      notification decision. The 72-hour process itself is yours to run.
     detail: |
       Breach detection + scoping is software-assisted:
-        - `audit.get` over the suspected time window → list of access tokens
-          that touched the data + which streams were read.
+        - `audit.get` over the suspected time window → list of access
+          tokens that touched the data + which streams were read.
         - access version chain → consent state at the moment of access
           (was processing within authorised scope?).
-        - encryption-at-rest → if the leaked artefact is encrypted operator
-          backup, the data may qualify as "secured" and notification may
-          not be required per Art.33 §1.
-      Detection-of-breach itself depends on monitoring + log review the
-      operator runs around the audit data.
+        - encryption-at-rest → if the leaked artefact is encrypted
+          operator backup, the data may qualify as "secured" and
+          notification may not be required per Art.33 §1.
+      Detection-of-breach itself depends on monitoring + log review you
+      run around the audit data.
 
   - ref: Art.34
     title: Communication of a personal data breach to the data subject
     text: |
-      Where breach likely to result in high risk, controller shall communicate
-      to data subjects without undue delay.
+      Where breach likely to result in high risk, controller shall
+      communicate to data subjects without undue delay.
     coverage: documented
     draft: true
     docs: [customer-resources/audit-setup.md]
     overview: |
-      Communication to data subjects is operational. Pryv's audit data lets
-      the implementer scope per-subject impact; encryption-at-rest may scope
+      Communication to your subjects is operational. Pryv's audit data
+      lets you scope per-subject impact; encryption-at-rest may scope
       the high-risk determination.

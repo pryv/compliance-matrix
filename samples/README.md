@@ -9,13 +9,14 @@ want to *see* the flow working, not read the API contract.
 
 ## When to write a sample
 
-Write a sample when a coverage claim depends on a user-facing flow that:
+Write a sample when a coverage claim depends on an implementer-side / user-
+facing flow that:
 
-- Combines several primitives (e.g., access + clientData + audit).
+- Combines several Pryv primitives (e.g., access + clientData + audit).
 - Has a temporal / interactive element (consent presentation → grant →
   later revoke).
-- Needs to be demonstrable without a full test harness or a deployed
-  customer app.
+- Needs to be demonstrable to an auditor without a full test harness or a
+  deployed customer app.
 
 ## Examples to build (proposals)
 
