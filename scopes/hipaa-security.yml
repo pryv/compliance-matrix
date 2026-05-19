@@ -497,14 +497,32 @@ requirements:
       Authentication is mediated by the access-token primitive: the
       bearer of a valid token has been authenticated. Strength of
       that authentication is layered — username + password by default;
-      MFA via `mfa.*` API methods (SMS-based) when
-      `services.mfa.mode` is set. Recovery paths preserve account
-      ownership when a second-factor device is lost.
+      MFA via `mfa.*` API methods when `services.mfa.mode` is set.
+      Recovery paths preserve account ownership when a second-factor
+      device is lost.
     detail: |
-      MFA is opt-in per operator; once enabled, it can be required at
-      login, at sensitive operations, or both. The MA test series
-      exercises activate / confirm / challenge / verify / deactivate /
-      recover paths.
+      **MFA is pluggable.** The `Service` base class
+      (`components/business/src/mfa/Service.ts`) defines
+      `challenge()` + `verify()` methods; two subclasses ship
+      (`ChallengeVerifyService`, `SingleService`) targeting
+      HTTP-callable external providers (SMS by config default). An
+      operator can plug in any provider matching the
+      challenge/verify shape via `services.mfa` config (Twilio Authy,
+      Auth0 MFA, Duo Web push, …) without writing code, or extend
+      `Service` to implement any in-process method.
+
+      NIST AAL framing: the achievable AAL depends on which provider
+      is configured. SMS-only is AAL1 under NIST SP 800-63B Rev 3.
+      TOTP + push or WebAuthn-based providers reach AAL2. Reference
+      plugins for in-process TOTP + WebAuthn are tracked at
+      `_plans/XXX-Backlog/MFA-MODERN-METHODS.md` (matrix-side mirror
+      at `proposals/mfa-modern-methods.md`); see Plan 40 OAuth2
+      modernisation for the broader auth-stack roadmap.
+
+      MFA is opt-in per operator; once enabled, it can be required
+      at login, at sensitive operations, or both. The MA test series
+      exercises activate / confirm / challenge / verify / deactivate
+      / recover paths.
 
   - ref: 164.312(e)(1)
     title: Transmission security — standard

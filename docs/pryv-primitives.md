@@ -107,11 +107,41 @@ A privileged stream namespace managed by the core (not user-creatable).
 
 Multi-factor authentication via the `mfa.*` API methods
 (`mfa.activate`, `mfa.confirm`, `mfa.challenge`, `mfa.verify`,
-`mfa.deactivate`, `mfa.recover`). SMS-based by default; opt-in per
-`services.mfa.mode` operator config.
+`mfa.deactivate`, `mfa.recover`). Opt-in per `services.mfa.mode`
+operator config.
 
-- **Compliance role**: authentication strength control (ISO 27001 A.8.5,
-  HIPAA-Security 164.312(d), GDPR Art.32 multi-aspect).
+**Pluggable** — `components/business/src/mfa/Service.ts` defines an
+abstract `Service` base class with `challenge()` and `verify()`
+methods. Two subclasses ship today, both targeting HTTP-callable
+external providers:
+
+- `ChallengeVerifyService` — two-step external provider (separate
+  challenge + verify endpoints).
+- `SingleService` — one-step external provider (single endpoint
+  does both).
+
+The shipped subclasses are configured with SMS provider templates
+by default (Twilio-style HTTP endpoints with `{{ username }}`
+placeholder substitution), but the abstraction is generic over
+any HTTP-callable provider. Operators can:
+
+- **Config-only:** point `services.mfa` URLs at any HTTP MFA
+  provider matching the challenge/verify or single-step shape
+  (Twilio Authy, Auth0 MFA API, Duo Web webhook, etc.).
+- **Code-level:** extend `Service` to implement any provider —
+  internal or external.
+
+In-process ceremonies (server-side TOTP, WebAuthn) currently
+require a `Service`-subclass implementation. Reference plugins for
+TOTP + WebAuthn are tracked at
+`_plans/XXX-Backlog/MFA-MODERN-METHODS.md` (matrix-side mirror at
+`proposals/mfa-modern-methods.md`).
+
+- **Compliance role**: authentication strength control (ISO 27001
+  A.8.5, HIPAA-Security 164.312(d), GDPR Art.32 multi-aspect, DiGA
+  Annex 1.2.4, PIPEDA Principle 4.7). Which NIST AAL the deployment
+  can claim depends on the configured provider; AAL2 requires TOTP
+  + push or WebAuthn (SMS-only is AAL1 under NIST SP 800-63B Rev 3).
 
 ### `audit-event-stream`
 
