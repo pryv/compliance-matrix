@@ -1,0 +1,303 @@
+id: gdpr
+title: General Data Protection Regulation
+short: GDPR
+type: regulation
+jurisdiction: EU + EEA (extraterritorial via Art. 3)
+version: Regulation (EU) 2016/679 (consolidated)
+version_date: "2016-04-27"
+canonical_url: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02016R0679-20160504
+matrix_language: EN
+curated: false
+
+changelog:
+  - date: "2026-05-19"
+    change: initial draft (Phase C.1) — Chapter I + selected Chapter II/III articles
+
+requirements:
+
+  # ───── Chapter I — General Provisions ─────
+
+  - ref: Art.1
+    title: Subject matter and objectives
+    text: |
+      Regulation lays down rules on the protection of natural persons with
+      regard to the processing of personal data and rules relating to the free
+      movement of personal data.
+    coverage: out-of-scope
+    draft: true
+    notes: |
+      Declarative. No software-level contribution.
+
+  - ref: Art.2
+    title: Material scope
+    text: |
+      Applies to the processing of personal data wholly or partly by
+      automated means and to the processing other than by automated means
+      of personal data which form part of a filing system.
+    coverage: out-of-scope
+    draft: true
+    notes: |
+      Defines what processing is in scope of GDPR. Not a software requirement.
+
+  - ref: Art.3
+    title: Territorial scope
+    text: |
+      Applies to processing of personal data in the context of the activities
+      of an establishment of a controller or processor in the Union; or of a
+      controller/processor not in the Union where processing relates to data
+      subjects in the Union.
+    coverage: out-of-scope
+    draft: true
+    notes: |
+      Determines if GDPR applies to an implementer's deployment. The
+      implementer's legal/business analysis, not software.
+
+  - ref: Art.4
+    title: Definitions
+    text: |
+      Defines key terms: personal data, processing, controller, processor,
+      consent, profiling, pseudonymisation, etc.
+    coverage: out-of-scope
+    draft: true
+    notes: |
+      Definitions only. Implementer must understand them — see WAB glossary
+      for software-side mapping.
+
+  # ───── Chapter II — Principles ─────
+
+  - ref: Art.5
+    title: Principles relating to processing of personal data
+    text: |
+      Lawfulness, fairness, transparency; purpose limitation; data minimisation;
+      accuracy; storage limitation; integrity and confidentiality (security);
+      accountability.
+    coverage: facilitated
+    draft: true
+    functional_specs: [EVENT.BASE, STREAM.BASE]
+    notes: |
+      Multi-aspect article; pryv contributes per-principle:
+        - lawfulness/fairness/transparency: documented (implementer obligation)
+        - purpose limitation: facilitated via Streams concept (data scoping)
+        - data minimisation: facilitated via Streams + tokens with scoped access
+        - accuracy: facilitated via events.update API
+        - storage limitation: configurable per-engine (SQLite folder erasure;
+          others require operator-managed retention)
+        - integrity & confidentiality: covered separately at Art.32
+        - accountability: documented + audit logs (see Art.30)
+
+  - ref: Art.6
+    title: Lawfulness of processing
+    text: |
+      Processing lawful only if at least one of six bases applies (consent,
+      contract, legal obligation, vital interests, public interest, legitimate
+      interests).
+    coverage: out-of-scope
+    draft: true
+    notes: |
+      Legal basis determination is implementer responsibility. pryv does not
+      enforce or record the legal basis itself.
+
+  - ref: Art.7
+    title: Conditions for consent
+    text: |
+      Where processing is based on consent, controller must be able to
+      demonstrate consent. Request must be in intelligible form, withdrawable.
+    coverage: facilitated
+    draft: true
+    notes: |
+      pryv data model supports `consent/*` event types (data-types repo,
+      Plan 68 cmc additions). Consent UI is implementer responsibility
+      (app-web-auth3 template; see Art.25).
+    docs: [guides/consent.md]
+
+  # ───── Chapter III — Rights of the data subject ─────
+
+  - ref: Art.12
+    title: Transparent information, communication and modalities
+    text: |
+      Controller shall provide concise, transparent, intelligible information
+      and respond to data subject requests within one month.
+    coverage: documented
+    draft: true
+    docs: [guides/consent.md, customer-resources/audit-setup.md]
+    notes: |
+      Notice + response timelines are organizational. pryv supports timely
+      response via API for the rights-related requests (Art.15-22).
+
+  - ref: Art.13
+    title: Information to be provided where data are collected from the data subject
+    text: |
+      Identity of controller, purposes, legal basis, recipients, retention,
+      rights — must be provided at the time of collection.
+    coverage: documented
+    draft: true
+    notes: |
+      Implementer's notice/UI. pryv backend is the storage; transparency
+      surface is the app talking to it.
+
+  - ref: Art.14
+    title: Information to be provided where data have not been obtained from the data subject
+    text: |
+      Same disclosures as Art.13, provided within reasonable period (≤1 month).
+    coverage: out-of-scope
+    draft: true
+    notes: |
+      Applies when data sourced from third parties. Implementer's process.
+
+  - ref: Art.15
+    title: Right of access by the data subject
+    text: |
+      Right to obtain confirmation, access, copy of personal data + supplementary
+      information (purposes, recipients, retention, rights, source, automated
+      decisions).
+    coverage: facilitated
+    draft: true
+    functional_specs: [EVENT.BASE, STREAM.BASE]
+    notes: |
+      pryv's API gives the data subject (via personal token) full read access
+      to their events, streams, accesses. Implementer must surface the
+      supplementary metadata (purposes/recipients/etc.) — pryv stores events,
+      not legal-context metadata.
+
+  - ref: Art.16
+    title: Right to rectification
+    text: |
+      Right to have inaccurate personal data rectified without undue delay.
+    coverage: facilitated
+    draft: true
+    functional_specs: [EVENT.BASE]
+    notes: |
+      events.update API allows correction. Implementer must expose a
+      user-facing rectification flow.
+
+  - ref: Art.17
+    title: Right to erasure ("right to be forgotten")
+    text: |
+      Right to obtain erasure without undue delay where one of six conditions
+      applies (no longer necessary, withdrawn consent, no legal basis, etc.).
+    coverage: configurable
+    draft: true
+    config_keys: [storages.userAccountStorage.engine, user-account.delete]
+    tests: [USAD]
+    notes: |
+      Full erasure (incl. backups) is engine-dependent:
+        - SQLite per-user folder: deletable + removable from filesystem
+          backups (each user is a separate file).
+        - PostgreSQL / Mongo: row-level erasure only; backup-level erasure
+          requires backup-rotation policy (operator-managed).
+      pryv provides system.users.delete API + bin/backup.js per-user prune.
+      Implementer must run backup-rotation to complete erasure in non-SQLite
+      engines.
+
+  - ref: Art.18
+    title: Right to restriction of processing
+    text: |
+      Right to obtain restriction (data stored but not processed) in defined
+      circumstances.
+    coverage: documented
+    draft: true
+    notes: |
+      pryv does not have a built-in "restriction" flag distinct from access
+      revocation. Implementer can achieve restriction by revoking all app
+      tokens against the data (accesses.delete) — described in [[backlog
+      doc: implementing-art-18-restriction]] (TODO).
+
+  - ref: Art.20
+    title: Right to data portability
+    text: |
+      Right to receive personal data concerning subject in structured,
+      commonly used, machine-readable format; right to transmit to another
+      controller.
+    coverage: facilitated
+    draft: true
+    functional_specs: [EVENT.BASE, STREAM.BASE]
+    notes: |
+      events.get + streams.get return JSON (structured, machine-readable).
+      Attachments downloadable. Implementer can offer a one-click export
+      via these APIs. No proprietary lock-in.
+
+  - ref: Art.21
+    title: Right to object
+    text: |
+      Right to object to processing based on legitimate interests or public
+      interest; absolute right to object to direct marketing.
+    coverage: out-of-scope
+    draft: true
+    notes: |
+      Marketing/profiling is implementer-side. pryv does not perform
+      marketing/profiling on user data.
+
+  # ───── Chapter IV — Controller / Processor ─────
+
+  - ref: Art.25
+    title: Data protection by design and by default
+    text: |
+      Controller shall implement technical + organisational measures designed
+      to integrate data-protection principles; default settings shall be
+      privacy-protective.
+    coverage: facilitated
+    draft: true
+    notes: |
+      pryv is built around privacy-by-design — per-user storage isolation,
+      Stream-scoped permissions, separate processor/controller boundaries.
+      Implementer must still configure defaults appropriately (token scopes,
+      audit-on, retention).
+
+  - ref: Art.30
+    title: Records of processing activities
+    text: |
+      Each controller + processor shall maintain a record of processing
+      activities under its responsibility (purposes, categories, recipients,
+      transfers, retention, security).
+    coverage: facilitated
+    draft: true
+    docs: [customer-resources/audit-setup.md, guides/audit-logs.md]
+    notes: |
+      Audit component records all API actions (who/what/when). Implementer
+      uses these logs as input to the Article 30 register — but the register
+      itself (purposes, recipients, retention policies) is a separate
+      organizational document.
+
+  - ref: Art.32
+    title: Security of processing
+    text: |
+      Controller + processor shall implement appropriate technical + organisational
+      measures: pseudonymisation, encryption, ongoing CIA, restoration, regular
+      testing.
+    coverage: facilitated
+    draft: true
+    notes: |
+      Multi-aspect:
+        - encryption in transit: implemented (TLS 1.3 via Let's Encrypt
+          integration, Plan 35; mTLS cluster, Plan 34)
+        - encryption at rest: configurable (operator filesystem encryption
+          + AES-256-GCM at-rest secrets, Plan 38)
+        - pseudonymisation: facilitated (system streams + custom event-type
+          design)
+        - ability to ensure ongoing CIA: facilitated (multi-core HA Plan 25,
+          health-checks, audit)
+        - restoration: implemented (bin/backup.js --restore, Plan 32)
+        - regular testing: documented (test matrix runbook, Plan 28)
+
+  - ref: Art.33
+    title: Notification of personal data breach to the supervisory authority
+    text: |
+      Controller shall notify supervisory authority within 72 hours of
+      becoming aware of a breach (unless unlikely to result in risk).
+    coverage: documented
+    draft: true
+    docs: [customer-resources/audit-setup.md]
+    notes: |
+      Notification is organizational. pryv contributes audit logs that
+      help determine breach scope (which data, which users, when accessed).
+
+  - ref: Art.34
+    title: Communication of a personal data breach to the data subject
+    text: |
+      Where breach likely to result in high risk, controller shall communicate
+      to data subjects without undue delay.
+    coverage: documented
+    draft: true
+    notes: |
+      Organizational. pryv's encryption-at-rest may scope the affected-subject
+      list (encrypted data → notification may not be required per §1(a)).
