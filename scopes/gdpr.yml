@@ -150,9 +150,10 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, stream, event, system-streams]
     overview: |
-      Article 4 defines GDPR vocabulary. Pryv's primitives map cleanly to
-      most of these terms — easier for you to point auditors at concrete
-      artefacts rather than abstract concepts.
+      **Facilitation: awareness (medium)** — Article 4 defines GDPR
+      vocabulary. Pryv's primitives map cleanly to most of these
+      terms — easier for you to point auditors at concrete artefacts
+      rather than abstract concepts.
     detail: |
       Approximate mapping of key GDPR terms to Pryv primitives:
 
@@ -235,11 +236,12 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData]
     overview: |
-      You decide which Art.6 basis you're relying on for each processing
-      activity. Pryv doesn't impose or check the basis. You can record
-      your chosen basis in `access.clientData.lawful_basis` so it travels
-      alongside the technical authorization and lives in the audit trail —
-      handy when an auditor asks "under what basis was this access made?".
+      **Facilitation: storage (low)** — You decide which Art.6 basis
+      you're relying on for each processing activity. Pryv doesn't
+      impose or check the basis. You can record your chosen basis in
+      `access.clientData.lawful_basis` so it travels alongside the
+      technical authorization and lives in the audit trail — handy
+      when an auditor asks "under what basis was this access made?".
     detail: |
       Recording the basis on the access gives you a durable, versioned
       artefact tying the basis to the specific processing scope it
@@ -305,14 +307,15 @@ requirements:
     draft: true
     pryv_primitives: [stream, system-streams, access, clientData, permissions]
     overview: |
-      Pryv doesn't classify event content as "special-category" for you
-      — that's your editorial judgement at design time. Once classified,
-      the platform gives you tools to isolate it: put special-category
+      **Facilitation: primitive (medium)** — Pryv doesn't classify
+      event content as "special-category" for you — that's your
+      editorial judgement at design time. Once classified, the
+      platform gives you tools to isolate it: put special-category
       data on dedicated stream subtrees (`health/*`, `biometrics/*`,
-      etc.) and tightly scope every access touching them. The Art.9(2)
-      condition relied on for each processing instance can travel in
-      `access.clientData.special_category_basis` so it lives next to
-      the technical grant.
+      etc.) and tightly scope every access touching them. The
+      Art.9(2) condition relied on for each processing instance can
+      travel in `access.clientData.special_category_basis` so it
+      lives next to the technical grant.
     detail: |
       Recommended stream-layout pattern for special-category-heavy
       deployments:
@@ -344,11 +347,12 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, event]
     overview: |
-      Pryv neither knows nor validates a subject's age — age + parental-
-      authority verification happens at your app's registration /
-      consent UX. Once verified, the artefacts you keep travel
-      alongside the access: `account.clientData.age_verification_method`
-      + `clientData.parental_holder_consent_event_id` (pointing at a
+      **Facilitation: storage (low)** — Pryv neither knows nor
+      validates a subject's age — age + parental-authority verification
+      happens at your app's registration / consent UX. Once verified,
+      the artefacts you keep travel alongside the access:
+      `account.clientData.age_verification_method` +
+      `clientData.parental_holder_consent_event_id` (pointing at a
       `consent/parental-cmc` event when applicable). Re-verification
       on age-of-majority transitions is your scheduled-process concern.
 
@@ -363,12 +367,12 @@ requirements:
     draft: true
     pryv_primitives: [stream, system-streams, access, clientData]
     overview: |
-      Same pattern as Art. 9 special-category data: dedicate a
-      `criminal-records/*` stream subtree, scope every access tightly,
-      record the Art. 10 legal-basis-by-law citation in
-      `access.clientData.art10_basis`. Pryv has no role in deciding
-      whether a given processing instance falls under "official
-      authority" — that's your legal judgement.
+      **Facilitation: primitive (medium)** — Same pattern as Art. 9
+      special-category data: dedicate a `criminal-records/*` stream
+      subtree, scope every access tightly, record the Art. 10 legal-
+      basis-by-law citation in `access.clientData.art10_basis`. Pryv
+      has no role in deciding whether a given processing instance
+      falls under "official authority" — that's your legal judgement.
 
   # ───── Chapter III — Rights of the data subject ─────
 
@@ -382,10 +386,11 @@ requirements:
     pryv_primitives: [access, clientData, event]
     docs: [guides/consent.md, customer-resources/audit-setup.md]
     overview: |
-      Pryv preserves whatever notice / consent text you presented to
-      the subject — immutably, versioned, retrievable later. The
-      response operations (Art.15-22) execute in sub-second; the
-      1-month rule is your process target, not a software limit.
+      **Facilitation: storage (medium)** — Pryv preserves whatever
+      notice / consent text you presented to the subject — immutably,
+      versioned, retrievable later. The response operations
+      (Art.15-22) execute in sub-second; the 1-month rule is your
+      process target, not a software limit.
     detail: |
       Information artefacts (notice, consent text, lawful-basis
       explanation) can live in `access.clientData` and/or in
@@ -405,10 +410,11 @@ requirements:
     pryv_primitives: [access, clientData, event]
     docs: [guides/consent.md]
     overview: |
-      The information items you must show at collection time map
-      naturally to `access.clientData` (or a `consent/request-cmc` event
-      when using CMC). Pryv preserves them immutably; your app surfaces
-      them at the right moment.
+      **Facilitation: storage (medium)** — The information items you
+      must show at collection time map naturally to `access.clientData`
+      (or a `consent/request-cmc` event when using CMC). Pryv
+      preserves them immutably; your app surfaces them at the right
+      moment.
 
   - ref: Art.14
     title: Information to be provided where data have not been obtained from the data subject
@@ -419,12 +425,13 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, event, audit]
     overview: |
-      When you ingest data into Pryv from third parties (not directly
-      from the subject), you still owe the same disclosures as Art.13.
-      Pryv lets you record the disclosure artefact alongside the data,
-      same as direct collection (`access.clientData` or a `consent/*`
-      event), and the audit log proves when disclosure happened — useful
-      when the 1-month / first-contact deadlines come into question.
+      **Facilitation: storage (medium)** — When you ingest data into
+      Pryv from third parties (not directly from the subject), you
+      still owe the same disclosures as Art.13. Pryv lets you record
+      the disclosure artefact alongside the data, same as direct
+      collection (`access.clientData` or a `consent/*` event), and
+      the audit log proves when disclosure happened — useful when
+      the 1-month / first-contact deadlines come into question.
     detail: |
       Where the data came from (the source) is an Art.14(2)(f) disclosure
       item — record it in `event.clientData.source` or in a dedicated
@@ -577,12 +584,13 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, clientData, event]
     overview: |
-      Pryv doesn't do profiling or marketing itself, but if your app
-      does either using Pryv-stored data, your subjects have the right
-      to object. Pryv gives you the primitives to honor objection:
-      revoke or scope-down the access that powers the marketing/
-      profiling job, and record the objection on the access's
-      `clientData` or as a dedicated event for audit.
+      **Facilitation: primitive (medium)** — Pryv doesn't do profiling
+      or marketing itself, but if your app does either using Pryv-
+      stored data, your subjects have the right to object. Pryv gives
+      you the primitives to honor objection: revoke or scope-down the
+      access that powers the marketing/profiling job, and record the
+      objection on the access's `clientData` or as a dedicated event
+      for audit.
     detail: |
       For direct marketing (absolute right per §2), the typical pattern is:
         - Subject submits objection (via your app's UI).
@@ -610,12 +618,13 @@ requirements:
     pryv_primitives: [access, audit, CMC]
     derives_from: [gdpr.Art.16, gdpr.Art.17, gdpr.Art.18]
     overview: |
-      The recipients are derivable from Pryv data — the accesses the
-      controller has minted to third parties. When you exercise an
-      Art. 16-18 action that affects events held by those recipients,
-      iterate the active accesses and notify each holder out-of-band.
-      For CMC-paired counterparties, the `consent/revoke-cmc` or a
-      custom `notification/rectification` event provides a structured
+      **Facilitation: evidence (low)** — The recipients are derivable
+      from Pryv data — the accesses the controller has minted to
+      third parties. When you exercise an Art. 16-18 action that
+      affects events held by those recipients, iterate the active
+      accesses and notify each holder out-of-band. For CMC-paired
+      counterparties, the `consent/revoke-cmc` or a custom
+      `notification/rectification` event provides a structured
       notification channel.
 
   - ref: Art.22
@@ -631,15 +640,15 @@ requirements:
     draft: true
     pryv_primitives: [audit, event, access, clientData]
     overview: |
-      Pryv doesn't run automated decisions — that's your application
-      logic. What Pryv contributes when Art.22 applies: (1) the audit
-      log proves which inputs were read for the decision; (2) the
-      decision output can be written as a Pryv event with the input
-      reference + the decision logic version captured in
-      `clientData`, making "human intervention" requests tractable
-      (the subject can locate the specific decision record); (3) the
-      consent basis for §2(c) lives on the access's clientData like
-      every other consent record.
+      **Facilitation: evidence (low)** — Pryv doesn't run automated
+      decisions — that's your application logic. What Pryv contributes
+      when Art.22 applies: (1) the audit log proves which inputs were
+      read for the decision; (2) the decision output can be written
+      as a Pryv event with the input reference + the decision logic
+      version captured in `clientData`, making "human intervention"
+      requests tractable (the subject can locate the specific decision
+      record); (3) the consent basis for §2(c) lives on the access's
+      clientData like every other consent record.
     detail: |
       Recommended pattern when you run Art.22 processing:
         - Mint a dedicated access for the automated-decision app with
@@ -666,12 +675,13 @@ requirements:
     pryv_primitives: [access, permissions, audit, encryption-at-rest-secrets, letsEncrypt-integration, MFA, backup-restore]
     derives_from: [gdpr.Art.5, gdpr.Art.25, gdpr.Art.32, gdpr.Art.30]
     overview: |
-      Art. 24 is the umbrella controller-accountability obligation that
-      ties every other Chapter-IV row together. Pryv contributes the
-      technical-measures substrate (this matrix enumerates it
-      explicitly) + the technical-measures demonstrability (audit log
-      + access version chain are the evidence layer). The
-      organisational-measures programme is yours.
+      **Facilitation: evidence (low)** — Art. 24 is the umbrella
+      controller-accountability obligation that ties every other
+      Chapter-IV row together. Pryv contributes the technical-
+      measures substrate (this matrix enumerates it explicitly) +
+      the technical-measures demonstrability (audit log + access
+      version chain are the evidence layer). The organisational-
+      measures programme is yours.
 
   - ref: Art.26
     title: Joint controllers
@@ -684,13 +694,14 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, CMC]
     overview: |
-      Joint-controller arrangements get recorded on the access's
+      **Facilitation: storage (low)** — Joint-controller arrangements
+      get recorded on the access's
       `clientData.joint_controller_arrangement` with a pointer to the
-      written agreement (Art. 26 §1). Where each controller runs their
-      own Pryv deployment, CMC's cross-platform access pattern is the
-      natural technical substrate for the joint operation. The
-      arrangement's essence (Art. 26 §2) is communicated to the data
-      subject via the access's clientData.privacy_notice.
+      written agreement (Art. 26 §1). Where each controller runs
+      their own Pryv deployment, CMC's cross-platform access pattern
+      is the natural technical substrate for the joint operation.
+      The arrangement's essence (Art. 26 §2) is communicated to the
+      data subject via the access's clientData.privacy_notice.
 
   - ref: Art.27
     title: Representative of controllers / processors not established in the Union
@@ -716,12 +727,12 @@ requirements:
     pryv_primitives: [access, permissions, audit]
     derives_from: [gdpr.Art.28]
     overview: |
-      "Only on instructions" is enforced operationally through the
-      access primitive — workforce / contractor / app accesses are
-      scoped to specific streams + levels per the controller's
-      instructions, and the audit log proves what was actually done.
-      Violations show as out-of-scope access attempts or unauthorized
-      method calls in the audit data.
+      **Facilitation: primitive (high)** — "Only on instructions" is
+      enforced operationally through the access primitive — workforce
+      / contractor / app accesses are scoped to specific streams +
+      levels per the controller's instructions, and the audit log
+      proves what was actually done. Violations show as out-of-scope
+      access attempts or unauthorized method calls in the audit data.
 
   - ref: Art.25
     title: Data protection by design and by default
@@ -733,11 +744,12 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, stream, system-streams]
     overview: |
-      Pryv's whole architecture leans privacy-by-design — per-user
-      storage isolation, stream-scoped permissions, separate
-      personal/app/shared access types, privileged data on system
-      streams. Your defaults (token scopes, audit-on, retention) are
-      the part still in your hands.
+      **Facilitation: infrastructure (high)** — Pryv's whole
+      architecture leans privacy-by-design — per-user storage
+      isolation, stream-scoped permissions, separate personal/app/
+      shared access types, privileged data on system streams. Your
+      defaults (token scopes, audit-on, retention) are the part still
+      in your hands.
     detail: |
       Design alignment Pryv gives you:
         - Per-user storage isolation: each subject's data is operationally
@@ -768,14 +780,15 @@ requirements:
     draft: true
     pryv_primitives: [audit, access, clientData, encryption-at-rest-secrets, letsEncrypt-integration]
     overview: |
-      When the Pryv operator and the controller are distinct legal
-      entities (typical SaaS arrangement), the operator is the Art.28
-      processor. Pryv-the-software provides the technical substrate
-      the §1 "sufficient guarantees" evaluation rests on (this matrix
-      enumerates it); the data-processing-agreement (DPA) under §3 is
-      the operator's contract. Audit log + access primitives carry
-      "documented controller instructions" (§3(a)) and the records
-      that demonstrate compliance (§3(h)).
+      **Facilitation: storage (medium)** — When the Pryv operator and
+      the controller are distinct legal entities (typical SaaS
+      arrangement), the operator is the Art.28 processor. Pryv-the-
+      software provides the technical substrate the §1 "sufficient
+      guarantees" evaluation rests on (this matrix enumerates it);
+      the data-processing-agreement (DPA) under §3 is the operator's
+      contract. Audit log + access primitives carry "documented
+      controller instructions" (§3(a)) and the records that
+      demonstrate compliance (§3(h)).
     detail: |
       Sub-processor relations (§2 + §4) — when the operator subcontracts
       part of the processing (e.g., hosting infrastructure, monitoring
@@ -838,11 +851,12 @@ requirements:
     draft: true
     pryv_primitives: [permissions, system-streams, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-secrets, backup-restore, MFA, data-residency]
     overview: |
-      Multi-aspect article — Pryv implements several aspects for you
-      (access control, encryption-in-transit, restoration) and provides
-      configurable controls for others (encryption-at-rest,
-      pseudonymisation, data residency). Organizational measures
-      (regular testing, incident response procedures) stay in your court.
+      **Facilitation: infrastructure (high)** — Multi-aspect article —
+      Pryv implements several aspects for you (access control,
+      encryption-in-transit, restoration) and provides configurable
+      controls for others (encryption-at-rest, pseudonymisation, data
+      residency). Organizational measures (regular testing, incident
+      response procedures) stay in your court.
     detail: |
       Per-aspect:
         - Encryption in transit: IMPLEMENTED — TLS 1.3 via built-in
@@ -877,10 +891,11 @@ requirements:
     pryv_primitives: [audit, encryption-at-rest-secrets]
     docs: [customer-resources/audit-setup.md]
     overview: |
-      Pryv's audit log helps you determine the scope of a breach (which
-      data, which users, by which access). Encryption-at-rest may scope
-      the "unsecured personal data" definition relevant to the
-      notification decision. The 72-hour process itself is yours to run.
+      **Facilitation: evidence (medium)** — Pryv's audit log helps you
+      determine the scope of a breach (which data, which users, by
+      which access). Encryption-at-rest may scope the "unsecured
+      personal data" definition relevant to the notification decision.
+      The 72-hour process itself is yours to run.
     detail: |
       Breach detection + scoping is software-assisted:
         - `audit.get` over the suspected time window → list of access
@@ -916,14 +931,15 @@ requirements:
     draft: true
     pryv_primitives: [audit, data-residency, access, system-streams]
     overview: |
-      The DPIA is a written assessment artefact — Pryv has no role in
-      producing it. What Pryv supplies as inputs: data-residency
-      primitive lets you state where each subject's data lives;
-      audit + access-version primitives describe the processing-flow
-      technical layer concretely; system-streams isolation gives a
-      defensible "scope of sensitive data" boundary; this matrix
-      itself enumerates the technical-organisational-measures (Art.35
-      §7(d)) for the deployment.
+      **Facilitation: evidence (low)** — The DPIA is a written
+      assessment artefact — Pryv has no role in producing it. What
+      Pryv supplies as inputs: data-residency primitive lets you
+      state where each subject's data lives; audit + access-version
+      primitives describe the processing-flow technical layer
+      concretely; system-streams isolation gives a defensible "scope
+      of sensitive data" boundary; this matrix itself enumerates the
+      technical-organisational-measures (Art.35 §7(d)) for the
+      deployment.
     detail: |
       §7 prescribed content → Pryv-side artefacts feeding each item:
         - (a) systematic description of processing → audit-log
@@ -996,10 +1012,10 @@ requirements:
     draft: true
     pryv_primitives: [audit, observability-provider]
     overview: |
-      DPO duties are organizational. Pryv contributes the data sources
-      the DPO uses for "monitoring compliance" — the audit log,
-      observability metrics, this matrix's evidence trail. Equips the
-      DPO; doesn't replace them.
+      **Facilitation: evidence (low)** — DPO duties are organizational.
+      Pryv contributes the data sources the DPO uses for "monitoring
+      compliance" — the audit log, observability metrics, this
+      matrix's evidence trail. Equips the DPO; doesn't replace them.
 
   - ref: Art.40
     title: Codes of conduct
@@ -1012,13 +1028,13 @@ requirements:
     draft: true
     pryv_primitives: [audit, access]
     overview: |
-      Codes of conduct are sector-level instruments (drafted by
-      associations of controllers / processors, approved by competent
-      supervisory authority). No software role at the code-drafting
-      layer. When a code applies to your sector, adherence is recorded
-      as one of the Art. 24 / Art. 32 "appropriate measures"; the
-      audit log + this matrix demonstrate the technical-control side
-      of code adherence.
+      **Facilitation: awareness (low)** — Codes of conduct are sector-
+      level instruments (drafted by associations of controllers /
+      processors, approved by competent supervisory authority). No
+      software role at the code-drafting layer. When a code applies
+      to your sector, adherence is recorded as one of the Art. 24 /
+      Art. 32 "appropriate measures"; the audit log + this matrix
+      demonstrate the technical-control side of code adherence.
 
   - ref: Art.42
     title: Certification
@@ -1031,11 +1047,12 @@ requirements:
     pryv_primitives: [audit, access]
     derives_from: [iso-27701.5]
     overview: |
-      Certification (e.g., EuroPrivacy seal, GDPR-certified processor
-      schemes) is sector- and jurisdiction-specific. Pryv operators
-      pursuing certification consume this matrix as the technical-
-      control inventory. ISO 27701 + (where applicable) HDS are
-      adjacent certifications already represented in this matrix.
+      **Facilitation: awareness (low)** — Certification (e.g.,
+      EuroPrivacy seal, GDPR-certified processor schemes) is sector-
+      and jurisdiction-specific. Pryv operators pursuing certification
+      consume this matrix as the technical-control inventory. ISO
+      27701 + (where applicable) HDS are adjacent certifications
+      already represented in this matrix.
 
   - ref: Art.82
     title: Right to compensation and liability
@@ -1048,11 +1065,12 @@ requirements:
     draft: true
     pryv_primitives: [audit, access]
     overview: |
-      Liability + compensation are legal proceedings. Pryv contributes
-      defense evidence: the audit log + access-version chain support
-      the controller / processor in demonstrating compliance with the
-      relevant obligations (or, where compliance failed, in scoping
-      the actual damage). The legal outcome is fact-specific.
+      **Facilitation: evidence (low)** — Liability + compensation are
+      legal proceedings. Pryv contributes defense evidence: the audit
+      log + access-version chain support the controller / processor
+      in demonstrating compliance with the relevant obligations (or,
+      where compliance failed, in scoping the actual damage). The
+      legal outcome is fact-specific.
 
   - ref: Art.83
     title: General conditions for imposing administrative fines
@@ -1083,14 +1101,15 @@ requirements:
     draft: true
     pryv_primitives: [data-residency, CMC, access]
     overview: |
-      The Art.44 framework is operational — every Art.45-49 path is
-      conditional. Pryv's data-residency primitive is the technical
-      enforcement layer: when you bind a subject's data to a hosting
-      inside the EU/EEA, no Chapter-V analysis is needed (no transfer
-      happens). When transfer is intentional, the CMC capability flow
-      records the recipient hosting + the legal basis on the originating
-      access's clientData — making Chapter V compliance auditable per
-      transfer rather than per system.
+      **Facilitation: infrastructure (medium)** — The Art.44 framework
+      is operational — every Art.45-49 path is conditional. Pryv's
+      data-residency primitive is the technical enforcement layer:
+      when you bind a subject's data to a hosting inside the EU/EEA,
+      no Chapter-V analysis is needed (no transfer happens). When
+      transfer is intentional, the CMC capability flow records the
+      recipient hosting + the legal basis on the originating access's
+      clientData — making Chapter V compliance auditable per transfer
+      rather than per system.
 
   - ref: Art.45
     title: Transfers on the basis of an adequacy decision
@@ -1122,14 +1141,14 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, data-residency]
     overview: |
-      Pryv-side artefact: record the §2 safeguard type on the
-      transferring access's `clientData.transfer_safeguard` (e.g.,
-      `"art_46_2_c_sccs"` for Standard Contractual Clauses). For
-      CMC-based cross-platform sharing, the counterparty's `apiEndpoint`
-      reveals their hosting jurisdiction; document the safeguard type
-      per pairing so the audit trail records the legal basis. The SCCs
-      / BCRs / approved-code documents themselves are operator/legal
-      artefacts.
+      **Facilitation: storage (low)** — Pryv-side artefact: record the
+      §2 safeguard type on the transferring access's
+      `clientData.transfer_safeguard` (e.g., `"art_46_2_c_sccs"` for
+      Standard Contractual Clauses). For CMC-based cross-platform
+      sharing, the counterparty's `apiEndpoint` reveals their hosting
+      jurisdiction; document the safeguard type per pairing so the
+      audit trail records the legal basis. The SCCs / BCRs / approved-
+      code documents themselves are operator/legal artefacts.
 
   - ref: Art.47
     title: Binding corporate rules
@@ -1176,9 +1195,10 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, audit]
     overview: |
-      Each Art.49 derogation requires per-instance recording. Pryv
-      pattern: mint a purpose-specific access per derogation invocation
-      with `clientData.transfer_derogation = "art_49_1_a_consent"` etc.;
+      **Facilitation: storage (low)** — Each Art.49 derogation
+      requires per-instance recording. Pryv pattern: mint a purpose-
+      specific access per derogation invocation with
+      `clientData.transfer_derogation = "art_49_1_a_consent"` etc.;
       execute the transfer; revoke. The audit trail then anchors the
       derogation rationale to the specific data movement.
 
