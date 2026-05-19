@@ -416,3 +416,55 @@ requirements:
     derives_from: [gdpr.Art.28]
     overview: |
       Customer agreement = the DPA. Contractual, no software role.
+
+  - ref: B.8.3.1
+    title: B.8.3.1 — Obligations to PII principals
+    text: |
+      Processor shall provide the customer (PII controller) with the
+      means to comply with its obligations to PII principals (right of
+      access, rectification, erasure, etc.).
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, event, stream, audit, data-types]
+    derives_from: [iso-27701.A.7.3.1, gdpr.Art.15, gdpr.Art.16, gdpr.Art.17, gdpr.Art.20]
+    tests: [AA01, EGSQ, U9HQ, PTU1, USAD]
+    overview: |
+      The standard Pryv API (events.get / events.update / streams.get
+      / accesses.get / system.users.delete) gives the customer the
+      means to fulfill each principal-rights obligation directly.
+      The controller wraps these in their subject-portal; the
+      processor (Pryv operator) doesn't intermediate.
+
+  - ref: B.8.4
+    title: B.8.4 — Privacy by design and by default
+    text: |
+      Processor shall ensure privacy + data-protection design + default
+      principles are implemented in processing of PII.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, stream, system-streams]
+    derives_from: [gdpr.Art.25, swiss-nlpd.Art.7]
+    overview: |
+      Pryv's architecture leans privacy-by-design (per-user isolation,
+      least-privilege permissions, system-streams separation, audit
+      by default). The processor inheriting these defaults satisfies
+      B.8.4 structurally. See gdpr.Art.25 for the cross-link to the
+      detailed primitive mapping.
+
+  - ref: B.8.5.2
+    title: B.8.5.2 — Records of PII disclosures to third parties
+    text: |
+      Processor shall record disclosures of PII to third parties,
+      including what PII has been disclosed, to whom, and at what time.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [audit, access, clientData, CMC]
+    derives_from: [iso-27701.A.7.4.9, hipaa-privacy.164.528, gdpr.Art.30]
+    tests: [AT01, AT51, AT61]
+    overview: |
+      When the processor (Pryv operator) executes a third-party
+      disclosure (e.g., a CMC cross-platform share, a shared access
+      to a counterparty), the audit log records the API call with
+      access reference; the access's `clientData.recipient` +
+      `clientData.purpose` capture the "to whom" + "for what" fields.
+      Together they constitute B.8.5.2-compliant records.

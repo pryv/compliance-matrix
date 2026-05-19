@@ -392,3 +392,33 @@ requirements:
       in Pryv, the manufacturer puts it on a designated
       `implant-card/*` stream — but the regulatory burden remains
       manufacturer-side.
+
+  - ref: Art.14
+    title: General obligations of importers
+    text: |
+      Importers shall verify that devices have been CE-marked + the
+      EU declaration of conformity drawn up, manufacturer + authorised
+      representative are identified, and importer's name + registered
+      trade name + address + place of business / single registered
+      office + UDI are indicated on device labelling or accompanying
+      documentation.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Importer obligations are contractual + regulatory. No software
+      role.
+
+  - ref: Art.15
+    title: General obligations of distributors
+    text: |
+      Distributors shall act with due care + verify CE marking,
+      EU declaration of conformity, language requirements, expiry
+      dates, etc. Shall cooperate with manufacturers and competent
+      authorities + maintain a register of complaints, non-conforming
+      devices, recalls + withdrawals.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Distributor obligations are operational. No software role; if a
+      distributor uses Pryv to store its complaints + recall register,
+      see the iso-13485.4.2.5 control-of-records row.

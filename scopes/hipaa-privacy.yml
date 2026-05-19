@@ -691,3 +691,48 @@ requirements:
       mapping. The pre-computed accounting report pattern (storing
       results on a dedicated stream) keeps the §528 response window
       tractable.
+
+  - ref: "164.504(e)"
+    title: Organizational requirements — business associate contracts
+    text: |
+      Covered entity may permit a business associate to create, receive,
+      maintain, or transmit PHI on its behalf only with satisfactory
+      assurances via written contract meeting the BAA content
+      requirements of §164.504(e)(2).
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, audit, CMC]
+    derives_from: [hipaa-security.164.314(a)(1), hipaa-privacy.164.502(e)(1), gdpr.Art.28]
+    overview: |
+      The §164.504(e) BAA content is contractual. Pryv-side support
+      for executing the contract terms: BA access tagged with
+      `clientData.baa_id` + `clientData.role = "business_associate"`,
+      scope narrowed to subjects + streams covered by the BAA,
+      audit-log accountability for every action under the BA access.
+
+  - ref: "164.504(g)"
+    title: Organizational requirements — group health plans
+    text: |
+      Group health plan may disclose PHI to a plan sponsor only upon
+      receipt of certification that the plan documents have been
+      amended per §164.504(f) restrictions.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Group-health-plan / plan-sponsor arrangements are organizational
+      / contractual. No software role.
+
+  - ref: 164.502(j)
+    title: Disclosures by whistleblowers + workforce member crime victims
+    text: |
+      Workforce member or business associate disclosure of PHI to a
+      regulatory authority / law enforcement / health oversight agency
+      is not a violation where the workforce member / BA believes in
+      good faith that the entity has engaged in unlawful conduct +
+      meets §502(j)(1) conditions.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Whistleblower protections are legal framing. No software role;
+      the disclosing person's audit-trail evidence under their access
+      may be cited in subsequent proceedings.
