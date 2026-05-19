@@ -172,3 +172,56 @@ requirements:
       organizational documentation (incident response records,
       notification records, decisions to not notify with rationale)
       sits on top of that data.
+
+  - ref: 164.404(b)
+    title: Implementation specification — timeliness of notification
+    text: |
+      Covered entity shall provide the required notification without
+      unreasonable delay and in no case later than 60 calendar days
+      after discovery of a breach.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, observability-provider]
+    derives_from: [hipaa-breach.164.404]
+    overview: |
+      The 60-day clock is procedural — the covered entity owns the
+      incident-response cadence. Pryv-side data accelerates the
+      "discovery" + "scoping" steps that dominate the timeline:
+      audit log + access-version chain answer "what was accessed,
+      by whom, when" in seconds. The discipline of acting on that
+      data within the 60-day window is the operator's process.
+
+  - ref: 164.404(c)
+    title: Implementation specification — content of notification
+    text: |
+      Notification to individuals shall include a brief description of
+      what happened (date of breach + date of discovery), description
+      of PHI involved, steps individuals should take, what the entity
+      is doing, and contact procedures.
+    coverage: out-of-scope
+    draft: true
+    derives_from: [hipaa-breach.164.404]
+    overview: |
+      Content of the notification is the covered entity's editorial
+      artefact. Pryv has no opinion on the wording. The PHI-involved
+      description is derivable from the audit-log scoping done under
+      Art. 402 risk assessment (see hipaa-breach.164.402 row), but
+      composing the prose remains operator-side.
+
+  - ref: 164.404(d)
+    title: Implementation specification — methods of individual notification
+    text: |
+      Written notice by first-class mail (or email if requested by
+      individual); telephone or in-person where urgent due to imminent
+      misuse; substitute notice where contact information insufficient
+      / out-of-date (with web-posting + media-notice variants per
+      threshold).
+    coverage: out-of-scope
+    draft: true
+    derives_from: [hipaa-breach.164.404]
+    overview: |
+      Notification method choice is operational. Pryv has no software
+      role in actually delivering the notice (Pryv is not a mailer).
+      When the entity uses Pryv events to record the notice-delivery
+      attempt (e.g., a `breach-notice/sent` event per affected
+      individual), the audit chain proves the delivery attempt.

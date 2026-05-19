@@ -556,3 +556,114 @@ requirements:
       data flow at the user-binding layer. Operator's environment-
       management procedure (test data hygiene, promotion gates,
       deployment automation) sits on top.
+
+  - ref: A.5.1
+    title: A.5.1 — Policies for information security
+    text: |
+      Information security policy + topic-specific policies shall be
+      defined, approved by management, published, communicated to and
+      acknowledged by relevant personnel + relevant interested parties,
+      reviewed at planned intervals.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Information-security policy is the operator's organizational
+      artefact. Pryv has no role in drafting policy text. The audit
+      log + observability data give the operator the means to verify
+      policy effectiveness post-facto.
+
+  - ref: A.5.7
+    title: A.5.7 — Threat intelligence
+    text: |
+      Information relating to information security threats shall be
+      collected and analysed to produce threat intelligence.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [observability-provider, audit]
+    overview: |
+      Pryv-side contribution to threat intelligence: published
+      dependency-audit pipeline (npm audit + dependabot on master),
+      CHANGELOG announcements of relevant security fixes, observability
+      data on anomalous request patterns. The operator's
+      threat-intel programme (threat-feed subscriptions, correlation
+      logic) sits on top.
+
+  - ref: A.5.16
+    title: A.5.16 — Identity management
+    text: |
+      The full life cycle of identities shall be managed.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, system-streams, audit]
+    derives_from: [iso-27001.A.5.15, hipaa-security.164.308(a)(4)(ii)(C)]
+    tests: [AA01, AA02, ACCP, U9HQ]
+    overview: |
+      Pryv's account + access primitives implement the full identity
+      lifecycle: create (registration), enable (login + access mint),
+      modify (accesses.update, account.update), suspend (access
+      narrowing), terminate (accesses.delete + system.users.delete).
+      Audit log gives the per-stage evidence. The naming + assignment
+      policy is the operator's.
+
+  - ref: A.5.17
+    title: A.5.17 — Authentication information
+    text: |
+      Allocation and management of authentication information shall be
+      controlled by a management process, including advising personnel
+      on appropriate handling.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [system-streams, MFA, encryption-at-rest-secrets]
+    overview: |
+      Pryv stores credentials on a privileged system-stream
+      (`:_system:password` etc.); MFA secrets follow the same isolation.
+      Operator's secret-distribution + secret-rotation policy is the
+      organizational programme; Pryv provides the secure storage tier.
+
+  - ref: A.5.18
+    title: A.5.18 — Access rights
+    text: |
+      Access rights to information and other associated assets shall be
+      provisioned, reviewed, modified and removed in accordance with
+      the organization's topic-specific policy on, and rules for,
+      access control.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, audit]
+    derives_from: [iso-27001.A.5.15, iso-27001.A.5.16, hipaa-security.164.308(a)(3)(ii)(C)]
+    tests: [AA01, AA02, ACCP]
+    overview: |
+      Same primitive surface as A.5.15 + A.5.16 — accesses.create /
+      .update / .delete cover the lifecycle stages; access version
+      history provides the review-evidence layer.
+
+  - ref: A.5.19
+    title: A.5.19 — Information security in supplier relationships
+    text: |
+      Processes and procedures shall be defined and implemented to
+      manage the information-security risks associated with the use of
+      supplier's products or services.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [observability-provider]
+    overview: |
+      When the operator's "supplier" is Pryv (i.e., open-pryv.io as a
+      third-party platform), the public release process + CHANGELOGs +
+      this compliance matrix serve as the supplier-monitoring artefact
+      set. The operator's supplier-management procedure (assessment
+      criteria, periodic review) sits on top.
+
+  - ref: A.5.20
+    title: A.5.20 — Addressing information security within supplier agreements
+    text: |
+      Relevant information-security requirements shall be established
+      and agreed with each supplier based on the type of supplier
+      relationship.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Supplier agreements are contractual artefacts. No software role.
+      When the operator's contract with Pryv (open-pryv.io is BSD-
+      licensed open source) requires security commitments, those map
+      to public Pryv-side practices (release cadence, security-fix
+      backporting, etc.) but the contract itself is operator-side.

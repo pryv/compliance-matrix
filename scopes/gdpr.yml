@@ -328,6 +328,44 @@ requirements:
       you must split it or design your event types so the special-
       category subset is its own event.
 
+  - ref: Art.8
+    title: Conditions applicable to child's consent in relation to information society services
+    text: |
+      Where Art. 6(1)(a) consent applies in relation to the offer of
+      information-society services directly to a child, processing
+      shall be lawful only where the child is at least 16 years old
+      (Member States may lower to no less than 13); below that age,
+      parental holder of responsibility must consent.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, event]
+    overview: |
+      Pryv neither knows nor validates a subject's age — age + parental-
+      authority verification happens at your app's registration /
+      consent UX. Once verified, the artefacts you keep travel
+      alongside the access: `account.clientData.age_verification_method`
+      + `clientData.parental_holder_consent_event_id` (pointing at a
+      `consent/parental-cmc` event when applicable). Re-verification
+      on age-of-majority transitions is your scheduled-process concern.
+
+  - ref: Art.10
+    title: Processing of personal data relating to criminal convictions and offences
+    text: |
+      Processing of personal data relating to criminal convictions /
+      offences shall be carried out only under control of official
+      authority or when authorised by Union / Member State law
+      providing appropriate safeguards.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [stream, system-streams, access, clientData]
+    overview: |
+      Same pattern as Art. 9 special-category data: dedicate a
+      `criminal-records/*` stream subtree, scope every access tightly,
+      record the Art. 10 legal-basis-by-law citation in
+      `access.clientData.art10_basis`. Pryv has no role in deciding
+      whether a given processing instance falls under "official
+      authority" — that's your legal judgement.
+
   # ───── Chapter III — Rights of the data subject ─────
 
   - ref: Art.12
@@ -556,6 +594,26 @@ requirements:
       same pattern; you also need a "compelling legitimate grounds"
       review process before deciding to override the objection.
 
+  - ref: Art.19
+    title: Notification obligation regarding rectification / erasure / restriction
+    text: |
+      Controller shall communicate any rectification, erasure or
+      restriction of processing carried out per Art. 16-18 to each
+      recipient to whom the personal data have been disclosed, unless
+      impossible or disproportionate effort.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, audit, CMC]
+    derives_from: [gdpr.Art.16, gdpr.Art.17, gdpr.Art.18]
+    overview: |
+      The recipients are derivable from Pryv data — the accesses the
+      controller has minted to third parties. When you exercise an
+      Art. 16-18 action that affects events held by those recipients,
+      iterate the active accesses and notify each holder out-of-band.
+      For CMC-paired counterparties, the `consent/revoke-cmc` or a
+      custom `notification/rectification` event provides a structured
+      notification channel.
+
   - ref: Art.22
     title: Automated individual decision-making, including profiling
     text: |
@@ -590,6 +648,26 @@ requirements:
           up that event and presents the trail to the human reviewer.
 
   # ───── Chapter IV — Controller / Processor ─────
+
+  - ref: Art.24
+    title: Responsibility of the controller
+    text: |
+      Taking into account the nature, scope, context, purposes of
+      processing + risks for rights and freedoms of natural persons,
+      controller shall implement appropriate technical + organisational
+      measures to ensure and demonstrate processing is performed in
+      accordance with the Regulation.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, audit, encryption-at-rest-secrets, letsEncrypt-integration, MFA, backup-restore]
+    derives_from: [gdpr.Art.5, gdpr.Art.25, gdpr.Art.32, gdpr.Art.30]
+    overview: |
+      Art. 24 is the umbrella controller-accountability obligation that
+      ties every other Chapter-IV row together. Pryv contributes the
+      technical-measures substrate (this matrix enumerates it
+      explicitly) + the technical-measures demonstrability (audit log
+      + access version chain are the evidence layer). The
+      organisational-measures programme is yours.
 
   - ref: Art.25
     title: Data protection by design and by default
@@ -804,6 +882,70 @@ requirements:
         - (d) measures envisaged to address the risks → see the
           Art.32 row of this matrix + cross-scope ISO 27001 A.8
           control rows.
+
+  - ref: Art.36
+    title: Prior consultation
+    text: |
+      Controller shall consult the supervisory authority prior to
+      processing where the DPIA under Art. 35 indicates the processing
+      would result in a high risk in the absence of measures taken by
+      the controller to mitigate the risk.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Prior consultation is the controller's procedural interaction
+      with a supervisory authority. No software role; the DPIA
+      artefact under Art. 35 carries the technical evidence the
+      authority may request — Pryv contributes inputs there but not
+      to the consultation itself.
+
+  - ref: Art.37
+    title: Designation of the data protection officer
+    text: |
+      Controller and processor shall designate a DPO where (a) processing
+      is by a public authority, (b) core activities require regular and
+      systematic monitoring on a large scale, or (c) core activities
+      consist of large-scale processing of special categories or
+      criminal-conviction data.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      DPO designation is an HR / organizational decision. No software
+      role. Where the deployment processes Art. 9 special-category or
+      Art. 10 criminal data on a large scale (likely for healthcare
+      Pryv deployments), the Art. 37(1)(c) trigger applies and a DPO
+      designation is required.
+
+  - ref: Art.38
+    title: Position of the data protection officer
+    text: |
+      DPO shall be involved properly + in a timely manner in all issues
+      relating to protection of personal data; given necessary resources;
+      shall directly report to the highest management level; shall not
+      receive any instructions regarding exercise of those tasks;
+      cannot be dismissed or penalised for performing tasks.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      DPO independence + reporting structure is an organizational
+      arrangement. No software role.
+
+  - ref: Art.39
+    title: Tasks of the data protection officer
+    text: |
+      DPO shall have, at minimum: informing + advising the controller +
+      processor + employees; monitoring compliance; providing advice on
+      the DPIA + monitoring its performance; cooperating with the
+      supervisory authority; acting as contact point for the
+      supervisory authority.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, observability-provider]
+    overview: |
+      DPO duties are organizational. Pryv contributes the data sources
+      the DPO uses for "monitoring compliance" — the audit log,
+      observability metrics, this matrix's evidence trail. Equips the
+      DPO; doesn't replace them.
 
   # ───── Chapter V — Transfers of personal data to third countries ─────
 
