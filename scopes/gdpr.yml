@@ -27,12 +27,13 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, stream, audit, data-types, CMC]
     overview: |
-      GDPR's purpose is to protect natural persons in how their personal
-      data is processed, while keeping that data freely movable. Pryv is
-      designed for exactly that — your subjects own their data, technical
-      controls enforce the consent they granted, and the API is open so
-      data can move without lock-in. The per-article rows below describe
-      how each obligation maps to the primitives Pryv gives you.
+      **Facilitation: awareness (low)** — GDPR's purpose is to protect
+      natural persons in how their personal data is processed, while
+      keeping that data freely movable. Pryv is designed for exactly
+      that — your subjects own their data, technical controls enforce
+      the consent they granted, and the API is open so data can move
+      without lock-in. The per-article rows below describe how each
+      obligation maps to the primitives Pryv gives you.
     detail: |
       Protection of natural persons (re: processing of their personal data):
         - Subject-centric storage — each of your users has dedicated
@@ -82,14 +83,15 @@ requirements:
     draft: true
     pryv_primitives: [access, event, audit]
     overview: |
-      Your Pryv deployment is fully inside Article 2's material scope.
-      Every event you store and every API call your apps make is automated
-      processing covered by GDPR. Pryv does not exempt you from any
-      per-article obligation — it gives you the technical primitives that
-      make those obligations addressable (see Art.5+). Branch 2
-      (non-automated processing inside a "filing system" — structured
-      paper records) doesn't surface at the Pryv layer; your own paper
-      records, if any, are outside the software boundary.
+      **Facilitation: awareness (low)** — Your Pryv deployment is
+      fully inside Article 2's material scope. Every event you store
+      and every API call your apps make is automated processing
+      covered by GDPR. Pryv does not exempt you from any per-article
+      obligation — it gives you the technical primitives that make
+      those obligations addressable (see Art.5+). Branch 2 (non-
+      automated processing inside a "filing system" — structured
+      paper records) doesn't surface at the Pryv layer; your own
+      paper records, if any, are outside the software boundary.
     detail: |
       GDPR Art.4(6) defines "filing system" as any structured set of
       personal data accessible by specific criteria — alphabetised
@@ -110,13 +112,15 @@ requirements:
     draft: true
     pryv_primitives: [data-residency]
     overview: |
-      Whether GDPR applies to your Pryv deployment depends on where you're
-      established and where your data subjects are — not on the software.
-      Pryv is self-hosted, so you control data residency directly: the
-      multi-hosting feature lets you choose which jurisdiction each core
-      runs in, and either let end-users pick their hosting at registration
-      or auto-route them by your policy. If any of your subjects are in
-      the EU/EEA, GDPR applies to your deployment in full.
+      **Facilitation: infrastructure (medium)** — Whether GDPR applies
+      to your Pryv deployment depends on where you're established and
+      where your data subjects are — not on the software. Pryv is
+      self-hosted, so you control data residency directly: the multi-
+      hosting feature lets you choose which jurisdiction each core
+      runs in, and either let end-users pick their hosting at
+      registration or auto-route them by your policy. If any of your
+      subjects are in the EU/EEA, GDPR applies to your deployment in
+      full.
     detail: |
       Pryv supports a single logical platform spanning multiple hostings
       (different countries / cloud regions / on-premise). Two routing
