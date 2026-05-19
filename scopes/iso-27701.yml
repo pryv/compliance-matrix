@@ -32,12 +32,12 @@ requirements:
     pryv_primitives: [access, audit]
     derives_from: [iso-27001.6.1.2]
     overview: |
-      27701 extends the 27001 ISMS to cover PII handling specifically.
-      Pryv contribution is the same primitive set surfaced in the
-      iso-27001 rows + the GDPR rows; 27701 simply combines them under
-      the privacy-information-management label. The organization's
-      PIMS-specific risk treatment and statement of applicability sit
-      on top.
+      **Facilitation: awareness (medium)** — 27701 extends the 27001
+      ISMS to cover PII handling specifically. Pryv contribution is
+      the same primitive set surfaced in the iso-27001 rows + the
+      GDPR rows; 27701 simply combines them under the privacy-
+      information-management label. The organization's PIMS-specific
+      risk treatment and statement of applicability sit on top.
 
   # ───────────────────────────────────────────────────────────────
   # Annex A — PII controller controls (selected)
@@ -53,10 +53,11 @@ requirements:
     pryv_primitives: [access, clientData]
     derives_from: [gdpr.Art.5]
     overview: |
-      Pryv pattern: `access.clientData.purpose` records the per-access
-      purpose at grant time, durable + auditable. The vocabulary of
-      purposes (the organization's documented PIMS catalogue) is the
-      operator's editorial work; Pryv carries each instance forward.
+      **Facilitation: storage (medium)** — Pryv pattern:
+      `access.clientData.purpose` records the per-access purpose at
+      grant time, durable + auditable. The vocabulary of purposes
+      (the organization's documented PIMS catalogue) is the operator's
+      editorial work; Pryv carries each instance forward.
 
   - ref: A.7.2.2
     title: A.7.2.2 — Identify lawful basis
@@ -68,9 +69,10 @@ requirements:
     pryv_primitives: [access, clientData]
     derives_from: [gdpr.Art.6, gdpr.Art.9]
     overview: |
-      `access.clientData.lawful_basis` records the determined basis
-      (consent, contract, legal obligation, etc.); for special-category
-      PII, `clientData.special_category_basis` records the GDPR Art. 9
+      **Facilitation: storage (medium)** — `access.clientData.lawful_basis`
+      records the determined basis (consent, contract, legal
+      obligation, etc.); for special-category PII,
+      `clientData.special_category_basis` records the GDPR Art. 9
       paragraph or equivalent. Both travel with the access into the
       audit chain.
 
@@ -158,11 +160,11 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, audit]
     overview: |
-      The confidentiality commitment is an organizational artefact
-      (employment agreements, contractor NDAs). Pryv's contribution:
-      the audit log gives per-person accountability so the commitment
-      is enforceable in practice (any breach is attributable to an
-      access tied to a person).
+      **Facilitation: evidence (low)** — The confidentiality commitment
+      is an organizational artefact (employment agreements, contractor
+      NDAs). Pryv's contribution: the audit log gives per-person
+      accountability so the commitment is enforceable in practice
+      (any breach is attributable to an access tied to a person).
 
   - ref: B.8.5.4
     title: B.8.5.4 — Records related to processing PII
@@ -281,13 +283,13 @@ requirements:
     pryv_primitives: [data-residency, access, clientData]
     derives_from: [gdpr.Art.44, gdpr.Art.46, gdpr.Art.49]
     overview: |
-      Per GDPR Art. 44 / Swiss nLPD Art. 34 mapping — the
-      data-residency primitive constrains where data lives;
-      cross-jurisdictional transfers record the legal basis on the
-      transferring access's `clientData.transfer_basis`. The
-      jurisdiction-mapping documentation (which jurisdictions appear
-      in your deployment, which transfer regime applies to each pair)
-      is operator-side.
+      **Facilitation: infrastructure (medium)** — Per GDPR Art. 44 /
+      Swiss nLPD Art. 34 mapping — the data-residency primitive
+      constrains where data lives; cross-jurisdictional transfers
+      record the legal basis on the transferring access's
+      `clientData.transfer_basis`. The jurisdiction-mapping
+      documentation (which jurisdictions appear in your deployment,
+      which transfer regime applies to each pair) is operator-side.
 
   - ref: A.7.5.2
     title: A.7.5.2 — Countries and international organizations to which PII can be transferred
@@ -320,12 +322,13 @@ requirements:
     pryv_primitives: [observability-provider]
     derives_from: [gdpr.Art.28]
     overview: |
-      Pryv-the-software has one optional subprocessor surface — the
-      observability provider (New Relic adapter; default disabled).
-      The operator's subcontractor list typically includes: hosting
-      provider, observability provider when enabled, any backup-storage
-      provider used by `bin/backup.js` outputs. The operator publishes
-      the list per their B.8.5.6 commitment.
+      **Facilitation: awareness (low)** — Pryv-the-software has one
+      optional subprocessor surface — the observability provider (New
+      Relic adapter; default disabled). The operator's subcontractor
+      list typically includes: hosting provider, observability
+      provider when enabled, any backup-storage provider used by
+      `bin/backup.js` outputs. The operator publishes the list per
+      their B.8.5.6 commitment.
 
   - ref: A.7.2.3
     title: A.7.2.3 — Determine when and how notice should be provided
@@ -337,10 +340,11 @@ requirements:
     pryv_primitives: [access, clientData, app-web-auth3]
     derives_from: [iso-27701.A.7.3.4, gdpr.Art.12, gdpr.Art.13]
     overview: |
-      Notice timing + form are editorial. Pryv preserves whatever
-      notice is shown (in `access.clientData.privacy_notice` or
-      dedicated `consent/notice-*` event) so the same content is
-      auditable per principal per time.
+      **Facilitation: storage (medium)** — Notice timing + form are
+      editorial. Pryv preserves whatever notice is shown (in
+      `access.clientData.privacy_notice` or dedicated
+      `consent/notice-*` event) so the same content is auditable per
+      principal per time.
 
   - ref: A.7.2.4
     title: A.7.2.4 — Obtain and record consent
@@ -370,11 +374,11 @@ requirements:
     pryv_primitives: [audit, data-residency, access]
     derives_from: [gdpr.Art.35, swiss-nlpd.Art.22]
     overview: |
-      PIA / DPIA is a written assessment artefact. Pryv contributes the
-      inputs (audit + access primitives describe the processing flow;
-      data-residency primitive describes where data lives). Cross-link
-      to gdpr.Art.35 + swiss-nlpd.Art.22 for the regulator-specific
-      DPIA mappings.
+      **Facilitation: evidence (low)** — PIA / DPIA is a written
+      assessment artefact. Pryv contributes the inputs (audit +
+      access primitives describe the processing flow; data-residency
+      primitive describes where data lives). Cross-link to gdpr.Art.35
+      + swiss-nlpd.Art.22 for the regulator-specific DPIA mappings.
 
   - ref: A.7.2.6
     title: A.7.2.6 — Contracts with PII processors
@@ -398,12 +402,12 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, CMC]
     overview: |
-      Joint-controller arrangements (per GDPR Art. 26) get recorded on
-      the relevant access's `clientData.joint_controller_arrangement`
-      with a pointer to the written agreement. CMC's cross-platform
-      access pattern is the natural technical substrate for joint
-      arrangements where each controller runs their own Pryv
-      deployment.
+      **Facilitation: storage (medium)** — Joint-controller arrangements
+      (per GDPR Art. 26) get recorded on the relevant access's
+      `clientData.joint_controller_arrangement` with a pointer to the
+      written agreement. CMC's cross-platform access pattern is the
+      natural technical substrate for joint arrangements where each
+      controller runs their own Pryv deployment.
 
   - ref: B.8.2.1
     title: B.8.2.1 — Customer agreement
@@ -445,10 +449,11 @@ requirements:
     pryv_primitives: [access, permissions, stream, system-streams]
     derives_from: [gdpr.Art.25, swiss-nlpd.Art.7]
     overview: |
-      Pryv's architecture leans privacy-by-design (per-user isolation,
-      least-privilege permissions, system-streams separation, audit
-      by default). The processor inheriting these defaults satisfies
-      B.8.4 structurally. See gdpr.Art.25 for the cross-link to the
+      **Facilitation: infrastructure (high)** — Pryv's architecture
+      leans privacy-by-design (per-user isolation, least-privilege
+      permissions, system-streams separation, audit by default). The
+      processor inheriting these defaults satisfies B.8.4
+      structurally. See gdpr.Art.25 for the cross-link to the
       detailed primitive mapping.
 
   - ref: B.8.5.2
