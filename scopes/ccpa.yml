@@ -271,3 +271,114 @@ requirements:
       surface where §1798.150 can attach. Encryption-at-rest is
       operator-side (LUKS, PG TDE, etc.) for event content today;
       Pryv-managed at-rest encryption covers platform secrets.
+
+  - ref: "1798.81.5"
+    title: Reasonable security procedures (Cal. Civ. Code §1798.81.5)
+    text: |
+      Business that owns, licenses, or maintains personal information
+      about a California resident shall implement and maintain
+      reasonable security procedures and practices appropriate to the
+      nature of the information, to protect the information from
+      unauthorized access, destruction, use, modification, or
+      disclosure.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, audit, letsEncrypt-integration, encryption-at-rest-secrets, MFA, backup-restore]
+    derives_from: [ccpa.1798.150, gdpr.Art.32]
+    overview: |
+      Statute predates CCPA but provides the "reasonable security"
+      basis the §1798.150 civil action attaches to. Pryv's
+      multi-aspect technical baseline (TLS, mTLS, at-rest secrets,
+      audit, MFA, backup-restore, permissions) constitutes the
+      software-layer "reasonable security" inventory. The
+      organizational-side reasonable-security programme is the
+      operator's.
+
+  - ref: 1798.130(a)(5)
+    title: Notice — content elements
+    text: |
+      Privacy-policy notice must include categories of PI collected,
+      categories of sources, business / commercial purposes, categories
+      of third parties with whom PI is shared, sale / sharing
+      practices, and consumer rights.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData]
+    derives_from: [ccpa.1798.130]
+    overview: |
+      Notice content is editorial. Pryv preserves the notice text per
+      individual consumer (on `account.clientData.privacy_notice` or a
+      dedicated event), so the precise wording shown at the moment
+      a particular consumer first interacted is recoverable later.
+      Drafting the wording remains the implementer's editorial work.
+
+  - ref: 1798.135(a)
+    title: Methods for opt-out — Do Not Sell / Share + Limit Use links
+    text: |
+      Business that sells or shares PI shall provide a clear and
+      conspicuous link titled "Do Not Sell or Share My Personal
+      Information" on its homepage. Business that uses sensitive PI for
+      purposes beyond those listed in §1798.121(a) shall provide an
+      additional link titled "Limit the Use of My Sensitive Personal
+      Information".
+    coverage: out-of-scope
+    draft: true
+    derives_from: [ccpa.1798.135, ccpa.1798.120]
+    overview: |
+      The UI link is part of the implementer's homepage; Pryv is the
+      backend the link's handler talks to (revoke / narrow the
+      relevant access). Surface itself is app-layer.
+
+  - ref: 1798.140(ad)
+    title: Definition — "Sale"
+    text: |
+      "Sale" / "Sell" includes selling, renting, releasing, disclosing,
+      disseminating, making available, transferring, or otherwise
+      communicating orally, in writing, or by electronic / other
+      means, a consumer's personal information by the business to
+      another business or a third party for monetary or other valuable
+      consideration.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData]
+    derives_from: [ccpa.1798.140]
+    overview: |
+      Whether a given access constitutes a "sale" under §1798.140(ad)
+      is a classification the implementer applies + records on the
+      access's `clientData.type = "sale"`. The consideration test
+      (monetary or valuable) is fact-specific and editorial; Pryv
+      preserves whatever classification you record.
+
+  - ref: 1798.140(ae)
+    title: Definition — "Sensitive personal information"
+    text: |
+      Enumerated categories: SSN, drivers license, account log-in
+      with password, precise geolocation, racial / ethnic origin,
+      religious / philosophical beliefs, union membership, contents
+      of mail / email / text messages not directed at the business,
+      genetic data, biometric identifier, health, sex life or
+      sexual orientation.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [stream, system-streams, event]
+    derives_from: [ccpa.1798.121, gdpr.Art.9]
+    overview: |
+      Sensitive-PI enumeration drives stream-layout design — dedicate
+      subtrees per sensitive category (`sensitive/health/`,
+      `sensitive/precise-location/`, etc.) for clean §1798.121
+      limit-use enforcement. The classification of whether a specific
+      event qualifies as sensitive PI is editorial.
+
+  - ref: "1798.155"
+    title: Enforcement
+    text: |
+      California Privacy Protection Agency (CPPA) + California Attorney
+      General may bring civil actions for CCPA violations; statutory
+      penalties up to $2,500 per violation ($7,500 for intentional
+      violations + violations involving minors).
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Enforcement is regulator-side. No software role; Pryv's audit
+      log + access-version chain are the evidence pack the implementer
+      surfaces in response to inquiries.

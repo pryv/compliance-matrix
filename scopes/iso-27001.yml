@@ -826,3 +826,134 @@ requirements:
       monitored via observability. Inter-core mTLS is the internal
       surface. The operator's broader network-service portfolio
       (LB, WAF, VPN) sits outside Pryv.
+
+  - ref: A.8.26
+    title: A.8.26 — Application security requirements
+    text: |
+      Information security requirements shall be identified, specified
+      and approved when developing or acquiring applications.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit]
+    derives_from: [iso-27001.A.8.25]
+    overview: |
+      For the operator running Pryv as one of its applications, this
+      compliance matrix is the catalogue of identified + specified +
+      approved security requirements Pryv satisfies. For the
+      operator's own applications built on Pryv, the requirements are
+      their editorial work.
+
+  - ref: A.8.27
+    title: A.8.27 — Secure system architecture and engineering principles
+    text: |
+      Principles for engineering secure systems shall be established,
+      documented, maintained and applied to any information systems
+      development activities.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, system-streams, encryption-at-rest-secrets]
+    derives_from: [iso-27001.A.8.25, iso-27001.A.8.28]
+    overview: |
+      Pryv's architecture is informed by secure-by-design principles
+      (per-user isolation, least-privilege permissions, encryption-by-
+      default in transit, system-stream privilege separation). The
+      operator's own engineering team applies the same principles to
+      app-layer code. Pryv-side architecture documentation lives in
+      public open-pryv.io README + this matrix.
+
+  - ref: A.8.29
+    title: A.8.29 — Security testing in development and acceptance
+    text: |
+      Security testing processes shall be defined and implemented in
+      the development life cycle.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit]
+    overview: |
+      Pryv's CI runs the public test matrix per commit (PG + Mongo
+      modes; component-level + integration tests; see Plan-56 test
+      hardening commits). Operator's own application-layer security
+      testing (SAST, DAST, pen-test before release) is layered on top.
+
+  - ref: A.8.33
+    title: A.8.33 — Test information
+    text: |
+      Test information shall be appropriately selected, protected and
+      managed.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [data-residency, multi-core-mTLS]
+    derives_from: [iso-27001.A.8.31]
+    overview: |
+      When test environments use real-or-derived PII, the same
+      protections as production apply. Pryv pattern: run test
+      environments as separate Pryv clusters (independent bootstrap
+      bundles + cluster CAs); the data-residency primitive prevents
+      accidental cross-environment data flow at the user-binding
+      layer.
+
+  # ─── Annex A.7 physical (Pryv-software has limited footprint here) ───
+
+  - ref: A.7.1
+    title: A.7.1 — Physical security perimeters
+    text: |
+      Security perimeters shall be defined and used to protect areas
+      that contain information and other associated assets.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Physical perimeters are facility scope. Out of Pryv's software
+      boundary; HDS Activity 1 hosters carry this control.
+
+  - ref: A.7.2
+    title: A.7.2 — Physical entry
+    text: |
+      Secure areas shall be protected by appropriate entry controls
+      and access points.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Physical entry controls (badge readers, mantraps, etc.) are
+      facility-side.
+
+  - ref: A.7.4
+    title: A.7.4 — Physical security monitoring
+    text: |
+      Premises shall be continuously monitored for unauthorized
+      physical access.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Physical monitoring (CCTV, intrusion detection) is facility-
+      side.
+
+  - ref: A.7.10
+    title: A.7.10 — Storage media
+    text: |
+      Storage media shall be managed through their life cycle of
+      acquisition, use, transportation and disposal in accordance with
+      the organization's classification scheme and handling
+      requirements.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [backup-restore, encryption-at-rest-secrets]
+    derives_from: [hipaa-security.164.310(d)(1)]
+    overview: |
+      Storage-media handling at the Pryv layer surfaces only for backup
+      media — `bin/backup.js` outputs go onto operator-managed media;
+      operator's encryption + transport + disposal procedure applies.
+
+  - ref: A.7.14
+    title: A.7.14 — Secure disposal or re-use of equipment
+    text: |
+      Items of equipment containing storage media shall be verified to
+      ensure that any sensitive data and licensed software has been
+      removed or securely overwritten prior to disposal or re-use.
+    coverage: out-of-scope
+    draft: true
+    derives_from: [iso-27001.A.7.10]
+    overview: |
+      Physical decommissioning of equipment is operator-side. When
+      decommissioned hardware carried a Pryv deployment, the operator's
+      data-destruction procedure handles the user-data directories +
+      database files; Pryv has no role at the host-OS hygiene layer.

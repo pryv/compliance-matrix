@@ -326,3 +326,93 @@ requirements:
       provider, observability provider when enabled, any backup-storage
       provider used by `bin/backup.js` outputs. The operator publishes
       the list per their B.8.5.6 commitment.
+
+  - ref: A.7.2.3
+    title: A.7.2.3 — Determine when and how notice should be provided
+    text: |
+      Organization shall determine when and how notice shall be
+      provided to PII principals concerning processing of their PII.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, app-web-auth3]
+    derives_from: [iso-27701.A.7.3.4, gdpr.Art.12, gdpr.Art.13]
+    overview: |
+      Notice timing + form are editorial. Pryv preserves whatever
+      notice is shown (in `access.clientData.privacy_notice` or
+      dedicated `consent/notice-*` event) so the same content is
+      auditable per principal per time.
+
+  - ref: A.7.2.4
+    title: A.7.2.4 — Obtain and record consent
+    text: |
+      Organization shall obtain and record consent from PII principals
+      according to the documented processes.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, clientData, CMC, event]
+    derives_from: [gdpr.Art.7, iso-27701.A.7.3.4]
+    tests: [AA01, ACCP]
+    overview: |
+      Consent recording = `accesses.create` with permissions +
+      clientData carrying the consent text; cross-account consent =
+      `consent/request-cmc` events. Both are immutable per their
+      primitive semantics — the §7 demonstrability requirement is
+      structural.
+
+  - ref: A.7.2.5
+    title: A.7.2.5 — Privacy impact assessment
+    text: |
+      Organization shall assess the need for + implement a privacy
+      impact assessment whenever new processing of PII or changes to
+      existing processing are planned.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, data-residency, access]
+    derives_from: [gdpr.Art.35, swiss-nlpd.Art.22]
+    overview: |
+      PIA / DPIA is a written assessment artefact. Pryv contributes the
+      inputs (audit + access primitives describe the processing flow;
+      data-residency primitive describes where data lives). Cross-link
+      to gdpr.Art.35 + swiss-nlpd.Art.22 for the regulator-specific
+      DPIA mappings.
+
+  - ref: A.7.2.6
+    title: A.7.2.6 — Contracts with PII processors
+    text: |
+      Organization shall have a written contract with any PII processor
+      that it uses, requiring the processor to implement appropriate
+      controls.
+    coverage: out-of-scope
+    draft: true
+    derives_from: [gdpr.Art.28]
+    overview: |
+      Contracts are out-of-scope; see GDPR Art. 28 + HIPAA-Security
+      §164.314(a)(1).
+
+  - ref: A.7.2.7
+    title: A.7.2.7 — Joint PII controller
+    text: |
+      Organization shall determine respective roles + responsibilities
+      where it acts jointly with one or more PII controllers.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, CMC]
+    overview: |
+      Joint-controller arrangements (per GDPR Art. 26) get recorded on
+      the relevant access's `clientData.joint_controller_arrangement`
+      with a pointer to the written agreement. CMC's cross-platform
+      access pattern is the natural technical substrate for joint
+      arrangements where each controller runs their own Pryv
+      deployment.
+
+  - ref: B.8.2.1
+    title: B.8.2.1 — Customer agreement
+    text: |
+      Customer agreement between processor and PII controller shall
+      address the processor's processing of PII consistent with
+      ISO/IEC 27018:2019 + applicable laws / regulations.
+    coverage: out-of-scope
+    draft: true
+    derives_from: [gdpr.Art.28]
+    overview: |
+      Customer agreement = the DPA. Contractual, no software role.

@@ -387,3 +387,54 @@ requirements:
       (and falls under MDR Art.61 clinical evaluation + Annex I §17.4
       verification). Pryv stores the alarm events; the logic that
       produces them is app-side.
+
+  - ref: A1.2.2
+    title: Annex 1.2 — Documentation of architecture + components
+    text: |
+      Manufacturer shall document the application's architecture
+      including all components, their role + interactions, and the
+      security boundary of each.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit]
+    derives_from: [iso-27001.A.8.27]
+    overview: |
+      Pryv's architecture is publicly documented (open-pryv.io README,
+      AGENTS.md, component-level READMEs) — the BfArM-required
+      architecture document references Pryv as a sub-system. The
+      app-layer architecture (services, libraries, network topology)
+      is the manufacturer's documentation.
+
+  - ref: A1.2.3
+    title: Annex 1.2 — Hardening + secure configuration
+    text: |
+      The technical platform shall be hardened per current best
+      practices; configuration shall minimize attack surface
+      (disabled services, restricted ports, least-privilege defaults).
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, system-streams, encryption-at-rest-secrets]
+    derives_from: [iso-27001.A.8.9]
+    overview: |
+      Pryv ships secure-by-default (TLS on, mTLS between cores, no
+      anonymous access path, system-streams isolating privileged data,
+      at-rest secret encryption). Operator-side hardening (host OS,
+      firewall, OS-level least-privilege) layers on top per their
+      hardening guide.
+
+  - ref: A1.2.6
+    title: Annex 1.2 — Incident response capability
+    text: |
+      Manufacturer shall have documented incident-response procedures,
+      with detection + escalation + containment + recovery + post-
+      mortem phases defined.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, observability-provider, access]
+    derives_from: [hipaa-security.164.308(a)(6)(i), iso-27001.A.5.23]
+    overview: |
+      Pryv contributes detection (observability anomalies, audit-log
+      patterns) + containment (accesses.delete revokes implicated
+      tokens) + recovery (backup-restore + multi-core HA) + post-
+      mortem (audit-log forensic trail). The manufacturer's IR
+      runbook ties these primitives together with people + decisions.

@@ -529,3 +529,56 @@ requirements:
       `consent/notice` events for clarity). The cross-border transfer
       element ties to Art. 34; automated-decision element ties to
       Art. 21.
+
+  - ref: Art.11
+    title: Codes of conduct
+    text: |
+      Professional, sector or trade associations may submit codes of
+      conduct to the FDPIC; the FDPIC takes a position on the code.
+    coverage: out-of-scope
+    draft: true
+    derives_from: [gdpr.Art.40]
+    overview: |
+      Sector-level instrument; see GDPR Art. 40 for parallel framing.
+      Adherence is recorded as one of the Art. 8 "appropriate
+      measures" indicators on the deployment.
+
+  - ref: Art.14
+    title: Representative in Switzerland
+    text: |
+      A controller established abroad whose processing concerns
+      persons in Switzerland on a large scale + regularly + with high
+      risk shall designate a representative in Switzerland.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Representative designation is a contractual / regulatory
+      registration step for non-Swiss controllers; no software role.
+
+  - ref: Art.15
+    title: Duty of the processor to inform the controller
+    text: |
+      Processor shall inform the controller of all data security
+      breaches without delay; cooperate with the controller in
+      fulfilling obligations toward data subjects.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, CMC, observability-provider]
+    derives_from: [gdpr.Art.28, gdpr.Art.33]
+    overview: |
+      When Pryv operator acts as processor, the breach-notification
+      channel to the controller is the operator's contractual
+      commitment. Pryv's audit + observability + access primitives
+      give the operator the scoping data needed for the notification;
+      CMC's cross-platform messaging is a structured channel when
+      both sides run Pryv.
+
+  - ref: Art.29
+    title: Information from official registers
+    text: |
+      Anyone may obtain information from official registers on the
+      conditions provided for in special legislation.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Public-register access is regulatory framing; no software role.
