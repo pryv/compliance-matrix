@@ -796,7 +796,12 @@ requirements:
     detail: |
       Design alignment Pryv gives you:
         - Per-user storage isolation: each subject's data is operationally
-          separable.
+          separable. **Per-engine semantics differ** — physical
+          (per-file) on SQLite vs logical (per-row, filtered by
+          userId in app code) on PG / Mongo. See
+          `context/per-engine-isolation.md` for the full per-engine
+          breakdown + operator mitigation patterns (RLS, per-schema,
+          per-account-DB, per-tenant deployment).
         - Permissions per stream: the smallest-permission default is
           "none"; you choose what to grant.
         - System streams: privileged user data (account, password, mfa)

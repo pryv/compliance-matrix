@@ -295,6 +295,15 @@ requirements:
       the technical control system that prevents access by anyone /
       anything not granted it.
 
+      **Cross-user isolation caveat:** the "no bypass on trust path"
+      property holds at the API surface. The strength of the
+      underlying isolation depends on the chosen storage engine —
+      SQLite gives physical per-user-file isolation; PG / Mongo give
+      logical app-code-enforced isolation against shared tables.
+      See `context/per-engine-isolation.md` for the per-engine
+      breakdown + operator mitigation patterns (PG row-level
+      security, per-schema, per-account-DB, per-tenant deployments).
+
   - ref: 164.312(a)(2)(i)
     title: Unique user identification — Required
     text: |
