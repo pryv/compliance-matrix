@@ -384,11 +384,17 @@ requirements:
     detail: |
       The "Pryv-managed" at-rest encryption today protects platform
       secrets — Let's Encrypt account keys, observability provider
-      tokens, cluster bootstrap bundles. Encrypting event content under
-      a Pryv-managed key is an open feature candidate (see
-      `proposals/event-content-encryption.md` if filed). In the
-      meantime, operator-side encryption (LUKS, dm-crypt, PG TDE) is
-      the canonical path.
+      tokens, cluster bootstrap bundles. **At-rest encryption of bulk
+      event data is voluntarily out of scope** for the Pryv layer: it
+      is the hosting provider's responsibility (LUKS, dm-crypt, PG TDE,
+      KMS-wrapped backup archives). Customer-managed encryption keys
+      (CMEK / BYOK) sit at the same infrastructure layer.
+
+      Longer-term direction: end-to-end encryption where the server
+      never holds plaintext — research direction in
+      `_plans/XXX-Backlog/E2E-ENCRYPTION.md` (proxy re-encryption);
+      matrix-side notes + per-row impact in
+      `proposals/e2e-encryption.md`.
     technical: |
       AES-256-GCM at-rest module: `open-pryv.io/components/business/src/acme/AtRestEncryption.js`.
       Bootstrap-bundle encryption: `BundleEncryption.js` (same component).
