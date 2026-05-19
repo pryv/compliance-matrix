@@ -1,0 +1,13 @@
+# Vite + Node
+node_modules/
+dist/
+.vite/
+
+# SQLite copied from ../dist at build time
+public/compliance.sqlite
+
+# Logs
+*.log
+
+# OS
+.DS_Store

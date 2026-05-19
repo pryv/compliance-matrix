@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --radius: 0.5rem;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* Coverage status colors (used by CoverageBadge) */
+.cov-implemented   { background-color: #16a34a; color: white; }   /* green-600 */
+.cov-configurable  { background-color: #2563eb; color: white; }   /* blue-600 */
+.cov-facilitated   { background-color: #ca8a04; color: white; }   /* yellow-600 */
+.cov-documented    { background-color: #475569; color: white; }   /* slate-600 */
+.cov-out-of-scope  { background-color: #cbd5e1; color: #475569; } /* slate-300 */
+
+.draft-badge {
+  background-color: #f59e0b;   /* amber-500 */
+  color: white;
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}

@@ -1,0 +1,63 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout compliance-matrix
+        uses: actions/checkout@v4
+        with:
+          path: compliance-matrix
+
+      - name: Checkout dev-site (for reqid resolution)
+        uses: actions/checkout@v4
+        with:
+          repository: pryv/dev-site
+          path: dev-site
+
+      - name: Checkout open-pryv.io (for test-code resolution)
+        uses: actions/checkout@v4
+        with:
+          repository: pryv/open-pryv.io
+          path: open-pryv.io
+          ref: master
+
+      - name: Reorganize to expected layout
+        run: |
+          mkdir -p workspace
+          mv compliance-matrix workspace/
+          mv dev-site workspace/
+          mv open-pryv.io workspace/
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: workspace/compliance-matrix/package-lock.json
+
+      - name: Install deps
+        working-directory: workspace/compliance-matrix
+        run: npm ci
+
+      - name: Validate
+        working-directory: workspace/compliance-matrix
+        run: npm run validate
+
+      - name: Build
+        working-directory: workspace/compliance-matrix
+        run: npm run build
+
+      - name: Upload SQLite artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-sqlite
+          path: workspace/compliance-matrix/dist/compliance.sqlite
+          if-no-files-found: error
