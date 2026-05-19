@@ -28,13 +28,14 @@ requirements:
     draft: true
     pryv_primitives: [audit, observability-provider]
     overview: |
-      The Security Management Process is a programme you run as the covered
-      entity / business associate — risk analysis, risk-management decisions,
-      sanctions, activity review. Pryv supplies the technical raw material
+      **Facilitation: evidence (low)** — The Security Management
+      Process is a programme you run as the covered entity / business
+      associate — risk analysis, risk-management decisions, sanctions,
+      activity review. Pryv supplies the technical raw material
       (audit log, system-level observability) that several of those
-      activities draw on — particularly the §164.308(a)(1)(ii)(D) Information
-      System Activity Review specification. The umbrella programme itself
-      remains yours to define and run.
+      activities draw on — particularly the §164.308(a)(1)(ii)(D)
+      Information System Activity Review specification. The umbrella
+      programme itself remains yours to define and run.
     detail: |
       The four implementation specifications under (a)(1)(ii) — risk
       analysis (R), risk management (R), sanction policy (R), and
@@ -234,11 +235,12 @@ requirements:
     draft: true
     pryv_primitives: [data-residency, encryption-at-rest-secrets]
     overview: |
-      Physical safeguards (facility access, workstation security, device
-      and media controls) are properties of the hosting environment, not
-      of the Pryv software itself. Pryv contributes two things: the
-      data-residency primitive lets you bind a user's data to a specific
-      hosting (so you can certify the physical environment for that data
+      **Facilitation: awareness (low)** — Physical safeguards (facility
+      access, workstation security, device and media controls) are
+      properties of the hosting environment, not of the Pryv software
+      itself. Pryv contributes two things: the data-residency
+      primitive lets you bind a user's data to a specific hosting
+      (so you can certify the physical environment for that data
       explicitly), and operator-supplied secrets are AES-256-GCM
       encrypted at rest so that a stolen disk doesn't leak the keys
       themselves.
@@ -406,13 +408,13 @@ requirements:
     draft: true
     pryv_primitives: [event, audit, permissions, backup-restore]
     overview: |
-      Integrity is multi-layered: write authorization gated by
-      `permissions`, event versioning preserves the prior value on
-      every update, audit pins the (who, when, via which access)
-      attribution, and `bin/backup.js` provides the recovery path if
-      a destruction event needs to be reversed. The standard's overall
-      programmatic obligation is yours; the technical substrate is
-      Pryv's.
+      **Facilitation: primitive (medium)** — Integrity is multi-
+      layered: write authorization gated by `permissions`, event
+      versioning preserves the prior value on every update, audit
+      pins the (who, when, via which access) attribution, and
+      `bin/backup.js` provides the recovery path if a destruction
+      event needs to be reversed. The standard's overall programmatic
+      obligation is yours; the technical substrate is Pryv's.
 
   - ref: 164.312(c)(2)
     title: Mechanism to authenticate ePHI — Addressable
@@ -423,12 +425,13 @@ requirements:
     draft: true
     pryv_primitives: [event, audit]
     overview: |
-      Event versioning preserves the prior content on every update, so
-      "is this the original?" is a tractable question — compare against
-      the history. The audit row references the access that performed
-      the update, anchoring the change to an authenticated actor.
-      Tamper detection beyond this (e.g., end-to-end content hashing
-      under a customer-held key) is on the implementer or an extension.
+      **Facilitation: evidence (low)** — Event versioning preserves
+      the prior content on every update, so "is this the original?"
+      is a tractable question — compare against the history. The
+      audit row references the access that performed the update,
+      anchoring the change to an authenticated actor. Tamper
+      detection beyond this (e.g., end-to-end content hashing under
+      a customer-held key) is on the implementer or an extension.
 
   - ref: 164.312(d)
     title: Person or entity authentication — standard
@@ -530,14 +533,15 @@ requirements:
     pryv_primitives: [access, audit, CMC]
     derives_from: [gdpr.Art.28]
     overview: |
-      The BAA itself is a contract — the covered entity drafts it with
-      legal counsel. What Pryv contributes when you operate as a
-      business associate: the audit log makes "implement administrative,
-      physical and technical safeguards" (§164.314(a)(2)(i)(A))
-      auditable per the BAA's specified terms; the access primitive
-      bounds which subjects + which streams the BA may touch; CMC's
-      cross-platform consent flow gives a structured channel for the
-      §164.314(a)(2)(i)(C) breach-notification pipe between BA and CE.
+      **Facilitation: storage (low)** — The BAA itself is a contract —
+      the covered entity drafts it with legal counsel. What Pryv
+      contributes when you operate as a business associate: the audit
+      log makes "implement administrative, physical and technical
+      safeguards" (§164.314(a)(2)(i)(A)) auditable per the BAA's
+      specified terms; the access primitive bounds which subjects +
+      which streams the BA may touch; CMC's cross-platform consent
+      flow gives a structured channel for the §164.314(a)(2)(i)(C)
+      breach-notification pipe between BA and CE.
 
   - ref: 164.314(a)(2)(i)(A)
     title: BAC content — implement safeguards reasonably and appropriately
@@ -550,12 +554,13 @@ requirements:
     pryv_primitives: [access, permissions, audit, letsEncrypt-integration, encryption-at-rest-secrets, MFA, backup-restore]
     derives_from: [hipaa-security.164.308(a)(1)(i), hipaa-security.164.312(a)(1), hipaa-security.164.312(e)(1)]
     overview: |
-      The BAA's "reasonable and appropriate safeguards" obligation is
-      satisfied by the technical-safeguards programme already enumerated
-      across §164.308 + §164.310 + §164.312. The BA cites the relevant
-      Pryv-implemented rows when populating their BAA exhibit. Mapping
-      this Article to the existing technical-safeguards rows is the
-      `derives_from` chain.
+      **Facilitation: infrastructure (high)** — The BAA's "reasonable
+      and appropriate safeguards" obligation is satisfied by the
+      technical-safeguards programme already enumerated across
+      §164.308 + §164.310 + §164.312. The BA cites the relevant
+      Pryv-implemented rows when populating their BAA exhibit.
+      Mapping this Article to the existing technical-safeguards rows
+      is the `derives_from` chain.
 
   - ref: 164.314(a)(2)(i)(C)
     title: BAC content — report security incidents
@@ -567,13 +572,13 @@ requirements:
     draft: true
     pryv_primitives: [audit, CMC, observability-provider]
     overview: |
-      Detection of a security incident is the BA's operational concern
-      (audit-log review + observability). Reporting to the CE is the
-      contractual flow. Pryv's CMC plugin provides a structured
-      cross-account messaging substrate when both sides run Pryv —
-      otherwise the report channel is email / API / portal at the BA's
-      choice. The audit log supplies the forensic evidence the report
-      cites.
+      **Facilitation: evidence (low)** — Detection of a security
+      incident is the BA's operational concern (audit-log review +
+      observability). Reporting to the CE is the contractual flow.
+      Pryv's CMC plugin provides a structured cross-account
+      messaging substrate when both sides run Pryv — otherwise the
+      report channel is email / API / portal at the BA's choice.
+      The audit log supplies the forensic evidence the report cites.
 
   - ref: 164.314(a)(2)(ii)(B)
     title: BAC content — extend safeguards to subcontractors
@@ -624,12 +629,13 @@ requirements:
     draft: true
     pryv_primitives: [event, stream, audit, backup-restore]
     overview: |
-      Where the required record is operational (activity logs,
-      assessment outputs), Pryv events on a designated `compliance/*`
-      stream carry the documentation alongside the audit log's
-      automatic operational record. Event versioning preserves the
-      change history of policies-as-data; backup-restore preserves
-      them across the §164.316(b)(2) retention window.
+      **Facilitation: storage (medium)** — Where the required record
+      is operational (activity logs, assessment outputs), Pryv events
+      on a designated `compliance/*` stream carry the documentation
+      alongside the audit log's automatic operational record. Event
+      versioning preserves the change history of policies-as-data;
+      backup-restore preserves them across the §164.316(b)(2)
+      retention window.
 
   - ref: 164.316(b)(2)(i)
     title: Documentation — time limit — Required
@@ -641,11 +647,12 @@ requirements:
     draft: true
     pryv_primitives: [backup-restore, audit]
     overview: |
-      Six-year retention is an operational choice. Pryv's audit log
-      stays per-user SQLite by default — retention is operator-driven
-      (the operator schedules archival + pruning per their HIPAA
-      schedule). `bin/backup.js` produces the artefact that the
-      6-year retention rule attaches to.
+      **Facilitation: storage (low)** — Six-year retention is an
+      operational choice. Pryv's audit log stays per-user SQLite by
+      default — retention is operator-driven (the operator schedules
+      archival + pruning per their HIPAA schedule). `bin/backup.js`
+      produces the artefact that the 6-year retention rule attaches
+      to.
 
   - ref: 164.316(b)(2)(iii)
     title: Documentation — updates — Required
@@ -657,11 +664,12 @@ requirements:
     draft: true
     pryv_primitives: [event, audit]
     overview: |
-      Periodic review cadence is the operator's procedure. Pryv's
-      contribution: when policies-as-data are stored as events on a
-      `compliance/policies/*` stream, the event-version chain shows
-      when each policy was last reviewed and what changed; audit log
-      shows who-reviewed-what.
+      **Facilitation: evidence (low)** — Periodic review cadence is
+      the operator's procedure. Pryv's contribution: when policies-
+      as-data are stored as events on a `compliance/policies/*`
+      stream, the event-version chain shows when each policy was
+      last reviewed and what changed; audit log shows who-reviewed-
+      what.
 
   - ref: 164.308(a)(2)
     title: Assigned security responsibility — standard
@@ -712,10 +720,11 @@ requirements:
     derives_from: [iso-27001.A.8.15]
     tests: [AT01, AT02, AT51]
     overview: |
-      Login + authentication-failure events are captured in the audit
-      log (per `auth.*` API method calls). Observability data
-      aggregates rate + anomaly signals. The discrepancy-reporting
-      cadence + threshold tuning are operator-side procedure.
+      **Facilitation: evidence (medium)** — Login + authentication-
+      failure events are captured in the audit log (per `auth.*` API
+      method calls). Observability data aggregates rate + anomaly
+      signals. The discrepancy-reporting cadence + threshold tuning
+      are operator-side procedure.
 
   - ref: 164.308(a)(6)(i)
     title: Security incident procedures — standard
@@ -726,12 +735,12 @@ requirements:
     pryv_primitives: [audit, observability-provider, access]
     derives_from: [hipaa-security.164.308(a)(1)(i)]
     overview: |
-      Incident-response procedure is the operator's organizational
-      programme. Pryv contributes the detection + scoping data layer:
-      audit log shows who accessed what; observability gives system-
-      level anomaly signals; access primitives provide the
-      containment mechanism (revoke or scope-down the implicated
-      access).
+      **Facilitation: evidence (medium)** — Incident-response procedure
+      is the operator's organizational programme. Pryv contributes
+      the detection + scoping data layer: audit log shows who
+      accessed what; observability gives system-level anomaly
+      signals; access primitives provide the containment mechanism
+      (revoke or scope-down the implicated access).
 
   - ref: 164.308(a)(7)(ii)(C)
     title: Emergency mode operation plan — Required
@@ -744,11 +753,12 @@ requirements:
     pryv_primitives: [multi-core-mTLS, backup-restore, letsEncrypt-integration]
     derives_from: [hipaa-security.164.308(a)(7)(ii)(A), hipaa-security.164.308(a)(7)(ii)(B)]
     overview: |
-      Pryv's HA primitives (multi-core cluster + Raft replication +
-      cluster-CA mTLS) support continued operation when a single
-      facility fails. The "critical business processes" definition +
-      emergency-mode runbook are the operator's. See also Art.5+ of
-      the Disaster Recovery row.
+      **Facilitation: infrastructure (medium)** — Pryv's HA primitives
+      (multi-core cluster + Raft replication + cluster-CA mTLS)
+      support continued operation when a single facility fails. The
+      "critical business processes" definition + emergency-mode
+      runbook are the operator's. See also Art.5+ of the Disaster
+      Recovery row.
 
   - ref: 164.308(a)(7)(ii)(D)
     title: Testing and revision procedures — Addressable
@@ -775,10 +785,11 @@ requirements:
     pryv_primitives: [audit, observability-provider]
     derives_from: [hipaa-security.164.316(b)(2)(iii)]
     overview: |
-      Evaluation is the operator's cyclical assessment. Pryv-side
-      inputs: audit log (control-effectiveness sample), observability
-      (operational stability data), this matrix (control inventory
-      to evaluate against). The assessment write-up is operator-side.
+      **Facilitation: evidence (low)** — Evaluation is the operator's
+      cyclical assessment. Pryv-side inputs: audit log (control-
+      effectiveness sample), observability (operational stability
+      data), this matrix (control inventory to evaluate against).
+      The assessment write-up is operator-side.
 
   - ref: "164.310(a)(1)"
     title: Facility access controls — standard
@@ -831,9 +842,10 @@ requirements:
     pryv_primitives: [backup-restore, encryption-at-rest-secrets]
     derives_from: [hipaa-security.164.310]
     overview: |
-      Pryv-side contribution at the media-controls layer: per-user
-      backup files are the natural unit when an individual subject's
-      ePHI moves off the production system (export, transfer, archive);
-      operator-side at-rest encryption (LUKS / PG TDE) keeps the
-      ePHI-on-media encrypted in motion + at rest. The physical
-      movement procedure is the operator's.
+      **Facilitation: infrastructure (medium)** — Pryv-side contribution
+      at the media-controls layer: per-user backup files are the
+      natural unit when an individual subject's ePHI moves off the
+      production system (export, transfer, archive); operator-side
+      at-rest encryption (LUKS / PG TDE) keeps the ePHI-on-media
+      encrypted in motion + at rest. The physical movement procedure
+      is the operator's.

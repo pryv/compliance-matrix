@@ -28,12 +28,13 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, audit]
     overview: |
-      Pryv's permission model is the technical enforcement layer for
-      Article 502: an app or counterparty can only read or write streams
-      its access permits. The "permitted or required by the Privacy Rule"
-      determination — which use cases are TPO, when authorization is
-      required, what minimum-necessary means in your workflow — is your
-      programmatic decision; Pryv enforces whatever scope you grant.
+      **Facilitation: primitive (medium)** — Pryv's permission model
+      is the technical enforcement layer for Article 502: an app or
+      counterparty can only read or write streams its access permits.
+      The "permitted or required by the Privacy Rule" determination —
+      which use cases are TPO, when authorization is required, what
+      minimum-necessary means in your workflow — is your programmatic
+      decision; Pryv enforces whatever scope you grant.
     detail: |
       Workforce, apps, and counterparties act on PHI only by holding an
       access whose `permissions[]` allows the specific stream + level.
@@ -55,12 +56,12 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, clientData]
     overview: |
-      TPO is the largest category of permitted uses. Pryv lets you mint
-      accesses tagged with the TPO purpose in `clientData` (e.g.,
-      `purpose: "treatment"`); the permission model enforces the scope.
-      The TPO-vs-not classification of any specific workflow is your
-      programmatic judgement; Pryv carries it forward into the audit
-      trail.
+      **Facilitation: storage (medium)** — TPO is the largest category
+      of permitted uses. Pryv lets you mint accesses tagged with the
+      TPO purpose in `clientData` (e.g., `purpose: "treatment"`); the
+      permission model enforces the scope. The TPO-vs-not
+      classification of any specific workflow is your programmatic
+      judgement; Pryv carries it forward into the audit trail.
     detail: |
       A common pattern: separate accesses per purpose (one
       "treatment-app" access; one "billing-app" access; one
@@ -118,11 +119,12 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, event]
     overview: |
-      The opportunity-to-agree-or-object construct is operational. Pryv
-      lets you record the offered choice and the individual's response
-      as durable artefacts (clientData on the relevant access, or a
-      `consent/notice-cmc` / custom event), so the §164.510 reasonable-
-      inference becomes a record rather than recollection.
+      **Facilitation: storage (low)** — The opportunity-to-agree-or-
+      object construct is operational. Pryv lets you record the
+      offered choice and the individual's response as durable
+      artefacts (clientData on the relevant access, or a
+      `consent/notice-cmc` / custom event), so the §164.510
+      reasonable-inference becomes a record rather than recollection.
 
   # ───────────────────────────────────────────────────────────────
   # §164.512 — Uses without authorization (public interest)
@@ -138,12 +140,13 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, audit]
     overview: |
-      Section 512 disclosures are operationally driven by the
-      circumstances (subpoena, public-health request, etc.). Pryv's
-      contribution is durability: every such disclosure must still go
-      through an access, and the audit log captures it. Recording the
-      §512 category and rationale in `access.clientData.legal_basis`
-      makes the disclosure justification recoverable later.
+      **Facilitation: storage (low)** — Section 512 disclosures are
+      operationally driven by the circumstances (subpoena, public-
+      health request, etc.). Pryv's contribution is durability: every
+      such disclosure must still go through an access, and the audit
+      log captures it. Recording the §512 category and rationale in
+      `access.clientData.legal_basis` makes the disclosure
+      justification recoverable later.
     detail: |
       Recommended pattern: mint a purpose-specific access per §512
       invocation (`clientData.disclosure_category: "law_enforcement"`,
@@ -164,11 +167,12 @@ requirements:
     draft: true
     pryv_primitives: [stream, event, data-types]
     overview: |
-      Pryv stores whatever event content you write; de-identification is
-      a transformation you perform on the data before storage (or before
-      disclosure). Custom event types + the per-stream design let you
-      keep an identified and a de-identified copy under separate
-      permission scopes, simplifying §514(a) workflows.
+      **Facilitation: storage (low)** — Pryv stores whatever event
+      content you write; de-identification is a transformation you
+      perform on the data before storage (or before disclosure).
+      Custom event types + the per-stream design let you keep an
+      identified and a de-identified copy under separate permission
+      scopes, simplifying §514(a) workflows.
     detail: |
       A typical pattern: identified events on a `clinical/*` stream tree
       with restricted access; a parallel `research/*` stream tree
@@ -215,12 +219,12 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, app-web-auth3, event]
     overview: |
-      The notice itself is your editorial content. Pryv preserves the
-      notice text shown to each subject — typically on
-      `access.clientData.privacy_notice` or as a dedicated event — so
-      the same words presented are recoverable per subject per time.
-      The customer-facing `app-web-auth3` template is the surface where
-      the notice typically appears.
+      **Facilitation: storage (medium)** — The notice itself is your
+      editorial content. Pryv preserves the notice text shown to each
+      subject — typically on `access.clientData.privacy_notice` or as
+      a dedicated event — so the same words presented are recoverable
+      per subject per time. The customer-facing `app-web-auth3`
+      template is the surface where the notice typically appears.
 
   # ───────────────────────────────────────────────────────────────
   # §164.522 — Right to request restrictions / confidential communications
@@ -353,9 +357,10 @@ requirements:
     draft: true
     pryv_primitives: [audit]
     overview: |
-      Designation is organizational. Pryv's contribution is indirect:
-      the audit log gives the privacy official a concrete artifact to
-      review when investigating complaints or auditing internal use.
+      **Facilitation: evidence (low)** — Designation is organizational.
+      Pryv's contribution is indirect: the audit log gives the
+      privacy official a concrete artifact to review when investigating
+      complaints or auditing internal use.
 
   - ref: 164.530(b)
     title: Training
@@ -366,11 +371,12 @@ requirements:
     draft: true
     pryv_primitives: [audit, observability-provider]
     overview: |
-      Training itself is your programme. Pryv's contribution to
-      operationalizing it: the audit log + observability data make
-      training-effectiveness measurable (e.g., does role X exercise
-      access patterns matching policy after training?). The training
-      content + record-keeping are yours.
+      **Facilitation: evidence (low)** — Training itself is your
+      programme. Pryv's contribution to operationalizing it: the
+      audit log + observability data make training-effectiveness
+      measurable (e.g., does role X exercise access patterns matching
+      policy after training?). The training content + record-keeping
+      are yours.
 
   - ref: 164.530(c)
     title: Safeguards
@@ -382,11 +388,12 @@ requirements:
     pryv_primitives: [access, permissions, audit, letsEncrypt-integration, encryption-at-rest-secrets]
     derives_from: [hipaa-security.164.308(a)(1)(i), hipaa-security.164.312(a)(1), hipaa-security.164.312(e)(1)]
     overview: |
-      Section 530(c) is the Privacy Rule's pointer to the Security Rule
-      and to physical / administrative safeguards. See the HIPAA-Security
-      rows for the technical safeguards Pryv contributes; §164.310
-      (Physical) for the operator's hosting environment. Together those
-      rows constitute the §530(c) answer for this Pryv deployment.
+      **Facilitation: awareness (medium)** — Section 530(c) is the
+      Privacy Rule's pointer to the Security Rule and to physical /
+      administrative safeguards. See the HIPAA-Security rows for the
+      technical safeguards Pryv contributes; §164.310 (Physical) for
+      the operator's hosting environment. Together those rows
+      constitute the §530(c) answer for this Pryv deployment.
 
   - ref: 164.530(f)
     title: Mitigation
@@ -398,11 +405,12 @@ requirements:
     draft: true
     pryv_primitives: [access, audit, backup-restore]
     overview: |
-      Audit log + access version chain let you scope what was disclosed
-      to whom and when — the first step in any mitigation. `bin/backup.js
-      --restore` is available if mitigation involves rolling back data
-      state; `accesses.delete` is the primitive to revoke access from
-      the offending counterparty.
+      **Facilitation: evidence (medium)** — Audit log + access version
+      chain let you scope what was disclosed to whom and when — the
+      first step in any mitigation. `bin/backup.js --restore` is
+      available if mitigation involves rolling back data state;
+      `accesses.delete` is the primitive to revoke access from the
+      offending counterparty.
 
   - ref: 164.502(b)
     title: Minimum necessary uses, disclosures, requests
@@ -437,12 +445,13 @@ requirements:
     pryv_primitives: [access, clientData, CMC]
     derives_from: [hipaa-security.164.314(a)(1), gdpr.Art.28]
     overview: |
-      The technical disclosure is mediated by the access primitive —
-      mint a BA-specific access with `clientData.role = "business_associate"`
-      + `clientData.baa_id = "<contract-ref>"`, scoped to the subjects
-      / streams covered by the BAA. Cross-platform BA arrangements
-      (where the BA runs their own Pryv) inherit the CMC capability
-      pattern for cross-account flow.
+      **Facilitation: storage (low)** — The technical disclosure is
+      mediated by the access primitive — mint a BA-specific access
+      with `clientData.role = "business_associate"` + `clientData.baa_id
+      = "<contract-ref>"`, scoped to the subjects / streams covered
+      by the BAA. Cross-platform BA arrangements (where the BA runs
+      their own Pryv) inherit the CMC capability pattern for cross-
+      account flow.
 
   - ref: 164.530(d)
     title: Complaints to the covered entity
@@ -455,10 +464,11 @@ requirements:
     draft: true
     pryv_primitives: [event, stream, audit]
     overview: |
-      A complaint-intake workflow stores each complaint as an event on
-      a designated `complaints/*` stream with `clientData.disposition`
-      tracking outcome. The audit log captures the timestamp + actor
-      on each disposition update — making the §530(d)(2) documentation
+      **Facilitation: storage (medium)** — A complaint-intake workflow
+      stores each complaint as an event on a designated
+      `complaints/*` stream with `clientData.disposition` tracking
+      outcome. The audit log captures the timestamp + actor on each
+      disposition update — making the §530(d)(2) documentation
       requirement an automatic byproduct of normal record-keeping.
 
   - ref: 164.530(e)
@@ -499,7 +509,8 @@ requirements:
     pryv_primitives: [event, stream, audit, backup-restore]
     derives_from: [hipaa-security.164.316(a)]
     overview: |
-      Same pattern as HIPAA-Security §164.316(a): policies-as-data on a
+      **Facilitation: storage (medium)** — Same pattern as HIPAA-
+      Security §164.316(a): policies-as-data on a
       `compliance/policies/*` stream get versioning + retention +
       audit. The drafting + approval + review-cycle procedure is the
       privacy officer's. Cross-link to §164.316(a) preserves the
@@ -518,10 +529,11 @@ requirements:
     pryv_primitives: [access, clientData, event]
     derives_from: [hipaa-privacy.164.510]
     overview: |
-      The §510(b) "directly relevant" determination + relationship
-      verification are clinical-workflow concerns. Pryv pattern: mint
-      a time-bounded access for the involved person with permissions
-      narrowed to "directly relevant" streams + `clientData.relationship`
+      **Facilitation: storage (medium)** — The §510(b) "directly
+      relevant" determination + relationship verification are
+      clinical-workflow concerns. Pryv pattern: mint a time-bounded
+      access for the involved person with permissions narrowed to
+      "directly relevant" streams + `clientData.relationship`
       capturing the §510(b)(1) basis (family member name, role,
       individual's opportunity-to-object record).
 
@@ -537,7 +549,8 @@ requirements:
     pryv_primitives: [access, clientData, audit]
     derives_from: [hipaa-privacy.164.512]
     overview: |
-      Public-health-authority recipient is recorded on the access's
+      **Facilitation: storage (low)** — Public-health-authority
+      recipient is recorded on the access's
       `clientData.recipient_authority` + `clientData.statute` for the
       §512(b) statutory basis. Audit log anchors the disclosure to a
       specific timestamp + event range. The "authorized by law"
@@ -555,8 +568,8 @@ requirements:
     pryv_primitives: [access, clientData, audit]
     derives_from: [hipaa-privacy.164.512]
     overview: |
-      §512(f) categories drive vocabulary for
-      `clientData.law_enforcement_basis` (e.g.,
+      **Facilitation: storage (low)** — §512(f) categories drive
+      vocabulary for `clientData.law_enforcement_basis` (e.g.,
       `"f_1_i_court_order"`, `"f_2_ii_subpoena"`, `"f_4_victim"`).
       Per-instance disclosure access minted + revoked; audit log
       preserves the chain. The decision of whether the request
@@ -574,12 +587,13 @@ requirements:
     pryv_primitives: [access, event]
     derives_from: [hipaa-privacy.164.524]
     overview: |
-      Request-intake workflow stores each request as an event on a
-      designated `access-requests/*` stream with `clientData.due_by`
-      computed from receipt timestamp. The 30/30-day operational
-      cadence is the covered entity's process; once the response is
-      ready, the individual exercises §524 directly via the standard
-      Pryv API (see the §164.524 parent row).
+      **Facilitation: storage (medium)** — Request-intake workflow
+      stores each request as an event on a designated
+      `access-requests/*` stream with `clientData.due_by` computed
+      from receipt timestamp. The 30/30-day operational cadence is
+      the covered entity's process; once the response is ready, the
+      individual exercises §524 directly via the standard Pryv API
+      (see the §164.524 parent row).
 
   - ref: 164.524(c)
     title: Right of access — provision of access
@@ -611,14 +625,15 @@ requirements:
     pryv_primitives: [access, clientData]
     derives_from: [hipaa-privacy.164.502]
     overview: |
-      Pryv pattern: the personal representative holds an `app` or
-      `shared` access to the subject's data with full scope (the
-      effective "treat as individual" technical permission). The
-      access's `clientData.representative_relationship` +
+      **Facilitation: storage (low)** — Pryv pattern: the personal
+      representative holds an `app` or `shared` access to the subject's
+      data with full scope (the effective "treat as individual"
+      technical permission). The access's
+      `clientData.representative_relationship` +
       `clientData.legal_basis` capture the relationship; the
       revocation-by-exception pattern is `accesses.update` to narrow
-      / `accesses.delete` to remove. The "abuse / neglect / endangerment"
-      determination is clinical / legal judgement.
+      / `accesses.delete` to remove. The "abuse / neglect /
+      endangerment" determination is clinical / legal judgement.
 
   - ref: "164.512(a)"
     title: Uses + disclosures required by law
@@ -632,10 +647,11 @@ requirements:
     pryv_primitives: [access, clientData, audit]
     derives_from: [hipaa-privacy.164.512]
     overview: |
-      "Required by law" disclosures still ride on accesses; record the
-      statutory basis in `clientData.statute` so the audit chain ties
-      the disclosure to the legal authority. The compliance burden of
-      the cited law is separate.
+      **Facilitation: storage (low)** — "Required by law" disclosures
+      still ride on accesses; record the statutory basis in
+      `clientData.statute` so the audit chain ties the disclosure to
+      the legal authority. The compliance burden of the cited law is
+      separate.
 
   - ref: 164.514(b)
     title: De-identification — Implementation specifications
@@ -665,13 +681,14 @@ requirements:
     pryv_primitives: [stream, system-streams, access, clientData]
     derives_from: [hipaa-privacy.164.514(a)]
     overview: |
-      When re-identification is a workflow requirement, the
-      code-to-PHI mapping is a tightly scoped resource: keep it on a
-      dedicated `re-id-map/*` system-stream-adjacent subtree with
-      access permitted only to the re-identification administrator
-      role. The code generation method (random / hash-of-non-PHI)
-      must not encode PHI per §514(c)(1)(ii) — that's an editorial
-      requirement on the implementer.
+      **Facilitation: storage (low)** — When re-identification is a
+      workflow requirement, the code-to-PHI mapping is a tightly
+      scoped resource: keep it on a dedicated `re-id-map/*` system-
+      stream-adjacent subtree with access permitted only to the
+      re-identification administrator role. The code generation
+      method (random / hash-of-non-PHI) must not encode PHI per
+      §514(c)(1)(ii) — that's an editorial requirement on the
+      implementer.
 
   - ref: 164.528(b)
     title: Accounting of disclosures — Implementation specifications
@@ -704,11 +721,12 @@ requirements:
     pryv_primitives: [access, clientData, audit, CMC]
     derives_from: [hipaa-security.164.314(a)(1), hipaa-privacy.164.502(e)(1), gdpr.Art.28]
     overview: |
-      The §164.504(e) BAA content is contractual. Pryv-side support
-      for executing the contract terms: BA access tagged with
-      `clientData.baa_id` + `clientData.role = "business_associate"`,
-      scope narrowed to subjects + streams covered by the BAA,
-      audit-log accountability for every action under the BA access.
+      **Facilitation: storage (low)** — The §164.504(e) BAA content
+      is contractual. Pryv-side support for executing the contract
+      terms: BA access tagged with `clientData.baa_id` +
+      `clientData.role = "business_associate"`, scope narrowed to
+      subjects + streams covered by the BAA, audit-log accountability
+      for every action under the BA access.
 
   - ref: "164.504(g)"
     title: Organizational requirements — group health plans
