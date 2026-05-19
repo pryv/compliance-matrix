@@ -1,0 +1,324 @@
+id: iso-27001
+title: ISO/IEC 27001 — Information Security Management Systems — Requirements
+short: ISO 27001
+type: standard
+jurisdiction: International (ISO/IEC)
+version: ISO/IEC 27001:2022
+version_date: "2022-10-25"
+canonical_url: https://www.iso.org/standard/27001
+matrix_language: EN
+curated: false
+
+changelog:
+  - date: "2026-05-19"
+    change: |
+      initial draft — 16 rows focused on Annex A technological controls
+      where Pryv-the-software contributes directly. Clauses 4-10
+      (organizational ISMS requirements) are largely QMS-side and stay
+      as framing rows. Source text is paywalled — references map by
+      clause + control ID only; requirement text is paraphrased.
+
+requirements:
+
+  # ───────────────────────────────────────────────────────────────
+  # Clauses 4-10 — ISMS programmatic requirements (mostly QMS-side)
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: "4"
+    title: Clause 4 — Context of the organization
+    text: |
+      Organization shall determine external and internal issues relevant
+      to its purpose that affect its ability to achieve the intended
+      outcomes of the ISMS, and shall determine interested parties +
+      requirements + scope.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Clause 4 is the organization's strategic ISMS-scoping exercise.
+      Pryv has no software role at this layer — when an organization
+      adopts Pryv, the matrix supports their Clause-6 risk assessment
+      by enumerating Pryv-side controls explicitly, but Clause 4 itself
+      sits at the operator/implementer level.
+
+  - ref: "6.1.2"
+    title: Clause 6.1.2 — Information security risk assessment
+    text: |
+      Organization shall define and apply an information security risk
+      assessment process that establishes and maintains criteria for
+      risk acceptance, identifies risks associated with the loss of
+      confidentiality, integrity and availability.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, audit, encryption-at-rest-secrets, multi-core-mTLS, letsEncrypt-integration, backup-restore]
+    overview: |
+      The risk-assessment methodology + the operator's specific findings
+      are the operator's artefact. Pryv contributes the inventory of
+      technical controls (this matrix, particularly Annex A.8 rows
+      below) — when the operator identifies a CIA risk, the matrix
+      surfaces which Pryv primitive addresses it (or does not), so
+      Annex A applicability is mechanical rather than judgemental.
+
+  # ───────────────────────────────────────────────────────────────
+  # Annex A.5 — Organizational controls (selected)
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: A.5.15
+    title: A.5.15 — Access control
+    text: |
+      Rules to control physical and logical access to information and
+      other associated assets shall be established and implemented based
+      on business and information security requirements.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, system-streams]
+    tests: [AA01, AA02, ACCP]
+    overview: |
+      Logical access control is enforced at the API surface by the
+      access + permissions primitives — every read/write request is
+      checked against the access's stream + level permissions. The
+      operator's access-control rule definition (who gets what) is
+      the policy half; technical enforcement is Pryv-side.
+
+  - ref: A.5.34
+    title: A.5.34 — Privacy and protection of personal information
+    text: |
+      Privacy and protection of personally identifiable information
+      shall be identified, documented and implemented in accordance
+      with applicable laws and contractual requirements.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, clientData, audit, system-streams]
+    derives_from: [gdpr.Art.25, gdpr.Art.32]
+    overview: |
+      Pryv's primitive set carries privacy-by-design (see GDPR Art. 25)
+      and the technical security controls (see GDPR Art. 32). What's on
+      the operator's side: the identification of which laws apply, the
+      documented privacy commitments (notice texts, consent UX), and
+      the contractual side. Cross-scope link to the gdpr.* rows for the
+      detailed mapping.
+
+  # ───────────────────────────────────────────────────────────────
+  # Annex A.6 — People controls (selected)
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: A.6.7
+    title: A.6.7 — Remote working
+    text: |
+      Security measures shall be implemented when personnel are working
+      remotely to protect information accessed, processed or stored
+      outside the organization's premises.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [letsEncrypt-integration, MFA, access]
+    overview: |
+      Pryv's API is remote-by-design — workforce access from off-
+      premises traverses the same TLS + access-token + MFA controls
+      as any other access. The operator's remote-working policy
+      (devices, VPN, endpoint hardening) sits on top of this; Pryv
+      provides the secure transport + auth substrate.
+
+  # ───────────────────────────────────────────────────────────────
+  # Annex A.8 — Technological controls (the Pryv-contribution surface)
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: A.8.2
+    title: A.8.2 — Privileged access rights
+    text: |
+      Allocation and use of privileged access rights shall be restricted
+      and managed.
+    coverage: configurable
+    draft: true
+    pryv_primitives: [access, system-streams]
+    config_keys: [auth.adminAccessKey]
+    tests: [LG20, GF33]
+    overview: |
+      Pryv's privileged-access surface is small and explicit: the
+      operator's `auth.adminAccessKey` is the root credential; system
+      streams (account, password, mfa) require an explicit grant in
+      `permissions[]`. Both surfaces are auditable. The operator's
+      custody process for the admin key is the policy-side control.
+
+  - ref: A.8.3
+    title: A.8.3 — Information access restriction
+    text: |
+      Access to information and other associated assets shall be
+      restricted in accordance with the established topic-specific
+      policy on access control.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, stream]
+    tests: [AA01, AA02, ACCP]
+    overview: |
+      Per-stream permissions are the technical access-restriction
+      primitive. Stream design (which data lives where) is the
+      implementer's choice; permission scoping per access is
+      operationally enforced at every API call.
+
+  - ref: A.8.5
+    title: A.8.5 — Secure authentication
+    text: |
+      Secure authentication technologies and procedures shall be
+      implemented based on information access restrictions and the
+      topic-specific policy on access control.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, MFA, system-streams]
+    config_keys: [services.mfa.mode]
+    tests: [MA01, MA02, MA03, MA04, MA05]
+    overview: |
+      Token-based auth by default; multi-factor via `mfa.*` API methods
+      when `services.mfa.mode` is enabled. The MFA test series
+      (MA01-MA09) exercises activate / confirm / challenge / verify /
+      deactivate / recover. Authentication strength tier is the
+      operator's policy choice; technical primitives are shipped.
+
+  - ref: A.8.10
+    title: A.8.10 — Information deletion
+    text: |
+      Information stored in information systems, devices or in any
+      other storage media shall be deleted when no longer required.
+    coverage: configurable
+    draft: true
+    pryv_primitives: [event, stream, backup-restore]
+    config_keys: [storages.userAccountStorage.engine, user-account.delete]
+    tests: [USAD]
+    overview: |
+      Per-user erasure: `system.users.delete` removes the user's data
+      from the live store. Engine-dependent backup behaviour (SQLite
+      per-user file vs PG/Mongo row deletion + backup rotation)
+      determines whether erasure extends to backups — same notes as
+      GDPR Art. 17 + HIPAA-Security §164.310(d) media-controls. Event-
+      level and stream-level deletion live alongside for per-record
+      deletion needs.
+
+  - ref: A.8.13
+    title: A.8.13 — Information backup
+    text: |
+      Backup copies of information, software and systems shall be
+      maintained and regularly tested in accordance with the agreed
+      topic-specific policy on backup.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [backup-restore, multi-core-mTLS]
+    overview: |
+      `bin/backup.js` produces per-user backup files; multi-core
+      cluster topology gives in-line replication (rqlite Raft +
+      mTLS). The operator's backup policy (cadence, retention,
+      offsite) is layered on top. "Regularly tested" is the
+      operator's drill. (Backup integration tests at the [code]
+      level are a coverage gap — backlog candidate for the
+      open-pryv.io test suite.)
+
+  - ref: A.8.15
+    title: A.8.15 — Logging
+    text: |
+      Logs that record activities, exceptions, faults and other
+      relevant events shall be produced, stored, protected and
+      analysed.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [audit, audit-event-stream]
+    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65]
+    overview: |
+      Per-user audit log captures every API method invocation; access
+      reference (accessId + accessSerial) ties each row to the
+      authenticated identity. Audit storage uses SQLite directly to
+      decouple log integrity from data-path engine issues. The
+      "analysed" element (review cadence, alerting thresholds) is the
+      operator's procedure.
+
+  - ref: A.8.16
+    title: A.8.16 — Monitoring activities
+    text: |
+      Networks, systems and applications shall be monitored for
+      anomalous behaviour and appropriate actions taken to evaluate
+      potential information security incidents.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [observability-provider, audit]
+    overview: |
+      The pluggable observability provider (New Relic adapter shipped)
+      gives system-level monitoring; audit logs give application-level
+      activity. Operator chooses provider + thresholds + escalation
+      paths. Anomaly-detection logic on the audit stream itself is a
+      potential extension.
+
+  - ref: A.8.20
+    title: A.8.20 — Networks security
+    text: |
+      Networks and network devices shall be secured, managed and
+      controlled to protect information in systems and applications.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
+    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC]
+    overview: |
+      TLS 1.3 in transit (built-in ACME integration with auto-renewal +
+      cluster-replicated rotation); mTLS between cores in a multi-
+      core cluster with a private cluster CA. No plaintext path
+      shipped. Operator-side network controls (firewalls, network
+      segmentation) sit on top.
+
+  - ref: A.8.24
+    title: A.8.24 — Use of cryptography
+    text: |
+      Rules for the effective use of cryptography, including
+      cryptographic key management, shall be defined and implemented.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS]
+    config_keys: [letsEncrypt.atRestKey]
+    tests: [ACMEINT, ATRENC, BUNDLEENC]
+    overview: |
+      TLS 1.3 for transit, AES-256-GCM for at-rest operator secrets
+      (HKDF-derived per-key with purpose labels), AES-256-GCM
+      (scrypt-derived) for bootstrap bundle encryption. The operator's
+      cryptography policy (key custody, rotation cadence, algorithm
+      choice for engine-side at-rest encryption) is layered on top.
+
+  - ref: A.8.25
+    title: A.8.25 — Secure development lifecycle
+    text: |
+      Rules for the secure development of software and systems shall be
+      established and applied.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit]
+    overview: |
+      Pryv's own SDLC is visible (public commit history, tagged
+      releases, CHANGELOG-v2 + CHANGELOG-v2-back, multi-engine test
+      matrix, dependency audit). For the implementer, this transparency
+      feeds supplier-assessment artefacts. The implementer's own SDLC
+      for their app + integrations remains their ISMS artefact.
+
+  - ref: A.8.32
+    title: A.8.32 — Change management
+    text: |
+      Changes to information processing facilities and information
+      systems shall be subject to change-management procedures.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit]
+    overview: |
+      Pryv-side change-management evidence: tagged releases, Docker
+      image SHA-pinning, CHANGELOG-v2 + CHANGELOG-v2-back per release,
+      release-notes per Dokku deploy. The operator's change-management
+      procedure (approvals, deployment windows, rollback plans) sits
+      on top. The audit log gives the operational record of changes
+      that touched data.
+
+  - ref: A.8.34
+    title: A.8.34 — Protection of information systems during audit testing
+    text: |
+      Audit tests and other assurance activities involving assessment
+      of operational systems shall be planned and agreed between the
+      tester and appropriate management.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit]
+    overview: |
+      Pen-tests, vulnerability scans, internal audits — all may
+      generate elevated activity on the system. Pryv's audit log
+      keeps the testing activity attributable (any test access
+      surfaces with its accessId + accessSerial in the audit rows).
+      The plan + agreement element is the operator's procedure.
