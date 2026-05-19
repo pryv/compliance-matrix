@@ -225,3 +225,59 @@ requirements:
       When the entity uses Pryv events to record the notice-delivery
       attempt (e.g., a `breach-notice/sent` event per affected
       individual), the audit chain proves the delivery attempt.
+
+  - ref: 164.402(1)
+    title: Definition of "breach" — four-factor risk assessment
+    text: |
+      "Breach" means the acquisition, access, use or disclosure of PHI
+      in a manner not permitted under Subpart E, which compromises the
+      security or privacy of the PHI. Compromise is determined via a
+      four-factor risk assessment: (i) nature + extent of PHI involved,
+      (ii) unauthorized person, (iii) whether PHI was acquired or
+      viewed, (iv) extent risk has been mitigated.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, access]
+    derives_from: [hipaa-breach.164.402]
+    overview: |
+      The four risk-assessment factors all draw on Pryv data:
+        (i) nature + extent: audit-row method + key request fields +
+            derived event-type set from the touched streams.
+        (ii) unauthorized person: audit-row accessId → access holder
+            with clientData.role + clientData.purpose.
+        (iii) actually acquired vs merely accessed: method-level
+            distinction in audit (events.get vs attachments.get,
+            success vs unauthorized error).
+        (iv) mitigation extent: access-version chain showing
+            revoke / scope-down timestamps relative to the incident.
+      The risk-assessment write-up is the operator's analytical
+      artefact; Pryv supplies the structured inputs.
+
+  - ref: 164.402(2)
+    title: Definition of "unsecured protected health information" — safe-harbor
+    text: |
+      "Unsecured PHI" means PHI not rendered unusable, unreadable or
+      indecipherable to unauthorized persons through use of a
+      technology or methodology specified in HHS guidance (NIST SP
+      800-111 for at-rest encryption; NIST SP 800-52 / SP 800-77 /
+      SP 800-113 / FIPS 140-2 for in-transit encryption; NIST SP 800-88
+      for destruction).
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS]
+    derives_from: [hipaa-breach.164.402, hipaa-security.164.312(a)(2)(iv), hipaa-security.164.312(e)(1)]
+    overview: |
+      The safe-harbor narrows what triggers Subpart D notification: PHI
+      that's actually secured per HHS guidance is outside §164.402's
+      "unsecured PHI" definition and a leak of it doesn't compel
+      notification. Pryv's default posture (TLS 1.3 in transit via
+      built-in ACME, AES-256-GCM for platform secrets at rest) puts
+      the in-transit half firmly inside the safe-harbor; the at-rest
+      half for ePHI content itself depends on the operator's chosen
+      at-rest encryption (operator-side LUKS / PG TDE / dm-crypt).
+    detail: |
+      Practical guidance: pair `letsEncrypt.enabled: true` with operator-
+      side full-disk encryption on every node + encrypted backup archives
+      to maximize §402(2) safe-harbor reach. NIST SP 800-111-equivalent
+      at-rest encryption applies whether the PHI is in the primary
+      engine, an attachment file, or a `bin/backup.js` output.

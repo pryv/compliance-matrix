@@ -327,3 +327,63 @@ requirements:
       gives uptime metrics. The application-layer continuity procedures
       (offline mode, degraded-service messaging, support channels)
       are manufacturer-side.
+
+  - ref: A1.5.1
+    title: Annex 1.5 — Consumer protection — clear pricing + contractual conditions
+    text: |
+      The implementer shall provide users with clear information on
+      pricing model + contractual conditions (subscription duration,
+      cancellation terms, renewal mechanics) in advance.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Pricing + contract terms are editorial / commercial. No software
+      role; Pryv stores whatever notice text you present (per A1.1
+      data-protection notices pattern) but doesn't generate it.
+
+  - ref: A1.5.4
+    title: Annex 1.5 — Consumer protection — barrier-free access (accessibility)
+    text: |
+      The digital health application shall meet relevant accessibility
+      requirements (WCAG 2.1 AA equivalent or higher, per BfArM
+      interpretation), supporting users with disabilities.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Accessibility is an app-layer UX concern. Pryv is a backend; the
+      app's HTML / WAI-ARIA / contrast / keyboard-navigation posture
+      is the manufacturer's frontend implementation.
+
+  - ref: A1.5.7
+    title: Annex 1.5 — Consumer protection — clear language + age-appropriate UI
+    text: |
+      User-facing text shall be in clear, plain language; for
+      applications targeting children or adolescents, the UI shall be
+      age-appropriate.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, event]
+    derives_from: [gdpr.Art.8]
+    overview: |
+      Plain-language text + age-appropriate UI are app-layer
+      responsibilities. Pryv contributes the artefact storage: when
+      different content variants are served to different age cohorts,
+      `access.clientData.target_audience` records the variant served,
+      and `account.clientData.age_verification_method` (per GDPR Art.8)
+      ties the variant to the verified age. Composition of the text
+      is editorial.
+
+  - ref: A1.6.5
+    title: Annex 1.6 — Patient safety — alarm / escalation logic when applicable
+    text: |
+      Where the digital health application generates alarms or
+      escalation messages (urgent clinical signal, abnormal value
+      crossing a threshold), the logic shall be documented + validated;
+      escalation paths shall be tested + reliable.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Clinical-alarm logic is the manufacturer's software responsibility
+      (and falls under MDR Art.61 clinical evaluation + Annex I §17.4
+      verification). Pryv stores the alarm events; the logic that
+      produces them is app-side.

@@ -947,6 +947,42 @@ requirements:
       observability metrics, this matrix's evidence trail. Equips the
       DPO; doesn't replace them.
 
+  - ref: Art.40
+    title: Codes of conduct
+    text: |
+      Member States, supervisory authorities, the Board and the
+      Commission shall encourage the drawing up of codes of conduct
+      intended to contribute to the proper application of the
+      Regulation.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, access]
+    overview: |
+      Codes of conduct are sector-level instruments (drafted by
+      associations of controllers / processors, approved by competent
+      supervisory authority). No software role at the code-drafting
+      layer. When a code applies to your sector, adherence is recorded
+      as one of the Art. 24 / Art. 32 "appropriate measures"; the
+      audit log + this matrix demonstrate the technical-control side
+      of code adherence.
+
+  - ref: Art.42
+    title: Certification
+    text: |
+      Member States, supervisory authorities, the Board and the
+      Commission shall encourage the establishment of data-protection
+      certification mechanisms, seals and marks.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, access]
+    derives_from: [iso-27701.5]
+    overview: |
+      Certification (e.g., EuroPrivacy seal, GDPR-certified processor
+      schemes) is sector- and jurisdiction-specific. Pryv operators
+      pursuing certification consume this matrix as the technical-
+      control inventory. ISO 27701 + (where applicable) HDS are
+      adjacent certifications already represented in this matrix.
+
   # ───── Chapter V — Transfers of personal data to third countries ─────
 
   - ref: Art.44
