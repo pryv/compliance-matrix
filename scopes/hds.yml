@@ -58,15 +58,15 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, audit, system-streams, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-secrets, MFA, data-residency, backup-restore, observability-provider]
     overview: |
-      This is the activity where Pryv-as-software substantively
-      contributes. An HDS-certified hoster running Pryv covers
-      Activity 3 by inheriting Pryv's primitive set: per-user storage
-      isolation (system-streams + per-user files when SQLite engine),
-      stream-scoped permissions, default-on TLS, mTLS between cores,
-      AES-256-GCM at-rest secrets, MFA, audit log, backup-restore,
-      observability adapter. The operator still does the operational +
-      organizational work the HDS audit checks (governance, incident
-      response, ISMS).
+      **Facilitation: infrastructure (high)** — this is the activity
+      where Pryv-as-software substantively contributes. An HDS-certified
+      hoster running Pryv covers Activity 3 by inheriting Pryv's
+      primitive set: per-user storage isolation (system-streams +
+      per-user files when SQLite engine), stream-scoped permissions,
+      default-on TLS, mTLS between cores, AES-256-GCM at-rest secrets,
+      MFA, audit log, backup-restore, observability adapter. The
+      operator still does the operational + organizational work the
+      HDS audit checks (governance, incident response, ISMS).
     detail: |
       The HDS audit verifies the platform's actual operational state —
       audit logs available, vulnerability management, change control,
@@ -98,14 +98,15 @@ requirements:
     draft: true
     pryv_primitives: [backup-restore, encryption-at-rest-secrets, multi-core-mTLS]
     overview: |
-      Pryv contributes the backup primitive (`bin/backup.js` per-user
-      backups + `--restore`). Multi-core cluster topology gives in-line
-      Raft replication of platform data; for health data backed up
-      to an outsourced location, the operator handles transport +
-      retention + at-rest encryption of the backup archive (LUKS / GPG
-      / KMS-wrapped). The "outsourced" element (separate physical
-      location) is the operator's responsibility; Pryv provides the
-      backup-generation + restoration primitives.
+      **Facilitation: infrastructure (medium)** — Pryv contributes the
+      backup primitive (`bin/backup.js` per-user backups + `--restore`).
+      Multi-core cluster topology gives in-line Raft replication of
+      platform data; for health data backed up to an outsourced
+      location, the operator handles transport + retention + at-rest
+      encryption of the backup archive (LUKS / GPG / KMS-wrapped). The
+      "outsourced" element (separate physical location) is the
+      operator's responsibility; Pryv provides the backup-generation +
+      restoration primitives.
 
   - ref: Activity.6
     title: Activity 6 — Archival of health data
@@ -116,13 +117,14 @@ requirements:
     draft: true
     pryv_primitives: [event, stream, backup-restore]
     overview: |
-      Pryv stores events with retained `class/format` semantics
-      (data-types schemas) and per-event version history. For
-      long-term archival, the operator typically combines Pryv's
-      event store with an external archival system (WORM storage,
-      blockchain-anchored hashes etc.) — Pryv is not an archival
-      product itself but feeds it. Integrity verification across
-      long timescales is a separate certified archival service.
+      **Facilitation: storage (low)** — Pryv stores events with
+      retained `class/format` semantics (data-types schemas) and
+      per-event version history. For long-term archival, the operator
+      typically combines Pryv's event store with an external archival
+      system (WORM storage, blockchain-anchored hashes etc.) — Pryv
+      is not an archival product itself but feeds it. Integrity
+      verification across long timescales is a separate certified
+      archival service.
 
   - ref: cross.data-residency
     title: Cross-cutting — data residency in France
@@ -164,14 +166,16 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, audit, letsEncrypt-integration, encryption-at-rest-secrets, MFA, data-residency, backup-restore, observability-provider]
     overview: |
-      Pryv's primitive set carries a substantial share of the ISO 27001
-      Annex A technical controls (A.5 information security policies
-      derives_from operator, A.8 asset management is operational,
-      A.9 access control = permissions, A.10 cryptography = TLS +
-      at-rest secrets, A.12 operations security = audit + monitoring,
-      A.13 communications security = TLS + mTLS, A.17 BCM = backup +
-      multi-core HA). Detailed control mapping to the ISO 27001 scope
-      to be authored.
+      **Facilitation: awareness (medium)** — Pryv's primitive set
+      carries a substantial share of the ISO 27001 Annex A technical
+      controls (A.5 information security policies derives_from
+      operator, A.8 asset management is operational, A.9 access
+      control = permissions, A.10 cryptography = TLS + at-rest
+      secrets, A.12 operations security = audit + monitoring, A.13
+      communications security = TLS + mTLS, A.17 BCM = backup +
+      multi-core HA). See the `iso-27001.*` rows of this matrix for
+      the detailed per-control mapping; the per-Activity-3 sub-control
+      rows below name the specific A.5/A.8 controls.
     detail: |
       The detailed control-by-control mapping will land in the
       `iso-27001` scope (Phase D continuation). HDS audit pack
@@ -190,12 +194,13 @@ requirements:
     draft: true
     pryv_primitives: [access, audit, CMC]
     overview: |
-      A common misconception in French health-tech: holding an HDS
-      certificate is sometimes mistaken for GDPR-compliance. It isn't.
-      The HDS scope above covers infrastructure security; the GDPR
-      scope (see this matrix's `gdpr.*` rows) covers the controller's
-      obligations toward data subjects. Pryv carries the technical
-      substrate for both, but they're distinct compliance burdens.
+      **Facilitation: awareness (low)** — a common misconception in
+      French health-tech: holding an HDS certificate is sometimes
+      mistaken for GDPR-compliance. It isn't. The HDS scope above
+      covers infrastructure security; the GDPR scope (see this
+      matrix's `gdpr.*` rows) covers the controller's obligations
+      toward data subjects. Pryv carries the technical substrate for
+      both, but they're distinct compliance burdens.
     detail: |
       Reference content for this point: Pryv published
       "pourquoi-la-certification-hds-ne-garantit-pas-votre-conformite-au-rgpd"

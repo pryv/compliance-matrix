@@ -25,13 +25,14 @@ requirements:
     draft: true
     pryv_primitives: [encryption-at-rest-secrets, letsEncrypt-integration]
     overview: |
-      Subpart D applies only to "unsecured" PHI — PHI that has not been
-      rendered unusable through encryption or destruction per HHS
-      guidance (NIST SP 800-111 / SP 800-88). Pryv's posture (TLS in
-      transit by default, operator-side encryption-at-rest, per-user
-      backup files transportable as encrypted bundles) lets you put
-      PHI inside the safe-harbor where you choose to — narrowing what
-      §400 actually reaches in your deployment.
+      **Facilitation: infrastructure (low)** — Subpart D applies only
+      to "unsecured" PHI — PHI that has not been rendered unusable
+      through encryption or destruction per HHS guidance (NIST SP
+      800-111 / SP 800-88). Pryv's posture (TLS in transit by default,
+      operator-side encryption-at-rest, per-user backup files
+      transportable as encrypted bundles) lets you put PHI inside the
+      safe-harbor where you choose to — narrowing what §400 actually
+      reaches in your deployment.
 
   - ref: "164.402"
     title: Definitions — breach and unsecured PHI
@@ -43,14 +44,14 @@ requirements:
     draft: true
     pryv_primitives: [audit, encryption-at-rest-secrets, access, permissions]
     overview: |
-      Two Pryv contributions to applying the §164.402 definitions:
-      (1) the audit log is the data source for the §402 risk-assessment
-      factors — nature of PHI involved, unauthorized person, whether
-      PHI was actually acquired, mitigation extent; and (2) Pryv's
-      access + permission model makes "acquisition / access / use /
-      disclosure not permitted under Subpart E" a queryable property
-      (was the access within its granted scope?) rather than an
-      after-the-fact narrative.
+      **Facilitation: evidence (medium)** — Two Pryv contributions to
+      applying the §164.402 definitions: (1) the audit log is the data
+      source for the §402 risk-assessment factors — nature of PHI
+      involved, unauthorized person, whether PHI was actually acquired,
+      mitigation extent; and (2) Pryv's access + permission model
+      makes "acquisition / access / use / disclosure not permitted
+      under Subpart E" a queryable property (was the access within its
+      granted scope?) rather than an after-the-fact narrative.
     detail: |
       §402(2) safe-harbor — "unsecured" excludes PHI made unusable
       through encryption guidance. Pryv default: TLS 1.3 in transit
@@ -80,11 +81,12 @@ requirements:
     draft: true
     pryv_primitives: [audit, access]
     overview: |
-      The notification process (drafting, sending, tracking receipts)
-      is operational. Pryv contributes to scoping: the audit log lets
-      you derive the per-subject impact (which subjects' streams were
-      touched by the breached access), so the individual-notification
-      list is auditable rather than estimated.
+      **Facilitation: evidence (medium)** — The notification process
+      (drafting, sending, tracking receipts) is operational. Pryv
+      contributes to scoping: the audit log lets you derive the
+      per-subject impact (which subjects' streams were touched by the
+      breached access), so the individual-notification list is
+      auditable rather than estimated.
     detail: |
       Per-subject impact query: filter audit rows by (breachedAccessId,
       timeWindow) → distinct user ids. That's your §164.404
@@ -132,13 +134,13 @@ requirements:
     draft: true
     pryv_primitives: [CMC, audit]
     overview: |
-      When you (the implementer) act as a business associate to a
-      covered entity and store their PHI on your Pryv deployment, your
-      BA-to-CE notification chain is operational. The CMC plugin's
-      cross-platform consent + revocation flow gives you the technical
-      substrate for inter-organization handshakes; audit data lets you
-      meet the "without unreasonable delay" element on the
-      data-gathering side.
+      **Facilitation: evidence (low)** — When you (the implementer)
+      act as a business associate to a covered entity and store their
+      PHI on your Pryv deployment, your BA-to-CE notification chain
+      is operational. The CMC plugin's cross-platform consent +
+      revocation flow gives you the technical substrate for
+      inter-organization handshakes; audit data lets you meet the
+      "without unreasonable delay" element on the data-gathering side.
 
   - ref: "164.412"
     title: Law enforcement delay
@@ -166,12 +168,13 @@ requirements:
     draft: true
     pryv_primitives: [audit, access]
     overview: |
-      "Burden of proof" is met with evidence; Pryv's audit + access-
-      version chain is the technical evidence layer ("we know exactly
-      what was accessed by which credential at what time"). The
-      organizational documentation (incident response records,
-      notification records, decisions to not notify with rationale)
-      sits on top of that data.
+      **Facilitation: evidence (medium)** — "Burden of proof" is met
+      with evidence; Pryv's audit + access-version chain is the
+      technical evidence layer ("we know exactly what was accessed by
+      which credential at what time"). The organizational
+      documentation (incident response records, notification records,
+      decisions to not notify with rationale) sits on top of that
+      data.
 
   - ref: 164.404(b)
     title: Implementation specification — timeliness of notification
@@ -184,12 +187,13 @@ requirements:
     pryv_primitives: [audit, observability-provider]
     derives_from: [hipaa-breach.164.404]
     overview: |
-      The 60-day clock is procedural — the covered entity owns the
-      incident-response cadence. Pryv-side data accelerates the
-      "discovery" + "scoping" steps that dominate the timeline:
-      audit log + access-version chain answer "what was accessed,
-      by whom, when" in seconds. The discipline of acting on that
-      data within the 60-day window is the operator's process.
+      **Facilitation: evidence (low)** — The 60-day clock is procedural
+      — the covered entity owns the incident-response cadence. Pryv-
+      side data accelerates the "discovery" + "scoping" steps that
+      dominate the timeline: audit log + access-version chain answer
+      "what was accessed, by whom, when" in seconds. The discipline
+      of acting on that data within the 60-day window is the
+      operator's process.
 
   - ref: 164.404(c)
     title: Implementation specification — content of notification
@@ -240,7 +244,8 @@ requirements:
     pryv_primitives: [audit, access]
     derives_from: [hipaa-breach.164.402]
     overview: |
-      The four risk-assessment factors all draw on Pryv data:
+      **Facilitation: evidence (high)** — The four risk-assessment
+      factors all draw on Pryv data:
         (i) nature + extent: audit-row method + key request fields +
             derived event-type set from the touched streams.
         (ii) unauthorized person: audit-row accessId → access holder
@@ -267,8 +272,9 @@ requirements:
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS]
     derives_from: [hipaa-breach.164.402, hipaa-security.164.312(a)(2)(iv), hipaa-security.164.312(e)(1)]
     overview: |
-      The safe-harbor narrows what triggers Subpart D notification: PHI
-      that's actually secured per HHS guidance is outside §164.402's
+      **Facilitation: infrastructure (medium)** — The safe-harbor
+      narrows what triggers Subpart D notification: PHI that's
+      actually secured per HHS guidance is outside §164.402's
       "unsecured PHI" definition and a leak of it doesn't compel
       notification. Pryv's default posture (TLS 1.3 in transit via
       built-in ACME, AES-256-GCM for platform secrets at rest) puts

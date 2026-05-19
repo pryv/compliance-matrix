@@ -103,15 +103,16 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, audit, CMC]
     overview: |
-      Every "sale" or "sharing" you do — in CCPA's broad sense, which
-      includes cross-context behavioural advertising — happens through
-      a Pryv access granted to the recipient. The access's `clientData`
-      can carry the §1798.115 classification (sale vs share, category
-      of third party); audit records anchor the transaction in time.
-      What's not the software's job: deciding when a use qualifies as
-      "sale" or "sharing" under the CCPA definition (Civ. Code
-      §1798.140(ad)+(ah)) — that's a contractual / classification
-      decision you record on the access.
+      **Facilitation: storage (medium)** — Every "sale" or "sharing"
+      you do — in CCPA's broad sense, which includes cross-context
+      behavioural advertising — happens through a Pryv access granted
+      to the recipient. The access's `clientData` can carry the
+      §1798.115 classification (sale vs share, category of third
+      party); audit records anchor the transaction in time. What's
+      not the software's job: deciding when a use qualifies as "sale"
+      or "sharing" under the CCPA definition (Civ. Code §1798.140(ad)
+      +(ah)) — that's a contractual / classification decision you
+      record on the access.
     detail: |
       Pattern: when minting an access for a counterparty:
       `access.clientData = {`
@@ -198,12 +199,13 @@ requirements:
     pryv_primitives: [access, clientData, app-web-auth3, event]
     derives_from: [gdpr.Art.12]
     overview: |
-      Notice text lives on `access.clientData.privacy_notice` or on a
-      dedicated `consent/notice` event — preserved per consumer per
-      time, recoverable later. The 45-day response window is your
-      operational target. Pryv's read APIs respond in milliseconds, so
-      the rate-limit on the response is your fulfilment workflow, not
-      a software latency.
+      **Facilitation: storage (medium)** — Notice text lives on
+      `access.clientData.privacy_notice` or on a dedicated
+      `consent/notice` event — preserved per consumer per time,
+      recoverable later. The 45-day response window is your
+      operational target. Pryv's read APIs respond in milliseconds,
+      so the rate-limit on the response is your fulfilment workflow,
+      not a software latency.
 
   - ref: "1798.135"
     title: Methods for opt-out
@@ -215,11 +217,12 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData]
     overview: |
-      The opt-out UI surface is your app — a CCPA-required link or an
-      automated GPC-signal handler. When the opt-out is exercised, the
-      Pryv mechanism is the access revoke / narrow flow from §1798.120.
-      Implementer's job: detect the opt-out, call the Pryv revoke
-      flow, surface confirmation.
+      **Facilitation: awareness (low)** — The opt-out UI surface is
+      your app — a CCPA-required link or an automated GPC-signal
+      handler. When the opt-out is exercised, the Pryv mechanism is
+      the access revoke / narrow flow from §1798.120. Implementer's
+      job: detect the opt-out, call the Pryv revoke flow, surface
+      confirmation.
 
   - ref: "1798.140"
     title: Definitions
@@ -231,13 +234,13 @@ requirements:
     draft: true
     pryv_primitives: [event, stream, access, clientData, CMC]
     overview: |
-      Pryv primitives map cleanly to most CCPA-defined terms (event =
-      personal-information storage; access + permissions = the
-      consent / authorization layer; CMC = sharing across distinct
-      operators). The §1798.140(ae) sensitive-personal-information
-      category drives stream layout (segregate sensitive categories
-      onto designated subtrees for clean §1798.121 limit-use
-      operation).
+      **Facilitation: awareness (medium)** — Pryv primitives map
+      cleanly to most CCPA-defined terms (event = personal-information
+      storage; access + permissions = the consent / authorization
+      layer; CMC = sharing across distinct operators). The
+      §1798.140(ae) sensitive-personal-information category drives
+      stream layout (segregate sensitive categories onto designated
+      subtrees for clean §1798.121 limit-use operation).
     detail: |
       Service-provider vs third-party (§1798.140(ag) vs (ai))
       classification is contractual — record it on the access's
@@ -256,13 +259,13 @@ requirements:
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, audit, access]
     overview: |
-      Two contributions: (1) TLS-in-transit + operator-side at-rest
-      encryption move ePHI / personal-information out of the
-      "nonencrypted and nonredacted" trigger zone for §1798.150;
-      (2) audit + access-version data are the technical evidence
-      layer when defending a "reasonable security" claim. The
-      "reasonable security" determination remains a fact-specific
-      legal question; Pryv provides the substrate.
+      **Facilitation: infrastructure (medium)** — Two contributions:
+      (1) TLS-in-transit + operator-side at-rest encryption move ePHI
+      / personal-information out of the "nonencrypted and nonredacted"
+      trigger zone for §1798.150; (2) audit + access-version data are
+      the technical evidence layer when defending a "reasonable
+      security" claim. The "reasonable security" determination remains
+      a fact-specific legal question; Pryv provides the substrate.
     detail: |
       The §1798.150 trigger is narrow — encrypted-and-redacted PI
       that leaks doesn't ground a statutory-damages claim. Pryv's
@@ -286,12 +289,12 @@ requirements:
     pryv_primitives: [access, permissions, audit, letsEncrypt-integration, encryption-at-rest-secrets, MFA, backup-restore]
     derives_from: [ccpa.1798.150, gdpr.Art.32]
     overview: |
-      Statute predates CCPA but provides the "reasonable security"
-      basis the §1798.150 civil action attaches to. Pryv's
-      multi-aspect technical baseline (TLS, mTLS, at-rest secrets,
-      audit, MFA, backup-restore, permissions) constitutes the
-      software-layer "reasonable security" inventory. The
-      organizational-side reasonable-security programme is the
+      **Facilitation: infrastructure (high)** — Statute predates CCPA
+      but provides the "reasonable security" basis the §1798.150 civil
+      action attaches to. Pryv's multi-aspect technical baseline (TLS,
+      mTLS, at-rest secrets, audit, MFA, backup-restore, permissions)
+      constitutes the software-layer "reasonable security" inventory.
+      The organizational-side reasonable-security programme is the
       operator's.
 
   - ref: 1798.130(a)(5)
@@ -306,11 +309,12 @@ requirements:
     pryv_primitives: [access, clientData]
     derives_from: [ccpa.1798.130]
     overview: |
-      Notice content is editorial. Pryv preserves the notice text per
-      individual consumer (on `account.clientData.privacy_notice` or a
-      dedicated event), so the precise wording shown at the moment
-      a particular consumer first interacted is recoverable later.
-      Drafting the wording remains the implementer's editorial work.
+      **Facilitation: storage (low)** — Notice content is editorial.
+      Pryv preserves the notice text per individual consumer (on
+      `account.clientData.privacy_notice` or a dedicated event), so
+      the precise wording shown at the moment a particular consumer
+      first interacted is recoverable later. Drafting the wording
+      remains the implementer's editorial work.
 
   - ref: 1798.135(a)
     title: Methods for opt-out — Do Not Sell / Share + Limit Use links
@@ -343,11 +347,12 @@ requirements:
     pryv_primitives: [access, clientData]
     derives_from: [ccpa.1798.140]
     overview: |
-      Whether a given access constitutes a "sale" under §1798.140(ad)
-      is a classification the implementer applies + records on the
-      access's `clientData.type = "sale"`. The consideration test
-      (monetary or valuable) is fact-specific and editorial; Pryv
-      preserves whatever classification you record.
+      **Facilitation: storage (low)** — Whether a given access
+      constitutes a "sale" under §1798.140(ad) is a classification the
+      implementer applies + records on the access's
+      `clientData.type = "sale"`. The consideration test (monetary or
+      valuable) is fact-specific and editorial; Pryv preserves
+      whatever classification you record.
 
   - ref: 1798.140(ae)
     title: Definition — "Sensitive personal information"
@@ -363,11 +368,12 @@ requirements:
     pryv_primitives: [stream, system-streams, event]
     derives_from: [ccpa.1798.121, gdpr.Art.9]
     overview: |
-      Sensitive-PI enumeration drives stream-layout design — dedicate
-      subtrees per sensitive category (`sensitive/health/`,
-      `sensitive/precise-location/`, etc.) for clean §1798.121
-      limit-use enforcement. The classification of whether a specific
-      event qualifies as sensitive PI is editorial.
+      **Facilitation: primitive (medium)** — Sensitive-PI enumeration
+      drives stream-layout design — dedicate subtrees per sensitive
+      category (`sensitive/health/`, `sensitive/precise-location/`,
+      etc.) for clean §1798.121 limit-use enforcement. The
+      classification of whether a specific event qualifies as
+      sensitive PI is editorial.
 
   - ref: "1798.155"
     title: Enforcement
