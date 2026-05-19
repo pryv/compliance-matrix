@@ -3,6 +3,9 @@ node_modules/
 dist/
 .vite/
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # SQLite copied from ../dist at build time
 public/compliance.sqlite
 
