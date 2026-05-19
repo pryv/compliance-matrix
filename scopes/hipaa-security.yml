@@ -824,6 +824,19 @@ requirements:
       method calls). Observability data aggregates rate + anomaly
       signals. The discrepancy-reporting cadence + threshold tuning
       are operator-side procedure.
+    detail: |
+      **Pryv surfaces the events; operator chooses the lockout
+      policy.** Pryv does not in-process rate-limit login attempts
+      or lock accounts after N failures by itself (deliberate;
+      multi-core deployments make in-process counters mis-fire +
+      lockout sensitivity is workload-specific). Operator pattern:
+      `fail2ban` watching the audit log + banning IPs that exceed
+      N auth failures in T minutes; reverse-proxy
+      `limit_req_zone` for per-IP rate caps on `/auth/login`.
+
+      Full operator-side rate-limiting framing + reference-config
+      backlog: `context/rate-limiting-and-dos-protection.md` +
+      `_plans/XXX-Backlog/RATE-LIMITING-RECIPES.md`.
 
   - ref: 164.308(a)(6)(i)
     title: Security incident procedures — standard

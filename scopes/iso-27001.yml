@@ -940,6 +940,17 @@ requirements:
       observability. Inter-core mTLS is the internal surface. The
       operator's broader network-service portfolio (LB, WAF, VPN)
       sits outside Pryv.
+    detail: |
+      **Rate limiting / DoS protection is deliberately operator-side**
+      (reverse proxy / WAF / API gateway). In-process throttling
+      inside Pryv was considered + rejected because (1) multi-core
+      load distribution makes per-core counters mis-fire and
+      (2) abuse signatures are operator-specific. Pryv contributes
+      the **detection layer** (audit log + observability metrics +
+      `accesses.delete` revocation); enforcement happens at the edge.
+      Full rationale + operator mitigation patterns + reference-
+      config backlog: `context/rate-limiting-and-dos-protection.md`
+      + `_plans/XXX-Backlog/RATE-LIMITING-RECIPES.md`.
 
   - ref: A.8.26
     title: A.8.26 — Application security requirements

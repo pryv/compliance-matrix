@@ -155,7 +155,59 @@ provide the right hooks for either audit-trail-preserving group
 exercise (mechanism 1) or independently-revocable per-member
 provisioning (mechanism 2).
 
-**Matrix encoding:** *(see commit when filed)*.
+**Matrix encoding:**
+- `context/workforce-access-patterns.md` — full breakdown of both
+  patterns + when to use each + trust models + matrix-row mapping.
+- `hipaa-security.164.308(a)(3)(ii)(C)` (Termination procedures)
+  `detail` extended with the two patterns for hospital-scale
+  termination.
+- `iso-27001.A.5.16` (Identity management) `detail` extended:
+  roles + groups deliberately outside Pryv; IdP is the source of
+  truth.
+
+**Commit:** `6c5f070`.
+
+### Q6 — Rate limiting / API throttling / DoS protection. Does Pryv ship throttling?
+
+**Short answer:** **voluntarily missing at the Pryv layer.** In-
+process rate limiting was considered + deliberately rejected for
+two reasons: (1) multi-core load distribution makes per-core
+counters mis-fire (a cross-core shared counter becomes itself a
+DoS target); (2) abuse signatures are operator-specific (research
+batch imports vs consumer-app per-user limits are wildly
+different). The right layer is the reverse proxy / WAF / API
+gateway — already deployed by the operator for TLS / geo-routing /
+WebSocket upgrades, purpose-built for traffic shaping, and tunable
+per actual workload.
+
+**What Pryv contributes:** detection layer, not enforcement.
+- Audit log captures every API call (fail2ban watches it for
+  auth-failure patterns; SIEM consumes for anomaly detection).
+- Observability adapter surfaces per-core request-rate + latency +
+  error-rate metrics.
+- `accesses.delete` is the kill-switch when abuse is detected.
+
+**What the operator handles:** per-IP rate limits, per-token rate
+limits, per-route limits, WAF rules, account-lockout via fail2ban,
+DDoS scrubbing, burst / cost protection — all in their existing
+reverse-proxy / WAF / API-gateway stack.
+
+**Future direction:** ship reference reverse-proxy configs (nginx,
+HAProxy, Cloudflare, Traefik, Caddy) per workload profile
+(consumer-app, B2B research, hospital) + matching fail2ban jail
+definitions. Tracked at
+`_plans/XXX-Backlog/RATE-LIMITING-RECIPES.md`. Doesn't change the
+Pryv-side stance; closes the operator-experience gap of "what do
+I actually configure?"
+
+**Matrix encoding:**
+- `context/rate-limiting-and-dos-protection.md` — full rationale +
+  operator mitigation patterns + when the stance might change.
+- `iso-27001.A.8.21` (network services security) `detail` extended.
+- `hipaa-security.164.308(a)(5)(ii)(C)` (login monitoring) `detail`
+  extended with the fail2ban + reverse-proxy pattern.
+
+**Commit:** *(this commit)*.
 
 ## How to use this FAQ
 
