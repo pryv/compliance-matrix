@@ -1,0 +1,174 @@
+id: hipaa-breach
+title: HIPAA Breach Notification Rule
+short: HIPAA-Breach
+type: regulation
+jurisdiction: US
+version: 45 CFR Part 164 Subpart D (HITECH 2013 Omnibus Final Rule)
+version_date: "2013-01-25"
+canonical_url: https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-D
+matrix_language: EN
+curated: false
+
+changelog:
+  - date: "2026-05-19"
+    change: initial draft — 8 rows (§§164.400-414). Software contribution concentrated on the audit-log evidence path (used to scope a breach + prove no breach) and the encryption-at-rest safe-harbor for §164.402(2) "unsecured PHI". Notification procedure itself is organizational.
+
+requirements:
+
+  - ref: "164.400"
+    title: Applicability
+    text: |
+      Subpart D applies to covered entities, business associates,
+      subcontractors and affiliated entities with respect to unsecured
+      protected health information.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [encryption-at-rest-secrets, letsEncrypt-integration]
+    overview: |
+      Subpart D applies only to "unsecured" PHI — PHI that has not been
+      rendered unusable through encryption or destruction per HHS
+      guidance (NIST SP 800-111 / SP 800-88). Pryv's posture (TLS in
+      transit by default, operator-side encryption-at-rest, per-user
+      backup files transportable as encrypted bundles) lets you put
+      PHI inside the safe-harbor where you choose to — narrowing what
+      §400 actually reaches in your deployment.
+
+  - ref: "164.402"
+    title: Definitions — breach and unsecured PHI
+    text: |
+      Defines "breach" (acquisition / access / use / disclosure not
+      permitted under Subpart E + four risk-assessment factors) and
+      "unsecured PHI" (not rendered unusable per HHS guidance).
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, encryption-at-rest-secrets, access, permissions]
+    overview: |
+      Two Pryv contributions to applying the §164.402 definitions:
+      (1) the audit log is the data source for the §402 risk-assessment
+      factors — nature of PHI involved, unauthorized person, whether
+      PHI was actually acquired, mitigation extent; and (2) Pryv's
+      access + permission model makes "acquisition / access / use /
+      disclosure not permitted under Subpart E" a queryable property
+      (was the access within its granted scope?) rather than an
+      after-the-fact narrative.
+    detail: |
+      §402(2) safe-harbor — "unsecured" excludes PHI made unusable
+      through encryption guidance. Pryv default: TLS 1.3 in transit
+      (always); operator-side at-rest encryption (when configured).
+      AES-256-GCM is the at-rest cipher for the Pryv-managed secrets
+      (platform DB), aligning with the NIST SP 800-111 AES guidance —
+      though for ePHI content at rest, the operator-side encryption
+      (LUKS / PG TDE / dm-crypt) is what governs the §402(2) status.
+
+      §402(1) risk-assessment factors → Pryv data sources:
+        - Nature + extent of PHI involved → audit row → API method +
+          key request fields → infer streams + event types touched.
+        - Unauthorized person → audit row → accessId → access holder.
+        - Whether PHI was actually acquired or merely accessed → audit
+          row → method (read vs. download attachments etc.).
+        - Extent to which risk was mitigated → access version chain
+          (was access revoked? when?), audit on revocation timestamp.
+
+  - ref: "164.404"
+    title: Notification to individuals
+    text: |
+      Following discovery of a breach of unsecured PHI, covered entity
+      must notify each individual whose PHI has been breached without
+      unreasonable delay and in no case later than 60 calendar days
+      after discovery.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, access]
+    overview: |
+      The notification process (drafting, sending, tracking receipts)
+      is operational. Pryv contributes to scoping: the audit log lets
+      you derive the per-subject impact (which subjects' streams were
+      touched by the breached access), so the individual-notification
+      list is auditable rather than estimated.
+    detail: |
+      Per-subject impact query: filter audit rows by (breachedAccessId,
+      timeWindow) → distinct user ids. That's your §164.404
+      notification list, with evidence.
+
+      §404(c) content elements (description of breach, types of PHI,
+      steps individual should take, what entity is doing, contact
+      info) are editorial; Pryv has no opinion on the wording.
+
+  - ref: "164.406"
+    title: Notification to media
+    text: |
+      Breach affecting more than 500 residents of a State or
+      jurisdiction requires notification to prominent media outlets in
+      that State or jurisdiction.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Media notification is an organizational / communications
+      procedure. No software contribution; the threshold determination
+      (500 residents) is derivable from the §164.404 per-subject list,
+      but the notification itself is operational.
+
+  - ref: "164.408"
+    title: Notification to Secretary
+    text: |
+      Covered entity must notify the Secretary of HHS following the
+      discovery of a breach of unsecured PHI; timing depends on
+      whether ≥500 individuals are affected.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      HHS notification (via the OCR online portal) is procedural and
+      organizational. Pryv's audit + access-version data inform the
+      content (subjects affected, dates, root cause) but the
+      submission itself is operator-side.
+
+  - ref: "164.410"
+    title: Notification by a business associate
+    text: |
+      Business associate must notify the covered entity of a breach
+      without unreasonable delay and in no case later than 60 days
+      after discovery.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [CMC, audit]
+    overview: |
+      When you (the implementer) act as a business associate to a
+      covered entity and store their PHI on your Pryv deployment, your
+      BA-to-CE notification chain is operational. The CMC plugin's
+      cross-platform consent + revocation flow gives you the technical
+      substrate for inter-organization handshakes; audit data lets you
+      meet the "without unreasonable delay" element on the
+      data-gathering side.
+
+  - ref: "164.412"
+    title: Law enforcement delay
+    text: |
+      A delay of notification (to individuals, media, or HHS) is
+      permitted when a law-enforcement official states that
+      notification would impede investigation or cause national-
+      security damage.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Procedural — depends on receipt of the law-enforcement
+      statement (oral with 30-day cap, or written with the official's
+      time-limit). No software role beyond preserving the audit log
+      across the delay period (which happens by default).
+
+  - ref: "164.414"
+    title: Administrative requirements and burden of proof
+    text: |
+      Covered entity / business associate must maintain documentation
+      sufficient to demonstrate that all notifications were made or
+      that the impermissible use / disclosure did not constitute a
+      breach.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, access]
+    overview: |
+      "Burden of proof" is met with evidence; Pryv's audit + access-
+      version chain is the technical evidence layer ("we know exactly
+      what was accessed by which credential at what time"). The
+      organizational documentation (incident response records,
+      notification records, decisions to not notify with rationale)
+      sits on top of that data.
