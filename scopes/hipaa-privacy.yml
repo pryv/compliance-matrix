@@ -403,3 +403,104 @@ requirements:
       --restore` is available if mitigation involves rolling back data
       state; `accesses.delete` is the primitive to revoke access from
       the offending counterparty.
+
+  - ref: 164.502(b)
+    title: Minimum necessary uses, disclosures, requests
+    text: |
+      Covered entity must make reasonable efforts to limit PHI to the
+      minimum necessary to accomplish the intended purpose, with
+      enumerated exceptions (treatment disclosures, disclosures to the
+      individual, authorized disclosures, required-by-law disclosures).
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, stream]
+    derives_from: [hipaa-privacy.164.514(d), gdpr.Art.5]
+    tests: [AA01, ACCP]
+    overview: |
+      Same primitive mapping as §164.514(d) minimum-necessary: per-
+      stream permissions are the technical control; the holder cannot
+      see more PHI than the granted scope permits. §502(b)(2)
+      exceptions are programmatic — the implementer leaves those
+      accesses unscoped per the exception's permission, and the audit
+      log records the broader access for accountability.
+
+  - ref: 164.502(e)(1)
+    title: Disclosures to business associates
+    text: |
+      Covered entity may disclose PHI to a business associate (BA) and
+      may allow a BA to create, receive, maintain, or transmit PHI on
+      its behalf only with satisfactory assurances (typically via a
+      written contract, the BAA) that the BA will appropriately
+      safeguard the information.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, CMC]
+    derives_from: [hipaa-security.164.314(a)(1), gdpr.Art.28]
+    overview: |
+      The technical disclosure is mediated by the access primitive —
+      mint a BA-specific access with `clientData.role = "business_associate"`
+      + `clientData.baa_id = "<contract-ref>"`, scoped to the subjects
+      / streams covered by the BAA. Cross-platform BA arrangements
+      (where the BA runs their own Pryv) inherit the CMC capability
+      pattern for cross-account flow.
+
+  - ref: 164.530(d)
+    title: Complaints to the covered entity
+    text: |
+      Covered entity must provide a process for individuals to make
+      complaints concerning the entity's policies + procedures or its
+      compliance with the Privacy Rule; document complaints received
+      and disposition.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, stream, audit]
+    overview: |
+      A complaint-intake workflow stores each complaint as an event on
+      a designated `complaints/*` stream with `clientData.disposition`
+      tracking outcome. The audit log captures the timestamp + actor
+      on each disposition update — making the §530(d)(2) documentation
+      requirement an automatic byproduct of normal record-keeping.
+
+  - ref: 164.530(e)
+    title: Sanctions
+    text: |
+      Covered entity must have and apply appropriate sanctions against
+      members of its workforce who fail to comply with the privacy
+      policies + procedures.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Sanctions are an HR / disciplinary process. No software role at
+      the sanction-decision layer; the audit log gives the underlying
+      evidence ("did this person actually access X?") that HR
+      processes evaluate.
+
+  - ref: 164.530(g)
+    title: Refraining from intimidating + retaliatory acts
+    text: |
+      Covered entity may not intimidate, threaten, coerce, discriminate
+      against, or take other retaliatory action against any individual
+      for exercising any right under the Privacy Rule.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Anti-retaliation is an organizational policy + culture commitment;
+      no software role.
+
+  - ref: 164.530(i)
+    title: Policies and procedures
+    text: |
+      Covered entity must implement policies and procedures with respect
+      to PHI that are designed to comply with the standards,
+      implementation specifications, and other requirements of this
+      Subpart E.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, stream, audit, backup-restore]
+    derives_from: [hipaa-security.164.316(a)]
+    overview: |
+      Same pattern as HIPAA-Security §164.316(a): policies-as-data on a
+      `compliance/policies/*` stream get versioning + retention +
+      audit. The drafting + approval + review-cycle procedure is the
+      privacy officer's. Cross-link to §164.316(a) preserves the
+      Security Rule's parallel obligation.

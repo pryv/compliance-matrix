@@ -182,3 +182,147 @@ requirements:
       satisfies the processor-side records-of-processing requirement.
       The processor's specific obligations (subprocessor list, transfer
       register) are operator-side artefacts.
+
+  - ref: A.7.4.2
+    title: A.7.4.2 — Limit processing
+    text: |
+      Organization shall limit the processing of PII to that which is
+      adequate, relevant and necessary for the identified purposes.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, stream]
+    derives_from: [iso-27701.A.7.4.1, gdpr.Art.5]
+    tests: [AA01, ACCP]
+    overview: |
+      Same primitive as A.7.4.1 limit collection — per-stream
+      permissions are the technical limit on what processing each
+      access can perform. The "adequate / relevant / necessary"
+      assessment per purpose is the controller's; the technical
+      enforcement is permission-shaped.
+
+  - ref: A.7.4.3
+    title: A.7.4.3 — Accuracy and quality
+    text: |
+      Organization shall ensure and document that PII is as accurate,
+      complete and up-to-date as is necessary for the purposes for
+      which it is processed throughout the lifecycle of the PII.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [event]
+    derives_from: [gdpr.Art.5, gdpr.Art.16]
+    tests: [PTU1]
+    overview: |
+      `events.update` rectifies events with version-history preservation
+      (matching GDPR Art.16 mechanics). For "throughout the lifecycle"
+      proof, the event version chain is the artefact. The accuracy
+      determination + correction workflow is the controller's.
+
+  - ref: A.7.4.5
+    title: A.7.4.5 — PII de-identification and deletion at end of processing
+    text: |
+      Organization shall either delete PII or render it in a form which
+      does not permit identification or re-identification of PII
+      principals, as soon as the original PII is no longer necessary
+      for the identified purpose(s).
+    coverage: configurable
+    draft: true
+    pryv_primitives: [event, stream, backup-restore]
+    derives_from: [gdpr.Art.17, hipaa-security.164.310, ccpa.1798.105]
+    config_keys: [storages.userAccountStorage.engine, user-account.delete]
+    tests: [USAD]
+    overview: |
+      Per-user deletion via `system.users.delete` (engine-dependent
+      backup behaviour — same notes as GDPR Art. 17). Per-event /
+      per-stream deletion lives alongside for partial-deletion needs.
+      De-identification (Safe Harbor / Expert Determination methods) is
+      an application-layer transformation; Pryv stores the result.
+
+  - ref: A.7.4.6
+    title: A.7.4.6 — Temporary files
+    text: |
+      Organization shall ensure that temporary files created as a
+      result of processing of PII are disposed of (e.g., erased,
+      destroyed) following documented procedures within a specified,
+      documented period.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Temporary-file handling is an operating-system / runtime concern.
+      Pryv-the-software doesn't write PII to ad-hoc temp files; the
+      operator's host hygiene (tmpfs, /tmp cleanup, log rotation)
+      addresses any temp-file footprints the runtime produces.
+
+  - ref: A.7.4.9
+    title: A.7.4.9 — Records of transfer of PII
+    text: |
+      Organization shall record transfers of PII to or from third
+      parties and ensure cooperation with those parties to support
+      future requests related to obligations to PII principals.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, clientData, audit, CMC]
+    derives_from: [gdpr.Art.30, gdpr.Art.44, hipaa-privacy.164.528]
+    tests: [AT01, AT51, AT61]
+    overview: |
+      Cross-party PII transfers in Pryv go through accesses (typically
+      CMC capability accesses or shared accesses). Each access's
+      `clientData` records recipient + purpose + legal basis at grant
+      time; audit log captures each transfer event with timestamp.
+      Together they constitute the §164.528-style accounting record
+      for transfers specifically.
+
+  - ref: A.7.5.1
+    title: A.7.5.1 — Identify basis for PII transfer between jurisdictions
+    text: |
+      Organization shall identify and document the relevant basis for
+      transfers of PII between jurisdictions.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [data-residency, access, clientData]
+    derives_from: [gdpr.Art.44, gdpr.Art.46, gdpr.Art.49]
+    overview: |
+      Per GDPR Art. 44 / Swiss nLPD Art. 34 mapping — the
+      data-residency primitive constrains where data lives;
+      cross-jurisdictional transfers record the legal basis on the
+      transferring access's `clientData.transfer_basis`. The
+      jurisdiction-mapping documentation (which jurisdictions appear
+      in your deployment, which transfer regime applies to each pair)
+      is operator-side.
+
+  - ref: A.7.5.2
+    title: A.7.5.2 — Countries and international organizations to which PII can be transferred
+    text: |
+      Organization shall specify and document the countries and
+      international organizations to which PII can possibly be
+      transferred.
+    coverage: configurable
+    draft: true
+    pryv_primitives: [data-residency, CMC]
+    config_keys: [auth.hostings]
+    tests: [REGC, RC01, RC03]
+    overview: |
+      `auth.hostings` declares the hostings (and thus countries /
+      jurisdictions) where subjects' data may live; for CMC
+      cross-platform sharing, the catalogue of trusted peer
+      deployments + their hostings is operator-managed. The
+      Statement-of-Applicability entry for A.7.5.2 cites the
+      `auth.hostings` config as the technical artefact.
+
+  - ref: B.8.5.6
+    title: B.8.5.6 — Disclosure of subcontractors used to process PII
+    text: |
+      Processor shall disclose to the customer in advance the use of
+      subcontractors before such subcontractors process PII; processor
+      shall publicly publish a list of subcontractors, or make it
+      available on request.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [observability-provider]
+    derives_from: [gdpr.Art.28]
+    overview: |
+      Pryv-the-software has one optional subprocessor surface — the
+      observability provider (New Relic adapter; default disabled).
+      The operator's subcontractor list typically includes: hosting
+      provider, observability provider when enabled, any backup-storage
+      provider used by `bin/backup.js` outputs. The operator publishes
+      the list per their B.8.5.6 commitment.
