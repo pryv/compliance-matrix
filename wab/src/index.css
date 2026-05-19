@@ -20,11 +20,20 @@ body {
 .cov-documented    { background-color: #475569; color: white; }   /* slate-600 */
 .cov-out-of-scope  { background-color: #cbd5e1; color: #475569; } /* slate-300 */
 
-/* pryv_effort_saved: how much of the obligation Pryv carries.
-   high = filled bold; medium = lighter fill; low = outline only */
+/* pryv_effort_saved standalone badges (used by hypothetical future
+   filter UIs). The combined RequirementBadge uses .effort-pill-* below. */
 .effort-high   { background-color: #0f766e; color: white; font-weight: 600; }       /* teal-700 */
 .effort-medium { background-color: #14b8a6; color: white; }                          /* teal-500 */
 .effort-low    { background-color: #ffffff; color: #0f766e; border: 1px solid #0f766e; } /* teal-700 outline */
+
+/* Right-side segment of the combined RequirementBadge.
+   Traffic-light semantic: emerald = Pryv saves most effort;
+   amber = roughly half; rose = implementer carries most. Colour family
+   distinct from coverage palette (green/blue/yellow/slate/gray) so
+   the two pill segments are visually separable. */
+.effort-pill-high    { background-color: #059669; color: white; }   /* emerald-600 */
+.effort-pill-medium  { background-color: #f59e0b; color: white; }   /* amber-500 */
+.effort-pill-low     { background-color: #f43f5e; color: white; }   /* rose-500 */
 
 /* facilitation_mode: WHAT kind of help Pryv provides.
    Distinct hue per mode; readable on white. */

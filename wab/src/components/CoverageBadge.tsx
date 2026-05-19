@@ -38,9 +38,15 @@ const MODE_LABELS_FULL: Record<FacilitationMode, string> = {
 
 /**
  * Combined single-pill badge that summarises a requirement row:
- *   Facilitated rows:  [F: <Mode> | <Effort>]
- *   Other tiers:       [<Coverage> | <Effort>]
- *   Out of scope:      [Out of scope]
+ *   Facilitated rows:  [F: <Mode>][<Effort>]
+ *   Other tiers:       [<Coverage>][<Effort>]
+ *   Out of scope:      [Out of scope]    (no effort tail)
+ *
+ * The pill is split into two coloured segments:
+ *   - left: coverage-tier color (cov-*)
+ *   - right: effort color (effort-pill-*) -- emerald/amber/rose for
+ *     high/medium/low. Visually conveys "how much effort Pryv saves"
+ *     at a glance.
  */
 export function RequirementBadge ({
   coverage,
@@ -51,28 +57,32 @@ export function RequirementBadge ({
   mode: FacilitationMode | null;
   effort: EffortSaved | null;
 }) {
-  const parts: string[] = [];
-  if (coverage === 'facilitated' && mode) {
-    parts.push(`F: ${MODE_LABELS[mode]}`);
-  } else {
-    parts.push(COVERAGE_LABELS[coverage]);
-  }
-  if (effort) {
-    parts.push(EFFORT_LABELS_SHORT[effort]);
-  }
-  const label = parts.join(' | ');
+  const leftLabel = (coverage === 'facilitated' && mode)
+    ? `F: ${MODE_LABELS[mode]}`
+    : COVERAGE_LABELS[coverage];
 
   const titleParts: string[] = [COVERAGE_LABELS[coverage]];
   if (mode) titleParts.push(`${MODE_LABELS[mode]} — ${MODE_LABELS_FULL[mode]}`);
   if (effort) titleParts.push(EFFORT_LABELS_FULL[effort]);
   const title = titleParts.join(' · ');
 
+  // No effort tail (out-of-scope rows) -> single-segment pill.
+  if (!effort) {
+    return (
+      <span
+        className={`cov-${coverage} inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap`}
+        title={title}
+      >
+        {leftLabel}
+      </span>
+    );
+  }
+
+  // Two-segment pill: coverage color on the left, effort color on the right.
   return (
-    <span
-      className={`cov-${coverage} inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap`}
-      title={title}
-    >
-      {label}
+    <span className='inline-flex rounded overflow-hidden text-xs font-medium whitespace-nowrap' title={title}>
+      <span className={`cov-${coverage} px-2 py-0.5`}>{leftLabel}</span>
+      <span className={`effort-pill-${effort} px-2 py-0.5`}>{EFFORT_LABELS_SHORT[effort]}</span>
     </span>
   );
 }
