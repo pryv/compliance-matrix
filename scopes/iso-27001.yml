@@ -957,3 +957,229 @@ requirements:
       decommissioned hardware carried a Pryv deployment, the operator's
       data-destruction procedure handles the user-data directories +
       database files; Pryv has no role at the host-OS hygiene layer.
+
+  # ─── Clauses 5-10 framing rows ───
+
+  - ref: "5"
+    title: Clause 5 — Leadership
+    text: |
+      Top management shall demonstrate leadership and commitment with
+      respect to the ISMS by ensuring policy + objectives are
+      established, integration of ISMS requirements into the
+      organization's processes, availability of resources, ownership
+      of communications, and oversight of management review.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Leadership commitment is the operator's top-management activity.
+      No software role; Pryv-side artefacts (audit, observability,
+      this matrix) inform management-review meetings but don't
+      substitute for leadership decisions.
+
+  - ref: "9.1"
+    title: Clause 9.1 — Monitoring, measurement, analysis and evaluation
+    text: |
+      The organization shall determine what needs to be monitored and
+      measured; the methods for monitoring, measurement, analysis,
+      and evaluation to ensure valid results; when monitoring shall
+      be performed; who shall monitor; when results shall be analysed
+      and evaluated; and who shall analyse + evaluate the results.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, observability-provider]
+    overview: |
+      Pryv contributes the data: audit log (control-effectiveness
+      sampling), observability metrics (operational + security KPIs).
+      The monitoring programme structure (what / when / who) is
+      operator-side.
+
+  - ref: "9.2"
+    title: Clause 9.2 — Internal audit
+    text: |
+      The organization shall conduct internal audits at planned
+      intervals to provide information on whether the ISMS conforms
+      to the organization's own requirements + this document's
+      requirements and is effectively implemented + maintained.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit]
+    overview: |
+      Internal-audit programme is operator-side. Pryv-side artefacts
+      that internal auditors typically review: the audit log itself
+      (control-effectiveness sample), this compliance matrix
+      (control inventory), open-pryv.io release-process evidence
+      (CHANGELOGs, tagged releases, test matrix).
+
+  - ref: "10.1"
+    title: Clause 10.1 — Continual improvement
+    text: |
+      The organization shall continually improve the suitability,
+      adequacy and effectiveness of the ISMS.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Continual improvement is a programmatic operator activity.
+      Pryv-side improvements arrive via upstream open-pryv.io releases
+      (which the operator integrates), but the organization's ISMS
+      improvement programme is theirs.
+
+  - ref: "10.2"
+    title: Clause 10.2 — Nonconformity and corrective action
+    text: |
+      When a nonconformity occurs, the organization shall react to
+      the nonconformity + take action to control + correct it;
+      evaluate the need for action to eliminate the causes; implement
+      action needed; review effectiveness; make changes to the ISMS
+      if necessary.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, stream, audit]
+    overview: |
+      CAPA records can ride on Pryv events on a `compliance/capa/*`
+      stream with attachments; the audit chain provides tamper
+      evidence. The CAPA workflow itself (root-cause analysis,
+      effectiveness verification, ISMS-change decisions) is operator-
+      side.
+
+  # ─── Additional A.5 organizational controls ───
+
+  - ref: A.5.2
+    title: A.5.2 — Information security roles and responsibilities
+    text: |
+      Information security roles and responsibilities shall be defined
+      and allocated according to the organization's needs.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Role allocation is HR / organizational. No software role.
+
+  - ref: A.5.3
+    title: A.5.3 — Segregation of duties
+    text: |
+      Conflicting duties and conflicting areas of responsibility shall
+      be segregated.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, system-streams]
+    overview: |
+      Pryv's permission model supports segregation: distinct accesses
+      with distinct permissions per role; system streams isolate
+      privileged data. The role-definition + duty-conflict analysis
+      is operator-side.
+
+  - ref: A.5.6
+    title: A.5.6 — Contact with special interest groups
+    text: |
+      The organization shall establish and maintain contact with
+      special interest groups, security forums and professional
+      associations.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Industry-engagement programme is operator-side.
+
+  - ref: A.5.8
+    title: A.5.8 — Information security in project management
+    text: |
+      Information security shall be integrated into project management.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Project-management methodology is operator-side. Pryv-side
+      project artefacts (this matrix, public open-pryv.io plans + GH
+      Projects board for new features) demonstrate ISMS integration
+      on the upstream side.
+
+  - ref: A.5.9
+    title: A.5.9 — Inventory of information and other associated assets
+    text: |
+      An inventory of information and other associated assets,
+      including owners, shall be developed and maintained.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [stream, event, audit]
+    derives_from: [iso-27001.A.5.12]
+    overview: |
+      Pryv's stream + event model gives a queryable inventory of all
+      data assets stored in the deployment (the data subject is
+      implicitly the asset owner under Art. 4 GDPR personhood).
+      Operator's broader infrastructure inventory (servers, databases,
+      logs, code repositories) is layered on top.
+
+  - ref: A.5.11
+    title: A.5.11 — Return of assets
+    text: |
+      Personnel + other interested parties shall return all the
+      organization's assets in their possession upon change or
+      termination of their employment, contract or agreement.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, audit]
+    derives_from: [iso-27001.A.6.5, hipaa-security.164.308(a)(3)(ii)(C)]
+    overview: |
+      For the technical "asset" of an access token, return = revocation
+      (`accesses.delete`). For physical / off-line assets, return is
+      operator-side. The audit log captures the technical-side return.
+
+  - ref: A.5.21
+    title: A.5.21 — Managing information security in the ICT supply chain
+    text: |
+      Processes and procedures shall be defined and implemented to
+      manage the information-security risks associated with the ICT
+      products and services supply chain.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit]
+    derives_from: [iso-27001.A.5.19, iso-27001.A.8.30]
+    overview: |
+      Supply-chain risk for the Pryv layer: published dependency-audit
+      pipeline + Docker image SHA pinning + reproducible builds. The
+      operator's broader ICT supply-chain programme (vendor
+      assessment, SLA reviews) sits on top.
+
+  - ref: A.5.24
+    title: A.5.24 — Information security incident management planning and preparation
+    text: |
+      The organization shall plan and prepare for managing information
+      security incidents by defining, establishing and communicating
+      information security incident management processes, roles and
+      responsibilities.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, observability-provider, access]
+    derives_from: [hipaa-security.164.308(a)(6)(i), diga.A1.2.6]
+    overview: |
+      Pryv contributes detection + scoping data (audit + observability)
+      + containment primitive (accesses.delete). The incident-
+      management plan itself (roles, escalation, communications,
+      lessons-learned) is operator-side.
+
+  - ref: A.5.25
+    title: A.5.25 — Assessment and decision on information security events
+    text: |
+      The organization shall assess information security events and
+      decide if they are to be categorized as information security
+      incidents.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, observability-provider]
+    derives_from: [iso-27001.A.5.24]
+    overview: |
+      Event-vs-incident classification is operator decision. Pryv-side
+      data (audit row patterns, observability anomalies) feeds the
+      assessment but the categorization rule is operator policy.
+
+  - ref: A.5.30
+    title: A.5.30 — ICT readiness for business continuity
+    text: |
+      ICT readiness shall be planned, implemented, maintained and
+      tested based on business continuity objectives and ICT
+      continuity requirements.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [multi-core-mTLS, backup-restore, letsEncrypt-integration]
+    derives_from: [iso-27001.A.8.14, hipaa-security.164.308(a)(7)(ii)(B)]
+    overview: |
+      ICT-readiness Pryv inheritance: multi-core HA + backup-restore +
+      cluster-replicated TLS certificates. The business-continuity
+      objectives + testing cadence are operator policy.

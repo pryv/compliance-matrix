@@ -669,6 +669,56 @@ requirements:
       + access version chain are the evidence layer). The
       organisational-measures programme is yours.
 
+  - ref: Art.26
+    title: Joint controllers
+    text: |
+      Where two or more controllers jointly determine purposes and
+      means of processing, they are joint controllers. They shall, in
+      a transparent manner, determine their respective responsibilities
+      for compliance with the Regulation by means of an arrangement.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, CMC]
+    overview: |
+      Joint-controller arrangements get recorded on the access's
+      `clientData.joint_controller_arrangement` with a pointer to the
+      written agreement (Art. 26 §1). Where each controller runs their
+      own Pryv deployment, CMC's cross-platform access pattern is the
+      natural technical substrate for the joint operation. The
+      arrangement's essence (Art. 26 §2) is communicated to the data
+      subject via the access's clientData.privacy_notice.
+
+  - ref: Art.27
+    title: Representative of controllers / processors not established in the Union
+    text: |
+      Where Art. 3(2) applies, controller or processor not established
+      in the Union shall designate in writing a representative in the
+      Union, except where processing is occasional, doesn't include
+      large-scale special-category data, etc.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Representative designation is a contractual + regulatory
+      registration step. No software role.
+
+  - ref: Art.29
+    title: Processing under the authority of the controller or processor
+    text: |
+      Processor and any person acting under the authority of the
+      controller or processor, who has access to personal data, shall
+      not process those data except on instructions from the controller.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, audit]
+    derives_from: [gdpr.Art.28]
+    overview: |
+      "Only on instructions" is enforced operationally through the
+      access primitive — workforce / contractor / app accesses are
+      scoped to specific streams + levels per the controller's
+      instructions, and the audit log proves what was actually done.
+      Violations show as out-of-scope access attempts or unauthorized
+      method calls in the audit data.
+
   - ref: Art.25
     title: Data protection by design and by default
     text: |
@@ -982,6 +1032,39 @@ requirements:
       pursuing certification consume this matrix as the technical-
       control inventory. ISO 27701 + (where applicable) HDS are
       adjacent certifications already represented in this matrix.
+
+  - ref: Art.82
+    title: Right to compensation and liability
+    text: |
+      Any person who has suffered material or non-material damage as a
+      result of an infringement of the Regulation shall have the right
+      to receive compensation from the controller or processor for the
+      damage suffered.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, access]
+    overview: |
+      Liability + compensation are legal proceedings. Pryv contributes
+      defense evidence: the audit log + access-version chain support
+      the controller / processor in demonstrating compliance with the
+      relevant obligations (or, where compliance failed, in scoping
+      the actual damage). The legal outcome is fact-specific.
+
+  - ref: Art.83
+    title: General conditions for imposing administrative fines
+    text: |
+      Each supervisory authority shall ensure that the imposition of
+      administrative fines is in each case effective, proportionate
+      and dissuasive. Fines up to €20 million or 4% of total worldwide
+      annual turnover, whichever is higher.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Fines are regulator-side. Pryv has no role in fine calculation
+      or imposition. Pryv-side data + this matrix help the controller
+      argue for mitigation under Art. 83(2) factors (degree of
+      cooperation, technical + organisational measures implemented,
+      etc.).
 
   # ───── Chapter V — Transfers of personal data to third countries ─────
 
