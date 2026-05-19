@@ -15,9 +15,9 @@ const EFFORT_LABELS_SHORT: Record<EffortSaved, string> = {
 };
 
 const EFFORT_LABELS_FULL: Record<EffortSaved, string> = {
-  high: 'Pryv carries most of the obligation',
-  medium: 'Shared effort between Pryv and implementer',
-  low: 'Implementer carries most of the work'
+  high: 'Engineering + operational effort: Pryv carries most (legal / editorial / process work not counted; see docs/effort-axis.md)',
+  medium: 'Engineering + operational effort: roughly shared between Pryv and implementer',
+  low: 'Engineering + operational effort: implementer carries most; Pryv contributes a small technical substrate'
 };
 
 const MODE_LABELS: Record<FacilitationMode, string> = {

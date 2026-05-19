@@ -20,11 +20,18 @@ Two structured fields decompose this:
 
 Reads as: "Pryv saves the implementer X effort."
 
+**Important:** the "effort" axis is scoped specifically to
+**engineering + operational** work — building, wiring, running the
+technical side of the obligation. It does **not** count legal /
+editorial / process / strategic compliance effort, which stays on
+the implementer regardless of Pryv. See
+[[effort-axis.md]] for the precise scope + examples per level.
+
 | Value | Meaning |
 |---|---|
-| `high` | Pryv carries most of the obligation. Implementer mostly cites / composes / clicks. |
-| `medium` | Roughly shared effort. Both sides do substantive work. |
-| `low` | Pryv contributes a small substrate. Implementer carries most of the work. |
+| `high` | Pryv carries most of the engineering+operational work. |
+| `medium` | Roughly shared engineering+operational effort. |
+| `low` | Pryv contributes a small technical substrate; bulk on implementer. |
 
 Per-coverage default expectations (not enforced — author's judgement):
 
