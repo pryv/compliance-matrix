@@ -1,0 +1,184 @@
+id: iso-27701
+title: ISO/IEC 27701 — Extension to ISO/IEC 27001 for Privacy Information Management
+short: ISO 27701
+type: standard
+jurisdiction: International (ISO/IEC)
+version: ISO/IEC 27701:2019
+version_date: "2019-08-01"
+canonical_url: https://www.iso.org/standard/71670
+matrix_language: EN
+curated: false
+layered_on: [iso-27001]
+
+changelog:
+  - date: "2026-05-19"
+    change: |
+      initial draft — 9 rows focused on Annex A (PII controller
+      controls) and Annex B (PII processor controls) where Pryv-the-
+      software contributes. 27701 cannot be certified standalone —
+      requires a 27001 ISMS first (layered_on: [iso-27001]). Source
+      text paywalled; maps by clause ID + paraphrase.
+
+requirements:
+
+  - ref: "5"
+    title: Clause 5 — PIMS-specific requirements extending ISO 27001
+    text: |
+      Organization shall apply the requirements of ISO/IEC 27001
+      treating privacy as an information-security concern; PII
+      controllers and processors apply Annex A and/or B respectively.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, audit]
+    derives_from: [iso-27001.6.1.2]
+    overview: |
+      27701 extends the 27001 ISMS to cover PII handling specifically.
+      Pryv contribution is the same primitive set surfaced in the
+      iso-27001 rows + the GDPR rows; 27701 simply combines them under
+      the privacy-information-management label. The organization's
+      PIMS-specific risk treatment and statement of applicability sit
+      on top.
+
+  # ───────────────────────────────────────────────────────────────
+  # Annex A — PII controller controls (selected)
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: A.7.2.1
+    title: A.7.2.1 — Identify and document purpose
+    text: |
+      Organization shall identify and document the specific purposes
+      for which PII will be processed.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData]
+    derives_from: [gdpr.Art.5]
+    overview: |
+      Pryv pattern: `access.clientData.purpose` records the per-access
+      purpose at grant time, durable + auditable. The vocabulary of
+      purposes (the organization's documented PIMS catalogue) is the
+      operator's editorial work; Pryv carries each instance forward.
+
+  - ref: A.7.2.2
+    title: A.7.2.2 — Identify lawful basis
+    text: |
+      Organization shall determine, document, and comply with the
+      relevant lawful basis for processing of PII.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData]
+    derives_from: [gdpr.Art.6, gdpr.Art.9]
+    overview: |
+      `access.clientData.lawful_basis` records the determined basis
+      (consent, contract, legal obligation, etc.); for special-category
+      PII, `clientData.special_category_basis` records the GDPR Art. 9
+      paragraph or equivalent. Both travel with the access into the
+      audit chain.
+
+  - ref: A.7.3.1
+    title: A.7.3.1 — Determining and fulfilling obligations to PII principals
+    text: |
+      Organization shall determine and document its legal, regulatory,
+      and business obligations to PII principals related to the
+      processing of their PII.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, stream, event, audit, data-types]
+    derives_from: [gdpr.Art.12, gdpr.Art.15]
+    functional_specs: [EVENT.BASE, STREAM.BASE]
+    tests: [AA01, EGSQ, U9HQ]
+    overview: |
+      Pryv ships the technical fulfilment of the PII-principal-rights
+      obligations: the subject (PII principal) holding a personal
+      token reads everything via the standard API. The organization's
+      response procedure (timeline, identity verification, content of
+      response) is the policy half; Pryv responds in milliseconds.
+
+  - ref: A.7.3.4
+    title: A.7.3.4 — Providing mechanism to modify or withdraw consent
+    text: |
+      Organization shall provide a mechanism for PII principals to
+      modify or withdraw their consent.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, CMC]
+    derives_from: [gdpr.Art.7]
+    tests: [AA02, ACCP]
+    overview: |
+      Withdrawal = `accesses.delete`; modification = `accesses.update`
+      with new permissions / clientData. Both are versioned and
+      auditable; the prior consent state is preserved for §7
+      demonstrability. Cross-account (CMC) consent withdrawal uses
+      `consent/revoke-cmc` for symmetric teardown.
+
+  - ref: A.7.4.1
+    title: A.7.4.1 — Limit collection
+    text: |
+      Organization shall limit the collection of PII to the minimum
+      relevant, proportionate and necessary for the identified
+      purposes.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, stream]
+    derives_from: [gdpr.Art.5]
+    tests: [AA01, ACCP]
+    overview: |
+      Per-stream permissions are the technical minimisation control;
+      stream topology design determines the granularity. The operator's
+      decision of which streams a given app's access should touch IS
+      the limit-collection enforcement, expressed in `permissions[]`.
+
+  - ref: A.7.4.7
+    title: A.7.4.7 — Records of PII processing
+    text: |
+      Organization shall determine and securely maintain the necessary
+      records in support of its obligations for the processing of PII.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, clientData, audit, CMC, data-residency]
+    derives_from: [gdpr.Art.30]
+    docs: [customer-resources/audit-setup.md, guides/audit-logs.md]
+    tests: [U9HQ, QXCH, AA01]
+    overview: |
+      Same artefact set as GDPR Art. 30: access + clientData + audit +
+      CMC + data-residency primitives constitute the records-of-
+      processing register (purpose, basis, recipients, transfers,
+      retention, security). Derivable per PII-principal per time
+      window.
+
+  # ───────────────────────────────────────────────────────────────
+  # Annex B — PII processor controls (selected)
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: B.8.4.1
+    title: B.8.4.1 — Confidentiality
+    text: |
+      Persons under the processor's authority who have access to PII
+      shall be subject to a confidentiality commitment.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, audit]
+    overview: |
+      The confidentiality commitment is an organizational artefact
+      (employment agreements, contractor NDAs). Pryv's contribution:
+      the audit log gives per-person accountability so the commitment
+      is enforceable in practice (any breach is attributable to an
+      access tied to a person).
+
+  - ref: B.8.5.4
+    title: B.8.5.4 — Records related to processing PII
+    text: |
+      Processor shall determine and maintain necessary records related
+      to the processing of PII to support compliance with applicable
+      obligations.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [audit, access]
+    derives_from: [iso-27701.A.7.4.7]
+    tests: [AT01, AT51, AT61]
+    overview: |
+      When Pryv operates as processor (i.e., when the implementer is
+      the controller and the Pryv operator is distinct), the same
+      audit chain documented under iso-27001 A.8.15 + iso-27701 A.7.4.7
+      satisfies the processor-side records-of-processing requirement.
+      The processor's specific obligations (subprocessor list, transfer
+      register) are operator-side artefacts.
