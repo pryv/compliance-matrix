@@ -1,0 +1,516 @@
+id: hipaa-security
+title: HIPAA Security Rule
+short: HIPAA-Security
+type: regulation
+jurisdiction: US
+version: 45 CFR Part 164 Subpart C (as amended through the HITECH 2013 Omnibus Final Rule)
+version_date: "2013-01-25"
+canonical_url: https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-C
+matrix_language: EN
+curated: false
+
+changelog:
+  - date: "2026-05-19"
+    change: initial draft — Technical Safeguards (§164.312) full + Administrative Safeguards (§164.308) high-coverage subset + Physical Safeguards (§164.310) framing row. Implementation-specifications mapped at Required (R) vs Addressable (A) granularity.
+
+requirements:
+
+  # ───────────────────────────────────────────────────────────────
+  # §164.308 — Administrative Safeguards
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: 164.308(a)(1)(i)
+    title: Security Management Process — standard
+    text: |
+      Implement policies and procedures to prevent, detect, contain, and
+      correct security violations.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, observability-provider]
+    overview: |
+      The Security Management Process is a programme you run as the covered
+      entity / business associate — risk analysis, risk-management decisions,
+      sanctions, activity review. Pryv supplies the technical raw material
+      (audit log, system-level observability) that several of those
+      activities draw on — particularly the §164.308(a)(1)(ii)(D) Information
+      System Activity Review specification. The umbrella programme itself
+      remains yours to define and run.
+    detail: |
+      The four implementation specifications under (a)(1)(ii) — risk
+      analysis (R), risk management (R), sanction policy (R), and
+      information system activity review (R) — each have their own row
+      where the Pryv contribution is more direct. This row covers the
+      umbrella standard itself: a written, maintained programme.
+
+  - ref: 164.308(a)(1)(ii)(D)
+    title: Information system activity review — Required
+    text: |
+      Implement procedures to regularly review records of information
+      system activity, such as audit logs, access reports, and security
+      incident tracking reports.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [audit, audit-event-stream, observability-provider]
+    tests: [AT01, AT02, AT03, AT51]
+    overview: |
+      Every API call is captured by Pryv's per-user audit log; the
+      `audit.get` method exposes it for periodic review. Observability
+      (New Relic adapter) gives system-level activity reports for the
+      infrastructure side. The "regular review" cadence is your written
+      procedure.
+    detail: |
+      Audit records carry timestamp, user, access reference (accessId +
+      accessSerial), API method, key request fields, success / error.
+      This is the raw material for both routine review (who accessed what,
+      when) and incident-driven investigation. The audit-event-stream
+      optional channel surfaces audit records into the subject's own
+      streams, useful when the subject participates in review.
+    technical: |
+      Audit storage: per-user SQLite in
+      `open-pryv.io/components/audit/`. Access method: `audit.get`. Tests
+      live under `open-pryv.io/components/audit/test/`.
+
+  - ref: 164.308(a)(3)(ii)(C)
+    title: Termination procedures — Addressable
+    text: |
+      Implement procedures for terminating access to electronic protected
+      health information when employment ends or workforce role changes.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, audit]
+    tests: [AA02, ACCP, LG20]
+    overview: |
+      Workforce access to ePHI is mediated by Pryv accesses. Termination
+      is a single API call (`accesses.delete`) which immediately revokes
+      the token. The audit log proves the termination instant. For
+      role-change scenarios, `accesses.update` narrows permissions without
+      full revocation, preserving the version history of the change.
+    detail: |
+      The "Addressable" status means you must implement it, document why
+      not, or implement an equivalent. The Pryv primitives give you the
+      "implement it" path directly:
+        - Full termination: `accesses.delete` revokes the token immediately
+          and snapshots the prior state into the access history.
+        - Role change / narrowing: `accesses.update` with reduced
+          `permissions` keeps the same access identity but enforces the
+          new scope from the version bump onward.
+        - Audit chain: every subsequent API call would fail authentication
+          (after delete) or fall outside the new scope (after update),
+          producing a verifiable termination boundary.
+
+  - ref: 164.308(a)(4)(ii)(B)
+    title: Access authorization — Addressable
+    text: |
+      Implement policies and procedures for granting access to ePHI
+      through, for example, access to a workstation, transaction,
+      program, process, or other mechanism.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, clientData, stream]
+    tests: [AA01, ACCP]
+    overview: |
+      Granting access to ePHI in Pryv means minting an access with
+      explicit per-stream permissions. The technical authorization
+      decision is enforced at every API call. Documentation of the
+      authorization rationale lives in `access.clientData` next to the
+      grant itself, so the "why" travels with the "what".
+    detail: |
+      Access grants are creation events on the `accesses` collection,
+      with `permissions[]` listing the streamId + level tuples the
+      grantee may exercise. `clientData` carries free-form metadata
+      such as the workforce-role label, the granting administrator,
+      the business reason. Together these form a per-grant record
+      satisfying both the technical control and the documentation
+      half of the standard.
+
+  - ref: 164.308(a)(4)(ii)(C)
+    title: Access establishment and modification — Addressable
+    text: |
+      Implement policies and procedures that, based upon the entity's
+      access authorization policies, establish, document, review, and
+      modify a user's right of access to a workstation, transaction,
+      program, or process.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, audit]
+    tests: [AA01, AA02, ACCP, GF33]
+    overview: |
+      The access lifecycle (create / read / update / delete) is first-
+      class in Pryv. `accesses.update` writes a tamper-evident snapshot
+      of the prior version into history on every modification, giving
+      you the documented review trail this standard expects.
+    detail: |
+      Modification semantics:
+        - `accesses.create` — establishes a new grant (see (a)(4)(ii)(B)).
+        - `accesses.get ?includeHistory=true` — review the version chain.
+        - `accesses.update` — modify permissions / clientData; bumps
+          `serial`, snapshots the old head into history.
+        - `accesses.delete` — termination (see (a)(3)(ii)(C)).
+      Every step appears in the audit log, with the timestamp and
+      acting administrator's identity preserved.
+
+  - ref: 164.308(a)(5)(ii)(D)
+    title: Password management — Addressable
+    text: |
+      Procedures for creating, changing, and safeguarding passwords.
+    coverage: configurable
+    draft: true
+    pryv_primitives: [system-streams, MFA, access]
+    config_keys: [services.mfa.mode, auth.passwordRules]
+    tests: [MA01, MA02, MA03]
+    overview: |
+      Pryv stores credentials on a privileged `system-stream`, separate
+      from ordinary content. Password rules (complexity, rotation) are
+      operator-configured. Adding `services.mfa.mode` raises the
+      authentication strength beyond a password alone — see §164.312(d).
+    detail: |
+      Password is one possible factor; MFA via the `mfa.*` API methods
+      (SMS-based by default) is the second factor when enabled. Recovery
+      flows live alongside (`mfa.recover`) so an account is not lost
+      when a device is. The implementer chooses whether MFA is required
+      universally or per-role.
+
+  - ref: 164.308(a)(7)(ii)(A)
+    title: Data backup plan — Required
+    text: |
+      Establish and implement procedures to create and maintain retrievable
+      exact copies of electronic protected health information.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [backup-restore]
+    config_keys: [backup.outputDir, backup.includeAttachments]
+    tests: [AT04, AT05]
+    overview: |
+      `bin/backup.js` produces per-user backup files (events, streams,
+      accesses, attachments). `--restore` rebuilds a user from a backup
+      file. The backup procedure ("when, where, how often") is yours to
+      schedule; the underlying primitive is shipped.
+    detail: |
+      Per-user backup files are advantageous for HIPAA's "exact copies"
+      language because the backup unit matches the natural protected-
+      health-information unit (the subject). They also play well with
+      the §164.310(d) media controls (you can encrypt + transport a
+      single subject's backup file).
+    technical: |
+      Backup chunking + integrity restored in plan 28 phase 1 (see
+      `open-pryv.io/CHANGELOG-v2-back.md`).
+
+  - ref: 164.308(a)(7)(ii)(B)
+    title: Disaster recovery plan — Required
+    text: |
+      Establish (and implement as needed) procedures to restore any loss
+      of data.
+    coverage: configurable
+    draft: true
+    pryv_primitives: [backup-restore, multi-core-mTLS, letsEncrypt-integration]
+    config_keys: [cluster.discoveryEnabled, letsEncrypt.certRenewer]
+    tests: [AT06, BUNDLEENC]
+    overview: |
+      Two layers Pryv gives you: (1) cold restore from `bin/backup.js
+      --restore`, the canonical recovery path; (2) hot redundancy via a
+      multi-core cluster (rqlite replication + cluster-CA mTLS between
+      cores), so a single-region failure doesn't lose live data. You
+      compose them per your RTO / RPO.
+    detail: |
+      Cluster topology is documented in the dev-site customer-resources
+      guides. The bootstrap CLI (`bin/bootstrap.js new-core`) issues an
+      encrypted bundle with the cluster CA + rqlite TLS material; the
+      joining core boots via `bin/master.js --bootstrap`. Lets-Encrypt
+      certificates replicate across the cluster via rqlite keys, so a
+      surviving core can serve TLS without re-issuing.
+
+  # ───────────────────────────────────────────────────────────────
+  # §164.310 — Physical Safeguards (framing only)
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: "164.310"
+    title: Physical Safeguards — standard (framing)
+    text: |
+      Implement policies and procedures to limit physical access to
+      electronic information systems and the facility or facilities in
+      which they are housed, while ensuring that properly authorized
+      access is allowed.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [data-residency, encryption-at-rest-secrets]
+    overview: |
+      Physical safeguards (facility access, workstation security, device
+      and media controls) are properties of the hosting environment, not
+      of the Pryv software itself. Pryv contributes two things: the
+      data-residency primitive lets you bind a user's data to a specific
+      hosting (so you can certify the physical environment for that data
+      explicitly), and operator-supplied secrets are AES-256-GCM
+      encrypted at rest so that a stolen disk doesn't leak the keys
+      themselves.
+    detail: |
+      For each implementation specification under §164.310 ((a)(1) facility
+      access controls, (b) workstation use, (c) workstation security,
+      (d) device and media controls), the controls are physical and
+      operational. Pryv's posture: the operator chooses + documents the
+      hosting environment; for multi-hosting deployments, `data-residency`
+      lets you certify the physical layer differently per region. Per-
+      user backup files (see §164.308(a)(7)(ii)(A)) are the unit of
+      device-and-media-controls transfer when you need to move a single
+      subject's ePHI off-host.
+
+  # ───────────────────────────────────────────────────────────────
+  # §164.312 — Technical Safeguards
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: 164.312(a)(1)
+    title: Access control — standard
+    text: |
+      Implement technical policies and procedures for electronic
+      information systems that maintain ePHI to allow access only to
+      those persons or software programs that have been granted access
+      rights as specified in §164.308(a)(4).
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, permissions, system-streams]
+    tests: [AA01, AA02, ACCP]
+    overview: |
+      Per-stream permissions are enforced at every API call; an access
+      can read or write only the streams its `permissions[]` lists, at
+      the level granted. There is no "bypass on trust" path — the
+      enforcement is the API surface, not a downstream policy layer.
+      System streams (account, password, MFA) sit on a separately
+      controlled namespace.
+    detail: |
+      The standard's four implementation specifications below each map
+      to a distinct Pryv concern. The standard itself is the umbrella:
+      the technical control system that prevents access by anyone /
+      anything not granted it.
+
+  - ref: 164.312(a)(2)(i)
+    title: Unique user identification — Required
+    text: |
+      Assign a unique name and/or number for identifying and tracking
+      user identity.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, audit, system-streams]
+    tests: [AA01, U9HQ]
+    overview: |
+      Every Pryv account has a unique username + cuid; every access
+      derived from it carries a unique access id (cuid) and version
+      serial. Audit records cite the (accessId, accessSerial) tuple,
+      so each tracked action ties back to a unique identity.
+    technical: |
+      Account model: see `open-pryv.io/components/business/src/users/`.
+      Access ids are cuids; composite ids `<cuid>:<serial>` appear once
+      `accesses.update` is exercised (see `context/access-versioning.md`).
+
+  - ref: 164.312(a)(2)(ii)
+    title: Emergency access procedure — Required
+    text: |
+      Establish (and implement as needed) procedures for obtaining
+      necessary ePHI during an emergency.
+    coverage: configurable
+    draft: true
+    pryv_primitives: [access, system-streams]
+    config_keys: [auth.adminAccessKey]
+    tests: [LG20, GF33]
+    overview: |
+      The operator-held admin access key (`auth.adminAccessKey`) is the
+      break-glass mechanism: it grants administrative reads not
+      requiring an ordinary user's consent. You document the
+      circumstances under which it may be exercised and the audit-trail
+      review that must follow.
+    detail: |
+      The admin access key is operator-side and rotates only at
+      operator-supplied cadence — treat it as a privileged credential
+      under custody controls equivalent to a root password. Every API
+      call made under the admin key is audited like any other, so
+      post-emergency review is concrete.
+
+  - ref: 164.312(a)(2)(iii)
+    title: Automatic logoff — Addressable
+    text: |
+      Implement electronic procedures that terminate an electronic
+      session after a predetermined time of inactivity.
+    coverage: configurable
+    draft: true
+    pryv_primitives: [access, permissions]
+    config_keys: [auth.sessionMaxAge, access.expires]
+    tests: [AA02, ACCP]
+    overview: |
+      Two configurables: personal-token session lifetime
+      (`auth.sessionMaxAge`) and per-access expiry (`access.expires`).
+      The latter is per-grant (the access is automatically inert after
+      the timestamp passes) — useful for clinical-workflow accesses
+      whose validity is bounded by the case.
+    detail: |
+      Note that HIPAA's "automatic logoff" is workstation-centric in
+      origin (workforce members stepping away from a terminal). In a
+      Pryv-mediated workflow, the analogous control is the validity
+      window of the access token. Combining `auth.sessionMaxAge` (for
+      interactive workforce sessions) with per-grant `access.expires`
+      (for app-driven background processes) covers both shapes.
+
+  - ref: 164.312(a)(2)(iv)
+    title: Encryption and decryption — Addressable
+    text: |
+      Implement a mechanism to encrypt and decrypt ePHI.
+    coverage: configurable
+    draft: true
+    pryv_primitives: [encryption-at-rest-secrets, letsEncrypt-integration]
+    config_keys: [letsEncrypt.atRestKey, storages.engines.postgresql.ssl]
+    tests: [ACMEINT, BUNDLEENC, CERTUTILS]
+    overview: |
+      Pryv encrypts operator-supplied secrets at rest using AES-256-GCM
+      (HKDF-derived per-key), and provides TLS-in-transit via the
+      built-in ACME integration. For ePHI itself, the operator chooses
+      the storage engine and its at-rest encryption posture (filesystem
+      encryption, PG TDE, etc.) — Pryv does not encrypt event content
+      with a Pryv-managed key.
+    detail: |
+      The "Pryv-managed" at-rest encryption today protects platform
+      secrets — Let's Encrypt account keys, observability provider
+      tokens, cluster bootstrap bundles. Encrypting event content under
+      a Pryv-managed key is an open feature candidate (see
+      `proposals/event-content-encryption.md` if filed). In the
+      meantime, operator-side encryption (LUKS, dm-crypt, PG TDE) is
+      the canonical path.
+    technical: |
+      AES-256-GCM at-rest module: `open-pryv.io/components/business/src/acme/AtRestEncryption.js`.
+      Bootstrap-bundle encryption: `BundleEncryption.js` (same component).
+
+  - ref: 164.312(b)
+    title: Audit controls — standard
+    text: |
+      Implement hardware, software, and/or procedural mechanisms that
+      record and examine activity in information systems that contain
+      or use ePHI.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [audit, audit-event-stream]
+    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65]
+    overview: |
+      Pryv's per-user audit log records every API method invocation —
+      timestamp, user, access reference, method, success / error. The
+      `audit.get` API method surfaces it for examination. The optional
+      audit-event-stream channel additionally emits audit records into
+      the subject's own streams, so the subject (and any access they
+      authorise) can examine the history.
+    detail: |
+      Audit storage uses SQLite directly (not the engine-agnostic mall
+      layer), to keep the audit path independent of the data path. This
+      decouples integrity of the log from issues in the primary engine.
+
+  - ref: 164.312(c)(1)
+    title: Integrity — standard
+    text: |
+      Implement policies and procedures to protect ePHI from improper
+      alteration or destruction.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, audit, permissions, backup-restore]
+    overview: |
+      Integrity is multi-layered: write authorization gated by
+      `permissions`, event versioning preserves the prior value on
+      every update, audit pins the (who, when, via which access)
+      attribution, and `bin/backup.js` provides the recovery path if
+      a destruction event needs to be reversed. The standard's overall
+      programmatic obligation is yours; the technical substrate is
+      Pryv's.
+
+  - ref: 164.312(c)(2)
+    title: Mechanism to authenticate ePHI — Addressable
+    text: |
+      Implement electronic mechanisms to corroborate that ePHI has not
+      been altered or destroyed in an unauthorized manner.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, audit]
+    overview: |
+      Event versioning preserves the prior content on every update, so
+      "is this the original?" is a tractable question — compare against
+      the history. The audit row references the access that performed
+      the update, anchoring the change to an authenticated actor.
+      Tamper detection beyond this (e.g., end-to-end content hashing
+      under a customer-held key) is on the implementer or an extension.
+
+  - ref: 164.312(d)
+    title: Person or entity authentication — standard
+    text: |
+      Implement procedures to verify that a person or entity seeking
+      access to ePHI is the one claimed.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, MFA, system-streams]
+    config_keys: [services.mfa.mode]
+    tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07]
+    overview: |
+      Authentication is mediated by the access-token primitive: the
+      bearer of a valid token has been authenticated. Strength of
+      that authentication is layered — username + password by default;
+      MFA via `mfa.*` API methods (SMS-based) when
+      `services.mfa.mode` is set. Recovery paths preserve account
+      ownership when a second-factor device is lost.
+    detail: |
+      MFA is opt-in per operator; once enabled, it can be required at
+      login, at sensitive operations, or both. The MA test series
+      exercises activate / confirm / challenge / verify / deactivate /
+      recover paths.
+
+  - ref: 164.312(e)(1)
+    title: Transmission security — standard
+    text: |
+      Implement technical security measures to guard against unauthorized
+      access to ePHI that is being transmitted over an electronic
+      communications network.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
+    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC]
+    overview: |
+      All Pryv API traffic terminates on TLS 1.3 by default, with
+      certificates issued + auto-renewed via the built-in ACME
+      integration. Inter-core traffic in a multi-core cluster runs over
+      mTLS using a cluster-private CA. There is no plaintext path
+      shipped.
+    detail: |
+      LE certificate replication uses rqlite keyspace `tls-cert/<host>` +
+      `tls-acme-account`; rotation triggers `https.Server.setSecureContext`
+      via cluster IPC for live key swap without downtime. The cluster CA
+      lives outside the LE chain — operator-rooted, used only between
+      cores.
+
+  - ref: 164.312(e)(2)(i)
+    title: Integrity controls — Addressable
+    text: |
+      Implement security measures to ensure that electronically
+      transmitted ePHI is not improperly modified without detection
+      until disposed of.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [letsEncrypt-integration]
+    tests: [ACMEINT, ACMEORCH]
+    overview: |
+      TLS 1.3 provides cryptographic integrity (AEAD) on every byte in
+      transit. End-to-end transmission integrity is therefore a
+      property of the connection — modification in transit is
+      cryptographically detectable. Endpoint-to-endpoint integrity
+      across multiple hops (e.g., proxy chains) requires the
+      implementer's chain to preserve this property.
+
+  - ref: 164.312(e)(2)(ii)
+    title: Encryption — Addressable (transmission)
+    text: |
+      Implement a mechanism to encrypt ePHI whenever deemed appropriate.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
+    config_keys: [letsEncrypt.enabled]
+    tests: [ACMEINT, ACMEORCH, CERTUTILS]
+    overview: |
+      TLS 1.3 in transit is default-on via the built-in ACME
+      integration; mTLS between cores is the inter-node default once
+      a cluster is bootstrapped. "Whenever deemed appropriate" — Pryv's
+      default for ePHI transit is: always.
+    detail: |
+      Operators running behind a TLS-terminating reverse proxy can opt
+      `letsEncrypt.enabled: false` and let the proxy hold the certs;
+      the core then serves plain HTTP only on its loopback. The TLS
+      requirement holds at the transmission boundary, wherever the
+      operator chooses to place that boundary.
