@@ -207,6 +207,43 @@ I actually configure?"
 - `hipaa-security.164.308(a)(5)(ii)(C)` (login monitoring) `detail`
   extended with the fail2ban + reverse-proxy pattern.
 
+**Commit:** `271f34d`.
+
+### Q7 — Webhook delivery: HMAC signing, replay protection, TLS-only, retry, token-leakage? (Classic push-with-content security minefield)
+
+**Short answer:** **Pryv webhooks are signal-only by design.** The
+webhook POST body carries a notification that something changed —
+not the changed data itself. Receivers consume the change by
+making an **authenticated GET** back to Pryv (using the access
+token they already hold) and reading the current state via
+`events.get` / `streams.get`.
+
+This sidesteps most of the classic webhook security minefield by
+construction:
+
+| Classic concern | Pryv signal-only consequence |
+|---|---|
+| HMAC signing | not required — no sensitive content in body to authenticate; forged signal → at worst an extra authenticated GET |
+| Replay protection | not required for data integrity — replayed signal → idempotent GET |
+| Token leakage in body | impossible — tokens stay with receiver, not in wire payload |
+| Body-content tampering | no sensitive content to tamper with |
+
+**What still matters operationally:**
+- TLS on delivery (don't leak the *existence* of a change).
+- Delivery retries + back-off; receiver awareness of failure
+  state so it can fall back to polling.
+- Receiver poison-pill protection (timeouts + concurrency caps on
+  the Pryv worker side).
+- GET-side auth (already secured by `access` + `permissions` +
+  `audit`).
+
+**Matrix encoding:**
+- `context/webhooks-signal-only.md` — full design + operational
+  caveats + the security-implications comparison table.
+- `docs/pryv-primitives.md` gets a new `webhooks` primitive entry.
+- `hipaa-security.164.312(e)(1)` (transmission security) `detail`
+  extended with the signal-only framing.
+
 **Commit:** *(this commit)*.
 
 ## How to use this FAQ

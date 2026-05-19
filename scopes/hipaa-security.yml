@@ -562,6 +562,16 @@ requirements:
       lives outside the LE chain — operator-rooted, used only between
       cores.
 
+      **Webhook delivery is signal-only.** Outbound webhook POSTs
+      from Pryv carry a notification that something changed — not
+      the changed data itself. Receivers fetch the current state via
+      authenticated GET back to Pryv (same access-token-protected
+      paths as any other read). No PHI / PII / tokens transit the
+      webhook surface; the transmission-security attack surface
+      narrows accordingly. See `context/webhooks-signal-only.md` for
+      the full design rationale + operational caveats (TLS-on-
+      delivery, retry semantics, poison-pill protection).
+
   - ref: 164.312(e)(2)(i)
     title: Integrity controls — Addressable
     text: |

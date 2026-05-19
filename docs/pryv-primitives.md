@@ -151,6 +151,36 @@ streams (configurable). Distinct from the per-method audit DB.
 - **Compliance role**: subject-visible audit trail; HIPAA-Security
   164.312(b) "Audit controls" subject-side.
 
+### `webhooks`
+
+Per-access HTTP POST notifications subscribed via the `webhooks.*`
+API methods. **Signal-only by design.** The webhook body contains
+a notification that something changed for the subscribing access;
+it does **not** contain the changed data.
+
+To consume the change, the receiver makes an **authenticated GET**
+back to Pryv (using the access token it already holds) and reads
+the current state via the standard `events.get` / `streams.get`
+flow.
+
+- Security consequence: the webhook surface itself does not carry
+  PHI / PII / sensitive content, so the receiver's incoming-POST
+  surface is **not a data-leak vector**. A forged or replayed
+  webhook signal at worst causes the receiver to make an extra
+  authenticated GET (which returns the same data Pryv would have
+  served via push). No tokens in webhook bodies (because the
+  receiver already holds its own token to make the GET).
+- This sidesteps the classic webhook security minefield (HMAC
+  signing, per-delivery nonces, replay windows) for the data-
+  integrity dimension. TLS-on-delivery + delivery retry semantics
+  still matter operationally.
+- **Compliance role**: notification primitive for any row about
+  "real-time change detection" / event-driven integrations
+  (GDPR Art.32, HIPAA-Security 164.312(e)(1) transmission security,
+  ISO 27001 A.8.20 + A.8.21 network services, monitoring patterns).
+  See `context/webhooks-signal-only.md` for the full design
+  rationale.
+
 ### `backup-restore`
 
 `bin/backup.js` produces per-user backups; `--restore` rebuilds a user
