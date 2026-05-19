@@ -33,10 +33,13 @@ matrix_language: EN (Swiss official languages DE/FR/IT also available)
 - Art. 8 — Data security
 - Art. 19-21 — Information / transparency
 - Art. 24 — Notification of data security breaches
-- Art. 25-29 — Data subject rights
+- Art. 22 — Data Protection Impact Assessment (the GDPR-equivalent DPIA;
+  corrected 2026-05-19 — initial draft of this reference file misfiled
+  the DPIA anchor as Art. 35-36).
+- Art. 25 — Right to information (data-subject access right)
+- Art. 28 — Right to data portability (right to receive + transfer)
 - Art. 31 — Justification of processing of sensitive data
 - Art. 34 — Disclosure abroad / international transfers
-- Art. 35-36 — DPIA equivalents
 
 ## Notes
 
