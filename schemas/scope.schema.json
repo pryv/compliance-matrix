@@ -21,7 +21,8 @@
       "description": "Display short name (e.g., 'GDPR', 'HIPAA-Security')."
     },
     "type": {
-      "enum": ["regulation", "standard", "hosting-cert"]
+      "enum": ["regulation", "standard", "hosting-cert", "discipline"],
+      "description": "regulation = law; standard = ISO-style cert spec; hosting-cert = infrastructure cert (HDS); discipline = organizational framework (data governance, etc.) not tied to a single regulator."
     },
     "jurisdiction": {
       "type": "string",

@@ -85,6 +85,22 @@
       },
       "uniqueItems": true
     },
+    "pryv_primitives": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Primitive identifier matching a heading in docs/pryv-primitives.md (e.g., 'access', 'permissions', 'audit', 'CMC')."
+      },
+      "uniqueItems": true
+    },
+    "sample_apps": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Sample app demonstrating the claim end-to-end (relative path under compliance-matrix/samples/<slug>/, or external URL). Use when tests + functional specs don't cover the user-experience evidence."
+      },
+      "uniqueItems": true
+    },
     "planned": {
       "type": "object",
       "additionalProperties": false,

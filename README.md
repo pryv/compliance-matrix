@@ -61,7 +61,10 @@ cd wab && npm install && npm run dev   # WAB locally (via backloop.dev)
 
 ## Status
 
-**Planning + Phase A+B in progress.** See macroPryv Plan 71 for the full plan.
+**Early — schema + foundation in place, GDPR first draft published.** All
+coverage rows are marked `draft: true` until reviewed. See `scopes/*.yml`
+for current state and the GitHub Actions `validate` workflow for what CI
+checks per change.
 
 ## License
 

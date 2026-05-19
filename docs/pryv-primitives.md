@@ -1,0 +1,220 @@
+# Pryv primitives — compliance-relevant building blocks
+
+The matrix's coverage claims rely on these primitives. Each is cited from
+requirement rows via `pryv_primitives: [<id>, ...]` in the scope YAML.
+
+When a primitive's semantics change in `open-pryv.io`, update this file +
+re-verify the citing rows.
+
+## Primitive catalogue
+
+### `access`
+
+A grant of permission to act on a user's data.
+
+- **Types**: `personal` (owner), `app` (third-party app), `shared` (peer).
+- **Versioned**: `app` + `shared` accesses are immutable per version.
+  `accesses.update` writes a full snapshot of the prior head into history,
+  bumps `serial`, applies changes to head. Wire-format `id` is the bare
+  `cuid` until first update, then `"<cuid>:<serial>"`. See
+  [`../context/access-versioning.md`](../context/access-versioning.md).
+- **Carries**: `permissions[]` (per-stream + level), `clientData` (free-form
+  metadata), `name`, expiry, telemetry counters.
+- **Compliance role**: the access IS the durable, versioned consent /
+  authorization contract. `clientData` can carry the consent text shown +
+  the lawful-basis + the purposes + retention metadata. Permissions enforce
+  the scope technically.
+
+### `permissions`
+
+The set of stream+level tuples carried by an access.
+
+- **Levels**: `none`, `create-only`, `read`, `contribute`, `manage`.
+- **Granularity**: per `streamId` (incl. wildcards like `*`).
+- **Enforcement**: blocked at the API surface — every read/write request
+  is checked against the access's permissions for the relevant streams.
+- **Compliance role**: technical purpose-limitation control. The
+  consent-granted scope is the scope the API enforces — not a policy /
+  documentation control.
+
+### `clientData`
+
+Free-form structured metadata slot present on accesses, streams, and
+events.
+
+- **Free-form**: arbitrary JSON. Implementer-defined schema.
+- **Versioned**: on accesses, included in every version snapshot (see
+  `access`). On events, included in event version history.
+- **Compliance role**: the carrier for legally-binding metadata that the
+  underlying primitive doesn't have a native field for — consent text,
+  purposes, lawful basis, recipients, retention period, originating
+  `consent/request-cmc` event id, etc.
+
+### `stream`
+
+A hierarchical container for events, owned by one user.
+
+- **Purpose**: organize events by topic / context / classification.
+- **Permissions handle**: access permissions reference streams; `level`
+  applies to the stream and its descendants (per Pryv semantics).
+- **System streams**: privileged streams (account, password, mfa, etc.)
+  managed by the core; not user-creatable. Plugin-managed streams
+  (e.g., `:_cmc:*`) follow similar conventions.
+- **Compliance role**: data classification + purpose-scoping primitive.
+
+### `event`
+
+The atomic data record.
+
+- **Carries**: type (class/format), content, time, streamIds,
+  attachments, `clientData`.
+- **Type validation**: `class/format` validated against the data-types
+  repo schemas (`https://raw.github.com/pryv/data-types/master/dist/event-types.json`).
+- **Versioned**: `events.update` snapshots prior state into event history
+  (similar to access versioning).
+- **Immutability when needed**: write the event once; never update.
+  History-only events are append-only — useful for audit / consent /
+  attestation.
+- **Compliance role**: where the data subject's actual data lives;
+  also the carrier for `consent/*` state-transition events
+  (see [`../context/cmc-consent-primitives.md`](../context/cmc-consent-primitives.md)).
+
+### `audit`
+
+Records every API method invocation per user.
+
+- **Stored**: per-user SQLite (see `components/audit/`).
+- **Captures**: timestamp, user, access reference (`accessId` +
+  `accessSerial`), method, request key fields, success / error.
+- **Read surface**: `audit.get` API method (subject to permissions).
+- **Compliance role**: end-to-end accountability chain. With access
+  versioning, the audit row points at a specific contract version —
+  the consent state at the moment of the call is recoverable.
+
+### `system-streams`
+
+A privileged stream namespace managed by the core (not user-creatable).
+
+- **Members**: account fields (username, email, language), security
+  state (password, MFA), etc.
+- **Special permissions**: access requires explicit grant of system
+  stream permissions (different from regular streams).
+- **Compliance role**: technical isolation of privileged data (e.g.,
+  authentication state) from ordinary user content. Auditable
+  independently.
+
+### `MFA`
+
+Multi-factor authentication via the `mfa.*` API methods
+(`mfa.activate`, `mfa.confirm`, `mfa.challenge`, `mfa.verify`,
+`mfa.deactivate`, `mfa.recover`). SMS-based by default; opt-in per
+`services.mfa.mode` operator config.
+
+- **Compliance role**: authentication strength control (ISO 27001 A.8.5,
+  HIPAA-Security 164.312(d), GDPR Art.32 multi-aspect).
+
+### `audit-event-stream`
+
+A separate, append-only audit channel emitted into the user's own
+streams (configurable). Distinct from the per-method audit DB.
+
+- **Compliance role**: subject-visible audit trail; HIPAA-Security
+  164.312(b) "Audit controls" subject-side.
+
+### `backup-restore`
+
+`bin/backup.js` produces per-user backups; `--restore` rebuilds a user
+from a backup file.
+
+- **Per-user granularity** (key for engine-dependent erasure semantics
+  in GDPR Art.17 + ISO 27001 A.8.10).
+- **Compliance role**: data restorability (GDPR Art.32 §1(c)) +
+  per-user erasure path for SQLite engine.
+
+### `encryption-at-rest-secrets`
+
+AES-256-GCM encrypted storage for operator-supplied secrets in the
+platform DB (rqlite). HKDF-derived key from `auth.adminAccessKey`,
+per-key purpose label.
+
+- **Compliance role**: protects secrets (Let's Encrypt account keys,
+  observability provider licence keys, future CMC keys) at rest.
+
+### `letsEncrypt-integration`
+
+Built-in ACME client that issues + renews certificates, replicates
+across cluster via rqlite, hot-swaps via cluster IPC.
+
+- **Compliance role**: TLS guaranteed-fresh; encryption-in-transit
+  (GDPR Art.32, HIPAA-Security 164.312(e), ISO 27001 A.8.24).
+
+### `multi-core-mTLS`
+
+Bootstrap CLI issues passphrase-encrypted bundles; new cores join over
+mTLS-protected Raft. PlatformDB pre-registration + DNS auto-publish.
+
+- **Compliance role**: high availability (GDPR Art.32 §1(b) "ongoing
+  CIA"); inter-core authentication separate from end-user auth.
+
+### `observability-provider`
+
+`PRYV_OBSERVABILITY_PROVIDER` env (New Relic adapter shipped first).
+Filtered attributes (strips authorization / cookie / x-* / body).
+
+- **Compliance role**: monitoring (ISO 27001 A.8.16) without leaking
+  PII to the provider.
+
+### `CMC`
+
+`components/cmc/`. Federation fabric: cross-platform consent flows,
+typed `consent/*` event lifecycle, capability accesses, bidirectional
+shared accesses, scope-update via composite-id `accesses.update`.
+
+- **Compliance role**: cross-account / cross-organization consent +
+  data sharing primitive. Critical for any data-governance scope.
+- **Details**: [`../context/cmc-consent-primitives.md`](../context/cmc-consent-primitives.md).
+
+### `data-types`
+
+Canonical `class/format` JSON Schemas at
+`https://raw.github.com/pryv/data-types/master/dist/event-types.json`.
+Includes `consent/*`, `notification/*-cmc`, `message/chat-cmc`.
+
+- **Compliance role**: standardised data semantics; auditable type
+  conformance.
+
+### `app-web-auth3`
+
+The customer-facing consent / auth / register / password-reset web
+page template. Forked + rebranded per platform.
+
+- **Compliance role**: the consent UX surface. The technical consent
+  record lives on the back-end (access + `consent/request-cmc`); the
+  UI must surface it correctly per Art.7(2) (presented in clear plain
+  language, distinguishable, etc.).
+
+## How to cite primitives in a scope YAML
+
+```yaml
+requirements:
+  - ref: Art.7
+    title: Conditions for consent
+    coverage: implemented
+    pryv_primitives: [access, permissions, clientData, audit, CMC]
+    notes: |
+      Access (with permissions + clientData) is the durable consent record.
+      CMC carries cross-account consent state transitions. Audit chain
+      proves the consent state at any time.
+```
+
+The validator checks every `pryv_primitives` entry resolves to a heading
+in this document.
+
+## Open items (need primitive doc additions later)
+
+- `accesses.delete` semantics + cascade (events stay or go?).
+- `events.update` history + which fields are mutable.
+- `streams.delete` + `mergeEventsWithParent` semantics.
+- `system.users.delete` end-to-end erasure flow incl. backups.
+- Rate-limiting + throttling primitives (relevant to denial-of-service
+  controls in ISO 27001 A.8.6).

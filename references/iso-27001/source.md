@@ -50,32 +50,32 @@ standard from ISO or a national standards body (ANSI, BSI, DIN, AFNOR, SNV).
 
 ### A.8 controls likely to map to Pryv (excerpt)
 - A.8.1 User end-point devices (out)
-- A.8.2 Privileged access rights (configurable via systemStreams/admin tokens)
-- A.8.3 Information access restriction (implemented — access permissions)
-- A.8.5 Secure authentication (implemented — MFA per Plan 26)
+- A.8.2 Privileged access rights (configurable via systemStreams + admin tokens)
+- A.8.3 Information access restriction (implemented — access permissions per stream)
+- A.8.5 Secure authentication (implemented — MFA via `mfa.*` API methods)
 - A.8.7 Protection against malware (out)
-- A.8.8 Management of technical vulnerabilities (facilitated — deps mgmt Plan 56)
-- A.8.10 Information deletion (configurable — Plan 13 etc.)
-- A.8.11 Data masking (configurable)
+- A.8.8 Management of technical vulnerabilities (facilitated — dependency-audit baseline)
+- A.8.10 Information deletion (configurable — engine-dependent: SQLite per-user folder vs PG/Mongo row-level + backup rotation)
+- A.8.11 Data masking (configurable — systemStreams design + per-stream permissions)
 - A.8.12 Data leakage prevention (out)
-- A.8.15 Logging (implemented — audit logs)
-- A.8.16 Monitoring activities (facilitated — observability Plan 38)
-- A.8.20 Networks security (configurable)
+- A.8.15 Logging (implemented — audit logs via `components/audit/`)
+- A.8.16 Monitoring activities (facilitated — pluggable observability provider, New Relic first)
+- A.8.20 Networks security (configurable — TLS + mTLS cluster + DNS topology)
 - A.8.23 Web filtering (out)
-- A.8.24 Use of cryptography (implemented — TLS, encryption-at-rest)
+- A.8.24 Use of cryptography (implemented — TLS 1.3 via Let's Encrypt, AES-256-GCM at-rest secrets)
 - A.8.25 Secure development life cycle (documented in QMS)
 - A.8.26 Application security requirements (documented in QMS)
 - A.8.28 Secure coding (documented in QMS)
 - A.8.30 Outsourced development (out)
 - A.8.31 Separation of development, test and production environments (documented)
-- A.8.32 Change management (documented — _plans/ workflow)
+- A.8.32 Change management (documented — version-controlled SDLC + release notes)
 - A.8.33 Test information (documented)
 - A.8.34 Protection of information systems during audit testing (documented)
 
 ## Notes
 
 - 27001 is an **organization-side** standard. Most clauses (4-10) map to QMS
-  (Phase F). Annex A controls are where Pryv contributes directly.
+  (QMS workstream). Annex A controls are where Pryv contributes directly.
 - 27001 is the basis for 27701 (PIMS) and informs HDS (which references ISO
   27001 + 27018 + 20000-1).
 

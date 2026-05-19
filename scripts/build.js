@@ -83,6 +83,10 @@ db.exec(`
                                FOREIGN KEY (scope_id, ref) REFERENCES requirements(scope_id, ref));
   CREATE TABLE derives_links  (scope_id TEXT, ref TEXT, target_ref TEXT,
                                FOREIGN KEY (scope_id, ref) REFERENCES requirements(scope_id, ref));
+  CREATE TABLE primitive_links (scope_id TEXT, ref TEXT, primitive TEXT,
+                               FOREIGN KEY (scope_id, ref) REFERENCES requirements(scope_id, ref));
+  CREATE TABLE sample_links    (scope_id TEXT, ref TEXT, sample TEXT,
+                               FOREIGN KEY (scope_id, ref) REFERENCES requirements(scope_id, ref));
 
   CREATE TABLE excluded_items (scope_id TEXT, ref TEXT, reason TEXT,
                                FOREIGN KEY (scope_id) REFERENCES scopes(id));
@@ -107,6 +111,8 @@ const insDoc     = db.prepare('INSERT INTO doc_links     (scope_id, ref, path) V
 const insQms     = db.prepare('INSERT INTO qms_links     (scope_id, ref, path) VALUES (?, ?, ?)');
 const insCfg     = db.prepare('INSERT INTO config_links  (scope_id, ref, config_key) VALUES (?, ?, ?)');
 const insDerives = db.prepare('INSERT INTO derives_links (scope_id, ref, target_ref) VALUES (?, ?, ?)');
+const insPrim    = db.prepare('INSERT INTO primitive_links (scope_id, ref, primitive) VALUES (?, ?, ?)');
+const insSample  = db.prepare('INSERT INTO sample_links (scope_id, ref, sample) VALUES (?, ?, ?)');
 const insExcl    = db.prepare('INSERT INTO excluded_items (scope_id, ref, reason) VALUES (?, ?, ?)');
 const insMeta    = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?)');
 
@@ -149,6 +155,8 @@ const tx = db.transaction(() => {
       for (const x of r.qms_docs || []) insQms.run(scope.id, r.ref, x);
       for (const x of r.config_keys || []) insCfg.run(scope.id, r.ref, x);
       for (const x of r.derives_from || []) insDerives.run(scope.id, r.ref, x);
+      for (const x of r.pryv_primitives || []) insPrim.run(scope.id, r.ref, x);
+      for (const x of r.sample_apps || []) insSample.run(scope.id, r.ref, x);
     }
 
     for (const x of scope.excluded_items || []) {

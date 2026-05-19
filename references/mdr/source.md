@@ -56,7 +56,7 @@ matrix_language: EN
 ## Notes
 
 - MDR rows expected: ~10-15 software-anchor articles get `documented`/`facilitated`.
-- Many MDR rows fall under QMS (Phase F) — design controls, post-market data,
+- Many MDR rows fall under QMS — design controls, post-market data,
   CAPA. Matrix `coverage` for these will be `documented` linking to
   `qms/pryv/` docs.
 

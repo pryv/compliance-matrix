@@ -106,6 +106,21 @@ try {
   w(`Failed to scan open-pryv.io test files: ${err.message}`);
 }
 
+// ---------- 3b. Load pryv primitives (docs/pryv-primitives.md) ----------
+
+const PRIMITIVES_DOC = path.join(ROOT, 'docs/pryv-primitives.md');
+const knownPrimitives = new Set();
+if (fs.existsSync(PRIMITIVES_DOC)) {
+  const txt = fs.readFileSync(PRIMITIVES_DOC, 'utf8');
+  // Headings under "## Primitive catalogue" of the form: ### `<id>`
+  const re = /^###\s+`([^`]+)`/gm;
+  let m;
+  while ((m = re.exec(txt)) !== null) knownPrimitives.add(m[1]);
+  console.log(`[OK]   pryv primitives loaded: ${knownPrimitives.size}`);
+} else {
+  w(`docs/pryv-primitives.md not found — pryv_primitives xref skipped`);
+}
+
 // ---------- 4. Load scope yamls ----------
 
 const scopeFiles = await glob(path.join(ROOT, 'scopes/*.yml'));
@@ -204,6 +219,22 @@ for (const { scope, file } of allScopes) {
       const p = path.join(ROOT, 'qms', q.replace(/^qms\//, ''));
       if (!fs.existsSync(p) && !fs.existsSync(path.join(ROOT, q))) {
         e(`${cell}: qms_docs path '${q}' not found`);
+      }
+    }
+
+    // pryv_primitives resolution
+    for (const p of r.pryv_primitives || []) {
+      if (knownPrimitives.size > 0 && !knownPrimitives.has(p)) {
+        e(`${cell}: pryv_primitives '${p}' not found in docs/pryv-primitives.md`);
+      }
+    }
+
+    // sample_apps resolution (local path) — external URLs are allowed without check
+    for (const s of r.sample_apps || []) {
+      if (s.startsWith('http://') || s.startsWith('https://')) continue;
+      const p = path.join(ROOT, 'samples', s.replace(/^samples\//, ''));
+      if (!fs.existsSync(p) && !fs.existsSync(path.join(ROOT, s))) {
+        e(`${cell}: sample_apps path '${s}' not found under samples/`);
       }
     }
 
