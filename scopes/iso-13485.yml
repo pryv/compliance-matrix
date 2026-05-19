@@ -69,10 +69,12 @@ requirements:
       system. Such software shall be validated prior to initial use,
       after changes, as appropriate.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit]
     overview: |
-      **Facilitation: evidence (low)** — When the manufacturer's QMS
+      When the manufacturer's QMS
       uses Pryv as one of its computer applications (e.g., storing
       CAPA records as events, design files as attachments, training
       records as stream content), 4.1.6 requires validation evidence.
@@ -89,10 +91,12 @@ requirements:
       legibility, identification of external-origin documents,
       prevention of obsolete-document misuse.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [event, stream, audit]
     overview: |
-      **Facilitation: storage (medium)** — Pryv as a document-control
+      Pryv as a document-control
       surface: events on a designated `qms-docs/*` stream tree carry
       the document content (or a reference to it); event versioning
       preserves change history; audit log tracks who-accessed-what
@@ -107,6 +111,7 @@ requirements:
       conformity to requirements and effective operation of the QMS;
       shall remain legible, readily identifiable + retrievable.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [event, audit, backup-restore]
     tests: [AT01, AT51, U9HQ]
@@ -125,10 +130,12 @@ requirements:
       input requirements; records of verification + actions shall be
       maintained.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [event, audit]
     overview: |
-      **Facilitation: storage (low)** — When the device under
+      When the device under
       development uses Pryv as backend, the verification activity
       ("output meets input") generates verification records — these
       can be stored as Pryv events on a designated
@@ -144,11 +151,13 @@ requirements:
       application or intended use; records of validation + actions
       shall be maintained.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [event, audit]
     derives_from: [mdr.Art.61]
     overview: |
-      **Facilitation: storage (low)** — Same Pryv contribution as
+      Same Pryv contribution as
       7.3.7 — validation records stored as events with attachments;
       audit chain proves authenticity over time. Clinical validation
       (the typical method for medical-device design validation)
@@ -162,11 +171,13 @@ requirements:
       production + post-production phases; feedback shall be used to
       identify input to risk management + maintain product requirements.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [event, audit, observability-provider]
     derives_from: [mdr.Art.83]
     overview: |
-      **Facilitation: evidence (low)** — Customer-feedback data
+      Customer-feedback data
       sources: events written from the device itself ("post-market
       reports"), observability data ("how is the system performing
       in the field"), audit data ("what activity patterns are users
@@ -181,10 +192,12 @@ requirements:
       to ensure + maintain continued suitability + adequacy + effectiveness
       of the QMS; corrective + preventive action shall be documented.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [event, audit]
     overview: |
-      **Facilitation: storage (low)** — CAPA records stored as Pryv
+      CAPA records stored as Pryv
       events with attachments; audit chain provides the tamper-
       evidence layer. The corrective + preventive action workflow
       itself (root-cause analysis, effectiveness check, verification)
@@ -199,11 +212,13 @@ requirements:
       for design and development and records for design and development
       changes.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [event, stream, audit, backup-restore]
     derives_from: [iso-13485.4.2.5, mdr.Art.10]
     overview: |
-      **Facilitation: storage (medium)** — The design history file
+      The design history file
       (DHF in FDA QSR terms) is a curated set of records spanning a
       device's design lifetime. Pryv supports it by storing each
       design record as an event on a designated
@@ -221,11 +236,13 @@ requirements:
       events or issuance of advisory notices, the organization shall
       document such reporting.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [event, audit, CMC]
     derives_from: [mdr.Art.87]
     overview: |
-      **Facilitation: evidence (low)** — Adverse-event reporting
+      Adverse-event reporting
       decisions + the actual reports are manufacturer-side (per MDR
       Art. 87 timelines for EU; equivalent timelines for FDA / other
       regulators). Pryv contribution: the events the report cites
@@ -242,10 +259,12 @@ requirements:
       relating to feedback, conformity to product requirements,
       characteristics + trends, suppliers, audits, service reports.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, event, observability-provider]
     overview: |
-      **Facilitation: evidence (medium)** — Pryv supplies the data
+      Pryv supplies the data
       sources: audit log (per-method usage patterns), events on
       customer-feedback streams (per §8.2.1), observability metrics
       (system trend data). The analysis methodology + the resulting

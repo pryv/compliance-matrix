@@ -22,10 +22,12 @@ requirements:
       subcontractors and affiliated entities with respect to unsecured
       protected health information.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [encryption-at-rest-secrets, letsEncrypt-integration]
     overview: |
-      **Facilitation: infrastructure (low)** — Subpart D applies only
+      Subpart D applies only
       to "unsecured" PHI — PHI that has not been rendered unusable
       through encryption or destruction per HHS guidance (NIST SP
       800-111 / SP 800-88). Pryv's posture (TLS in transit by default,
@@ -41,10 +43,12 @@ requirements:
       permitted under Subpart E + four risk-assessment factors) and
       "unsecured PHI" (not rendered unusable per HHS guidance).
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, encryption-at-rest-secrets, access, permissions]
     overview: |
-      **Facilitation: evidence (medium)** — Two Pryv contributions to
+      Two Pryv contributions to
       applying the §164.402 definitions: (1) the audit log is the data
       source for the §402 risk-assessment factors — nature of PHI
       involved, unauthorized person, whether PHI was actually acquired,
@@ -78,10 +82,12 @@ requirements:
       unreasonable delay and in no case later than 60 calendar days
       after discovery.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, access]
     overview: |
-      **Facilitation: evidence (medium)** — The notification process
+      The notification process
       (drafting, sending, tracking receipts) is operational. Pryv
       contributes to scoping: the audit log lets you derive the
       per-subject impact (which subjects' streams were touched by the
@@ -131,10 +137,12 @@ requirements:
       without unreasonable delay and in no case later than 60 days
       after discovery.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [CMC, audit]
     overview: |
-      **Facilitation: evidence (low)** — When you (the implementer)
+      When you (the implementer)
       act as a business associate to a covered entity and store their
       PHI on your Pryv deployment, your BA-to-CE notification chain
       is operational. The CMC plugin's cross-platform consent +
@@ -165,10 +173,12 @@ requirements:
       that the impermissible use / disclosure did not constitute a
       breach.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, access]
     overview: |
-      **Facilitation: evidence (medium)** — "Burden of proof" is met
+      "Burden of proof" is met
       with evidence; Pryv's audit + access-version chain is the
       technical evidence layer ("we know exactly what was accessed by
       which credential at what time"). The organizational
@@ -183,11 +193,13 @@ requirements:
       unreasonable delay and in no case later than 60 calendar days
       after discovery of a breach.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider]
     derives_from: [hipaa-breach.164.404]
     overview: |
-      **Facilitation: evidence (low)** — The 60-day clock is procedural
+      The 60-day clock is procedural
       — the covered entity owns the incident-response cadence. Pryv-
       side data accelerates the "discovery" + "scoping" steps that
       dominate the timeline: audit log + access-version chain answer
@@ -240,11 +252,13 @@ requirements:
       (ii) unauthorized person, (iii) whether PHI was acquired or
       viewed, (iv) extent risk has been mitigated.
     coverage: facilitated
+    pryv_effort_saved: high
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, access]
     derives_from: [hipaa-breach.164.402]
     overview: |
-      **Facilitation: evidence (high)** — The four risk-assessment
+      The four risk-assessment
       factors all draw on Pryv data:
         (i) nature + extent: audit-row method + key request fields +
             derived event-type set from the touched streams.
@@ -268,11 +282,13 @@ requirements:
       SP 800-113 / FIPS 140-2 for in-transit encryption; NIST SP 800-88
       for destruction).
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS]
     derives_from: [hipaa-breach.164.402, hipaa-security.164.312(a)(2)(iv), hipaa-security.164.312(e)(1)]
     overview: |
-      **Facilitation: infrastructure (medium)** — The safe-harbor
+      The safe-harbor
       narrows what triggers Subpart D notification: PHI that's
       actually secured per HHS guidance is outside §164.402's
       "unsecured PHI" definition and a leak of it doesn't compel

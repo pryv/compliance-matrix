@@ -28,11 +28,13 @@ requirements:
       treating privacy as an information-security concern; PII
       controllers and processors apply Annex A and/or B respectively.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: awareness
     draft: true
     pryv_primitives: [access, audit]
     derives_from: [iso-27001.6.1.2]
     overview: |
-      **Facilitation: awareness (medium)** — 27701 extends the 27001
+      27701 extends the 27001
       ISMS to cover PII handling specifically. Pryv contribution is
       the same primitive set surfaced in the iso-27001 rows + the
       GDPR rows; 27701 simply combines them under the privacy-
@@ -49,11 +51,13 @@ requirements:
       Organization shall identify and document the specific purposes
       for which PII will be processed.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData]
     derives_from: [gdpr.Art.5]
     overview: |
-      **Facilitation: storage (medium)** — Pryv pattern:
+      Pryv pattern:
       `access.clientData.purpose` records the per-access purpose at
       grant time, durable + auditable. The vocabulary of purposes
       (the organization's documented PIMS catalogue) is the operator's
@@ -65,11 +69,13 @@ requirements:
       Organization shall determine, document, and comply with the
       relevant lawful basis for processing of PII.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData]
     derives_from: [gdpr.Art.6, gdpr.Art.9]
     overview: |
-      **Facilitation: storage (medium)** — `access.clientData.lawful_basis`
+      `access.clientData.lawful_basis`
       records the determined basis (consent, contract, legal
       obligation, etc.); for special-category PII,
       `clientData.special_category_basis` records the GDPR Art. 9
@@ -83,6 +89,7 @@ requirements:
       and business obligations to PII principals related to the
       processing of their PII.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, stream, event, audit, data-types]
     derives_from: [gdpr.Art.12, gdpr.Art.15]
@@ -101,6 +108,7 @@ requirements:
       Organization shall provide a mechanism for PII principals to
       modify or withdraw their consent.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, CMC]
     derives_from: [gdpr.Art.7]
@@ -119,6 +127,7 @@ requirements:
       relevant, proportionate and necessary for the identified
       purposes.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, stream]
     derives_from: [gdpr.Art.5]
@@ -135,6 +144,7 @@ requirements:
       Organization shall determine and securely maintain the necessary
       records in support of its obligations for the processing of PII.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, clientData, audit, CMC, data-residency]
     derives_from: [gdpr.Art.30]
@@ -157,10 +167,12 @@ requirements:
       Persons under the processor's authority who have access to PII
       shall be subject to a confidentiality commitment.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [access, permissions, audit]
     overview: |
-      **Facilitation: evidence (low)** — The confidentiality commitment
+      The confidentiality commitment
       is an organizational artefact (employment agreements, contractor
       NDAs). Pryv's contribution: the audit log gives per-person
       accountability so the commitment is enforceable in practice
@@ -173,6 +185,7 @@ requirements:
       to the processing of PII to support compliance with applicable
       obligations.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, access]
     derives_from: [iso-27701.A.7.4.7]
@@ -191,6 +204,7 @@ requirements:
       Organization shall limit the processing of PII to that which is
       adequate, relevant and necessary for the identified purposes.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, stream]
     derives_from: [iso-27701.A.7.4.1, gdpr.Art.5]
@@ -209,6 +223,7 @@ requirements:
       complete and up-to-date as is necessary for the purposes for
       which it is processed throughout the lifecycle of the PII.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [event]
     derives_from: [gdpr.Art.5, gdpr.Art.16]
@@ -227,6 +242,7 @@ requirements:
       principals, as soon as the original PII is no longer necessary
       for the identified purpose(s).
     coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [event, stream, backup-restore]
     derives_from: [gdpr.Art.17, hipaa-security.164.310, ccpa.1798.105]
@@ -261,6 +277,7 @@ requirements:
       parties and ensure cooperation with those parties to support
       future requests related to obligations to PII principals.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, clientData, audit, CMC]
     derives_from: [gdpr.Art.30, gdpr.Art.44, hipaa-privacy.164.528]
@@ -279,11 +296,13 @@ requirements:
       Organization shall identify and document the relevant basis for
       transfers of PII between jurisdictions.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [data-residency, access, clientData]
     derives_from: [gdpr.Art.44, gdpr.Art.46, gdpr.Art.49]
     overview: |
-      **Facilitation: infrastructure (medium)** — Per GDPR Art. 44 /
+      Per GDPR Art. 44 /
       Swiss nLPD Art. 34 mapping — the data-residency primitive
       constrains where data lives; cross-jurisdictional transfers
       record the legal basis on the transferring access's
@@ -298,6 +317,7 @@ requirements:
       international organizations to which PII can possibly be
       transferred.
     coverage: configurable
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [data-residency, CMC]
     config_keys: [auth.hostings]
@@ -318,11 +338,13 @@ requirements:
       shall publicly publish a list of subcontractors, or make it
       available on request.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: awareness
     draft: true
     pryv_primitives: [observability-provider]
     derives_from: [gdpr.Art.28]
     overview: |
-      **Facilitation: awareness (low)** — Pryv-the-software has one
+      Pryv-the-software has one
       optional subprocessor surface — the observability provider (New
       Relic adapter; default disabled). The operator's subcontractor
       list typically includes: hosting provider, observability
@@ -336,11 +358,13 @@ requirements:
       Organization shall determine when and how notice shall be
       provided to PII principals concerning processing of their PII.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData, app-web-auth3]
     derives_from: [iso-27701.A.7.3.4, gdpr.Art.12, gdpr.Art.13]
     overview: |
-      **Facilitation: storage (medium)** — Notice timing + form are
+      Notice timing + form are
       editorial. Pryv preserves whatever notice is shown (in
       `access.clientData.privacy_notice` or dedicated
       `consent/notice-*` event) so the same content is auditable per
@@ -352,6 +376,7 @@ requirements:
       Organization shall obtain and record consent from PII principals
       according to the documented processes.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, clientData, CMC, event]
     derives_from: [gdpr.Art.7, iso-27701.A.7.3.4]
@@ -370,11 +395,13 @@ requirements:
       impact assessment whenever new processing of PII or changes to
       existing processing are planned.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, data-residency, access]
     derives_from: [gdpr.Art.35, swiss-nlpd.Art.22]
     overview: |
-      **Facilitation: evidence (low)** — PIA / DPIA is a written
+      PIA / DPIA is a written
       assessment artefact. Pryv contributes the inputs (audit +
       access primitives describe the processing flow; data-residency
       primitive describes where data lives). Cross-link to gdpr.Art.35
@@ -399,10 +426,12 @@ requirements:
       Organization shall determine respective roles + responsibilities
       where it acts jointly with one or more PII controllers.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData, CMC]
     overview: |
-      **Facilitation: storage (medium)** — Joint-controller arrangements
+      Joint-controller arrangements
       (per GDPR Art. 26) get recorded on the relevant access's
       `clientData.joint_controller_arrangement` with a pointer to the
       written agreement. CMC's cross-platform access pattern is the
@@ -428,6 +457,7 @@ requirements:
       means to comply with its obligations to PII principals (right of
       access, rectification, erasure, etc.).
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, event, stream, audit, data-types]
     derives_from: [iso-27701.A.7.3.1, gdpr.Art.15, gdpr.Art.16, gdpr.Art.17, gdpr.Art.20]
@@ -445,11 +475,13 @@ requirements:
       Processor shall ensure privacy + data-protection design + default
       principles are implemented in processing of PII.
     coverage: facilitated
+    pryv_effort_saved: high
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [access, permissions, stream, system-streams]
     derives_from: [gdpr.Art.25, swiss-nlpd.Art.7]
     overview: |
-      **Facilitation: infrastructure (high)** — Pryv's architecture
+      Pryv's architecture
       leans privacy-by-design (per-user isolation, least-privilege
       permissions, system-streams separation, audit by default). The
       processor inheriting these defaults satisfies B.8.4
@@ -462,6 +494,7 @@ requirements:
       Processor shall record disclosures of PII to third parties,
       including what PII has been disclosed, to whom, and at what time.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, access, clientData, CMC]
     derives_from: [iso-27701.A.7.4.9, hipaa-privacy.164.528, gdpr.Art.30]

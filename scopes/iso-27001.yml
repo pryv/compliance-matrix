@@ -48,10 +48,12 @@ requirements:
       risk acceptance, identifies risks associated with the loss of
       confidentiality, integrity and availability.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [access, permissions, audit, encryption-at-rest-secrets, multi-core-mTLS, letsEncrypt-integration, backup-restore]
     overview: |
-      **Facilitation: evidence (low)** — The risk-assessment
+      The risk-assessment
       methodology + the operator's specific findings are the
       operator's artefact. Pryv contributes the inventory of
       technical controls (this matrix, particularly Annex A.8 rows
@@ -70,6 +72,7 @@ requirements:
       other associated assets shall be established and implemented based
       on business and information security requirements.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams]
     tests: [AA01, AA02, ACCP]
@@ -87,11 +90,13 @@ requirements:
       shall be identified, documented and implemented in accordance
       with applicable laws and contractual requirements.
     coverage: facilitated
+    pryv_effort_saved: high
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [access, permissions, clientData, audit, system-streams]
     derives_from: [gdpr.Art.25, gdpr.Art.32]
     overview: |
-      **Facilitation: infrastructure (high)** — Pryv's primitive set
+      Pryv's primitive set
       carries privacy-by-design (see GDPR Art. 25) and the technical
       security controls (see GDPR Art. 32). What's on the operator's
       side: the identification of which laws apply, the documented
@@ -110,10 +115,12 @@ requirements:
       remotely to protect information accessed, processed or stored
       outside the organization's premises.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [letsEncrypt-integration, MFA, access]
     overview: |
-      **Facilitation: infrastructure (medium)** — Pryv's API is remote-
+      Pryv's API is remote-
       by-design — workforce access from off-premises traverses the
       same TLS + access-token + MFA controls as any other access.
       The operator's remote-working policy (devices, VPN, endpoint
@@ -130,6 +137,7 @@ requirements:
       Allocation and use of privileged access rights shall be restricted
       and managed.
     coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [access, system-streams]
     config_keys: [auth.adminAccessKey]
@@ -148,6 +156,7 @@ requirements:
       restricted in accordance with the established topic-specific
       policy on access control.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, stream]
     tests: [AA01, AA02, ACCP]
@@ -164,6 +173,7 @@ requirements:
       implemented based on information access restrictions and the
       topic-specific policy on access control.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams]
     config_keys: [services.mfa.mode]
@@ -181,6 +191,7 @@ requirements:
       Information stored in information systems, devices or in any
       other storage media shall be deleted when no longer required.
     coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [event, stream, backup-restore]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
@@ -201,10 +212,12 @@ requirements:
       maintained and regularly tested in accordance with the agreed
       topic-specific policy on backup.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [backup-restore, multi-core-mTLS]
     overview: |
-      **Facilitation: infrastructure (medium)** — `bin/backup.js`
+      `bin/backup.js`
       produces per-user backup files; multi-core cluster topology
       gives in-line replication (rqlite Raft + mTLS). The operator's
       backup policy (cadence, retention, offsite) is layered on top.
@@ -219,6 +232,7 @@ requirements:
       relevant events shall be produced, stored, protected and
       analysed.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream]
     tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65]
@@ -237,10 +251,12 @@ requirements:
       anomalous behaviour and appropriate actions taken to evaluate
       potential information security incidents.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [observability-provider, audit]
     overview: |
-      **Facilitation: evidence (low)** — The pluggable observability
+      The pluggable observability
       provider (New Relic adapter shipped) gives system-level
       monitoring; audit logs give application-level activity.
       Operator chooses provider + thresholds + escalation paths.
@@ -253,6 +269,7 @@ requirements:
       Networks and network devices shall be secured, managed and
       controlled to protect information in systems and applications.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
     tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC]
@@ -269,6 +286,7 @@ requirements:
       Rules for the effective use of cryptography, including
       cryptographic key management, shall be defined and implemented.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS]
     config_keys: [letsEncrypt.atRestKey]
@@ -286,10 +304,12 @@ requirements:
       Rules for the secure development of software and systems shall be
       established and applied.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: awareness
     draft: true
     pryv_primitives: [audit]
     overview: |
-      **Facilitation: awareness (low)** — Pryv's own SDLC is visible
+      Pryv's own SDLC is visible
       (public commit history, tagged releases, CHANGELOG-v2 +
       CHANGELOG-v2-back, multi-engine test matrix, dependency audit).
       For the implementer, this transparency feeds supplier-
@@ -302,10 +322,12 @@ requirements:
       Changes to information processing facilities and information
       systems shall be subject to change-management procedures.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit]
     overview: |
-      **Facilitation: evidence (low)** — Pryv-side change-management
+      Pryv-side change-management
       evidence: tagged releases, Docker image SHA-pinning,
       CHANGELOG-v2 + CHANGELOG-v2-back per release, release-notes
       per Dokku deploy. The operator's change-management procedure
@@ -320,10 +342,12 @@ requirements:
       of operational systems shall be planned and agreed between the
       tester and appropriate management.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit]
     overview: |
-      **Facilitation: evidence (low)** — Pen-tests, vulnerability
+      Pen-tests, vulnerability
       scans, internal audits — all may generate elevated activity on
       the system. Pryv's audit log keeps the testing activity
       attributable (any test access surfaces with its accessId +
@@ -356,10 +380,12 @@ requirements:
       security needs of the organization based on confidentiality,
       integrity, availability + relevant interested party requirements.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
     pryv_primitives: [stream, system-streams, event, data-types]
     overview: |
-      **Facilitation: primitive (medium)** — Pryv supports
+      Pryv supports
       classification by stream layout — dedicate subtrees per
       classification tier (e.g., `confidential/`, `restricted/`,
       `public/`) and gate them with distinct permission scopes.
@@ -375,10 +401,12 @@ requirements:
       be developed and implemented in accordance with the information
       classification scheme adopted by the organization.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [event, clientData, stream]
     overview: |
-      **Facilitation: storage (medium)** — Labels on event-level data
+      Labels on event-level data
       can ride on `event.clientData.classification` or on the parent
       stream's `clientData`; the canonical event-type schema
       (`data-types`) can be extended with a classification property
@@ -392,10 +420,12 @@ requirements:
       services shall be established in accordance with the
       organization's information security requirements.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [data-residency, encryption-at-rest-secrets, backup-restore]
     overview: |
-      **Facilitation: infrastructure (low)** — When the Pryv operator
+      When the Pryv operator
       runs on a cloud provider (rather than on-premise), the cloud-
       service security posture is the operator's contractual concern.
       Pryv-side hooks that the operator's CSP-management process
@@ -442,10 +472,12 @@ requirements:
       to such vulnerabilities shall be evaluated, and appropriate
       measures taken.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [observability-provider, audit]
     overview: |
-      **Facilitation: evidence (low)** — Pryv-side vulnerability
+      Pryv-side vulnerability
       management is upstream — public dependency-audit (npm audit
       pipeline, dependabot on open-pryv.io master), versioned
       CHANGELOG announcing relevant fixes, reproducible Docker image
@@ -460,10 +492,12 @@ requirements:
       software, services and networks shall be established, documented,
       implemented, monitored and reviewed.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit]
     overview: |
-      **Facilitation: evidence (low)** — Pryv configuration lives in
+      Pryv configuration lives in
       `default-config.yml` + `override-config.yml` + `host-config.yml`
       (operator-side); a `config-validation` step on master start
       fails fast on unresolved variables or missing required service
@@ -480,10 +514,12 @@ requirements:
       specific policies, and business requirements, taking applicable
       legislation into consideration.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
     pryv_primitives: [stream, system-streams, event]
     overview: |
-      **Facilitation: primitive (medium)** — Pryv supports masking by
+      Pryv supports masking by
       storing the masked (pseudonymised) data on a separate stream
       tree with different permissioning, and keeping the un-masked /
       re-identification data on a tightly scoped subtree. System
@@ -501,10 +537,12 @@ requirements:
       networks and any other devices that process, store or transmit
       sensitive information.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
     pryv_primitives: [access, permissions, audit, observability-provider]
     overview: |
-      **Facilitation: primitive (medium)** — Pryv's primary leakage-
+      Pryv's primary leakage-
       prevention surface is the permission model — an access only
       reads / writes the streams its scope permits, so a misconfigured
       app can't accidentally exfiltrate out-of-scope data. The audit
@@ -518,10 +556,12 @@ requirements:
       Groups of information services, users and information systems
       shall be segregated in the organization's networks.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [multi-core-mTLS]
     overview: |
-      **Facilitation: infrastructure (medium)** — Multi-core Pryv
+      Multi-core Pryv
       clusters use mTLS over rqlite Raft for inter-core traffic, on
       a cluster-private CA distinct from the Let's Encrypt user-
       facing chain. This gives technical segregation between the
@@ -534,9 +574,11 @@ requirements:
     text: |
       Secure coding principles shall be applied to software development.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: awareness
     draft: true
     overview: |
-      **Facilitation: awareness (low)** — Pryv's own secure-coding
+      Pryv's own secure-coding
       posture is visible in the public open-pryv.io repository —
       coding standards (neostandard), linting enforced on PRs,
       pre-commit hooks, dependency-audit pipeline. The implementer's
@@ -564,10 +606,12 @@ requirements:
       Development, testing and production environments shall be
       separated and secured.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [data-residency, multi-core-mTLS]
     overview: |
-      **Facilitation: infrastructure (medium)** — Pryv supports
+      Pryv supports
       separate environments via independent core deployments (each
       with its own bootstrap bundle + cluster CA); the data-residency
       primitive prevents accidental cross-environment data flow at
@@ -596,10 +640,12 @@ requirements:
       Information relating to information security threats shall be
       collected and analysed to produce threat intelligence.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [observability-provider, audit]
     overview: |
-      **Facilitation: evidence (low)** — Pryv-side contribution to
+      Pryv-side contribution to
       threat intelligence: published dependency-audit pipeline
       (npm audit + dependabot on master), CHANGELOG announcements of
       relevant security fixes, observability data on anomalous
@@ -611,6 +657,7 @@ requirements:
     text: |
       The full life cycle of identities shall be managed.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, system-streams, audit]
     derives_from: [iso-27001.A.5.15, hipaa-security.164.308(a)(4)(ii)(C)]
@@ -630,10 +677,12 @@ requirements:
       controlled by a management process, including advising personnel
       on appropriate handling.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [system-streams, MFA, encryption-at-rest-secrets]
     overview: |
-      **Facilitation: infrastructure (medium)** — Pryv stores
+      Pryv stores
       credentials on a privileged system-stream (`:_system:password`
       etc.); MFA secrets follow the same isolation. Operator's
       secret-distribution + secret-rotation policy is the
@@ -647,6 +696,7 @@ requirements:
       the organization's topic-specific policy on, and rules for,
       access control.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, audit]
     derives_from: [iso-27001.A.5.15, iso-27001.A.5.16, hipaa-security.164.308(a)(3)(ii)(C)]
@@ -663,10 +713,12 @@ requirements:
       manage the information-security risks associated with the use of
       supplier's products or services.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: awareness
     draft: true
     pryv_primitives: [observability-provider]
     overview: |
-      **Facilitation: awareness (low)** — When the operator's
+      When the operator's
       "supplier" is Pryv (i.e., open-pryv.io as a third-party
       platform), the public release process + CHANGELOGs + this
       compliance matrix serve as the supplier-monitoring artefact
@@ -722,11 +774,13 @@ requirements:
       enforced and communicated to relevant personnel and other
       interested parties.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
     pryv_primitives: [access, audit]
     derives_from: [iso-27001.A.5.16, iso-27001.A.5.18, hipaa-security.164.308(a)(3)(ii)(C)]
     overview: |
-      **Facilitation: primitive (medium)** — Technical termination is
+      Technical termination is
       `accesses.delete` (full revoke) + audit-log timestamp. The
       post-termination obligations (confidentiality, IP, NDA
       enforcement window) are contractual.
@@ -763,10 +817,12 @@ requirements:
       The use of resources shall be monitored + adjusted in line with
       current + expected capacity requirements.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [observability-provider, multi-core-mTLS]
     overview: |
-      **Facilitation: infrastructure (medium)** — Pryv-side capacity
+      Pryv-side capacity
       surfaces: per-core observability metrics (memory, CPU, latency,
       request volume); horizontal scaling via adding cores to the
       cluster (each handles its bound users + shared rqlite control
@@ -779,11 +835,13 @@ requirements:
       Information processing facilities shall be implemented with
       redundancy sufficient to meet availability requirements.
     coverage: facilitated
+    pryv_effort_saved: high
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [multi-core-mTLS, backup-restore, letsEncrypt-integration]
     derives_from: [iso-27001.A.5.23, hipaa-security.164.308(a)(7)(ii)(B)]
     overview: |
-      **Facilitation: infrastructure (high)** — Multi-core HA + Raft
+      Multi-core HA + Raft
       replication give in-line redundancy; backup-restore + cluster-
       replicated TLS certs let a surviving core continue user-facing
       operation when a peer fails. The availability target +
@@ -808,11 +866,13 @@ requirements:
       system and application controls shall be restricted and tightly
       controlled.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
     pryv_primitives: [system-streams, access, audit]
     derives_from: [iso-27001.A.8.2, hipaa-security.164.312(a)(2)(ii)]
     overview: |
-      **Facilitation: primitive (medium)** — Pryv-side privileged
+      Pryv-side privileged
       utilities: the `bin/*` CLIs (`bootstrap.js`, `migrate.js`,
       `dns-records.js`, `observability.js`, `backup.js`). Operator
       restricts their execution to administrator accounts via host-OS
@@ -826,10 +886,12 @@ requirements:
       Procedures and measures shall be implemented to securely manage
       software installation on operational systems.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [audit]
     overview: |
-      **Facilitation: infrastructure (low)** — Pryv ships as a single
+      Pryv ships as a single
       Docker image with SHA-pinned tag; the installation channel is
       reproducible. Operator's installation procedure (build
       verification, signature checking, change-approval gate) sits
@@ -841,11 +903,13 @@ requirements:
       Security mechanisms, service levels and service requirements of
       network services shall be identified, implemented and monitored.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, observability-provider]
     derives_from: [iso-27001.A.8.20]
     overview: |
-      **Facilitation: infrastructure (medium)** — Pryv's external
+      Pryv's external
       network surface is the TLS-terminating HTTPS API + the embedded
       DNS server (when multi-core enabled); both are monitored via
       observability. Inter-core mTLS is the internal surface. The
@@ -858,11 +922,13 @@ requirements:
       Information security requirements shall be identified, specified
       and approved when developing or acquiring applications.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: awareness
     draft: true
     pryv_primitives: [audit]
     derives_from: [iso-27001.A.8.25]
     overview: |
-      **Facilitation: awareness (medium)** — For the operator running
+      For the operator running
       Pryv as one of its applications, this compliance matrix IS the
       catalogue of identified + specified + approved security
       requirements Pryv satisfies. For the operator's own applications
@@ -875,11 +941,13 @@ requirements:
       documented, maintained and applied to any information systems
       development activities.
     coverage: facilitated
+    pryv_effort_saved: high
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [access, permissions, system-streams, encryption-at-rest-secrets]
     derives_from: [iso-27001.A.8.25, iso-27001.A.8.28]
     overview: |
-      **Facilitation: infrastructure (high)** — Pryv's architecture is
+      Pryv's architecture is
       informed by secure-by-design principles (per-user isolation,
       least-privilege permissions, encryption-by-default in transit,
       system-stream privilege separation). The operator's own
@@ -893,10 +961,12 @@ requirements:
       Security testing processes shall be defined and implemented in
       the development life cycle.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit]
     overview: |
-      **Facilitation: evidence (low)** — Pryv's CI runs the public
+      Pryv's CI runs the public
       test matrix per commit (PG + Mongo modes; component-level +
       integration tests; see Plan-56 test hardening commits).
       Operator's own application-layer security testing (SAST, DAST,
@@ -908,11 +978,13 @@ requirements:
       Test information shall be appropriately selected, protected and
       managed.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [data-residency, multi-core-mTLS]
     derives_from: [iso-27001.A.8.31]
     overview: |
-      **Facilitation: infrastructure (low)** — When test environments
+      When test environments
       use real-or-derived PII, the same protections as production
       apply. Pryv pattern: run test environments as separate Pryv
       clusters (independent bootstrap bundles + cluster CAs); the
@@ -962,11 +1034,13 @@ requirements:
       the organization's classification scheme and handling
       requirements.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [backup-restore, encryption-at-rest-secrets]
     derives_from: [hipaa-security.164.310(d)(1)]
     overview: |
-      **Facilitation: infrastructure (low)** — Storage-media handling
+      Storage-media handling
       at the Pryv layer surfaces only for backup media —
       `bin/backup.js` outputs go onto operator-managed media;
       operator's encryption + transport + disposal procedure applies.
@@ -1013,10 +1087,12 @@ requirements:
       be performed; who shall monitor; when results shall be analysed
       and evaluated; and who shall analyse + evaluate the results.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider]
     overview: |
-      **Facilitation: evidence (medium)** — Pryv contributes the data:
+      Pryv contributes the data:
       audit log (control-effectiveness sampling), observability
       metrics (operational + security KPIs). The monitoring programme
       structure (what / when / who) is operator-side.
@@ -1029,10 +1105,12 @@ requirements:
       to the organization's own requirements + this document's
       requirements and is effectively implemented + maintained.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit]
     overview: |
-      **Facilitation: evidence (low)** — Internal-audit programme is
+      Internal-audit programme is
       operator-side. Pryv-side artefacts that internal auditors
       typically review: the audit log itself (control-effectiveness
       sample), this compliance matrix (control inventory),
@@ -1061,10 +1139,12 @@ requirements:
       action needed; review effectiveness; make changes to the ISMS
       if necessary.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [event, stream, audit]
     overview: |
-      **Facilitation: storage (medium)** — CAPA records can ride on
+      CAPA records can ride on
       Pryv events on a `compliance/capa/*` stream with attachments;
       the audit chain provides tamper evidence. The CAPA workflow
       itself (root-cause analysis, effectiveness verification,
@@ -1088,10 +1168,12 @@ requirements:
       Conflicting duties and conflicting areas of responsibility shall
       be segregated.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
     pryv_primitives: [access, permissions, system-streams]
     overview: |
-      **Facilitation: primitive (medium)** — Pryv's permission model
+      Pryv's permission model
       supports segregation: distinct accesses with distinct
       permissions per role; system streams isolate privileged data.
       The role-definition + duty-conflict analysis is operator-side.
@@ -1125,11 +1207,13 @@ requirements:
       An inventory of information and other associated assets,
       including owners, shall be developed and maintained.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
     pryv_primitives: [stream, event, audit]
     derives_from: [iso-27001.A.5.12]
     overview: |
-      **Facilitation: primitive (medium)** — Pryv's stream + event
+      Pryv's stream + event
       model gives a queryable inventory of all data assets stored in
       the deployment (the data subject is implicitly the asset owner
       under Art. 4 GDPR personhood). Operator's broader infrastructure
@@ -1143,11 +1227,13 @@ requirements:
       organization's assets in their possession upon change or
       termination of their employment, contract or agreement.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
     pryv_primitives: [access, audit]
     derives_from: [iso-27001.A.6.5, hipaa-security.164.308(a)(3)(ii)(C)]
     overview: |
-      **Facilitation: primitive (medium)** — For the technical
+      For the technical
       "asset" of an access token, return = revocation
       (`accesses.delete`). For physical / off-line assets, return is
       operator-side. The audit log captures the technical-side
@@ -1160,11 +1246,13 @@ requirements:
       manage the information-security risks associated with the ICT
       products and services supply chain.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: awareness
     draft: true
     pryv_primitives: [audit]
     derives_from: [iso-27001.A.5.19, iso-27001.A.8.30]
     overview: |
-      **Facilitation: awareness (low)** — Supply-chain risk for the
+      Supply-chain risk for the
       Pryv layer: published dependency-audit pipeline + Docker image
       SHA pinning + reproducible builds. The operator's broader ICT
       supply-chain programme (vendor assessment, SLA reviews) sits on
@@ -1178,11 +1266,13 @@ requirements:
       information security incident management processes, roles and
       responsibilities.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider, access]
     derives_from: [hipaa-security.164.308(a)(6)(i), diga.A1.2.6]
     overview: |
-      **Facilitation: evidence (medium)** — Pryv contributes detection
+      Pryv contributes detection
       + scoping data (audit + observability) + containment primitive
       (accesses.delete). The incident-management plan itself (roles,
       escalation, communications, lessons-learned) is operator-side.
@@ -1194,11 +1284,13 @@ requirements:
       decide if they are to be categorized as information security
       incidents.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider]
     derives_from: [iso-27001.A.5.24]
     overview: |
-      **Facilitation: evidence (low)** — Event-vs-incident
+      Event-vs-incident
       classification is operator decision. Pryv-side data (audit row
       patterns, observability anomalies) feeds the assessment but the
       categorization rule is operator policy.
@@ -1210,11 +1302,13 @@ requirements:
       tested based on business continuity objectives and ICT
       continuity requirements.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [multi-core-mTLS, backup-restore, letsEncrypt-integration]
     derives_from: [iso-27001.A.8.14, hipaa-security.164.308(a)(7)(ii)(B)]
     overview: |
-      **Facilitation: infrastructure (medium)** — ICT-readiness Pryv
+      ICT-readiness Pryv
       inheritance: multi-core HA + backup-restore + cluster-replicated
       TLS certificates. The business-continuity objectives + testing
       cadence are operator policy.

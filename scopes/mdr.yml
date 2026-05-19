@@ -24,10 +24,12 @@ requirements:
       document, implement, maintain, keep up-to-date and continually
       improve a QMS that ensures compliance.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider, backup-restore]
     overview: |
-      **Facilitation: evidence (low)** — MDR Art. 10 is the umbrella
+      MDR Art. 10 is the umbrella
       obligation tying every other requirement to the manufacturer's
       QMS. Pryv supplies the technical raw material that several QMS
       sub-processes draw on (audit log for design controls +
@@ -85,10 +87,12 @@ requirements:
       requirements set out in Annex I shall be based on clinical data
       providing sufficient clinical evidence.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, event, stream, data-types]
     overview: |
-      **Facilitation: evidence (low)** — Clinical evaluation is the
+      Clinical evaluation is the
       manufacturer's regulatory artefact. Pryv's contribution is
       operational: if your device collects clinical data during the
       evaluation, Pryv stores it (events with stable class/format
@@ -107,11 +111,13 @@ requirements:
       to ensure rights, safety, dignity and well-being of subjects;
       data shall be reliable and robust.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [access, audit, encryption-at-rest-secrets, backup-restore]
     derives_from: [gdpr.Art.32]
     overview: |
-      **Facilitation: infrastructure (medium)** — Subject protection in
+      Subject protection in
       clinical investigations rides on the same Pryv primitives that
       carry GDPR Art. 32 — per-subject storage isolation, access
       control, audit, encryption at rest, restoration. "Reliable and
@@ -126,10 +132,12 @@ requirements:
       proportionate to the risk class and appropriate for the type of
       device.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider, event]
     overview: |
-      **Facilitation: evidence (medium)** — PMS data sources are
+      PMS data sources are
       two-fold: (1) operational telemetry of the device + backend
       (audit log + New Relic observability when enabled); (2) field
       data from the device itself, captured as events. Pryv is the
@@ -150,10 +158,12 @@ requirements:
       surveillance report summarising the results and conclusions of
       the analyses of the post-market surveillance data.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, event]
     overview: |
-      **Facilitation: evidence (low)** — The PMS report itself is an
+      The PMS report itself is an
       editorial artefact the manufacturer drafts. Pryv contributes
       the data: audit log gives the backend activity summary; events
       on the PMS streams give the field data summary. Composition of
@@ -166,10 +176,12 @@ requirements:
       periodic safety update report (PSUR) summarising the results +
       conclusions of analyses of post-market surveillance data.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, event, observability-provider]
     overview: |
-      **Facilitation: evidence (low)** — Same Pryv contribution as
+      Same Pryv contribution as
       Art. 85, with cadence increased per device class (annually for
       IIa+; available to competent authorities; for class III +
       implantables, uploaded into Eudamed). The PSUR's analytical
@@ -182,10 +194,12 @@ requirements:
       made available on the Union market, except expected side-effects
       which are clearly documented in the product information.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, event, observability-provider]
     overview: |
-      **Facilitation: evidence (low)** — The reporting decision + the
+      The reporting decision + the
       report itself are manufacturer-side. Pryv's audit log +
       observability data make root-cause analysis tractable when
       investigating an incident — particularly when the incident's
@@ -201,10 +215,12 @@ requirements:
       designed to ensure repeatability, reliability and performance
       according to their intended use.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, backup-restore, multi-core-mTLS, letsEncrypt-integration, observability-provider]
     overview: |
-      **Facilitation: evidence (medium)** — Annex I §17 is the General
+      Annex I §17 is the General
       Safety + Performance Requirement (GSPR) most directly relevant
       to software medical devices. Pryv as the backend contributes to
       several §17 sub-clauses: §17.2 (development and manufacture in
@@ -298,10 +314,12 @@ requirements:
       unacceptable risk; including withdrawal, recall, restrictions
       on availability.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, access, event, observability-provider]
     overview: |
-      **Facilitation: evidence (medium)** — A recall / withdrawal
+      A recall / withdrawal
       decision is manufacturer + authority side. Pryv contributes:
       audit log + observability data scope the affected user / device
       population (which subjects' devices were active when the risk
@@ -318,11 +336,13 @@ requirements:
       part of the technical documentation specified in Annex II; details
       in Annex III.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [event, stream, audit, backup-restore]
     derives_from: [mdr.Art.83, iso-13485.4.2.5]
     overview: |
-      **Facilitation: storage (low)** — The PMS plan document itself
+      The PMS plan document itself
       is the manufacturer's artefact (it lives in the technical
       documentation under Annex III). Pryv-side operational
       contribution: when the plan calls for specific data collection
@@ -338,11 +358,13 @@ requirements:
       supplied with the device (labels, IFU, design history file
       summary, post-market documentation references).
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [event, stream, backup-restore]
     derives_from: [iso-13485.7.3.10, mdr.A1.23]
     overview: |
-      **Facilitation: storage (medium)** — The technical documentation
+      The technical documentation
       file (TDF) is the manufacturer's regulatory artefact. Pryv-side
       support: events on a designated `tdf/<device-id>/*` stream with
       attachments give a single, versioned, backed-up + audit-trailed

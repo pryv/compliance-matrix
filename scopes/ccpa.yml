@@ -23,6 +23,7 @@ requirements:
       sources, business / commercial purposes, and specific pieces
       collected.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, stream, event, audit, data-types]
     derives_from: [gdpr.Art.15]
@@ -43,6 +44,7 @@ requirements:
       collected from the consumer; with statutory exceptions (Section
       1798.105(d)).
     coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [event, stream, backup-restore]
     derives_from: [gdpr.Art.17]
@@ -63,6 +65,7 @@ requirements:
       Consumer has the right to request that a business correct
       inaccurate personal information.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [event]
     derives_from: [gdpr.Art.16]
@@ -82,6 +85,7 @@ requirements:
       information and the specific pieces of personal information the
       business has collected about the consumer.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [event, stream, data-types]
     derives_from: [gdpr.Art.15]
@@ -100,10 +104,12 @@ requirements:
       sold or shared, the categories sold or shared, and the categories
       of third parties to whom it was sold or shared.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData, audit, CMC]
     overview: |
-      **Facilitation: storage (medium)** — Every "sale" or "sharing"
+      Every "sale" or "sharing"
       you do — in CCPA's broad sense, which includes cross-context
       behavioural advertising — happens through a Pryv access granted
       to the recipient. The access's `clientData` can carry the
@@ -132,6 +138,7 @@ requirements:
       sells or shares personal information about the consumer to third
       parties not to do so.
     coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [access, permissions, clientData, audit]
     derives_from: [gdpr.Art.21]
@@ -160,6 +167,7 @@ requirements:
       reasonably expected (with statutory exceptions in CPPA
       regulations).
     coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [access, permissions, stream]
     derives_from: [gdpr.Art.18]
@@ -195,11 +203,13 @@ requirements:
       purposes, sources; respond to verifiable consumer requests within
       45 days (one extension permitted, 90 day total max).
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData, app-web-auth3, event]
     derives_from: [gdpr.Art.12]
     overview: |
-      **Facilitation: storage (medium)** — Notice text lives on
+      Notice text lives on
       `access.clientData.privacy_notice` or on a dedicated
       `consent/notice` event — preserved per consumer per time,
       recoverable later. The 45-day response window is your
@@ -214,10 +224,12 @@ requirements:
       Information" link / mechanism; CPRA additionally requires
       honoring opt-out preference signals (Global Privacy Control).
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: awareness
     draft: true
     pryv_primitives: [access, clientData]
     overview: |
-      **Facilitation: awareness (low)** — The opt-out UI surface is
+      The opt-out UI surface is
       your app — a CCPA-required link or an automated GPC-signal
       handler. When the opt-out is exercised, the Pryv mechanism is
       the access revoke / narrow flow from §1798.120. Implementer's
@@ -231,10 +243,12 @@ requirements:
       personal information", "sale", "sharing", "service provider",
       "third party".
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: awareness
     draft: true
     pryv_primitives: [event, stream, access, clientData, CMC]
     overview: |
-      **Facilitation: awareness (medium)** — Pryv primitives map
+      Pryv primitives map
       cleanly to most CCPA-defined terms (event = personal-information
       storage; access + permissions = the consent / authorization
       layer; CMC = sharing across distinct operators). The
@@ -256,10 +270,12 @@ requirements:
       may bring a civil action for statutory damages ($100-$750 per
       consumer per incident or actual damages).
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, audit, access]
     overview: |
-      **Facilitation: infrastructure (medium)** — Two contributions:
+      Two contributions:
       (1) TLS-in-transit + operator-side at-rest encryption move ePHI
       / personal-information out of the "nonencrypted and nonredacted"
       trigger zone for §1798.150; (2) audit + access-version data are
@@ -285,11 +301,13 @@ requirements:
       unauthorized access, destruction, use, modification, or
       disclosure.
     coverage: facilitated
+    pryv_effort_saved: high
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [access, permissions, audit, letsEncrypt-integration, encryption-at-rest-secrets, MFA, backup-restore]
     derives_from: [ccpa.1798.150, gdpr.Art.32]
     overview: |
-      **Facilitation: infrastructure (high)** — Statute predates CCPA
+      Statute predates CCPA
       but provides the "reasonable security" basis the §1798.150 civil
       action attaches to. Pryv's multi-aspect technical baseline (TLS,
       mTLS, at-rest secrets, audit, MFA, backup-restore, permissions)
@@ -305,11 +323,13 @@ requirements:
       of third parties with whom PI is shared, sale / sharing
       practices, and consumer rights.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData]
     derives_from: [ccpa.1798.130]
     overview: |
-      **Facilitation: storage (low)** — Notice content is editorial.
+      Notice content is editorial.
       Pryv preserves the notice text per individual consumer (on
       `account.clientData.privacy_notice` or a dedicated event), so
       the precise wording shown at the moment a particular consumer
@@ -343,11 +363,13 @@ requirements:
       another business or a third party for monetary or other valuable
       consideration.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData]
     derives_from: [ccpa.1798.140]
     overview: |
-      **Facilitation: storage (low)** — Whether a given access
+      Whether a given access
       constitutes a "sale" under §1798.140(ad) is a classification the
       implementer applies + records on the access's
       `clientData.type = "sale"`. The consideration test (monetary or
@@ -364,11 +386,13 @@ requirements:
       genetic data, biometric identifier, health, sex life or
       sexual orientation.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
     pryv_primitives: [stream, system-streams, event]
     derives_from: [ccpa.1798.121, gdpr.Art.9]
     overview: |
-      **Facilitation: primitive (medium)** — Sensitive-PI enumeration
+      Sensitive-PI enumeration
       drives stream-layout design — dedicate subtrees per sensitive
       category (`sensitive/health/`, `sensitive/precise-location/`,
       etc.) for clean §1798.121 limit-use enforcement. The

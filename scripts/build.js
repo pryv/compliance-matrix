@@ -60,6 +60,8 @@ db.exec(`
     text TEXT,
     text_url TEXT,
     coverage TEXT NOT NULL,
+    pryv_effort_saved TEXT,
+    facilitation_mode TEXT,
     overview TEXT,
     detail TEXT,
     technical TEXT,
@@ -71,6 +73,8 @@ db.exec(`
     FOREIGN KEY (scope_id) REFERENCES scopes(id)
   );
   CREATE INDEX idx_req_coverage ON requirements(coverage);
+  CREATE INDEX idx_req_effort   ON requirements(pryv_effort_saved);
+  CREATE INDEX idx_req_facmode  ON requirements(facilitation_mode);
   CREATE INDEX idx_req_draft ON requirements(draft);
 
   CREATE TABLE spec_links     (scope_id TEXT, ref TEXT, reqid TEXT,
@@ -104,8 +108,8 @@ const insScope = db.prepare(`INSERT INTO scopes
   VALUES (@id, @title, @short, @type, @jurisdiction, @version, @version_date, @canonical_url, @curated, @layered_on_json, @requirement_count)`);
 
 const insReq = db.prepare(`INSERT INTO requirements
-  (scope_id, ref, title, text, text_url, coverage, overview, detail, technical, draft, reviewed_by, reviewed_at, applies_to_versions)
-  VALUES (@scope_id, @ref, @title, @text, @text_url, @coverage, @overview, @detail, @technical, @draft, @reviewed_by, @reviewed_at, @applies_to_versions)`);
+  (scope_id, ref, title, text, text_url, coverage, pryv_effort_saved, facilitation_mode, overview, detail, technical, draft, reviewed_by, reviewed_at, applies_to_versions)
+  VALUES (@scope_id, @ref, @title, @text, @text_url, @coverage, @pryv_effort_saved, @facilitation_mode, @overview, @detail, @technical, @draft, @reviewed_by, @reviewed_at, @applies_to_versions)`);
 
 const insSpec    = db.prepare('INSERT INTO spec_links    (scope_id, ref, reqid) VALUES (?, ?, ?)');
 const insTest    = db.prepare('INSERT INTO test_links    (scope_id, ref, test_code) VALUES (?, ?, ?)');
@@ -145,6 +149,8 @@ const tx = db.transaction(() => {
         text: r.text || null,
         text_url: r.text_url || null,
         coverage: r.coverage,
+        pryv_effort_saved: r.pryv_effort_saved || null,
+        facilitation_mode: r.facilitation_mode || null,
         overview: r.overview || null,
         detail: r.detail || null,
         technical: r.technical || null,

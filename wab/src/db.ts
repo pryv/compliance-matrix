@@ -1,6 +1,8 @@
 import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
 
 export type Coverage = 'implemented' | 'configurable' | 'facilitated' | 'documented' | 'out-of-scope';
+export type EffortSaved = 'high' | 'medium' | 'low';
+export type FacilitationMode = 'primitive' | 'evidence' | 'storage' | 'infrastructure' | 'awareness';
 
 export interface Scope {
   id: string;
@@ -23,6 +25,8 @@ export interface Requirement {
   text: string | null;
   text_url: string | null;
   coverage: Coverage;
+  pryv_effort_saved: EffortSaved | null;
+  facilitation_mode: FacilitationMode | null;
   overview: string | null;
   detail: string | null;
   technical: string | null;

@@ -28,6 +28,14 @@
     "coverage": {
       "enum": ["implemented", "configurable", "facilitated", "documented", "out-of-scope"]
     },
+    "pryv_effort_saved": {
+      "enum": ["high", "medium", "low"],
+      "description": "How much of the requirement Pryv carries (high = Pryv saves most implementer effort; low = small substrate; bulk on implementer). Required for every coverage tier except out-of-scope (which is zero by definition). See docs/facilitation-typology.md."
+    },
+    "facilitation_mode": {
+      "enum": ["primitive", "evidence", "storage", "infrastructure", "awareness"],
+      "description": "What kind of help Pryv provides for this facilitated requirement. Only meaningful when coverage='facilitated'. See docs/facilitation-typology.md."
+    },
     "overview": {
       "type": "string",
       "description": "High-level position (2-3 sentences). Audience: auditor / compliance officer. Skimmable; states pryv's contribution without jargon."

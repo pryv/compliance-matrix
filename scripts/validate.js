@@ -191,6 +191,28 @@ for (const { scope, file } of allScopes) {
       w(`${cell}: coverage=${r.coverage} but overview is empty (audiences: auditor / compliance officer rely on it)`);
     }
 
+    // pryv_effort_saved: required when coverage != out-of-scope; forbidden when out-of-scope.
+    if (r.coverage === 'out-of-scope') {
+      if (r.pryv_effort_saved !== undefined) {
+        e(`${cell}: coverage=out-of-scope MUST NOT carry pryv_effort_saved (out-of-scope = zero by definition)`);
+      }
+    } else {
+      if (r.pryv_effort_saved === undefined) {
+        e(`${cell}: coverage=${r.coverage} requires pryv_effort_saved (high|medium|low) -- see docs/facilitation-typology.md`);
+      }
+    }
+
+    // facilitation_mode: required when coverage=facilitated; forbidden otherwise.
+    if (r.coverage === 'facilitated') {
+      if (r.facilitation_mode === undefined) {
+        e(`${cell}: coverage=facilitated requires facilitation_mode (primitive|evidence|storage|infrastructure|awareness)`);
+      }
+    } else {
+      if (r.facilitation_mode !== undefined) {
+        e(`${cell}: facilitation_mode is only valid when coverage=facilitated (this row has coverage=${r.coverage})`);
+      }
+    }
+
     // reqid resolution
     for (const reqid of r.functional_specs || []) {
       if (knownReqids.size > 0 && !knownReqids.has(reqid)) {

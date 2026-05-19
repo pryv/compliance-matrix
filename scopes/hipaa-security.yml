@@ -25,10 +25,12 @@ requirements:
       Implement policies and procedures to prevent, detect, contain, and
       correct security violations.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider]
     overview: |
-      **Facilitation: evidence (low)** — The Security Management
+      The Security Management
       Process is a programme you run as the covered entity / business
       associate — risk analysis, risk-management decisions, sanctions,
       activity review. Pryv supplies the technical raw material
@@ -50,6 +52,7 @@ requirements:
       system activity, such as audit logs, access reports, and security
       incident tracking reports.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream, observability-provider]
     tests: [AT01, AT02, AT03, AT51]
@@ -77,6 +80,7 @@ requirements:
       Implement procedures for terminating access to electronic protected
       health information when employment ends or workforce role changes.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, audit]
     tests: [AA02, ACCP, LG20]
@@ -106,6 +110,7 @@ requirements:
       through, for example, access to a workstation, transaction,
       program, process, or other mechanism.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, clientData, stream]
     tests: [AA01, ACCP]
@@ -132,6 +137,7 @@ requirements:
       modify a user's right of access to a workstation, transaction,
       program, or process.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, audit]
     tests: [AA01, AA02, ACCP, GF33]
@@ -155,6 +161,7 @@ requirements:
     text: |
       Procedures for creating, changing, and safeguarding passwords.
     coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [system-streams, MFA, access]
     config_keys: [services.mfa.mode, auth.passwordRules]
@@ -177,6 +184,7 @@ requirements:
       Establish and implement procedures to create and maintain retrievable
       exact copies of electronic protected health information.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [backup-restore]
     config_keys: [backup.outputDir, backup.includeAttachments]
@@ -202,6 +210,7 @@ requirements:
       Establish (and implement as needed) procedures to restore any loss
       of data.
     coverage: configurable
+    pryv_effort_saved: low
     draft: true
     pryv_primitives: [backup-restore, multi-core-mTLS, letsEncrypt-integration]
     config_keys: [cluster.discoveryEnabled, letsEncrypt.certRenewer]
@@ -232,10 +241,12 @@ requirements:
       which they are housed, while ensuring that properly authorized
       access is allowed.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: awareness
     draft: true
     pryv_primitives: [data-residency, encryption-at-rest-secrets]
     overview: |
-      **Facilitation: awareness (low)** — Physical safeguards (facility
+      Physical safeguards (facility
       access, workstation security, device and media controls) are
       properties of the hosting environment, not of the Pryv software
       itself. Pryv contributes two things: the data-residency
@@ -267,6 +278,7 @@ requirements:
       those persons or software programs that have been granted access
       rights as specified in §164.308(a)(4).
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams]
     tests: [AA01, AA02, ACCP]
@@ -289,6 +301,7 @@ requirements:
       Assign a unique name and/or number for identifying and tracking
       user identity.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, audit, system-streams]
     tests: [AA01, U9HQ]
@@ -308,6 +321,7 @@ requirements:
       Establish (and implement as needed) procedures for obtaining
       necessary ePHI during an emergency.
     coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [access, system-streams]
     config_keys: [auth.adminAccessKey]
@@ -331,6 +345,7 @@ requirements:
       Implement electronic procedures that terminate an electronic
       session after a predetermined time of inactivity.
     coverage: configurable
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions]
     config_keys: [auth.sessionMaxAge, access.expires]
@@ -354,6 +369,7 @@ requirements:
     text: |
       Implement a mechanism to encrypt and decrypt ePHI.
     coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [encryption-at-rest-secrets, letsEncrypt-integration]
     config_keys: [letsEncrypt.atRestKey, storages.engines.postgresql.ssl]
@@ -384,6 +400,7 @@ requirements:
       record and examine activity in information systems that contain
       or use ePHI.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream]
     tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65]
@@ -405,10 +422,12 @@ requirements:
       Implement policies and procedures to protect ePHI from improper
       alteration or destruction.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
     pryv_primitives: [event, audit, permissions, backup-restore]
     overview: |
-      **Facilitation: primitive (medium)** — Integrity is multi-
+      Integrity is multi-
       layered: write authorization gated by `permissions`, event
       versioning preserves the prior value on every update, audit
       pins the (who, when, via which access) attribution, and
@@ -422,10 +441,12 @@ requirements:
       Implement electronic mechanisms to corroborate that ePHI has not
       been altered or destroyed in an unauthorized manner.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [event, audit]
     overview: |
-      **Facilitation: evidence (low)** — Event versioning preserves
+      Event versioning preserves
       the prior content on every update, so "is this the original?"
       is a tractable question — compare against the history. The
       audit row references the access that performed the update,
@@ -439,6 +460,7 @@ requirements:
       Implement procedures to verify that a person or entity seeking
       access to ePHI is the one claimed.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams]
     config_keys: [services.mfa.mode]
@@ -463,6 +485,7 @@ requirements:
       access to ePHI that is being transmitted over an electronic
       communications network.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
     tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC]
@@ -486,6 +509,7 @@ requirements:
       transmitted ePHI is not improperly modified without detection
       until disposed of.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [letsEncrypt-integration]
     tests: [ACMEINT, ACMEORCH]
@@ -502,6 +526,7 @@ requirements:
     text: |
       Implement a mechanism to encrypt ePHI whenever deemed appropriate.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
     config_keys: [letsEncrypt.enabled]
@@ -529,11 +554,13 @@ requirements:
       covered entity and its business associate must meet the
       requirements of §164.314(a)(2).
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, audit, CMC]
     derives_from: [gdpr.Art.28]
     overview: |
-      **Facilitation: storage (low)** — The BAA itself is a contract —
+      The BAA itself is a contract —
       the covered entity drafts it with legal counsel. What Pryv
       contributes when you operate as a business associate: the audit
       log makes "implement administrative, physical and technical
@@ -550,11 +577,13 @@ requirements:
       associate will implement administrative, physical and technical
       safeguards that reasonably and appropriately protect ePHI.
     coverage: facilitated
+    pryv_effort_saved: high
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [access, permissions, audit, letsEncrypt-integration, encryption-at-rest-secrets, MFA, backup-restore]
     derives_from: [hipaa-security.164.308(a)(1)(i), hipaa-security.164.312(a)(1), hipaa-security.164.312(e)(1)]
     overview: |
-      **Facilitation: infrastructure (high)** — The BAA's "reasonable
+      The BAA's "reasonable
       and appropriate safeguards" obligation is satisfied by the
       technical-safeguards programme already enumerated across
       §164.308 + §164.310 + §164.312. The BA cites the relevant
@@ -569,10 +598,12 @@ requirements:
       associate will report any security incident of which it becomes
       aware to the covered entity.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, CMC, observability-provider]
     overview: |
-      **Facilitation: evidence (low)** — Detection of a security
+      Detection of a security
       incident is the BA's operational concern (audit-log review +
       observability). Reporting to the CE is the contractual flow.
       Pryv's CMC plugin provides a structured cross-account
@@ -626,10 +657,12 @@ requirements:
       be documented, maintain a written (which may be electronic)
       record of the action, activity, or assessment.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [event, stream, audit, backup-restore]
     overview: |
-      **Facilitation: storage (medium)** — Where the required record
+      Where the required record
       is operational (activity logs, assessment outputs), Pryv events
       on a designated `compliance/*` stream carry the documentation
       alongside the audit log's automatic operational record. Event
@@ -644,10 +677,12 @@ requirements:
       from the date of its creation or the date when it last was in
       effect, whichever is later.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [backup-restore, audit]
     overview: |
-      **Facilitation: storage (low)** — Six-year retention is an
+      Six-year retention is an
       operational choice. Pryv's audit log stays per-user SQLite by
       default — retention is operator-driven (the operator schedules
       archival + pruning per their HIPAA schedule). `bin/backup.js`
@@ -661,10 +696,12 @@ requirements:
       response to environmental or operational changes affecting the
       security of the ePHI.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [event, audit]
     overview: |
-      **Facilitation: evidence (low)** — Periodic review cadence is
+      Periodic review cadence is
       the operator's procedure. Pryv's contribution: when policies-
       as-data are stored as events on a `compliance/policies/*`
       stream, the event-version chain shows when each policy was
@@ -715,12 +752,14 @@ requirements:
       Implement procedures for monitoring log-in attempts and reporting
       discrepancies.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider]
     derives_from: [iso-27001.A.8.15]
     tests: [AT01, AT02, AT51]
     overview: |
-      **Facilitation: evidence (medium)** — Login + authentication-
+      Login + authentication-
       failure events are captured in the audit log (per `auth.*` API
       method calls). Observability data aggregates rate + anomaly
       signals. The discrepancy-reporting cadence + threshold tuning
@@ -731,11 +770,13 @@ requirements:
     text: |
       Implement policies and procedures to address security incidents.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider, access]
     derives_from: [hipaa-security.164.308(a)(1)(i)]
     overview: |
-      **Facilitation: evidence (medium)** — Incident-response procedure
+      Incident-response procedure
       is the operator's organizational programme. Pryv contributes
       the detection + scoping data layer: audit log shows who
       accessed what; observability gives system-level anomaly
@@ -749,11 +790,13 @@ requirements:
       continuation of critical business processes for protection of
       the security of ePHI while operating in emergency mode.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [multi-core-mTLS, backup-restore, letsEncrypt-integration]
     derives_from: [hipaa-security.164.308(a)(7)(ii)(A), hipaa-security.164.308(a)(7)(ii)(B)]
     overview: |
-      **Facilitation: infrastructure (medium)** — Pryv's HA primitives
+      Pryv's HA primitives
       (multi-core cluster + Raft replication + cluster-CA mTLS)
       support continued operation when a single facility fails. The
       "critical business processes" definition + emergency-mode
@@ -781,11 +824,13 @@ requirements:
       security of ePHI to ensure security policies and procedures meet
       the requirements of this subpart.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider]
     derives_from: [hipaa-security.164.316(b)(2)(iii)]
     overview: |
-      **Facilitation: evidence (low)** — Evaluation is the operator's
+      Evaluation is the operator's
       cyclical assessment. Pryv-side inputs: audit log (control-
       effectiveness sample), observability (operational stability
       data), this matrix (control inventory to evaluate against).
@@ -838,11 +883,13 @@ requirements:
       and out of a facility, and the movement of these items within
       the facility.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [backup-restore, encryption-at-rest-secrets]
     derives_from: [hipaa-security.164.310]
     overview: |
-      **Facilitation: infrastructure (medium)** — Pryv-side contribution
+      Pryv-side contribution
       at the media-controls layer: per-user backup files are the
       natural unit when an individual subject's ePHI moves off the
       production system (export, transfer, archive); operator-side

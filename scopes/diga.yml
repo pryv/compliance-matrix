@@ -24,11 +24,13 @@ requirements:
       and information security (per current state of the art, including
       BSI guidelines).
     coverage: facilitated
+    pryv_effort_saved: high
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [access, permissions, audit, letsEncrypt-integration, encryption-at-rest-secrets, MFA, data-residency, system-streams, backup-restore]
     derives_from: [gdpr.Art.5, gdpr.Art.25, gdpr.Art.32]
     overview: |
-      **Facilitation: infrastructure (high)** — The data-protection
+      The data-protection
       half of § 4 derives directly from the GDPR coverage already
       authored (see GDPR Art. 5, Art. 25 by-design, Art. 32 security
       of processing). The information-security half aligns with the
@@ -53,10 +55,12 @@ requirements:
       records (ePA / TI), based on the semantic and technical standards
       named in the BfArM interoperability annex.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [event, data-types, stream]
     overview: |
-      **Facilitation: infrastructure (low)** — Pryv's data-types
+      Pryv's data-types
       schemas (canonical `class/format` JSON Schema) give you a
       stable in-platform data model that you can map to FHIR R4 (the
       standard BfArM expects). The FHIR-mapping layer is app-side or
@@ -77,10 +81,12 @@ requirements:
       interruption and manipulation, with appropriate processes to
       address security incidents.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [multi-core-mTLS, backup-restore, audit, observability-provider, letsEncrypt-integration]
     overview: |
-      **Facilitation: infrastructure (medium)** — Pryv contributes the
+      Pryv contributes the
       operational baseline: multi-core HA with Raft replication;
       cluster-CA mTLS between cores; encrypted bootstrap bundles;
       daily-renewed TLS certs; backup + restore; audit-log for
@@ -97,11 +103,13 @@ requirements:
       categories collected, and other minimum elements must be
       disclosed in advance.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData, app-web-auth3, event]
     derives_from: [gdpr.Art.13]
     overview: |
-      **Facilitation: storage (medium)** — Same artefact set as GDPR
+      Same artefact set as GDPR
       Art. 13 (notice at collection): Pryv stores the text shown to
       the user — durably, versioned, per subject — typically on
       `access.clientData.privacy_notice` or in a `consent/notice`
@@ -146,11 +154,13 @@ requirements:
       For each processing purpose, the manufacturer must declare the
       Art. 6 + (if applicable) Art. 9 GDPR legal basis used.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData]
     derives_from: [gdpr.Art.6, gdpr.Art.9]
     overview: |
-      **Facilitation: storage (medium)** — Pryv pattern:
+      Pryv pattern:
       `access.clientData.legal_basis` captures the Art. 6 basis per
       access; for sensitive data,
       `clientData.special_category_basis` captures the Art. 9
@@ -164,6 +174,7 @@ requirements:
       Only data necessary for the intended use shall be processed; data
       must be deleted as soon as the purpose is fulfilled.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [permissions, stream]
     derives_from: [gdpr.Art.5]
@@ -182,6 +193,7 @@ requirements:
       All communication interfaces of the digital health application
       shall employ Transport Layer Security at current state of the art.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
     derives_from: [gdpr.Art.32]
@@ -201,10 +213,12 @@ requirements:
       "critical" severity must be remediated; "high" findings must have
       a mitigation plan.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [audit]
     overview: |
-      **Facilitation: infrastructure (low)** — Pryv supports the
+      Pryv supports the
       manufacturer's pentest by providing a reproducible deployment
       artefact (Docker image), a structured audit log for
       verification, and documentation of the security surface. The
@@ -219,11 +233,13 @@ requirements:
       data using HL7 FHIR R4 profiles approved in the BfArM
       interoperability annex.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [event, data-types, stream]
     derives_from: [diga.5]
     overview: |
-      **Facilitation: infrastructure (low)** — Same status as § 5:
+      Same status as § 5:
       Pryv's event model is structurally adequate; the FHIR-mapping
       transformation is app-side today. A
       "compliance-matrix/proposals/fhir-data-type-mapping.md" entry
@@ -250,6 +266,7 @@ requirements:
       their rights under GDPR Art. 15-22 directly within the digital
       health application or via a clearly named contact.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, event, stream, audit]
     derives_from: [gdpr.Art.15, gdpr.Art.16, gdpr.Art.17, gdpr.Art.20]
@@ -268,6 +285,7 @@ requirements:
       must be implemented; passwords alone are not sufficient when
       sensitive health data is processed.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams]
     derives_from: [hipaa-security.164.312(d), iso-27001.A.8.5]
@@ -287,6 +305,7 @@ requirements:
       to support incident investigation and audit; logs must be
       protected against tampering.
     coverage: implemented
+    pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream]
     derives_from: [iso-27001.A.8.15, hipaa-security.164.312(b)]
@@ -306,10 +325,12 @@ requirements:
       LOINC, SNOMED CT, ICD-10, etc.), the application shall use them
       to encode treatment-relevant data.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [event, data-types, stream]
     overview: |
-      **Facilitation: storage (low)** — Pryv stores whatever event
+      Pryv stores whatever event
       content the application writes. For LOINC / SNOMED / ICD-10
       codings, the implementer encodes the code system + value as
       event content fields (typically `event.content.code` +
@@ -323,11 +344,13 @@ requirements:
       to users during its specified use periods, with documented
       procedures for handling unavailability.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [multi-core-mTLS, letsEncrypt-integration, backup-restore, observability-provider]
     derives_from: [iso-27001.A.5.23, mdr.A1.17]
     overview: |
-      **Facilitation: infrastructure (medium)** — Pryv-side availability:
+      Pryv-side availability:
       multi-core HA (cluster topology + Raft replication); TLS
       auto-renewal preventing cert-expiry outages; backup-restore for
       catastrophic recovery; observability gives uptime metrics. The
@@ -368,11 +391,13 @@ requirements:
       applications targeting children or adolescents, the UI shall be
       age-appropriate.
     coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData, event]
     derives_from: [gdpr.Art.8]
     overview: |
-      **Facilitation: storage (low)** — Plain-language text + age-
+      Plain-language text + age-
       appropriate UI are app-layer responsibilities. Pryv contributes
       the artefact storage: when different content variants are
       served to different age cohorts,
@@ -403,11 +428,13 @@ requirements:
       including all components, their role + interactions, and the
       security boundary of each.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: awareness
     draft: true
     pryv_primitives: [audit]
     derives_from: [iso-27001.A.8.27]
     overview: |
-      **Facilitation: awareness (medium)** — Pryv's architecture is
+      Pryv's architecture is
       publicly documented (open-pryv.io README, AGENTS.md,
       component-level READMEs) — the BfArM-required architecture
       document references Pryv as a sub-system. The app-layer
@@ -421,11 +448,13 @@ requirements:
       practices; configuration shall minimize attack surface
       (disabled services, restricted ports, least-privilege defaults).
     coverage: facilitated
+    pryv_effort_saved: high
+    facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, system-streams, encryption-at-rest-secrets]
     derives_from: [iso-27001.A.8.9]
     overview: |
-      **Facilitation: infrastructure (high)** — Pryv ships secure-by-
+      Pryv ships secure-by-
       default (TLS on, mTLS between cores, no anonymous access path,
       system-streams isolating privileged data, at-rest secret
       encryption). Operator-side hardening (host OS, firewall,
@@ -439,11 +468,13 @@ requirements:
       with detection + escalation + containment + recovery + post-
       mortem phases defined.
     coverage: facilitated
+    pryv_effort_saved: medium
+    facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider, access]
     derives_from: [hipaa-security.164.308(a)(6)(i), iso-27001.A.5.23]
     overview: |
-      **Facilitation: evidence (medium)** — Pryv contributes detection
+      Pryv contributes detection
       (observability anomalies, audit-log patterns) + containment
       (accesses.delete revokes implicated tokens) + recovery
       (backup-restore + multi-core HA) + post-mortem (audit-log
