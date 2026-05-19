@@ -685,6 +685,15 @@ requirements:
       narrowing), terminate (accesses.delete + system.users.delete).
       Audit log gives the per-stage evidence. The naming + assignment
       policy is the operator's.
+    detail: |
+      For workforce / role-scale deployments, Pryv composes with an
+      external IdP / IGA system via two patterns documented in
+      `context/workforce-access-patterns.md` — (1) group access +
+      `callerId` audit suffix, (2) seed access + sub-access
+      derivation. **Roles + groups themselves are deliberately
+      outside Pryv;** the IdP is the source of truth for identity
+      lifecycle, and Pryv records the resulting access state +
+      per-individual audit trail.
 
   - ref: A.5.17
     title: A.5.17 — Authentication information

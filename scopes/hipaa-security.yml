@@ -103,6 +103,20 @@ requirements:
           (after delete) or fall outside the new scope (after update),
           producing a verifiable termination boundary.
 
+      For workforce-scale deployments (e.g., hospital with 100+ staff),
+      Pryv composes with two patterns covered in
+      `context/workforce-access-patterns.md`:
+        - Group access + `callerId` (auth header
+          `Authorization: <TOKEN> <CALLERID>`) — termination = removing
+          the individual from the external IdP / IGA group, no Pryv-
+          side action; audit trail preserves the individual identity
+          via the recorded caller id.
+        - Seed access + sub-access derivation — termination =
+          `accesses.delete` on the individual's sub-access while the
+          seed + sibling sub-accesses remain untouched.
+      Roles + groups are deliberately outside Pryv; the external IdP
+      is the source of truth.
+
   - ref: 164.308(a)(4)(ii)(B)
     title: Access authorization — Addressable
     text: |
