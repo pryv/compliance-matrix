@@ -8,46 +8,80 @@ const COVERAGE_LABELS: Record<Coverage, string> = {
   'out-of-scope': 'Out of scope'
 };
 
-const EFFORT_LABELS: Record<EffortSaved, string> = {
-  high: 'Pryv carries most',
-  medium: 'Shared effort',
-  low: 'Implementer carries most'
+const EFFORT_LABELS_SHORT: Record<EffortSaved, string> = {
+  high: 'High',
+  medium: 'Med',
+  low: 'Low'
+};
+
+const EFFORT_LABELS_FULL: Record<EffortSaved, string> = {
+  high: 'Pryv carries most of the obligation',
+  medium: 'Shared effort between Pryv and implementer',
+  low: 'Implementer carries most of the work'
 };
 
 const MODE_LABELS: Record<FacilitationMode, string> = {
-  primitive: 'primitive',
-  evidence: 'evidence',
-  storage: 'storage',
-  infrastructure: 'infrastructure',
-  awareness: 'awareness'
+  primitive: 'Primitive',
+  evidence: 'Evidence',
+  storage: 'Storage',
+  infrastructure: 'Infrastructure',
+  awareness: 'Awareness'
 };
 
+const MODE_LABELS_FULL: Record<FacilitationMode, string> = {
+  primitive: 'Pryv\'s access/permissions enforce the obligation',
+  evidence: 'Pryv\'s audit log feeds the implementer\'s artefact',
+  storage: 'Pryv stores text/records the implementer creates',
+  infrastructure: 'Pryv runs the technical layer (TLS, HA, encryption)',
+  awareness: 'Framing row; Pryv contributes minimally'
+};
+
+/**
+ * Combined single-pill badge that summarises a requirement row:
+ *   Facilitated rows:  [F: <Mode> | <Effort>]
+ *   Other tiers:       [<Coverage> | <Effort>]
+ *   Out of scope:      [Out of scope]
+ */
+export function RequirementBadge ({
+  coverage,
+  mode,
+  effort
+}: {
+  coverage: Coverage;
+  mode: FacilitationMode | null;
+  effort: EffortSaved | null;
+}) {
+  const parts: string[] = [];
+  if (coverage === 'facilitated' && mode) {
+    parts.push(`F: ${MODE_LABELS[mode]}`);
+  } else {
+    parts.push(COVERAGE_LABELS[coverage]);
+  }
+  if (effort) {
+    parts.push(EFFORT_LABELS_SHORT[effort]);
+  }
+  const label = parts.join(' | ');
+
+  const titleParts: string[] = [COVERAGE_LABELS[coverage]];
+  if (mode) titleParts.push(`${MODE_LABELS[mode]} — ${MODE_LABELS_FULL[mode]}`);
+  if (effort) titleParts.push(EFFORT_LABELS_FULL[effort]);
+  const title = titleParts.join(' · ');
+
+  return (
+    <span
+      className={`cov-${coverage} inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap`}
+      title={title}
+    >
+      {label}
+    </span>
+  );
+}
+
+/** Coverage-only badge (used by the scope-page histogram). */
 export function CoverageBadge ({ coverage }: { coverage: Coverage }) {
   return (
     <span className={`cov-${coverage} inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap`}>
       {COVERAGE_LABELS[coverage]}
-    </span>
-  );
-}
-
-export function EffortBadge ({ effort }: { effort: EffortSaved }) {
-  return (
-    <span
-      className={`effort-${effort} inline-block px-2 py-0.5 rounded text-xs whitespace-nowrap`}
-      title={EFFORT_LABELS[effort]}
-    >
-      {effort}
-    </span>
-  );
-}
-
-export function FacilitationModeBadge ({ mode }: { mode: FacilitationMode }) {
-  return (
-    <span
-      className={`fac-${mode} inline-block px-2 py-0.5 rounded text-xs whitespace-nowrap`}
-      title={`Facilitation mode: ${MODE_LABELS[mode]}`}
-    >
-      {MODE_LABELS[mode]}
     </span>
   );
 }

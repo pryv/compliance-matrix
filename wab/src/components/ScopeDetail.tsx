@@ -10,7 +10,7 @@ import {
   type Coverage,
   type RequirementLinks
 } from '../db';
-import { CoverageBadge, DraftBadge, EffortBadge, FacilitationModeBadge } from './CoverageBadge';
+import { CoverageBadge, DraftBadge, RequirementBadge } from './CoverageBadge';
 
 const COVERAGE_ORDER: Coverage[] = [
   'implemented', 'configurable', 'facilitated', 'documented', 'out-of-scope'
@@ -98,11 +98,11 @@ export function ScopeDetail () {
                     {r.draft && <DraftBadge />}
                   </td>
                   <td className='p-2'>
-                    <div className='flex flex-wrap items-center gap-1'>
-                      <CoverageBadge coverage={r.coverage} />
-                      {r.facilitation_mode && <FacilitationModeBadge mode={r.facilitation_mode} />}
-                      {r.pryv_effort_saved && <EffortBadge effort={r.pryv_effort_saved} />}
-                    </div>
+                    <RequirementBadge
+                      coverage={r.coverage}
+                      mode={r.facilitation_mode}
+                      effort={r.pryv_effort_saved}
+                    />
                   </td>
                 </tr>
                 {openRef === r.ref && (
