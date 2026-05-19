@@ -599,3 +599,95 @@ requirements:
       Implementer's portal can transform to PDF / printed format
       where requested. Summaries are application-layer constructions
       from the same source events.
+
+  - ref: 164.502(g)
+    title: Personal representatives
+    text: |
+      Covered entity must treat a personal representative as the
+      individual with respect to uses + disclosures of PHI, subject to
+      enumerated exceptions (abuse / neglect concerns, endangerment).
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData]
+    derives_from: [hipaa-privacy.164.502]
+    overview: |
+      Pryv pattern: the personal representative holds an `app` or
+      `shared` access to the subject's data with full scope (the
+      effective "treat as individual" technical permission). The
+      access's `clientData.representative_relationship` +
+      `clientData.legal_basis` capture the relationship; the
+      revocation-by-exception pattern is `accesses.update` to narrow
+      / `accesses.delete` to remove. The "abuse / neglect / endangerment"
+      determination is clinical / legal judgement.
+
+  - ref: "164.512(a)"
+    title: Uses + disclosures required by law
+    text: |
+      Covered entity may use or disclose PHI to the extent that such
+      use or disclosure is required by law and the use or disclosure
+      complies with and is limited to the relevant requirements of
+      such law.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, audit]
+    derives_from: [hipaa-privacy.164.512]
+    overview: |
+      "Required by law" disclosures still ride on accesses; record the
+      statutory basis in `clientData.statute` so the audit chain ties
+      the disclosure to the legal authority. The compliance burden of
+      the cited law is separate.
+
+  - ref: 164.514(b)
+    title: De-identification — Implementation specifications
+    text: |
+      Two methods: (1) Expert determination that the risk is very small;
+      (2) Safe Harbor — removal of 18 enumerated identifiers + no
+      actual knowledge that residual information could re-identify.
+    coverage: out-of-scope
+    draft: true
+    derives_from: [hipaa-privacy.164.514(a)]
+    overview: |
+      Choice of method + execution are app-side. Pryv stores the
+      output of either method as ordinary events on the de-identified
+      streams.
+
+  - ref: 164.514(c)
+    title: De-identification — Re-identification
+    text: |
+      Covered entity may assign a code or other means of record
+      identification to allow information de-identified under §514(b)
+      to be re-identified by the covered entity, provided the code
+      is not derived from / related to information about the
+      individual + the entity does not use / disclose the code for
+      any other purpose.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [stream, system-streams, access, clientData]
+    derives_from: [hipaa-privacy.164.514(a)]
+    overview: |
+      When re-identification is a workflow requirement, the
+      code-to-PHI mapping is a tightly scoped resource: keep it on a
+      dedicated `re-id-map/*` system-stream-adjacent subtree with
+      access permitted only to the re-identification administrator
+      role. The code generation method (random / hash-of-non-PHI)
+      must not encode PHI per §514(c)(1)(ii) — that's an editorial
+      requirement on the implementer.
+
+  - ref: 164.528(b)
+    title: Accounting of disclosures — Implementation specifications
+    text: |
+      Accounting must include, for each disclosure: date, name of
+      entity / person who received PHI, brief description of PHI
+      disclosed, brief statement of the purpose or copy of written
+      request.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [audit, access, clientData]
+    derives_from: [hipaa-privacy.164.528]
+    tests: [AT01, AT51, AT61, AT65]
+    overview: |
+      Each §528(b)(2) field has a Pryv source (date / name / PHI
+      description / purpose) — see the §164.528 parent row for the
+      mapping. The pre-computed accounting report pattern (storing
+      results on a dedicated stream) keeps the §528 response window
+      tractable.

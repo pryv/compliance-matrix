@@ -455,3 +455,77 @@ requirements:
     overview: |
       Treaty-level activity. No software role; no implementer
       obligation arises from this Article alone.
+
+  - ref: Art.9
+    title: Processing by a processor
+    text: |
+      Controller may entrust processing to a processor only if the
+      processor undertakes to process personal data only as instructed,
+      ensures equivalent data security, and obtains controller approval
+      for any sub-processor engagement.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, audit, encryption-at-rest-secrets]
+    derives_from: [gdpr.Art.28]
+    overview: |
+      Same pattern as GDPR Art. 28: when the Pryv operator is a
+      processor distinct from the controller, the DPA + sub-processor
+      list are the operator's contractual artefacts. Pryv's audit log
+      enforces "only as instructed" demonstrability; the observability-
+      provider primitive is the sole built-in subprocessor candidate
+      (default disabled).
+
+  - ref: Art.12
+    title: Register of processing activities
+    text: |
+      Each controller + processor shall maintain a register of
+      processing activities (exceptions for SMEs whose processing
+      poses low risk). Register content parallels GDPR Art. 30.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, clientData, audit, CMC, data-residency]
+    derives_from: [gdpr.Art.30]
+    docs: [customer-resources/audit-setup.md, guides/audit-logs.md]
+    tests: [U9HQ, QXCH, AA01]
+    overview: |
+      Same primitive-set mapping as GDPR Art. 30: access + clientData
+      + audit + CMC + data-residency form the technical register
+      substrate. Swiss-specific note: the SME exception (Ordinance on
+      Data Protection) drops register obligation for companies < 250
+      personnel processing low-risk data. The register substrate is
+      available regardless; whether it's required is operator-side
+      legal judgement.
+
+  - ref: Art.17
+    title: Exceptions to the duty to inform
+    text: |
+      Information duty under Art. 19 may be waived where the data
+      subject already has the information, the processing is
+      provided for by law, the controller is bound by professional
+      secrecy, or providing information would be disproportionate.
+    coverage: out-of-scope
+    draft: true
+    derives_from: [swiss-nlpd.Art.19]
+    overview: |
+      Exception-applicability is the controller's legal judgement; no
+      software role. Where the exception applies, the controller's
+      reasoning is documentable in `account.clientData.art17_basis`
+      for auditor questions.
+
+  - ref: Art.18
+    title: Information when collecting personal data — specific cases
+    text: |
+      In addition to Art. 19 baseline, controller shall provide
+      additional information when transferring abroad, when processing
+      involves automated decision-making, and in cases involving
+      sensitive personal data.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData]
+    derives_from: [swiss-nlpd.Art.19, swiss-nlpd.Art.21, swiss-nlpd.Art.34]
+    overview: |
+      Additional disclosures are stored alongside the baseline notice
+      in `access.clientData.privacy_notice` (or as additional
+      `consent/notice` events for clarity). The cross-border transfer
+      element ties to Art. 34; automated-decision element ties to
+      Art. 21.

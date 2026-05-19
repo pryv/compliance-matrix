@@ -340,3 +340,55 @@ requirements:
       versioned, backed-up + audit-trailed home for the file's
       contents. Cross-link to iso-13485.7.3.10 (design + development
       files) preserves the QMS standard's parallel obligation.
+
+  - ref: Art.5
+    title: Placing on the market and putting into service
+    text: |
+      A device may be placed on the market or put into service only if
+      it complies with this Regulation when duly supplied and properly
+      installed, maintained and used in accordance with its intended
+      purpose.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Placing-on-market is the manufacturer's act and depends on the
+      device passing classification + conformity assessment. Pryv has
+      no role in the act itself.
+
+  - ref: Art.11
+    title: Authorised representative
+    text: |
+      Where manufacturer is not established in a Member State, the
+      device may only be placed on the Union market if the manufacturer
+      designates an authorised representative.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Authorised-representative designation is a contractual + Eudamed-
+      registration step for non-EU manufacturers. No software role.
+
+  - ref: Art.31
+    title: Registration of manufacturers, authorised representatives + importers
+    text: |
+      Manufacturers, authorised representatives + importers shall
+      submit specified information to Eudamed.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Eudamed registration is a regulatory submission. No software
+      role.
+
+  - ref: Art.55
+    title: Implant card and information to be supplied to the patient with an implanted device
+    text: |
+      Manufacturer of an implantable device shall supply with the
+      device an implant card carrying device identification + patient-
+      specific safety information.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Implant cards are physical artefacts (or digital equivalents
+      issued at implantation). If a digital implant-card record lives
+      in Pryv, the manufacturer puts it on a designated
+      `implant-card/*` stream — but the regulatory burden remains
+      manufacturer-side.

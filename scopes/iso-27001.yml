@@ -667,3 +667,162 @@ requirements:
       licensed open source) requires security commitments, those map
       to public Pryv-side practices (release cadence, security-fix
       backporting, etc.) but the contract itself is operator-side.
+
+  - ref: A.6.1
+    title: A.6.1 — Screening
+    text: |
+      Background-verification checks on all candidates to become
+      personnel shall be carried out prior to joining the organization
+      and on an ongoing basis taking into consideration applicable
+      laws, regulations and ethics.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Personnel screening is an HR process. No software role.
+
+  - ref: A.6.4
+    title: A.6.4 — Disciplinary process
+    text: |
+      A formal and communicated disciplinary process shall be in place
+      to take actions against personnel and other relevant interested
+      parties who have committed an information-security policy
+      violation.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Disciplinary process is HR-side. Pryv's audit log gives the
+      evidence pack the HR / legal team uses to substantiate an
+      allegation, but the process itself is organizational.
+
+  - ref: A.6.5
+    title: A.6.5 — Responsibilities after termination or change of employment
+    text: |
+      Information security responsibilities + duties that remain valid
+      after termination or change of employment shall be defined,
+      enforced and communicated to relevant personnel and other
+      interested parties.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, audit]
+    derives_from: [iso-27001.A.5.16, iso-27001.A.5.18, hipaa-security.164.308(a)(3)(ii)(C)]
+    overview: |
+      Technical termination is `accesses.delete` (full revoke) +
+      audit-log timestamp. The post-termination obligations
+      (confidentiality, IP, NDA enforcement window) are contractual.
+
+  - ref: A.8.1
+    title: A.8.1 — User end-point devices
+    text: |
+      Information stored on, processed by or accessible via user
+      end-point devices shall be protected.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      End-point device security (laptops, phones, tablets) is endpoint-
+      management scope. Pryv's API access from end-points is mediated
+      by access tokens + TLS, but the device itself isn't a Pryv
+      concern.
+
+  - ref: A.8.4
+    title: A.8.4 — Access to source code
+    text: |
+      Read + write access to source code, development tools and software
+      libraries shall be appropriately managed.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Source-code access management is an operator IT concern (Git
+      access policies, CI/CD secrets, repository permissions). Pryv-
+      the-software's own source is public; the operator's app-side
+      source-code repo is theirs to manage.
+
+  - ref: A.8.6
+    title: A.8.6 — Capacity management
+    text: |
+      The use of resources shall be monitored + adjusted in line with
+      current + expected capacity requirements.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [observability-provider, multi-core-mTLS]
+    overview: |
+      Pryv-side capacity surfaces: per-core observability metrics
+      (memory, CPU, latency, request volume); horizontal scaling via
+      adding cores to the cluster (each handles its bound users +
+      shared rqlite control plane). Operator's capacity-planning
+      cadence + provisioning automation sit on top.
+
+  - ref: A.8.14
+    title: A.8.14 — Redundancy of information processing facilities
+    text: |
+      Information processing facilities shall be implemented with
+      redundancy sufficient to meet availability requirements.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [multi-core-mTLS, backup-restore, letsEncrypt-integration]
+    derives_from: [iso-27001.A.5.23, hipaa-security.164.308(a)(7)(ii)(B)]
+    overview: |
+      Multi-core HA + Raft replication give in-line redundancy; backup-
+      restore + cluster-replicated TLS certs let a surviving core
+      continue user-facing operation when a peer fails. The
+      availability target + redundancy depth (cores per region) is
+      operator policy.
+
+  - ref: A.8.17
+    title: A.8.17 — Clock synchronization
+    text: |
+      Clocks of information processing systems used by the organization
+      shall be synchronized to approved time sources.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Clock sync is host-OS concern (chronyd / ntpd). Pryv stores
+      whatever timestamp the host produces; the operator ensures the
+      host runs a synchronized clock service.
+
+  - ref: A.8.18
+    title: A.8.18 — Use of privileged utility programs
+    text: |
+      The use of utility programs that can be capable of overriding
+      system and application controls shall be restricted and tightly
+      controlled.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [system-streams, access, audit]
+    derives_from: [iso-27001.A.8.2, hipaa-security.164.312(a)(2)(ii)]
+    overview: |
+      Pryv-side privileged utilities: the `bin/*` CLIs (`bootstrap.js`,
+      `migrate.js`, `dns-records.js`, `observability.js`,
+      `backup.js`). Operator restricts their execution to administrator
+      accounts via host-OS permissions + sudo policy. The
+      `auth.adminAccessKey`-bearing API surface is the runtime
+      privilege channel; usage is audit-logged.
+
+  - ref: A.8.19
+    title: A.8.19 — Installation of software on operational systems
+    text: |
+      Procedures and measures shall be implemented to securely manage
+      software installation on operational systems.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit]
+    overview: |
+      Pryv ships as a single Docker image with SHA-pinned tag; the
+      installation channel is reproducible. Operator's installation
+      procedure (build verification, signature checking, change-
+      approval gate) sits on top.
+
+  - ref: A.8.21
+    title: A.8.21 — Security of network services
+    text: |
+      Security mechanisms, service levels and service requirements of
+      network services shall be identified, implemented and monitored.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, observability-provider]
+    derives_from: [iso-27001.A.8.20]
+    overview: |
+      Pryv's external network surface is the TLS-terminating HTTPS API
+      + the embedded DNS server (when multi-core enabled); both are
+      monitored via observability. Inter-core mTLS is the internal
+      surface. The operator's broader network-service portfolio
+      (LB, WAF, VPN) sits outside Pryv.
