@@ -514,3 +514,151 @@ requirements:
       the core then serves plain HTTP only on its loopback. The TLS
       requirement holds at the transmission boundary, wherever the
       operator chooses to place that boundary.
+
+  # ───────────────────────────────────────────────────────────────
+  # §164.314 — Organizational requirements
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: 164.314(a)(1)
+    title: Business associate contracts — standard
+    text: |
+      Business associate contract or other arrangement between the
+      covered entity and its business associate must meet the
+      requirements of §164.314(a)(2).
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, audit, CMC]
+    derives_from: [gdpr.Art.28]
+    overview: |
+      The BAA itself is a contract — the covered entity drafts it with
+      legal counsel. What Pryv contributes when you operate as a
+      business associate: the audit log makes "implement administrative,
+      physical and technical safeguards" (§164.314(a)(2)(i)(A))
+      auditable per the BAA's specified terms; the access primitive
+      bounds which subjects + which streams the BA may touch; CMC's
+      cross-platform consent flow gives a structured channel for the
+      §164.314(a)(2)(i)(C) breach-notification pipe between BA and CE.
+
+  - ref: 164.314(a)(2)(i)(A)
+    title: BAC content — implement safeguards reasonably and appropriately
+    text: |
+      Business associate contract must provide that the business
+      associate will implement administrative, physical and technical
+      safeguards that reasonably and appropriately protect ePHI.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, audit, letsEncrypt-integration, encryption-at-rest-secrets, MFA, backup-restore]
+    derives_from: [hipaa-security.164.308(a)(1)(i), hipaa-security.164.312(a)(1), hipaa-security.164.312(e)(1)]
+    overview: |
+      The BAA's "reasonable and appropriate safeguards" obligation is
+      satisfied by the technical-safeguards programme already enumerated
+      across §164.308 + §164.310 + §164.312. The BA cites the relevant
+      Pryv-implemented rows when populating their BAA exhibit. Mapping
+      this Article to the existing technical-safeguards rows is the
+      `derives_from` chain.
+
+  - ref: 164.314(a)(2)(i)(C)
+    title: BAC content — report security incidents
+    text: |
+      Business associate contract must provide that the business
+      associate will report any security incident of which it becomes
+      aware to the covered entity.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, CMC, observability-provider]
+    overview: |
+      Detection of a security incident is the BA's operational concern
+      (audit-log review + observability). Reporting to the CE is the
+      contractual flow. Pryv's CMC plugin provides a structured
+      cross-account messaging substrate when both sides run Pryv —
+      otherwise the report channel is email / API / portal at the BA's
+      choice. The audit log supplies the forensic evidence the report
+      cites.
+
+  - ref: 164.314(a)(2)(ii)(B)
+    title: BAC content — extend safeguards to subcontractors
+    text: |
+      Where applicable, business associate must ensure that any
+      subcontractors that create, receive, maintain, or transmit ePHI
+      on its behalf agree to comply with applicable requirements via
+      a written contract.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Subcontracting chains are contractual — no software role. The
+      only built-in subprocessor Pryv-the-software carries is the
+      observability-provider adapter (default disabled); when enabled,
+      the BA's subcontractor list adds the observability provider as
+      a sub-processor under both HIPAA-Security §164.314(a)(2)(ii)(B)
+      and GDPR Art.28(4).
+
+  # ───────────────────────────────────────────────────────────────
+  # §164.316 — Policies and procedures and documentation requirements
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: 164.316(a)
+    title: Policies and procedures — standard
+    text: |
+      Implement reasonable and appropriate policies and procedures to
+      comply with the standards, implementation specifications, or
+      other requirements of this subpart.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      The policies-and-procedures programme is an organizational
+      artefact owned by the covered entity / business associate's
+      security officer. Pryv has no software role in drafting them.
+      Pryv-side documentation (this matrix, CHANGELOGs, the QMS
+      workstream) feeds the operator's policy work but doesn't
+      substitute for it.
+
+  - ref: 164.316(b)(1)
+    title: Documentation — Required
+    text: |
+      Maintain the policies and procedures implemented to comply with
+      this subpart in written (which may be electronic) form; if an
+      action, activity, or assessment is required by this subpart to
+      be documented, maintain a written (which may be electronic)
+      record of the action, activity, or assessment.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, stream, audit, backup-restore]
+    overview: |
+      Where the required record is operational (activity logs,
+      assessment outputs), Pryv events on a designated `compliance/*`
+      stream carry the documentation alongside the audit log's
+      automatic operational record. Event versioning preserves the
+      change history of policies-as-data; backup-restore preserves
+      them across the §164.316(b)(2) retention window.
+
+  - ref: 164.316(b)(2)(i)
+    title: Documentation — time limit — Required
+    text: |
+      Retain the documentation required by §164.316(b)(1) for 6 years
+      from the date of its creation or the date when it last was in
+      effect, whichever is later.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [backup-restore, audit]
+    overview: |
+      Six-year retention is an operational choice. Pryv's audit log
+      stays per-user SQLite by default — retention is operator-driven
+      (the operator schedules archival + pruning per their HIPAA
+      schedule). `bin/backup.js` produces the artefact that the
+      6-year retention rule attaches to.
+
+  - ref: 164.316(b)(2)(iii)
+    title: Documentation — updates — Required
+    text: |
+      Review documentation periodically, and update as needed, in
+      response to environmental or operational changes affecting the
+      security of the ePHI.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, audit]
+    overview: |
+      Periodic review cadence is the operator's procedure. Pryv's
+      contribution: when policies-as-data are stored as events on a
+      `compliance/policies/*` stream, the event-version chain shows
+      when each policy was last reviewed and what changed; audit log
+      shows who-reviewed-what.

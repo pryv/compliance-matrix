@@ -322,3 +322,237 @@ requirements:
       keeps the testing activity attributable (any test access
       surfaces with its accessId + accessSerial in the audit rows).
       The plan + agreement element is the operator's procedure.
+
+  # ───────────────────────────────────────────────────────────────
+  # Additional A.5 organizational + A.8 technological gaps
+  # ───────────────────────────────────────────────────────────────
+
+  - ref: A.5.10
+    title: A.5.10 — Acceptable use of information and other associated assets
+    text: |
+      Rules for the acceptable use and procedures for handling
+      information + associated assets shall be identified, documented
+      and implemented.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Acceptable-use policies are operator-side editorial artefacts
+      (workforce code-of-conduct, asset handling rules). Pryv has no
+      software role at the policy-content layer; the audit log
+      supports after-the-fact enforcement evidence but doesn't
+      author the rules.
+
+  - ref: A.5.12
+    title: A.5.12 — Classification of information
+    text: |
+      Information shall be classified according to the information
+      security needs of the organization based on confidentiality,
+      integrity, availability + relevant interested party requirements.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [stream, system-streams, event, data-types]
+    overview: |
+      Pryv supports classification by stream layout — dedicate subtrees
+      per classification tier (e.g., `confidential/`, `restricted/`,
+      `public/`) and gate them with distinct permission scopes. System
+      streams add a privileged-data tier independent of the operator's
+      classification scheme. The operator's classification scheme
+      itself (tier labels, criteria, owner) is the policy artefact.
+
+  - ref: A.5.13
+    title: A.5.13 — Labelling of information
+    text: |
+      An appropriate set of procedures for information labelling shall
+      be developed and implemented in accordance with the information
+      classification scheme adopted by the organization.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, clientData, stream]
+    overview: |
+      Labels on event-level data can ride on `event.clientData.classification`
+      or on the parent stream's `clientData`; the canonical event-type
+      schema (`data-types`) can be extended with a classification
+      property when machine-readable labelling is needed downstream.
+      Stream-level labels propagate to descendants by Pryv semantics.
+
+  - ref: A.5.23
+    title: A.5.23 — Information security for use of cloud services
+    text: |
+      Processes for acquisition, use, management and exit from cloud
+      services shall be established in accordance with the
+      organization's information security requirements.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [data-residency, encryption-at-rest-secrets, backup-restore]
+    overview: |
+      When the Pryv operator runs on a cloud provider (rather than
+      on-premise), the cloud-service security posture is the
+      operator's contractual concern. Pryv-side hooks that the
+      operator's CSP-management process should use: data-residency
+      configuration locks subjects to chosen regions; bootstrap
+      bundle export gives a clean cloud-exit path (re-issue the
+      cluster onto new infrastructure); operator-side at-rest
+      encryption isolates the cloud provider from plaintext.
+
+  - ref: A.6.3
+    title: A.6.3 — Information security awareness, education and training
+    text: |
+      Personnel and relevant interested parties shall receive
+      appropriate information security awareness, education and
+      training and regular updates of the organization's information
+      security policy + procedures.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Training is an organizational programme. No software role at
+      the training-content / training-delivery layer; the audit log
+      lets you measure whether trained workforce actually applies
+      trained patterns (a defensible "training effectiveness"
+      artefact for the ISMS).
+
+  - ref: A.8.7
+    title: A.8.7 — Protection against malware
+    text: |
+      Protection against malware shall be implemented and supported by
+      appropriate user awareness.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Anti-malware is a host / endpoint / network-layer control —
+      Pryv-the-software doesn't include AV or endpoint protection.
+      The operator's hosting environment carries this (HDS Activity 1+2
+      certified hosters typically inherit it from the CSP).
+
+  - ref: A.8.8
+    title: A.8.8 — Management of technical vulnerabilities
+    text: |
+      Information about technical vulnerabilities of information
+      systems in use shall be obtained, the organization's exposure
+      to such vulnerabilities shall be evaluated, and appropriate
+      measures taken.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [observability-provider, audit]
+    overview: |
+      Pryv-side vulnerability management is upstream — public
+      dependency-audit (npm audit pipeline, dependabot on open-pryv.io
+      master), versioned CHANGELOG announcing relevant fixes,
+      reproducible Docker image SHA. The operator's vulnerability-
+      management cadence (when to upgrade, how to verify) sits on top.
+      Observability data feeds incident-correlated vulnerability
+      hunting.
+
+  - ref: A.8.9
+    title: A.8.9 — Configuration management
+    text: |
+      Configurations, including security configurations, of hardware,
+      software, services and networks shall be established, documented,
+      implemented, monitored and reviewed.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit]
+    overview: |
+      Pryv configuration lives in `default-config.yml` +
+      `override-config.yml` + `host-config.yml` (operator-side); a
+      `config-validation` step on master start fails fast on
+      unresolved variables or missing required service fields, giving
+      a baseline "configuration is well-formed" check. The operator's
+      config-change procedure (versioning, approval, deployment) sits
+      on top. Audit log shows when config-driven behaviour changed
+      observably.
+
+  - ref: A.8.11
+    title: A.8.11 — Data masking
+    text: |
+      Data masking shall be used in accordance with the organization's
+      topic-specific policy on access control + other related topic-
+      specific policies, and business requirements, taking applicable
+      legislation into consideration.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [stream, system-streams, event]
+    overview: |
+      Pryv supports masking by storing the masked (pseudonymised) data
+      on a separate stream tree with different permissioning, and
+      keeping the un-masked / re-identification data on a tightly
+      scoped subtree. System streams add an additional tier for
+      truly privileged identifiers. The actual masking transformation
+      is application-layer code; Pryv stores the inputs + outputs.
+
+  - ref: A.8.12
+    title: A.8.12 — Data leakage prevention
+    text: |
+      Data leakage prevention measures shall be applied to systems,
+      networks and any other devices that process, store or transmit
+      sensitive information.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, audit, observability-provider]
+    overview: |
+      Pryv's primary leakage-prevention surface is the permission
+      model — an access only reads / writes the streams its scope
+      permits, so a misconfigured app can't accidentally exfiltrate
+      out-of-scope data. The audit log surfaces anomalous access
+      patterns post-facto. Network / endpoint DLP (browser-side
+      copy-paste protection, USB blocking, etc.) is the operator's
+      endpoint-management scope.
+
+  - ref: A.8.22
+    title: A.8.22 — Segregation of networks
+    text: |
+      Groups of information services, users and information systems
+      shall be segregated in the organization's networks.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [multi-core-mTLS]
+    overview: |
+      Multi-core Pryv clusters use mTLS over rqlite Raft for
+      inter-core traffic, on a cluster-private CA distinct from the
+      Let's Encrypt user-facing chain. This gives technical
+      segregation between the cluster-internal control plane and the
+      user-facing data plane. The operator's network segmentation
+      (VPCs, security groups, firewall rules) layers on top.
+
+  - ref: A.8.28
+    title: A.8.28 — Secure coding
+    text: |
+      Secure coding principles shall be applied to software development.
+    coverage: facilitated
+    draft: true
+    overview: |
+      Pryv's own secure-coding posture is visible in the public
+      open-pryv.io repository — coding standards (neostandard), linting
+      enforced on PRs, pre-commit hooks, dependency-audit pipeline.
+      The implementer's own application-layer secure-coding programme
+      remains their ISMS artefact, drawing on the public Pryv-side
+      practice as supplier evidence.
+
+  - ref: A.8.30
+    title: A.8.30 — Outsourced development
+    text: |
+      Organization shall direct, monitor and review activities related
+      to outsourced system development.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Outsourced development is the operator's contractual / supplier-
+      management concern. When the operator's "supplier" is Pryv
+      (i.e., they consume open-pryv.io as a third-party platform),
+      this matrix + the CHANGELOGs + the public release process serve
+      as the supplier-monitoring artefact set the operator references.
+
+  - ref: A.8.31
+    title: A.8.31 — Separation of development, test and production environments
+    text: |
+      Development, testing and production environments shall be
+      separated and secured.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [data-residency, multi-core-mTLS]
+    overview: |
+      Pryv supports separate environments via independent core
+      deployments (each with its own bootstrap bundle + cluster CA);
+      the data-residency primitive prevents accidental cross-environment
+      data flow at the user-binding layer. Operator's environment-
+      management procedure (test data hygiene, promotion gates,
+      deployment automation) sits on top.
