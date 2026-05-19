@@ -504,3 +504,98 @@ requirements:
       audit. The drafting + approval + review-cycle procedure is the
       privacy officer's. Cross-link to §164.316(a) preserves the
       Security Rule's parallel obligation.
+
+  - ref: 164.510(b)
+    title: Disclosures for involvement in care + for notification purposes
+    text: |
+      Covered entity may, in accordance with §510(b)(2) standards,
+      disclose to a family member, other relative, close personal
+      friend or other person identified by the individual, PHI directly
+      relevant to that person's involvement with the individual's care
+      or payment for care.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, event]
+    derives_from: [hipaa-privacy.164.510]
+    overview: |
+      The §510(b) "directly relevant" determination + relationship
+      verification are clinical-workflow concerns. Pryv pattern: mint
+      a time-bounded access for the involved person with permissions
+      narrowed to "directly relevant" streams + `clientData.relationship`
+      capturing the §510(b)(1) basis (family member name, role,
+      individual's opportunity-to-object record).
+
+  - ref: "164.512(b)"
+    title: Uses + disclosures for public-health activities
+    text: |
+      Covered entity may disclose PHI for public-health activities to
+      public-health authorities authorized by law to collect or receive
+      such information, including reporting of disease, injury,
+      vital events, conduct of public-health surveillance.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, audit]
+    derives_from: [hipaa-privacy.164.512]
+    overview: |
+      Public-health-authority recipient is recorded on the access's
+      `clientData.recipient_authority` + `clientData.statute` for the
+      §512(b) statutory basis. Audit log anchors the disclosure to a
+      specific timestamp + event range. The "authorized by law"
+      determination is the covered entity's legal judgement.
+
+  - ref: "164.512(f)"
+    title: Uses + disclosures for law enforcement purposes
+    text: |
+      Covered entity may disclose PHI for law-enforcement purposes
+      under specific conditions: court order / warrant, administrative
+      request, identification + location, victim of crime, decedent,
+      etc.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, audit]
+    derives_from: [hipaa-privacy.164.512]
+    overview: |
+      §512(f) categories drive vocabulary for
+      `clientData.law_enforcement_basis` (e.g.,
+      `"f_1_i_court_order"`, `"f_2_ii_subpoena"`, `"f_4_victim"`).
+      Per-instance disclosure access minted + revoked; audit log
+      preserves the chain. The decision of whether the request
+      qualifies under §512(f) is legal counsel's, not Pryv's.
+
+  - ref: 164.524(b)
+    title: Right of access — requests + responses
+    text: |
+      Covered entity may require individuals to make access requests
+      in writing (within reasonable limitations); must act on request
+      within 30 days (with one 30-day extension permitted with
+      written notice).
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, event]
+    derives_from: [hipaa-privacy.164.524]
+    overview: |
+      Request-intake workflow stores each request as an event on a
+      designated `access-requests/*` stream with `clientData.due_by`
+      computed from receipt timestamp. The 30/30-day operational
+      cadence is the covered entity's process; once the response is
+      ready, the individual exercises §524 directly via the standard
+      Pryv API (see the §164.524 parent row).
+
+  - ref: 164.524(c)
+    title: Right of access — provision of access
+    text: |
+      Covered entity must provide access in the form + format requested
+      if readily producible; in a readable hard-copy form or other
+      form as agreed; must provide a summary if the individual agrees
+      in advance + agrees to applicable fees.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [event, stream, data-types]
+    derives_from: [hipaa-privacy.164.524]
+    tests: [EGSQ, U9HQ]
+    overview: |
+      The Pryv API delivers events in canonical JSON (data-types
+      schemas) — "readily producible" in the §524(c) sense.
+      Implementer's portal can transform to PDF / printed format
+      where requested. Summaries are application-layer constructions
+      from the same source events.

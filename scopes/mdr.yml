@@ -303,3 +303,40 @@ requirements:
       connectivity if remote disable is part of the corrective action;
       events on a `recall/*` stream carry the recall communication
       record per affected subject.
+
+  - ref: Art.84
+    title: Post-market surveillance plan
+    text: |
+      The post-market surveillance plan referred to in Art. 83 shall be
+      part of the technical documentation specified in Annex II; details
+      in Annex III.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, stream, audit, backup-restore]
+    derives_from: [mdr.Art.83, iso-13485.4.2.5]
+    overview: |
+      The PMS plan document itself is the manufacturer's artefact (it
+      lives in the technical documentation under Annex III). Pryv-side
+      operational contribution: when the plan calls for specific data
+      collection (e.g., field-event reporting cadence, telemetry
+      thresholds), the event-stream + audit substrate carries the data
+      flow per the plan. The plan's content (criteria, methods, cadence)
+      is manufacturer-side.
+
+  - ref: A2.5
+    title: Annex II §5 — Information supplied by the manufacturer
+    text: |
+      Technical documentation shall include a complete set of information
+      supplied with the device (labels, IFU, design history file
+      summary, post-market documentation references).
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, stream, backup-restore]
+    derives_from: [iso-13485.7.3.10, mdr.A1.23]
+    overview: |
+      The technical documentation file (TDF) is the manufacturer's
+      regulatory artefact. Pryv-side support: events on a designated
+      `tdf/<device-id>/*` stream with attachments give a single,
+      versioned, backed-up + audit-trailed home for the file's
+      contents. Cross-link to iso-13485.7.3.10 (design + development
+      files) preserves the QMS standard's parallel obligation.

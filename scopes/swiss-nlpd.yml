@@ -391,3 +391,67 @@ requirements:
       the access's `clientData.legal_basis` (Swiss-specific vocabulary
       drawn from Art. 30 §2 list). Determination of which basis
       applies is your editorial / legal judgement.
+
+  - ref: Art.4
+    title: Federal Data Protection and Information Commissioner (FDPIC)
+    text: |
+      The FDPIC supervises the application of data-protection
+      legislation by federal bodies and private persons; advises
+      authorities and private persons; investigates breaches +
+      makes recommendations + orders.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      The FDPIC is a regulator; no software role. When an FDPIC
+      investigation involves a Pryv deployment, the audit log +
+      access-version chain are the evidence layer the controller
+      provides — but interaction with the FDPIC is the controller's
+      legal / regulatory process.
+
+  - ref: Art.23
+    title: Privacy by default
+    text: |
+      Controller shall, by default, ensure that personal-data processing
+      is limited to the minimum required to fulfil the purpose, in
+      particular through appropriate technical settings.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, permissions, stream, system-streams]
+    derives_from: [gdpr.Art.25, swiss-nlpd.Art.7]
+    overview: |
+      Pryv defaults lean privacy-protective by construction: smallest-
+      permission default is "none"; system streams isolate privileged
+      data; per-user storage isolates subjects. The operator's deployment-
+      time choices (token-scope defaults, retention policy, MFA-on)
+      determine whether the by-default posture is fully exercised.
+
+  - ref: Art.26
+    title: Restriction of the right to information
+    text: |
+      Right to information under Art. 25 may be restricted, refused or
+      deferred where a law so provides, where overriding interests of
+      a third party require it, or where the request is manifestly
+      unfounded.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [access, clientData, audit]
+    derives_from: [swiss-nlpd.Art.25, gdpr.Art.15]
+    overview: |
+      When a controller invokes Art. 26 to restrict / refuse / defer a
+      DSAR, the rationale is recorded as a `dsar/restricted` event on
+      a designated stream with `clientData.art26_basis` capturing the
+      §1 letter (a / b / c). Audit log anchors the decision in time.
+      Whether a given restriction is justified is the controller's
+      legal judgement.
+
+  - ref: Art.33
+    title: Cross-border international cooperation
+    text: |
+      Federal Council may conclude international treaties on the
+      cross-border exchange of personal data, including treaties on
+      mutual data-protection cooperation.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Treaty-level activity. No software role; no implementer
+      obligation arises from this Article alone.
