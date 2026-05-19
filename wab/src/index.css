@@ -27,13 +27,14 @@ body {
 .effort-low    { background-color: #ffffff; color: #0f766e; border: 1px solid #0f766e; } /* teal-700 outline */
 
 /* Right-side segment of the combined RequirementBadge.
-   Traffic-light semantic: emerald = Pryv saves most effort;
-   amber = roughly half; rose = implementer carries most. Colour family
-   distinct from coverage palette (green/blue/yellow/slate/gray) so
-   the two pill segments are visually separable. */
-.effort-pill-high    { background-color: #059669; color: white; }   /* emerald-600 */
-.effort-pill-medium  { background-color: #f59e0b; color: white; }   /* amber-500 */
-.effort-pill-low     { background-color: #f43f5e; color: white; }   /* rose-500 */
+   Monochrome teal scale -- intensity encodes effort saved (dark = high,
+   light = low), like a fuel gauge. Keeps the loud coverage palette on
+   the left undisturbed; the right side reads as ordered without
+   competing for attention. Teal hue avoids clashing with green
+   (implemented) and blue (configurable). */
+.effort-pill-high    { background-color: #0f766e; color: white; }     /* teal-700 */
+.effort-pill-medium  { background-color: #5eead4; color: #134e4a; }   /* teal-300 on teal-900 */
+.effort-pill-low     { background-color: #ccfbf1; color: #134e4a; }   /* teal-100 on teal-900 */
 
 /* facilitation_mode: WHAT kind of help Pryv provides.
    Distinct hue per mode; readable on white. */
