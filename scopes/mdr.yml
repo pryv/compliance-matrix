@@ -235,3 +235,71 @@ requirements:
       monitor), §18.4 + §18.7 (interoperability + connection-loss
       safety) become operational concerns the manufacturer addresses
       at the device + integration layer.
+
+  - ref: A1.23
+    title: Annex I §23 — Information supplied with the device
+    text: |
+      The instructions for use and label of a device shall comply with
+      defined requirements (§23.1 labels, §23.2 IFU content, §23.3
+      e-labelling, §23.4 patient implant card content where applicable).
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Labelling + IFU content is the device manufacturer's editorial
+      artefact. Pryv has no role at the IFU-content layer. For
+      software medical devices that present the IFU in-app, the IFU
+      versioning + acknowledgement record can ride on Pryv events
+      with `clientData.ifu_version` — but the IFU content is
+      manufacturer-side.
+
+  - ref: Art.27
+    title: Unique Device Identification (UDI) system
+    text: |
+      Manufacturers shall assign a UDI to their devices and place it on
+      the device label (or its packaging) before placing on the market;
+      record the UDI in their internal device-file system; submit it
+      to the UDI database (Eudamed UDI module).
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      UDI assignment + Eudamed submission are manufacturer-side. Pryv
+      doesn't ship with a UDI (Pryv is not itself a medical device).
+      When a device built on Pryv has a UDI, the manufacturer's UDI
+      record may cite Pryv as a sub-system component but the UDI
+      management is theirs.
+
+  - ref: Art.93
+    title: Market surveillance activities (competent authorities)
+    text: |
+      Competent authorities shall perform appropriate checks on the
+      conformity characteristics + performance of devices, including
+      review of documentation, physical / laboratory checks on
+      adequate samples, follow-up of received vigilance information.
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Market surveillance is competent-authority activity. Pryv has no
+      software role. If an authority requests information about the
+      Pryv-backed device, the manufacturer's evidence pack (drawing
+      on this matrix + the audit log) is the substrate of the
+      response.
+
+  - ref: Art.95
+    title: Measures required to deal with devices presenting an unacceptable risk to health
+    text: |
+      Competent authorities may require manufacturers to take all
+      appropriate corrective actions where a device presents an
+      unacceptable risk; including withdrawal, recall, restrictions
+      on availability.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, access, event, observability-provider]
+    overview: |
+      A recall / withdrawal decision is manufacturer + authority side.
+      Pryv contributes: audit log + observability data scope the
+      affected user / device population (which subjects' devices
+      were active when the risk was identified); the access primitive
+      gives the technical mechanism to disable the device's backend
+      connectivity if remote disable is part of the corrective action;
+      events on a `recall/*` stream carry the recall communication
+      record per affected subject.

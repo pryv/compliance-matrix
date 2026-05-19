@@ -186,3 +186,63 @@ requirements:
       action workflow itself (root-cause analysis, effectiveness check,
       verification) is the manufacturer's process. Pryv carries the
       records.
+
+  - ref: "7.3.10"
+    title: Design and development files
+    text: |
+      Organization shall maintain a design and development file for
+      each medical device type. The file shall include or reference
+      records generated to demonstrate conformity to the requirements
+      for design and development and records for design and development
+      changes.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, stream, audit, backup-restore]
+    derives_from: [iso-13485.4.2.5, mdr.Art.10]
+    overview: |
+      The design history file (DHF in FDA QSR terms) is a curated set
+      of records spanning a device's design lifetime. Pryv supports it
+      by storing each design record as an event on a designated
+      `design-history/<device-id>/*` stream, with event versioning for
+      change traceability + audit log for tamper evidence + backup-
+      restore for retention. The curation methodology (what's "in"
+      the file vs ambient project history) is the manufacturer's
+      editorial decision.
+
+  - ref: "8.2.3"
+    title: Reporting to regulatory authorities
+    text: |
+      Where applicable regulatory requirements require notification of
+      complaints that meet specified reporting criteria of adverse
+      events or issuance of advisory notices, the organization shall
+      document such reporting.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, audit, CMC]
+    derives_from: [mdr.Art.87]
+    overview: |
+      Adverse-event reporting decisions + the actual reports are
+      manufacturer-side (per MDR Art. 87 timelines for EU; equivalent
+      timelines for FDA / other regulators). Pryv contribution: the
+      events the report cites live on Pryv with their original
+      timestamps + access provenance + audit trail; CMC plugin (if
+      both parties run Pryv) supports a structured
+      manufacturer-to-authority handshake.
+
+  - ref: "8.4"
+    title: Analysis of data
+    text: |
+      Organization shall document procedures to determine, collect and
+      analyze appropriate data to demonstrate the suitability and
+      effectiveness of the QMS; analysis shall provide information
+      relating to feedback, conformity to product requirements,
+      characteristics + trends, suppliers, audits, service reports.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [audit, event, observability-provider]
+    overview: |
+      Pryv supplies the data sources: audit log (per-method usage
+      patterns), events on customer-feedback streams (per §8.2.1),
+      observability metrics (system trend data). The analysis
+      methodology + the resulting suitability-of-QMS conclusions are
+      management-review artefacts produced by the manufacturer.

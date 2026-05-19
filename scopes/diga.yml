@@ -236,3 +236,94 @@ requirements:
       Usability testing is the manufacturer's process (UX research +
       protocols + documentation). Pryv has no software role at the
       usability layer.
+
+  - ref: A1.1.5
+    title: Annex 1.1 — Data subject rights at the BfArM-specified level
+    text: |
+      Mechanisms must be provided to allow data subjects to exercise
+      their rights under GDPR Art. 15-22 directly within the digital
+      health application or via a clearly named contact.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, event, stream, audit]
+    derives_from: [gdpr.Art.15, gdpr.Art.16, gdpr.Art.17, gdpr.Art.20]
+    tests: [AA01, EGSQ, U9HQ, PTU1, USAD]
+    overview: |
+      The personal-token Pryv API gives the data subject direct access
+      to events, streams, accesses, audit data. Implementer wraps it
+      in a UI section ("Your data + your rights") inside the DiGA app;
+      no separate portal needed. Each GDPR Art. 15-22 right has a
+      single API call behind it.
+
+  - ref: A1.2.4
+    title: Annex 1.2 — Authentication of users and devices
+    text: |
+      Strong authentication of users (and where applicable devices)
+      must be implemented; passwords alone are not sufficient when
+      sensitive health data is processed.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [access, MFA, system-streams]
+    derives_from: [hipaa-security.164.312(d), iso-27001.A.8.5]
+    config_keys: [services.mfa.mode]
+    tests: [MA01, MA02, MA03, MA04, MA05]
+    overview: |
+      MFA via the `mfa.*` API methods (`services.mfa.mode` enables it);
+      personal-token + access-token model gives separation of user
+      identity from app identity. The BfArM "strong authentication
+      where sensitive health data is processed" bar maps to MFA on by
+      default for DiGA-listed apps.
+
+  - ref: A1.2.10
+    title: Annex 1.2 — Logging of security-relevant events
+    text: |
+      Security-relevant events must be logged with sufficient detail
+      to support incident investigation and audit; logs must be
+      protected against tampering.
+    coverage: implemented
+    draft: true
+    pryv_primitives: [audit, audit-event-stream]
+    derives_from: [iso-27001.A.8.15, hipaa-security.164.312(b)]
+    tests: [AT01, AT02, AT51, AT61, AT65]
+    overview: |
+      Per-user audit log records every API method invocation; storage
+      is SQLite directly (decoupled from data-path engine) so log
+      integrity is independent of primary engine state. The
+      audit-event-stream optional channel additionally emits audit
+      records into the subject's own streams when surface-side
+      visibility is required.
+
+  - ref: A1.3.6
+    title: Annex 1.3 — Use of established healthcare data standards
+    text: |
+      Where established standards exist for the data domain (FHIR R4,
+      LOINC, SNOMED CT, ICD-10, etc.), the application shall use them
+      to encode treatment-relevant data.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [event, data-types, stream]
+    overview: |
+      Pryv stores whatever event content the application writes. For
+      LOINC / SNOMED / ICD-10 codings, the implementer encodes the
+      code system + value as event content fields (typically
+      `event.content.code` + `event.content.codeSystem`) per the
+      `data-types` schema chosen. The semantic-standard choice is
+      app-side; Pryv preserves it.
+
+  - ref: A1.4.3
+    title: Annex 1.4 — Availability and continuity
+    text: |
+      The digital health application must be designed to be available
+      to users during its specified use periods, with documented
+      procedures for handling unavailability.
+    coverage: facilitated
+    draft: true
+    pryv_primitives: [multi-core-mTLS, letsEncrypt-integration, backup-restore, observability-provider]
+    derives_from: [iso-27001.A.5.23, mdr.A1.17]
+    overview: |
+      Pryv-side availability: multi-core HA (cluster topology +
+      Raft replication); TLS auto-renewal preventing cert-expiry
+      outages; backup-restore for catastrophic recovery; observability
+      gives uptime metrics. The application-layer continuity procedures
+      (offline mode, degraded-service messaging, support channels)
+      are manufacturer-side.
