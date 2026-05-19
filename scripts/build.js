@@ -60,7 +60,9 @@ db.exec(`
     text TEXT,
     text_url TEXT,
     coverage TEXT NOT NULL,
-    notes TEXT,
+    overview TEXT,
+    detail TEXT,
+    technical TEXT,
     draft INTEGER NOT NULL DEFAULT 1,
     reviewed_by TEXT,
     reviewed_at TEXT,
@@ -102,8 +104,8 @@ const insScope = db.prepare(`INSERT INTO scopes
   VALUES (@id, @title, @short, @type, @jurisdiction, @version, @version_date, @canonical_url, @curated, @layered_on_json, @requirement_count)`);
 
 const insReq = db.prepare(`INSERT INTO requirements
-  (scope_id, ref, title, text, text_url, coverage, notes, draft, reviewed_by, reviewed_at, applies_to_versions)
-  VALUES (@scope_id, @ref, @title, @text, @text_url, @coverage, @notes, @draft, @reviewed_by, @reviewed_at, @applies_to_versions)`);
+  (scope_id, ref, title, text, text_url, coverage, overview, detail, technical, draft, reviewed_by, reviewed_at, applies_to_versions)
+  VALUES (@scope_id, @ref, @title, @text, @text_url, @coverage, @overview, @detail, @technical, @draft, @reviewed_by, @reviewed_at, @applies_to_versions)`);
 
 const insSpec    = db.prepare('INSERT INTO spec_links    (scope_id, ref, reqid) VALUES (?, ?, ?)');
 const insTest    = db.prepare('INSERT INTO test_links    (scope_id, ref, test_code) VALUES (?, ?, ?)');
@@ -143,7 +145,9 @@ const tx = db.transaction(() => {
         text: r.text || null,
         text_url: r.text_url || null,
         coverage: r.coverage,
-        notes: r.notes || null,
+        overview: r.overview || null,
+        detail: r.detail || null,
+        technical: r.technical || null,
         draft: r.draft === false ? 0 : 1,
         reviewed_by: r.reviewed_by || null,
         reviewed_at: r.reviewed_at || null,

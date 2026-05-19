@@ -186,6 +186,10 @@ for (const { scope, file } of allScopes) {
     if (r.coverage === 'configurable' && (!r.config_keys || r.config_keys.length === 0)) {
       w(`${cell}: coverage=configurable but config_keys[] is empty`);
     }
+    // overview is the primary skimmable summary; warn when missing for non-out-of-scope rows.
+    if (r.coverage !== 'out-of-scope' && (!r.overview || r.overview.trim().length === 0)) {
+      w(`${cell}: coverage=${r.coverage} but overview is empty (audiences: auditor / compliance officer rely on it)`);
+    }
 
     // reqid resolution
     for (const reqid of r.functional_specs || []) {

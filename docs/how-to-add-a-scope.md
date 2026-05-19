@@ -36,11 +36,40 @@ requirements:
     tests: [TEST01]
     docs: [reference.md#section]
     functional_specs: [EVENT.BASE]
-    notes: |
-      Optional freeform nuance.
+    pryv_primitives: [access, audit]
+    sample_apps: [get-a-copy-of-my-data]      # optional
+    overview: |
+      High-level position (2-3 sentences).
+      Audience: auditor / compliance officer.
+    detail: |
+      Functional explanation (medium length).
+      Audience: compliance officer + technical lead.
+      Multi-aspect breakdowns, gotchas, configuration trade-offs.
+    technical: |
+      Implementation-level specifics.
+      Audience: engineer.
+      Code paths, primitive citations, exact API methods.
 
 excluded_items: []      # for curated scopes only
 ```
+
+## Authoring tiers
+
+Every requirement row has three optional content fields read by different
+audiences:
+
+| Field | Audience | Tone | Length |
+|---|---|---|---|
+| `overview` | auditor / compliance officer | accessible, jargon-free | 2-3 sentences |
+| `detail` | compliance officer + technical lead | functional, may include lists / tables | a few paragraphs |
+| `technical` | engineer | code-grounded, specific | as long as needed |
+
+The WAB renders all three when a row is expanded, with visual hierarchy
+(overview prominent, technical in monospace). A reader stops at the level
+they need.
+
+Always write `overview` for any non-`out-of-scope` row — the validator
+warns when it's missing.
 
 ## 3. Validate locally
 

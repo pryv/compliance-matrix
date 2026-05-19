@@ -28,9 +28,17 @@
     "coverage": {
       "enum": ["implemented", "configurable", "facilitated", "documented", "out-of-scope"]
     },
-    "notes": {
+    "overview": {
       "type": "string",
-      "description": "Freeform nuance — gotchas, multi-aspect breakdowns, exceptions."
+      "description": "High-level position (2-3 sentences). Audience: auditor / compliance officer. Skimmable; states pryv's contribution without jargon."
+    },
+    "detail": {
+      "type": "string",
+      "description": "Functional explanation (medium length). Audience: compliance officer + technical lead. Why + how at the feature level; multi-aspect breakdowns, gotchas, configuration trade-offs."
+    },
+    "technical": {
+      "type": "string",
+      "description": "Implementation-level specifics. Audience: engineer. Code paths, primitive citations beyond pryv_primitives[], exact API methods, version constraints."
     },
     "draft": {
       "type": "boolean",

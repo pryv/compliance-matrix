@@ -101,17 +101,45 @@ export function ScopeDetail () {
                 </tr>
                 {openRef === r.ref && (
                   <tr key={`${r.ref}-det`} className='bg-slate-50'>
-                    <td colSpan={3} className='p-4 text-sm'>
-                      {r.notes && <div className='mb-3 whitespace-pre-wrap'>{r.notes}</div>}
+                    <td colSpan={3} className='p-4 text-sm space-y-4'>
+                      {r.overview && (
+                        <section>
+                          <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
+                            Overview
+                          </div>
+                          <div className='text-base leading-relaxed whitespace-pre-wrap'>{r.overview}</div>
+                        </section>
+                      )}
+                      {r.detail && (
+                        <section>
+                          <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
+                            Detail
+                          </div>
+                          <div className='whitespace-pre-wrap'>{r.detail}</div>
+                        </section>
+                      )}
+                      {r.technical && (
+                        <section>
+                          <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
+                            Technical
+                          </div>
+                          <div className='whitespace-pre-wrap font-mono text-xs text-slate-700 bg-white border border-slate-200 rounded p-2'>{r.technical}</div>
+                        </section>
+                      )}
                       {links && (
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                          <LinkSection title='Tests' items={links.tests} />
-                          <LinkSection title='Docs' items={links.docs} />
-                          <LinkSection title='QMS' items={links.qms} />
-                          <LinkSection title='Config keys' items={links.configs} mono />
-                          <LinkSection title='Functional specs' items={links.specs} mono />
-                          <LinkSection title='Derives from' items={links.derives} mono />
-                        </div>
+                        <section>
+                          <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
+                            Evidence
+                          </div>
+                          <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                            <LinkSection title='Tests' items={links.tests} />
+                            <LinkSection title='Docs' items={links.docs} />
+                            <LinkSection title='QMS' items={links.qms} />
+                            <LinkSection title='Config keys' items={links.configs} mono />
+                            <LinkSection title='Functional specs' items={links.specs} mono />
+                            <LinkSection title='Derives from' items={links.derives} mono />
+                          </div>
+                        </section>
                       )}
                     </td>
                   </tr>

@@ -23,7 +23,9 @@ export interface Requirement {
   text: string | null;
   text_url: string | null;
   coverage: Coverage;
-  notes: string | null;
+  overview: string | null;
+  detail: string | null;
+  technical: string | null;
   draft: boolean;
   reviewed_by: string | null;
   reviewed_at: string | null;
