@@ -118,17 +118,44 @@
       "uniqueItems": true
     },
     "planned": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "tracking_url": {
-          "type": "string",
-          "format": "uri",
-          "description": "GitHub issue, project board item, or backlog plan URL."
-        },
-        "eta_release": {
-          "type": "string",
-          "description": "Target open-pryv.io release (e.g., '2.1.0')."
+      "type": "array",
+      "description": "Planned bug fixes or backlog features whose shipping would change this row's claim. WAB renders one chip per entry alongside the coverage/effort badges; index/scope pages surface a filter for rows with planned items. Multiple entries allowed (a row may depend on both a queued bug fix and a backlog feature).",
+      "uniqueItems": false,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "summary", "proposal"],
+        "properties": {
+          "kind": {
+            "enum": ["bug", "feature", "enhancement"],
+            "description": "bug = known defect already queued for fix (the row's current claim is partially incorrect); feature = backlog feature whose shipping would tighten / extend the claim; enhancement = smaller refinement (docs, ergonomics)."
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One-line description of what's queued (rendered in the WAB chip tooltip)."
+          },
+          "proposal": {
+            "type": "string",
+            "description": "Relative path to the matrix-side proposal markdown under proposals/ (e.g., 'proposals/audit-on-user-delete.md')."
+          },
+          "backlog": {
+            "type": "string",
+            "description": "Slug of the upstream macroPryv backlog file at _plans/XXX-Backlog/<slug>.md (e.g., 'AUDIT-ON-USER-DELETE'). Omit if the planned work has no macroPryv-side backlog yet."
+          },
+          "impact": {
+            "enum": ["high", "medium", "low"],
+            "description": "How much this row's claim shifts when shipped. high = coverage tier likely changes; medium = effort/facilitation upgrade; low = wording / evidence refinement."
+          },
+          "tracking_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional external tracker (GitHub issue, project board) — supplements the in-tree backlog file."
+          },
+          "eta_release": {
+            "type": "string",
+            "description": "Optional target open-pryv.io release (e.g., '2.1.0')."
+          }
         }
       }
     },

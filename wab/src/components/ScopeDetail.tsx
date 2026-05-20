@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   getScope,
@@ -10,7 +10,9 @@ import {
   type Coverage,
   type RequirementLinks
 } from '../db';
-import { CoverageBadge, DraftBadge, RequirementBadge } from './CoverageBadge';
+import { CoverageBadge, DraftBadge, PlannedBadge, RequirementBadge } from './CoverageBadge';
+
+type PlannedFilter = 'all' | 'planned' | 'bugs';
 
 const COVERAGE_ORDER: Coverage[] = [
   'implemented', 'configurable', 'facilitated', 'documented', 'out-of-scope'
@@ -24,6 +26,7 @@ export function ScopeDetail () {
   const [error, setError] = useState<string | null>(null);
   const [openRef, setOpenRef] = useState<string | null>(null);
   const [links, setLinks] = useState<RequirementLinks | null>(null);
+  const [plannedFilter, setPlannedFilter] = useState<PlannedFilter>('all');
 
   useEffect(() => {
     if (!id) return;
@@ -69,6 +72,30 @@ export function ScopeDetail () {
         ))}
       </div>
 
+      {(() => {
+        const plannedTotal = reqs.reduce((n, r) => n + r.planned.length, 0);
+        const bugsTotal = reqs.reduce(
+          (n, r) => n + r.planned.filter((p) => p.kind === 'bug').length, 0
+        );
+        if (plannedTotal === 0) return null;
+        return (
+          <div className='mt-3 flex flex-wrap gap-2 items-center text-xs'>
+            <span className='text-slate-500'>Filter:</span>
+            <FilterPill active={plannedFilter === 'all'} onClick={() => setPlannedFilter('all')}>
+              All ({reqs.length})
+            </FilterPill>
+            <FilterPill active={plannedFilter === 'planned'} onClick={() => setPlannedFilter('planned')}>
+              Has planned changes ({plannedTotal})
+            </FilterPill>
+            {bugsTotal > 0 && (
+              <FilterPill active={plannedFilter === 'bugs'} onClick={() => setPlannedFilter('bugs')}>
+                Has queued bug ({bugsTotal})
+              </FilterPill>
+            )}
+          </div>
+        );
+      })()}
+
       {reqs.length === 0 && (
         <div className='mt-6 text-slate-500'>
           No requirements authored yet. See [INPUT.md](https://github.com/pryv/compliance-matrix) for status.
@@ -85,7 +112,13 @@ export function ScopeDetail () {
             </tr>
           </thead>
           <tbody>
-            {reqs.map((r) => (
+            {reqs
+              .filter((r) => {
+                if (plannedFilter === 'planned') return r.planned.length > 0;
+                if (plannedFilter === 'bugs') return r.planned.some((p) => p.kind === 'bug');
+                return true;
+              })
+              .map((r) => (
               <>
                 <tr
                   key={`${r.ref}-row`}
@@ -94,8 +127,13 @@ export function ScopeDetail () {
                 >
                   <td className='p-2 font-mono text-xs'>{r.ref}</td>
                   <td className='p-2'>
-                    {r.title}
-                    {r.draft && <DraftBadge />}
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <span>{r.title}</span>
+                      {r.draft && <DraftBadge />}
+                      {r.planned.map((p, i) => (
+                        <PlannedBadge key={`${r.ref}-pl-${i}`} change={p} />
+                      ))}
+                    </div>
                   </td>
                   <td className='p-2'>
                     <RequirementBadge
@@ -108,6 +146,28 @@ export function ScopeDetail () {
                 {openRef === r.ref && (
                   <tr key={`${r.ref}-det`} className='bg-slate-50'>
                     <td colSpan={3} className='p-4 text-sm space-y-4'>
+                      {r.planned.length > 0 && (
+                        <section>
+                          <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
+                            Planned changes
+                          </div>
+                          <ul className='space-y-1'>
+                            {r.planned.map((p, i) => (
+                              <li key={`pl-${i}`} className='flex items-start gap-2'>
+                                <PlannedBadge change={p} />
+                                <div className='text-xs'>
+                                  <div>{p.summary}</div>
+                                  <div className='text-slate-500 mt-0.5 font-mono'>
+                                    {p.proposal}
+                                    {p.backlog && <> · backlog: {p.backlog}</>}
+                                    {p.eta_release && <> · eta {p.eta_release}</>}
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      )}
                       {r.overview && (
                         <section>
                           <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
@@ -156,6 +216,24 @@ export function ScopeDetail () {
         </table>
       )}
     </div>
+  );
+}
+
+function FilterPill ({
+  active, onClick, children
+}: { active: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      className={`px-2 py-0.5 rounded border text-xs ${
+        active
+          ? 'bg-slate-700 text-white border-slate-700'
+          : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 

@@ -97,6 +97,22 @@ db.exec(`
   CREATE TABLE excluded_items (scope_id TEXT, ref TEXT, reason TEXT,
                                FOREIGN KEY (scope_id) REFERENCES scopes(id));
 
+  CREATE TABLE planned_changes (
+    scope_id TEXT NOT NULL,
+    ref TEXT NOT NULL,
+    seq INTEGER NOT NULL,
+    kind TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    proposal TEXT NOT NULL,
+    backlog TEXT,
+    impact TEXT,
+    tracking_url TEXT,
+    eta_release TEXT,
+    PRIMARY KEY (scope_id, ref, seq),
+    FOREIGN KEY (scope_id, ref) REFERENCES requirements(scope_id, ref)
+  );
+  CREATE INDEX idx_planned_kind ON planned_changes(kind);
+
   CREATE TABLE meta (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -120,6 +136,9 @@ const insDerives = db.prepare('INSERT INTO derives_links (scope_id, ref, target_
 const insPrim    = db.prepare('INSERT INTO primitive_links (scope_id, ref, primitive) VALUES (?, ?, ?)');
 const insSample  = db.prepare('INSERT INTO sample_links (scope_id, ref, sample) VALUES (?, ?, ?)');
 const insExcl    = db.prepare('INSERT INTO excluded_items (scope_id, ref, reason) VALUES (?, ?, ?)');
+const insPlanned = db.prepare(`INSERT INTO planned_changes
+  (scope_id, ref, seq, kind, summary, proposal, backlog, impact, tracking_url, eta_release)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 const insMeta    = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?)');
 
 const scopeFiles = await glob(path.join(ROOT, 'scopes/*.yml'));
@@ -167,6 +186,15 @@ const tx = db.transaction(() => {
       for (const x of r.derives_from || []) insDerives.run(scope.id, r.ref, x);
       for (const x of r.pryv_primitives || []) insPrim.run(scope.id, r.ref, x);
       for (const x of r.sample_apps || []) insSample.run(scope.id, r.ref, x);
+      let plannedSeq = 0;
+      for (const p of r.planned || []) {
+        insPlanned.run(
+          scope.id, r.ref, plannedSeq++,
+          p.kind, p.summary, p.proposal,
+          p.backlog || null, p.impact || null,
+          p.tracking_url || null, p.eta_release || null
+        );
+      }
     }
 
     for (const x of scope.excluded_items || []) {
@@ -185,7 +213,9 @@ const stats = {
   requirements: db.prepare('SELECT COUNT(*) c FROM requirements').get().c,
   test_links: db.prepare('SELECT COUNT(*) c FROM test_links').get().c,
   doc_links: db.prepare('SELECT COUNT(*) c FROM doc_links').get().c,
-  drafts: db.prepare('SELECT COUNT(*) c FROM requirements WHERE draft=1').get().c
+  drafts: db.prepare('SELECT COUNT(*) c FROM requirements WHERE draft=1').get().c,
+  planned: db.prepare('SELECT COUNT(*) c FROM planned_changes').get().c,
+  planned_bugs: db.prepare("SELECT COUNT(*) c FROM planned_changes WHERE kind='bug'").get().c
 };
 
 db.close();
@@ -193,3 +223,4 @@ db.close();
 console.log(`[OK]   built ${path.relative(ROOT, OUT)}`);
 console.log(`[OK]   ${stats.scopes} scope(s), ${stats.requirements} requirement(s) (${stats.drafts} draft)`);
 console.log(`[OK]   ${stats.test_links} test link(s), ${stats.doc_links} doc link(s)`);
+console.log(`[OK]   ${stats.planned} planned change(s) (${stats.planned_bugs} queued bug fix(es))`);

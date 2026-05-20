@@ -246,6 +246,79 @@ construction:
 
 **Commit:** *(this commit)*.
 
+## Session 2026-05-20
+
+### Q8 — Right-to-erasure end-to-end including the audit log itself: when `auth.delete` runs, does the audit log referencing the deleted subject also disappear?
+
+**Short answer:** **engine-dependent today — undocumented gap;
+queued as a bug fix + operator setting** (not a "voluntarily
+missing" call). The `gdpr.Art.17` row claims "configurable end-to-
+end erasure", but on a PostgreSQL audit deployment the audit rows
+referencing the deleted subject silently survive.
+
+**What the code actually does.** The `auth.delete` pipeline
+(`components/api-server/src/methods/auth/delete.ts`) runs
+`checkIfAuthorized → validateUserExists → validateUserFilepaths →
+deleteUserFiles → deleteHFData → deleteAuditData → deleteUser`.
+The `deleteAuditData` middleware
+(`components/business/src/auth/deletion.ts:104-108`) calls
+`userLocalDirectory.deleteUserDirectory(userId)` — i.e. it wipes
+the per-user filesystem directory wholesale.
+
+| Audit engine | Storage layout | Outcome of `auth.delete` |
+|---|---|---|
+| SQLite | per-user file under user-data directory | wiped ✅ |
+| PostgreSQL | shared `audit_events` table, rows keyed by `user_id` | **not touched** ⚠️ |
+
+`AuditStoragePG.deleteUser(userId)` exists
+(`storages/engines/postgresql/src/AuditStoragePG.ts:60-63`) and
+runs `DELETE FROM audit_events WHERE user_id = $1` — but the only
+in-tree caller is `RestoreOrchestrator.ts:341` (backup-restore
+preflight). The `auth.delete` pipeline does not call it.
+
+**Planned fix (one bundled change).**
+
+1. Add `deleteAuditDataStorage` as its own explicit middleware in
+   `auth.delete`, calling `auditStorage.deleteUser(userId)`. Decouples
+   "wipe filesystem directory" from "erase audit rows". Both engines
+   converge.
+
+2. Operator setting `audit.onUserDelete: erase | keep | pseudonymise`
+   (default `erase`).
+   - `erase` — runs `auditStorage.deleteUser(userId)`; matches
+     today's SQLite default + the GDPR/CCPA/PIPEDA-friendly path.
+   - `keep` — skips the call; for HIPAA §164.316(b)(2)(i) 6-year
+     retention, MDR Art.10(8) device-history retention, or any
+     regime keeping audit under a separate lawful basis (GDPR
+     Art.17(3)(b) "compliance with a legal obligation"); the
+     implementer documents this in their DPIA.
+   - `pseudonymise` — null/hash the audit row's personal
+     identifiers (`accessId`, `userId`, params containing personal
+     data); keep timestamps + action verbs. Composes with the
+     `randomAlias` primitive
+     (`proposals/aliases-as-pseudonymization-primitive.md`) — an
+     alias-issuing deployment never stores the canonical
+     identifier in the audit row at all.
+
+**Future direction note.** The chained-audit-log proposal
+(`proposals/audit-log-chaining.md`) must accommodate post-hoc row
+deletion / pseudonymisation — likely via "tombstone" rows that
+preserve chain continuity while removing the personal data.
+
+**Matrix encoding:**
+- `proposals/audit-on-user-delete.md` — mirror of the upstream
+  backlog; lists rows that would tighten when shipped.
+- `gdpr.Art.17` `detail` block extended with the per-engine
+  truth-table + planned consistency fix + operator setting +
+  pointer to the `randomAlias` composition.
+- `hipaa-security.164.316(b)(2)(i)` (6-year audit retention)
+  `detail` block added — calls out the `keep` mode as the
+  HIPAA-friendly path + the §164.530(j) separate-lawful-basis
+  framing.
+- Upstream backlog: `_plans/XXX-Backlog/AUDIT-ON-USER-DELETE.md`.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

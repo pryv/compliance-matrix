@@ -1,4 +1,4 @@
-import type { Coverage, EffortSaved, FacilitationMode } from '../db';
+import type { Coverage, EffortSaved, FacilitationMode, PlannedChange, PlannedKind } from '../db';
 
 const COVERAGE_LABELS: Record<Coverage, string> = {
   implemented: 'Implemented',
@@ -98,4 +98,39 @@ export function CoverageBadge ({ coverage }: { coverage: Coverage }) {
 
 export function DraftBadge () {
   return <span className='draft-badge ml-2'>draft</span>;
+}
+
+const PLANNED_KIND_LABELS: Record<PlannedKind, string> = {
+  bug: 'BUG',
+  feature: 'PLANNED',
+  enhancement: 'ENH'
+};
+
+/**
+ * Compact chip that flags a row as depending on planned work.
+ *   - bug   → red       (a known defect; today's claim is partially incorrect)
+ *   - feature → indigo  (backlog feature whose shipping would tighten the claim)
+ *   - enhancement → grey (smaller refinement)
+ *
+ * `impact` controls intensity (high = filled bold, low = outlined). Tooltip
+ * surfaces the summary + impact + proposal/backlog references.
+ */
+export function PlannedBadge ({ change }: { change: PlannedChange }) {
+  const labelKind = PLANNED_KIND_LABELS[change.kind];
+  const impact = change.impact ?? 'medium';
+  const titleParts = [
+    `${labelKind} (${impact} impact): ${change.summary}`,
+    `Proposal: ${change.proposal}`
+  ];
+  if (change.backlog) titleParts.push(`Backlog: ${change.backlog}`);
+  if (change.eta_release) titleParts.push(`ETA: ${change.eta_release}`);
+  return (
+    <span
+      className={`planned-${change.kind} planned-impact-${impact} inline-block px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap`}
+      title={titleParts.join('\n')}
+    >
+      {labelKind}
+      {change.impact && <span className='ml-1 opacity-80'>· {change.impact}</span>}
+    </span>
+  );
 }

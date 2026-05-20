@@ -3,6 +3,18 @@ import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
 export type Coverage = 'implemented' | 'configurable' | 'facilitated' | 'documented' | 'out-of-scope';
 export type EffortSaved = 'high' | 'medium' | 'low';
 export type FacilitationMode = 'primitive' | 'evidence' | 'storage' | 'infrastructure' | 'awareness';
+export type PlannedKind = 'bug' | 'feature' | 'enhancement';
+export type PlannedImpact = 'high' | 'medium' | 'low';
+
+export interface PlannedChange {
+  kind: PlannedKind;
+  summary: string;
+  proposal: string;
+  backlog: string | null;
+  impact: PlannedImpact | null;
+  tracking_url: string | null;
+  eta_release: string | null;
+}
 
 export interface Scope {
   id: string;
@@ -34,6 +46,7 @@ export interface Requirement {
   reviewed_by: string | null;
   reviewed_at: string | null;
   applies_to_versions: string;
+  planned: PlannedChange[];
 }
 
 let sqlPromise: Promise<SqlJsStatic> | null = null;
@@ -92,9 +105,43 @@ export async function listRequirements (scopeId: string): Promise<Requirement[]>
     'SELECT * FROM requirements WHERE scope_id = ?',
     [scopeId]
   );
+  const planned = rows<any>(
+    db,
+    'SELECT ref, kind, summary, proposal, backlog, impact, tracking_url, eta_release FROM planned_changes WHERE scope_id = ? ORDER BY ref, seq',
+    [scopeId]
+  );
+  const plannedByRef = new Map<string, PlannedChange[]>();
+  for (const p of planned) {
+    const arr = plannedByRef.get(p.ref) || [];
+    arr.push({
+      kind: p.kind, summary: p.summary, proposal: p.proposal,
+      backlog: p.backlog, impact: p.impact,
+      tracking_url: p.tracking_url, eta_release: p.eta_release
+    });
+    plannedByRef.set(p.ref, arr);
+  }
   return raw
-    .map((r) => ({ ...r, draft: !!r.draft }))
+    .map((r) => ({ ...r, draft: !!r.draft, planned: plannedByRef.get(r.ref) || [] }))
     .sort((a, b) => a.ref.localeCompare(b.ref, undefined, { numeric: true, sensitivity: 'base' }));
+}
+
+/**
+ * Returns a {scope_id: {planned: N, bugs: N}} map for surfacing planned-count
+ * chips on the scope-list index page.
+ */
+export async function plannedCountsByScope (): Promise<Record<string, { planned: number; bugs: number }>> {
+  const db = await loadDb();
+  const raw = rows<{ scope_id: string; planned: number; bugs: number }>(
+    db,
+    `SELECT scope_id,
+            COUNT(*) planned,
+            SUM(CASE WHEN kind='bug' THEN 1 ELSE 0 END) bugs
+     FROM planned_changes
+     GROUP BY scope_id`
+  );
+  const out: Record<string, { planned: number; bugs: number }> = {};
+  for (const r of raw) out[r.scope_id] = { planned: r.planned, bugs: r.bugs };
+  return out;
 }
 
 export async function coverageHistogram (scopeId: string): Promise<Record<Coverage, number>> {

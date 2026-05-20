@@ -751,6 +751,12 @@ requirements:
     facilitation_mode: storage
     draft: true
     pryv_primitives: [backup-restore, audit]
+    planned:
+      - kind: feature
+        summary: "audit.onUserDelete: keep mode preserves audit across subject erasure"
+        proposal: proposals/audit-on-user-delete.md
+        backlog: AUDIT-ON-USER-DELETE
+        impact: medium
     overview: |
       Six-year retention is an
       operational choice. Pryv's audit log stays per-user SQLite by
@@ -758,6 +764,19 @@ requirements:
       archival + pruning per their HIPAA schedule). `bin/backup.js`
       produces the artefact that the 6-year retention rule attaches
       to.
+    detail: |
+      The planned `audit.onUserDelete: keep` operator setting (see
+      `proposals/audit-on-user-delete.md`) is the HIPAA-friendly
+      path: when a covered entity deletes a subject's account, the
+      6-year audit-retention obligation under §164.316(b)(2)(i)
+      runs under a separate lawful basis from the deletion itself
+      (GDPR Art.17(3)(b) "compliance with a legal obligation" maps
+      cleanly; HIPAA Privacy Rule §164.530(j) anchors the
+      documentation-retention duty independently of the subject's
+      account state). Today, audit erasure on `auth.delete` is
+      effectively engine-dependent (SQLite wipes, PG retains) — the
+      planned consistency fix surfaces the choice as an explicit
+      operator setting.
 
   - ref: 164.316(b)(2)(iii)
     title: Documentation — updates — Required

@@ -271,6 +271,23 @@ for (const { scope, file } of allScopes) {
         e(`${cell}: derives_from '${ref}' references unknown scope '${otherScope}'`);
       }
     }
+
+    // planned[].proposal must exist under proposals/; planned[].backlog (when
+    // set) must resolve to a file under macroPryv _plans/XXX-Backlog/.
+    for (const p of r.planned || []) {
+      const propPath = path.join(ROOT, p.proposal);
+      if (!fs.existsSync(propPath)) {
+        e(`${cell}: planned.proposal '${p.proposal}' not found (expected under compliance-matrix/)`);
+      }
+      if (p.backlog) {
+        const backlogPath = path.join(
+          MACROPRYV_ROOT, '_plans/XXX-Backlog', `${p.backlog}.md`
+        );
+        if (!fs.existsSync(backlogPath)) {
+          e(`${cell}: planned.backlog '${p.backlog}' not found at ${path.relative(MACROPRYV_ROOT, backlogPath)}`);
+        }
+      }
+    }
   }
 }
 

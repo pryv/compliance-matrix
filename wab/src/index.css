@@ -54,3 +54,14 @@ body {
   letter-spacing: 0.05em;
   font-weight: 700;
 }
+
+/* Planned-change chips — flag rows whose claim depends on a queued bug fix or
+   backlog feature. Hue = kind (bug = red, feature = indigo, enhancement = slate).
+   Impact tunes intensity at-a-glance. */
+.planned-bug          { background-color: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
+.planned-feature      { background-color: #e0e7ff; color: #3730a3; border: 1px solid #6366f1; }
+.planned-enhancement  { background-color: #f1f5f9; color: #334155; border: 1px solid #94a3b8; }
+
+.planned-impact-high   { font-weight: 700; }
+.planned-impact-medium { font-weight: 600; }
+.planned-impact-low    { font-weight: 500; opacity: 0.85; }

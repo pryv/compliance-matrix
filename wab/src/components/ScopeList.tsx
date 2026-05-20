@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listScopes, type Scope } from '../db';
+import { listScopes, plannedCountsByScope, type Scope } from '../db';
 
 const TYPE_GROUPS: Array<{ key: Scope['type']; label: string }> = [
   { key: 'regulation', label: 'Regulations' },
@@ -10,11 +10,12 @@ const TYPE_GROUPS: Array<{ key: Scope['type']; label: string }> = [
 
 export function ScopeList () {
   const [scopes, setScopes] = useState<Scope[] | null>(null);
+  const [planned, setPlanned] = useState<Record<string, { planned: number; bugs: number }>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    listScopes()
-      .then(setScopes)
+    Promise.all([listScopes(), plannedCountsByScope()])
+      .then(([s, p]) => { setScopes(s); setPlanned(p); })
       .catch((e: Error) => setError(e.message));
   }, []);
 
@@ -50,6 +51,20 @@ export function ScopeList () {
                     {s.layered_on.length > 0 && (
                       <div className='text-xs text-slate-500 mt-1'>
                         layered on: {s.layered_on.join(', ')}
+                      </div>
+                    )}
+                    {planned[s.id] && (
+                      <div className='mt-2 flex flex-wrap gap-1'>
+                        {planned[s.id].bugs > 0 && (
+                          <span className='planned-bug planned-impact-medium text-xs px-1.5 py-0.5 rounded'>
+                            {planned[s.id].bugs} queued bug{planned[s.id].bugs > 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {(planned[s.id].planned - planned[s.id].bugs) > 0 && (
+                          <span className='planned-feature planned-impact-medium text-xs px-1.5 py-0.5 rounded'>
+                            {planned[s.id].planned - planned[s.id].bugs} planned
+                          </span>
+                        )}
                       </div>
                     )}
                   </Link>

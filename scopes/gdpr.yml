@@ -521,6 +521,17 @@ requirements:
     pryv_primitives: [event, stream, backup-restore]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
     tests: [USAD]
+    planned:
+      - kind: bug
+        summary: "PG audit not erased on auth.delete (engine-dependent gap)"
+        proposal: proposals/audit-on-user-delete.md
+        backlog: AUDIT-ON-USER-DELETE
+        impact: medium
+      - kind: feature
+        summary: "Operator setting audit.onUserDelete: erase|keep|pseudonymise"
+        proposal: proposals/audit-on-user-delete.md
+        backlog: AUDIT-ON-USER-DELETE
+        impact: low
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -528,7 +539,7 @@ requirements:
       filesystem backups; PostgreSQL / MongoDB require a backup-rotation
       policy to complete erasure.
     detail: |
-      Per-engine behaviour:
+      Per-engine behaviour for the live data:
         - SQLite — each user is a separate file under the user-data
           directory. File deletion removes the user from filesystem
           backups (depending on your backup tool's per-file semantics).
@@ -540,10 +551,34 @@ requirements:
       `bin/backup.js` supports per-user backup files alongside DB-engine
       backups; using per-user backups improves erasure semantics
       regardless of engine.
+
+      Audit-log erasure caveat (queued for fix — see
+      `proposals/audit-on-user-delete.md`). The `auth.delete` pipeline
+      includes a `deleteAuditData` step that wipes the per-user
+      filesystem directory. That happens to erase SQLite audit (the
+      per-user `.sqlite` file lives there) but does **not** touch
+      PostgreSQL audit (rows in the shared `audit_events` table keyed
+      by `user_id`). The PG `auditStorage.deleteUser(userId)` method
+      exists but is currently only wired into the backup-restore
+      preflight, not the user-delete pipeline. On a PG-audit
+      deployment, audit rows referencing the deleted subject
+      (`accessId`, action `userId`, params) silently survive. Queued
+      consistency fix: add `deleteAuditDataStorage` as its own explicit
+      middleware in `auth.delete` so both engines converge.
+
+      Planned operator setting `audit.onUserDelete: erase | keep |
+      pseudonymise` (default `erase`) — `keep` for HIPAA / MDR
+      retention regimes under GDPR Art.17(3)(b); `pseudonymise`
+      composes with the `randomAlias` primitive
+      (`proposals/aliases-as-pseudonymization-primitive.md`) for
+      audit-row PII null-out while preserving forensic value.
     technical: |
       Tested via `[USAD]`
       (`open-pryv.io/components/api-server/test/deletion-seq.test.js` —
       exercises the `user-account.delete` config-dependent path).
+      Pipeline source: `components/business/src/auth/deletion.ts`
+      (`deleteAuditData` step) + `components/api-server/src/methods/
+      auth/delete.ts` (middleware registration).
 
   - ref: Art.18
     title: Right to restriction of processing
