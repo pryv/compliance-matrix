@@ -983,6 +983,102 @@ doesn't shift.
 
 **Commit:** *(this commit)*.
 
+### Q18 — CMC counterparties and GDPR Art.26 joint controllers: when User A's operator shares a stream with User B's operator via CMC, what's the controller relationship?
+
+**Short answer: NOT joint controllership.** Pryv's CMC primitive
+**requires subject validation** — User A's `consent/accept-cmc`
+event is the authorising step for any cross-account data flow.
+Each operator remains the **sole controller** for their
+respective user's data; the lawful basis for B's operator
+processing A's data is A's CMC consent record (GDPR Art.6(1)(a)),
+not a controller-to-controller agreement. This is **controller-
+to-controller transmission via subject consent** (Art.20(2)
+lineage), not Art.26 joint controllership.
+
+**Why this matters**: the matrix's `gdpr.Art.26` row previously
+read like CMC was the joint-controller technical substrate.
+That's misleading. Operators using CMC don't inherit Art.26
+obligations from the CMC architecture; they get them only if
+they separately decide to jointly process data outside the
+subject-driven flow.
+
+**The CMC flow in code** (verified at
+`components/cmc/src/acceptOrchestration.ts`):
+
+1. Requester (B's app) creates a `consent/request-cmc` offer
+   event on a capability stream — declares title, description,
+   consent text, requested permissions, expiry.
+2. Capability URL delivered to A (out-of-band: email / QR /
+   deep link).
+3. A's app fetches the offer, displays it to A.
+4. **A writes `consent/accept-cmc` event on A's account** —
+   subject's explicit consent recorded durably.
+5. CMC plugin (server-side, on A's core) creates the
+   bidirectional access pair + delivers the back-channel
+   apiEndpoint to B.
+6. B's operator now holds an access token that resolves to
+   A's `apiEndpoint`; B's client reads A's data directly from
+   A's core (no replication).
+
+The `consent/accept-cmc` event is queryable, auditable, and
+revocable — A's subsequent `consent/revoke-cmc` triggers
+bidirectional access revocation.
+
+**Art.26 test mapped to CMC**:
+
+| Art.26(1) element | CMC reality |
+|---|---|
+| "two or more controllers" | yes — Operator-X and Operator-Y |
+| "JOINTLY determine purposes" | **no** — A's `consent/request-cmc` content + A's `consent/accept-cmc` decision determine the purpose; operators are infrastructure |
+| "JOINTLY determine means" | **no** — A's access permissions are the technical control; operators run the API but neither decides the means |
+
+So Art.26 doesn't apply to the CMC pattern by construction.
+What applies instead:
+
+- **Art.6(1)(a) (consent)** — A's `consent/accept-cmc` is the
+  lawful basis for B's operator processing A's data.
+- **Art.20(2) (controller-to-controller transmission)** — the
+  CMC delivery IS this transmission; subject's right to
+  transmit with consent.
+- **Art.13/14 (transparency)** — each operator has their own
+  transparency obligation to their respective user. A's
+  operator informs A about who receives the data; B's
+  operator informs B about what data they received + the
+  lawful basis (A's consent).
+- **Art.7(3) (right to withdraw)** — A's `consent/revoke-cmc`
+  triggers symmetric bidirectional revocation.
+
+**Where Art.26 actually applies (separately from CMC)**: two
+operators running a joint research programme, joint health
+platform, or shared-purpose service where both decide on
+processing rules independently of subject choices. In that
+case the arrangement IS the operator-side contract; Pryv's
+contribution is `clientData.joint_controller_arrangement` on
+the relevant accesses (point to the written agreement) +
+"essence" of the arrangement in `clientData.privacy_notice`
+for Art.26(2). Operator-edited metadata, no Pryv primitive
+enforces it. This makes `gdpr.Art.26` correctly
+`F: Awareness | Low` (was `F: Storage | Low`).
+
+**Matrix encoding:**
+- `gdpr.Art.26` overview rewritten to lead with the
+  "CMC is NOT a joint-controller pattern by default" framing.
+  Detail block spells out the Art.26 test mapped to CMC +
+  where Art.26 actually applies.
+- Facilitation mode shifted `storage` → `awareness` (the row
+  is more about implementer awareness of the regulatory
+  distinction than about Pryv storing arrangement metadata).
+- `context/cmc-consent-primitives.md` extended with the Q18
+  Art.26 finding alongside the existing Art.7 + Art.30
+  treatments.
+
+No backlog filed — this is matrix-prose tightening on a
+correctly classified-but-misframed row. The CMC primitive
+itself works as documented; the matrix just needed to surface
+the regulatory framing correctly.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

@@ -820,18 +820,58 @@ requirements:
       for compliance with the Regulation by means of an arrangement.
     coverage: facilitated
     pryv_effort_saved: low
-    facilitation_mode: storage
+    facilitation_mode: awareness
     draft: true
     pryv_primitives: [access, clientData, CMC]
     overview: |
-      Joint-controller arrangements
-      get recorded on the access's
-      `clientData.joint_controller_arrangement` with a pointer to the
-      written agreement (Art. 26 §1). Where each controller runs
-      their own Pryv deployment, CMC's cross-platform access pattern
-      is the natural technical substrate for the joint operation.
-      The arrangement's essence (Art. 26 §2) is communicated to the
-      data subject via the access's clientData.privacy_notice.
+      **CMC is NOT a joint-controller pattern by default.** Pryv's
+      CMC primitive requires **subject validation** — User A's
+      `consent/accept-cmc` event is what authorises any cross-account
+      data flow to User B's operator. Each operator remains the
+      **sole controller** for their respective user's data; the
+      lawful basis for B's processing of A's data is A's CMC
+      consent record (Art.6(1)(a)), not a controller-to-controller
+      agreement. This is controller-to-controller transmission
+      *via subject consent* (Art.20(2) lineage), not Art.26 joint
+      controllership. Real Art.26 fires only if Operator-X +
+      Operator-Y separately decide to jointly process a category
+      of subjects' data — outside the CMC primitive.
+    detail: |
+      **Art.26 test**: "two or more controllers JOINTLY determine
+      purposes and means". In a CMC share:
+        - The **purpose** is declared in A's
+          `consent/request-cmc` event (or accepted from B's
+          request) — A determines whether to consent.
+        - The **means** are A's access permissions + B's access
+          scope, both anchored to A's accept event.
+        - Neither operator decides on behalf of both;
+          subject A is the determiner.
+
+      So a CMC share does NOT trigger Art.26. It's covered by:
+        - **Art.6(1)(a)** (consent) — A's consent is the lawful
+          basis for B's operator to process A's data.
+        - **Art.20(2)** (data portability — transmit to another
+          controller) — the act of CMC delivery is "transmission
+          to another controller" with subject's consent.
+        - **Art.13/14** (transparency) — each operator carries
+          their own transparency obligation to their respective
+          user; A's operator informs A about who receives the
+          data; B's operator informs B about what data they
+          received + the lawful basis (A's consent).
+
+      **Where Art.26 actually applies**: when two operators run a
+      joint research programme, joint health platform, or
+      shared-purpose service where both decide on processing
+      independently of subjects' individual choices. In that
+      case, the arrangement IS the operator-side contract;
+      Pryv's contribution is `clientData.joint_controller_arrangement`
+      on the relevant accesses (point to the written agreement)
+      + the "essence" of the arrangement in
+      `clientData.privacy_notice` for Art.26(2). This is
+      operator-edited metadata, no Pryv primitive enforces it.
+
+      Full CMC-vs-Art.26 reasoning in
+      `context/cmc-consent-primitives.md`.
 
   - ref: Art.27
     title: Representative of controllers / processors not established in the Union

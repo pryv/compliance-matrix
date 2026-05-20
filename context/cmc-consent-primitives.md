@@ -112,6 +112,19 @@ No `consent/*` events needed (the negotiation IS the local auth flow).
   authorization is an access with the appropriate scope; revocation is
   symmetric.
 
+- **GDPR Art.26 (Joint controllers) — does NOT apply to CMC by
+  default** (Q18 finding, 2026-05-20). CMC requires subject
+  validation: User A's `consent/accept-cmc` event is what
+  authorises any cross-account flow to User B's operator. Each
+  operator remains the SOLE controller for their respective
+  user's data; the lawful basis for B's operator processing A's
+  data is A's CMC consent record (Art.6(1)(a)), not a
+  controller-to-controller agreement. This is controller-to-
+  controller transmission *via subject consent* (Art.20(2)
+  lineage). Real Art.26 only fires when two operators decide on
+  joint processing independently of subject choices — outside
+  the CMC primitive.
+
 ## Distinction the matrix must surface
 
 - **Primary record**: the access (permissions, clientData, version chain).
