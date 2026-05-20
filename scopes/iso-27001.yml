@@ -934,10 +934,41 @@ requirements:
       shall be synchronized to approved time sources.
     coverage: out-of-scope
     draft: true
+    planned:
+      - kind: feature
+        summary: "Bootstrap-join + pre-cert-load clock-skew detection (would shift row to F:Awareness|Low)"
+        proposal: proposals/clock-skew-cluster-checks.md
+        backlog: CLOCK-SKEW-CLUSTER-CHECKS
+        impact: medium
     overview: |
-      Clock sync is host-OS concern (chronyd / ntpd). Pryv stores
-      whatever timestamp the host produces; the operator ensures the
-      host runs a synchronized clock service.
+      Clock sync is the host-OS concern (chronyd / ntpd); Pryv stores
+      whatever timestamp the host produces. The operator ensures every
+      host in the cluster runs a synchronized clock service.
+    detail: |
+      Pryv's architecture is **core-affine** — every user's data
+      operations resolve to one core (see
+      `context/core-affinity-architecture.md`). Cores never need to
+      agree on clock value or on cert validity with each other; the
+      dangerous failure modes are all intra-core (one core's own
+      clock vs its own loaded cert / its own audit-row timestamps).
+
+      **Pryv's existing contribution to skew detection**: every API
+      response carries `meta.serverTime` (Unix timestamp seconds;
+      `components/api-server/src/methods/helpers/setCommonMeta.ts`).
+      Webhook payloads include the same. Clients use this to detect
+      their own clock skew vs the server. Server-to-server skew
+      detection is not currently shipped — operators rely on host
+      NTP for that.
+
+      **Planned addition** (see
+      `proposals/clock-skew-cluster-checks.md`): two intra-core
+      checkpoints — bootstrap-join skew check (refuse to ack when
+      the joining core's clock differs from the issuer's
+      `serverTime` by more than `cluster.clockSkewThresholdSec`)
+      + pre-cert-load validity check (refuse to swap a rotated
+      cert whose `notBefore..notAfter` window doesn't contain the
+      local clock). After these ship the row moves from
+      `out-of-scope` to `F: Awareness | Low`.
 
   - ref: A.8.18
     title: A.8.18 — Use of privileged utility programs

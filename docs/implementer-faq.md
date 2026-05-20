@@ -452,6 +452,90 @@ that the backup tool just doesn't exercise yet.
 
 **Commit:** *(this commit)*.
 
+### Q11 — Time synchronization across cores. Audit row ordering, LE cert rotation, access expiry — do I need to run NTP, and does Pryv enforce or detect skew?
+
+**Short answer:** **clock sync is the operator's job** (`chronyd` /
+`ntpd` on each host). Pryv uses machine wall-clock + ships
+**`meta.serverTime` in every API response** for client-side skew
+detection. Server-side, the architecture is **core-affine** —
+users live on exactly one core, the data plane never proxies
+across cores, and PlatformDB is an indexing + uniqueness service
+(not a routing layer). So **cores never need to agree on clock
+value or cert validity**; the dangerous failure modes are all
+intra-core. Two **small queued additions** (`CLOCK-SKEW-CLUSTER-CHECKS`)
+will add server-side skew detection at two natural checkpoints:
+bootstrap-join + pre-cert-load.
+
+**Architectural correction recorded** (from this Q):
+- A user is **assigned to one core**; subsequent API calls resolve
+  to that home core via `/reg/:uid/server` (PlatformDB
+  `user-core/<username>` lookup).
+- Cores never proxy a user's data calls to each other. The only
+  cross-core flow is the registration-time `forwardIfCrossCore`
+  handshake (Plan 37) + the CMC counterparty pattern where user
+  B's client talks directly to user A's home core (B's client has
+  two `apiEndpoint`s, not one core talking to another).
+- PlatformDB carries: `user-core/*` lookups, `emailIndex/*`
+  uniqueness, DNS records, TLS materials, `access-state/*` (Plan
+  55), `cluster_kv/*` (Plan 55). **Not** events / streams /
+  accesses / audit / attachments.
+
+**Per the three sub-questions:**
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | Audit row timestamps coherent across cores? | **Not relevant** — audit rows from a single user land on a single core (core-affine). Per-core monotonic time is the only requirement; cross-core ordering not meaningful by design. |
+| 2 | LE cert rotation across cores? | Cores do **not** need to agree on cert validity; each core's TLS stack judges its loaded cert against its own clock at handshake time. The risk model is intra-core: forward-skew past `notAfter` → that core's TLS rejects its own cert; backward-skew before `notBefore` of a freshly-rotated cert → refuses to load it. LE's 60-day issue / 90-day expire gives ~30 days of overlap so it takes weeks of drift to bite. Queued fix: pre-load validity check refuses the swap if local clock falls outside the new cert's window. |
+| 3 | Access expiry across cores? | **Not relevant** — an access is core-bound; a user authenticating on core-A then calling core-B cannot happen. One core, one clock judges expiry. |
+
+**Pryv's contribution today:**
+- `meta.serverTime` in every API response (Unix timestamp seconds;
+  `components/api-server/src/methods/helpers/setCommonMeta.ts:49`).
+- Webhook payloads include `serverTime`
+  (`components/business/src/webhooks/Webhook.ts:185`).
+- That's the **client-side** skew-detection primitive. No
+  server-side skew detection today.
+
+**Planned addition** (small dev, two intra-core checkpoints):
+
+1. **Bootstrap-join skew check** — joining core compares its
+   `Date.now()` to the issuer's `serverTime` before ack; refuses
+   to ack if `|delta| > cluster.clockSkewThresholdSec`
+   (default `30s`). Operator fixes NTP, retries.
+2. **Pre-cert-load validity check** — worker-side `acme:rotate`
+   handler parses the new cert with `x509.X509Certificate`, checks
+   `validFromDate / validToDate` vs local clock with the same
+   `clockSkewThresholdSec`. Refuses the swap on failure; keeps
+   previous cert loaded; logs for operator alert.
+
+After shipping, `iso-27001.A.8.17` (Clock synchronization) moves
+from `out-of-scope` to `F: Awareness | Low` — Pryv contributes
+detection at two checkpoints + the existing `serverTime` client
+helper; operator still runs NTP.
+
+**Audit-log-chaining (Q2 backlog) precondition recorded.** The
+chain reconstructs per-core only because the data plane is
+per-core; the chain requires per-core monotonic time, not
+cluster-wide clock agreement. Added as an explicit constraint to
+`_plans/XXX-Backlog/AUDIT-LOG-CHAINING.md` and its proposal
+mirror.
+
+**Matrix encoding:**
+- New backlog `_plans/XXX-Backlog/CLOCK-SKEW-CLUSTER-CHECKS.md`.
+- New proposal `proposals/clock-skew-cluster-checks.md`.
+- New architecture context `context/core-affinity-architecture.md`
+  (the mental-model correction made during this Q).
+- `iso-27001.A.8.17` Clock synchronization overview + detail
+  rewritten with the `serverTime` cross-reference + core-affine
+  framing + `planned:` chip.
+- `docs/pryv-primitives.md` audit entry extended with
+  time-semantics + `serverTime` cross-reference.
+- `proposals/audit-log-chaining.md` + the macroPryv backlog
+  twin both gain the "per-core monotonic time is the
+  precondition" constraint section.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

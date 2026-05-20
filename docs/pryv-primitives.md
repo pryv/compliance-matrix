@@ -101,6 +101,21 @@ Records every API method invocation per user.
   no-content guarantee means the audit log itself raises no
   data-minimisation (GDPR Art.5(1)(c)) or audit-PII-residue concerns
   when the original event is erased.
+- **Time semantics**: audit row `time` is `timestamp.now()` on the
+  serving core (machine wall-clock). Pryv is core-affine — each
+  user's audit lives on their home core only (see
+  [`../context/core-affinity-architecture.md`](../context/core-affinity-architecture.md)),
+  so per-core monotonic time suffices; cross-core ordering is not
+  meaningful by design. Clock synchronization between hosts is the
+  operator's responsibility (NTP); `iso-27001.A.8.17` row carries
+  the planned bootstrap-join + pre-cert-load skew-detection
+  proposal (`proposals/clock-skew-cluster-checks.md`).
+- **`meta.serverTime` for clients**: every API response carries
+  `meta.serverTime` (Unix timestamp seconds;
+  `components/api-server/src/methods/helpers/setCommonMeta.ts:49`)
+  + webhook payloads include the same. Clients use this to detect
+  their own clock skew vs the server — the existing client-side
+  primitive that pairs with the planned server-side skew checks.
 
 ### `system-streams`
 

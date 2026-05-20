@@ -37,6 +37,20 @@ treatment):
 
 For Pryv: (1) + (2) is the right pairing.
 
+## Precondition: per-core monotonic time
+
+The chain reconstructs **per-core only** because Pryv's data plane
+is core-affine — each user's audit lives on exactly one core
+(see `context/core-affinity-architecture.md`). Cross-core
+audit-row ordering is not meaningful by design, so the chain
+requires *per-core* monotonic time, not cluster-wide clock
+agreement. Operator NTP keeps each core's clock well-behaved;
+the planned `CLOCK-SKEW-CLUSTER-CHECKS` proposal
+(`proposals/clock-skew-cluster-checks.md`) adds bootstrap-time
++ pre-cert-load skew detection on top — useful pre-flight, not
+a hard prerequisite for the chain to verify (the hash links carry
+correctness; `time` is metadata).
+
 ## Affected matrix rows (today's framing → after shipping)
 
 | Scope | Row | Today | After shipping |
