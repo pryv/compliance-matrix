@@ -254,6 +254,11 @@ requirements:
         proposal: proposals/audit-log-chaining.md
         backlog: AUDIT-LOG-CHAINING
         impact: low
+      - kind: feature
+        summary: "bin/breach-scope.js produces the RROSH-input artefact in a single CLI call (records affected, methods invoked, streams touched)"
+        proposal: proposals/breach-scope-tool.md
+        backlog: BREACH-SCOPE-TOOL
+        impact: medium
     overview: |
       Same primitive set as the
       parallel breach-notification regimes (GDPR Art. 33-34,

@@ -181,6 +181,24 @@ Proposal: `proposals/mfa-modern-methods.md`
 
 Proposal: `proposals/webhook-cascade-on-access-delete.md`
 
+### `BREACH-SCOPE-TOOL`
+
+**Where the work lives**: `open-pryv.io`. Three phases —
+PlatformDB reverse-index + `GET /system/accesses/<accessId>`,
+audit row extensions (`recordCount` + `affectedStreamIds`),
+`bin/breach-scope.js` CLI.
+
+| Scope | Ref | Kind | Impact | After shipping |
+|---|---|---|---|---|
+| gdpr | Art.33 | feature | medium | tier could shift F:Evidence Med → F:Evidence High |
+| swiss-nlpd | Art.24 | feature | medium | inherits gdpr.Art.33 |
+| pipeda | s.10.1 | feature | medium | RROSH evidence chain tightens |
+| hipaa-breach | 164.404(b) | feature | medium | tier shifts F:Awareness Low → F:Evidence Medium |
+| hipaa-breach | 164.404(c) | feature | medium | tier shifts Out-of-scope → F:Evidence Medium |
+| hipaa-breach | 164.414 | feature | medium | combines with AUDIT-LOG-CHAINING for non-repudiation |
+
+Proposal: `proposals/breach-scope-tool.md`
+
 ### `BUILTIN-STORE-OVERRIDE` (DX-only — no matrix row updates)
 
 **Where the work lives**: `open-pryv.io`

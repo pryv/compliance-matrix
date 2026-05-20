@@ -1061,6 +1061,12 @@ requirements:
     draft: true
     pryv_primitives: [audit, encryption-at-rest-secrets]
     docs: [customer-resources/audit-setup.md]
+    planned:
+      - kind: feature
+        summary: "bin/breach-scope.js — emits §33(1)(b-d) scoping report from audit + access-version data for a compromised accessId"
+        proposal: proposals/breach-scope-tool.md
+        backlog: BREACH-SCOPE-TOOL
+        impact: medium
     overview: |
       Pryv's audit log helps you
       determine the scope of a breach (which data, which users, by

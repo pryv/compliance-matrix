@@ -901,6 +901,88 @@ provides the operator's path.
 
 **Commit:** *(this commit)*.
 
+### Q17 — Breach scoping in under 72 hours: what artefact does Pryv hand my incident-response team at hour 0?
+
+**Short answer:** **today, audit data is queryable per access
++ time window via `audit.getLogs?streams=[access-<id>]&fromTime=
+<T>`, but no bundled `bin/breach-scope.js` exists and three
+concrete gaps prevent a clean Art.33(1)(b)–(d) artefact.**
+Filed as a feature backlog (`BREACH-SCOPE-TOOL`) with a
+three-phase implementation plan.
+
+**Gap analysis (user-directed during this Q):**
+
+User confirmed `accessId` is bound to a single subject per the
+core-affine architecture (`context/core-affinity-architecture.md`),
+so per-access scoping is single-user-scoped by construction.
+AccessIds are present in both the audit log + the `@pryv/boiler`
+HTTP request log. With that anchor, what's missing for
+`bin/breach-scope.js --access <id> --since <ts>`:
+
+| Gap | What's missing | Impact |
+|---|---|---|
+| **Hard** | Global `accessId → userId` lookup | Without it, responder either walks all users O(N) via `system.users.list` + per-user `audit.getLogs?streams=[access-<id>]&limit=1`, or relies on SIEM-external correlation. Won't fit the 72h budget for large deployments. **Direction**: add `GET /system/accesses/<accessId>` admin API backed by a PlatformDB reverse-index. |
+| **Medium** | `recordCount` on audit row for read operations | `events.get`/`streams.get` audit rows capture the input query but NOT the number of records returned. Re-running the historical query is fragile if events have changed since. **Direction**: extend audit-write path to capture `result.events.length` on the row. |
+| **Medium** | `affectedStreamIds[]` on audit row | Complex stream queries (`*`, `.children`, `any/and/not` trees) resolve at request time; the resolved list isn't persisted. **Direction**: extend audit row with `content.affectedStreamIds[]`. |
+| **Soft** | `bin/breach-scope.js` itself | Once inputs above exist, ~300 lines of glue: audit walk + event-type lookup for category derivation + Markdown / JSON report render. |
+
+**What Pryv already ships toward this artefact**:
+
+- Per-access audit query via stream filter `access-<accessId>`
+  (every audit row carries the access stream + access-serial
+  variant from Plan 66 + an `action-<methodId>` stream).
+- Time-range filter via `fromTime`/`toTime` on `audit.getLogs`.
+- Action / method invoked in `content.action`.
+- URL query in `content.query` (Q9 — body never captured).
+- Integrity payload for mutating operations: `content.record =
+  { key, integrity }` — gives a non-repudiable hash anchor for
+  HIPAA-Breach §164.414 burden-of-proof.
+- `meta.serverTime` per response → reliable clock anchor for
+  the time-window picker.
+- `Pryv-Access-Id` response header → SIEM-side log enrichment.
+- `@pryv/boiler` HTTP log → second audit source for methods
+  filtered out of application audit.
+
+**Multi-core consideration (none needed)**: accessId is
+single-subject + single-core. The reverse-index lookup runs
+against PlatformDB (cluster-replicated) but the audit query
+runs against one core's storage. No cross-core aggregation
+required for a single compromised access.
+
+**Phasing** (full detail in
+`_plans/XXX-Backlog/BREACH-SCOPE-TOOL.md`):
+1. `GET /system/accesses/<accessId>` + PlatformDB reverse-index
+   — ~1-2 days.
+2. Audit row extensions (`recordCount` + `affectedStreamIds`) —
+   ~2-3 days (touches per-engine audit conformance).
+3. `bin/breach-scope.js` + report shape — ~2-3 days.
+
+**Why this is regulator-relevant** (not DX sugar): the §33
+72-hour clock makes "ship a usable scoping artefact quickly"
+a regulator-visible capability. The audit-row extensions in
+particular fill information that's regulator-required
+(§33(1)(b) "approximate number of records affected") and not
+recoverable post-hoc without them. Distinguishes from the Q16
+`BUILTIN-STORE-OVERRIDE` DX item where the matrix tier
+doesn't shift.
+
+**Matrix encoding:**
+- `proposals/breach-scope-tool.md` filed.
+- `gdpr.Art.33` tagged with `planned: kind: feature, impact:
+  medium`.
+- `swiss-nlpd.Art.24` (derives_from gdpr.Art.33) tagged with
+  same.
+- `pipeda.s.10.1` (already had AUDIT-LOG-CHAINING chip) gets
+  the breach-scope-tool chip added — both proposals improve
+  the RROSH evidence chain.
+- `hipaa-breach.164.404(b)` (timeliness) tagged with same.
+- `hipaa-breach.164.404(c)` (content) tagged with same.
+- `hipaa-breach.164.414` (burden of proof; already had
+  AUDIT-LOG-CHAINING chip) gets the breach-scope-tool chip
+  added.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

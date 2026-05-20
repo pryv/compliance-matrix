@@ -204,6 +204,12 @@ requirements:
     draft: true
     pryv_primitives: [audit, encryption-at-rest-secrets, access]
     derives_from: [gdpr.Art.33]
+    planned:
+      - kind: feature
+        summary: "bin/breach-scope.js inherits from gdpr.Art.33 — same scoping artefact serves the FDPIC 'as soon as possible' regime"
+        proposal: proposals/breach-scope-tool.md
+        backlog: BREACH-SCOPE-TOOL
+        impact: medium
     overview: |
       Same Pryv contribution as
       GDPR Art. 33: audit data + access-version chain let you scope
