@@ -84,6 +84,12 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, audit]
     tests: [AA02, ACCP, LG20]
+    planned:
+      - kind: bug
+        summary: "accesses.delete doesn't cascade to webhooks; dangling webhook keeps firing on matching events"
+        proposal: proposals/webhook-cascade-on-access-delete.md
+        backlog: WEBHOOK-CASCADE-ON-ACCESS-DELETE
+        impact: medium
     overview: |
       Workforce access to ePHI is mediated by Pryv accesses. Termination
       is a single API call (`accesses.delete`) which immediately revokes

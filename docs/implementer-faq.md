@@ -613,6 +613,79 @@ guarantee level clearly enough.
 
 **Commit:** *(this commit)*.
 
+### Q13 — Webhook subscription lifecycle: does revoking an access cascade to its webhooks?
+
+**Short answer:** **No — this is a bug, classified + queued for
+fix** (`WEBHOOK-CASCADE-ON-ACCESS-DELETE`). Today,
+`accesses.delete` removes the access from cache + storage but
+does NOT delete webhooks created by that access. The webhook
+rows survive with a now-dangling `accessId` and **keep firing**
+on matching events until the responder manually walks
+`webhooks.get` + `webhooks.delete`.
+
+**Code-verified findings:**
+- `deleteAccesses` in `components/api-server/src/methods/
+  accesses.ts:723-738` has no webhook cleanup step.
+- The webhook repository (`components/business/src/webhooks/
+  repository.ts`) ships `deleteOne(webhookId)` +
+  `deleteForUser(user)` but no `deleteByAccess(accessId)`.
+- `Webhook.send()` at `components/business/src/webhooks/
+  Webhook.ts:106-147` checks `state === 'inactive'` but does NOT
+  verify the parent access still exists / is still valid before
+  firing.
+
+**Sanity-check counter-path** (this is fine): full
+user-account erasure via `auth.delete` **does** delete webhooks
+through the `storageLayer.webhooks.removeAll` call in
+`components/business/src/auth/deletion.ts:113-119`. The user-
+erasure path closes the channel cleanly; only `accesses.delete`
+in isolation leaks.
+
+**Bounded by Q7's signal-only design**: a dangling webhook keeps
+POSTing notifications to its URL but the receiver can't fetch
+the data because their access token is dead (401 on the
+authenticated GET back). So the **data exposure** is limited to
+the existence of a change (metadata: "something happened on
+stream X at time T"). However, the URL itself remains an active
+outbound channel — non-zero severity in a breach scenario where
+the original webhook URL was attacker-controlled.
+
+**Planned fix** (small dev — `WEBHOOK-CASCADE-ON-ACCESS-DELETE`):
+1. Add `deleteByAccess(user, accessId)` to the webhook
+   repository.
+2. Wire into the `deleteAccesses` middleware (call BEFORE the
+   access-storage delete — partial-failure safety).
+3. Belt-and-braces: `Webhook.send()` does a fire-time
+   access-validity cache lookup; on miss, mark `state =
+   'inactive'` + persist. Self-heals any future dangling-
+   webhook situation.
+
+**Operational workaround until the fix ships** (for responders
+handling an immediate compromise):
+
+```
+# Walk all webhooks under the personal access:
+GET /<apiEndpoint>/webhooks
+# For each webhook returned:
+DELETE /<apiEndpoint>/webhooks/<webhookId>
+# Then revoke the compromised access:
+DELETE /<apiEndpoint>/accesses/<accessId>
+```
+
+Order matters: delete webhooks BEFORE the access (the personal
+token needs to still be valid when walking `webhooks.get`).
+
+**Matrix encoding:**
+- `proposals/webhook-cascade-on-access-delete.md` filed.
+- `hipaa-security.164.308(a)(3)(ii)(C)` (Termination procedures)
+  tagged with `planned: kind: bug, impact: medium`.
+- `iso-27001.A.5.16` (Identity management) + `A.5.18` (Access
+  rights) tagged with the same.
+- Upstream backlog: `_plans/XXX-Backlog/
+  WEBHOOK-CASCADE-ON-ACCESS-DELETE.md`.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:
