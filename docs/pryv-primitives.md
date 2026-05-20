@@ -367,6 +367,30 @@ Includes `consent/*`, `notification/*-cmc`, `message/chat-cmc`.
 
 - **Compliance role**: standardised data semantics; auditable type
   conformance.
+- **Server-side validation**: `events.create` runs every event
+  through `typeRepo.lookup(type).validate(content)`; unknown
+  types + content schema violations are rejected with `400`. No
+  silent downgrade.
+- **Built-in default**: `components/business/src/types/event-
+  types.default.json` (~4750 lines mirroring upstream
+  `pryv/data-types`) is the baked-in fallback; the server starts
+  with this catalogue even if no `service.eventTypes` config is
+  set.
+- **Extension model — no fork required.** Implementers needing
+  custom event types (e.g., niche health measurements not in the
+  upstream catalogue, FHIR-R4 bindings, regulated-deployment-
+  specific schemas) maintain a **sibling data-model repo**,
+  publish a merged catalogue to a URL, and point
+  `service.eventTypes` at that URL. The server fetches at
+  startup, validates against the JSON Schema meta-schema, and
+  `deepMerge`s on top of the baked-in defaults
+  (`components/business/src/types.ts:143-186`
+  `TypeRepository.tryUpdate`). **Custom types are first-class** —
+  same z-schema validation pipeline, same canonical
+  serialisation in `events.get`, same portability in
+  `events.json` exports. Full extension-pattern detail +
+  HDS-data-model exemplar in
+  [`../context/custom-event-type-catalogues.md`](../context/custom-event-type-catalogues.md).
 
 ### `app-web-auth3`
 

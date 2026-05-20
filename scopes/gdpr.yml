@@ -682,6 +682,19 @@ requirements:
       the CMC capability flow: a single-event-scoped capability access
       mints a URL the receiving controller can read once.
 
+      **Portability of custom event types**: deployments using a
+      custom event-type catalogue (via `service.eventTypes`, see
+      `context/custom-event-type-catalogues.md`) export the same
+      canonical JSON shape for custom types as for upstream
+      `pryv/data-types` types — they're first-class in the
+      validation + serialisation pipeline. Receiving Pryv.io
+      deployments that ship the same catalogue (or a superset)
+      can import the events without loss. A receiving deployment
+      without the custom catalogue would reject unknown types at
+      write-time validation — the implementer ensures schema
+      alignment between transmitting + receiving operators when
+      relying on §2 controller-to-controller transmission.
+
   - ref: Art.21
     title: Right to object
     text: |

@@ -245,6 +245,17 @@ requirements:
       "compliance-matrix/proposals/fhir-data-type-mapping.md" entry
       tracks the potential Pryv-side mapping primitive for cleaner
       downstream coverage.
+    detail: |
+      The implementer's natural extension path is a **FHIR-flavoured
+      custom event-type catalogue** — a sibling data-model repo
+      that defines Pryv event types mapping 1-to-1 (or 1-to-many)
+      to BfArM-approved FHIR resources, published via the standard
+      `service.eventTypes` extension model (see
+      `context/custom-event-type-catalogues.md`). The mapping
+      transformation (Pryv event ↔ FHIR Bundle) still runs
+      app-side, but the schemas being mapped are first-class
+      Pryv types validated by the same z-schema pipeline as the
+      legacy catalogue.
 
   - ref: A1.6.1
     title: Annex 1.6 — Patient safety — usability tested with target group

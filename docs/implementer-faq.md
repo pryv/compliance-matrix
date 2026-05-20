@@ -686,6 +686,99 @@ token needs to still be valid when walking `webhooks.get`).
 
 **Commit:** *(this commit)*.
 
+### Q14 — Custom event-type catalogues: can implementers add their own types without forking `data-types`?
+
+**Short answer:** **yes — filled by an existing primitive.** The
+implementer maintains a **sibling data-model repo** (small,
+schema-only, no Pryv runtime), publishes a merged catalogue to a
+URL, and points the Pryv.io deployment's `service.eventTypes`
+config at that URL. The server fetches at startup, validates
+against the JSON Schema meta-schema, and **deep-merges** the
+fetched catalogue on top of the baked-in defaults
+(`components/business/src/types.ts:143-186`
+`TypeRepository.tryUpdate` does
+`defaultTypes = deepMerge(defaultTypes, fetched)`).
+
+**Custom types are first-class**: same z-schema validation
+pipeline, same canonical JSON serialisation in `events.get`,
+same portability in `events.json` exports. They're indistinguishable
+from upstream `pryv/data-types` types at the API surface.
+
+**Two publication strategies:**
+
+| Strategy | Catalogue content | Trade-off |
+|---|---|---|
+| Additive | only custom types (e.g. `{ types: { "measurement/vo2max": {...} } }`) | simpler — ride upstream `pryv/data-types` updates automatically via the baked-in default |
+| Complete merged | vendor full upstream + add custom (HDS pattern) | deterministic — pin exact catalogue version, selectively cherry-pick upstream updates |
+
+For most implementers the additive strategy is the right default.
+Regulated deployments (HDS, DiGA, MDR) where the operator wants
+explicit version-pinning for audit purposes lean toward the
+complete-merged strategy.
+
+**HDS exemplar**: `hds-macro/data-model` is a real-world
+implementer-side data-model repo. Its build merges
+`eventTypes-legacy.json` (vendored upstream) +
+`eventTypes-hds.json` (HDS-specific additions like
+`vulva-mucus-inspect/9d-vector`) into `dist/eventTypes.json`,
+published via GitHub Pages at `model.datasafe.dev`. A Pryv.io
+deployment serving HDS sets:
+
+```yaml
+service:
+  eventTypes: https://model.datasafe.dev/eventTypes.json
+```
+
+**Validation guarantees**:
+- Catalogue must validate against JSON Schema meta-schema at
+  fetch time — invalid catalogues are rejected; server refuses
+  to start.
+- Per-event validation at write time — `events.create` calls
+  `typeRepo.lookup(type).validate(content)`; unknown types or
+  invalid content → `400`. No silent fallback.
+
+**What the extension model does NOT cover**:
+- Server-side computed fields (BMI from height+weight etc.) —
+  application layer.
+- Custom converters / transformations — application layer (HDS
+  ships `converters/` but those are app artefacts, not server
+  schemas).
+- Custom stream hierarchies — documented in the data-model repo
+  as conventions, not server-enforced; stream IDs remain
+  free-form.
+
+**Compliance implications**:
+- GDPR Art.20 — custom types serialise identically to legacy;
+  portability holds between deployments that share the catalogue.
+  A receiving Pryv.io deployment without the custom catalogue
+  rejects unknown types at write — implementer ensures schema
+  alignment between transmitting + receiving operators.
+- MDR Annex II §5 — implementer custom schemas live alongside
+  legacy `pryv/data-types`; MDR-specific device-record formats
+  can be authored once + reused across deployments.
+- DiGA Annex 1.3.1 — FHIR-flavoured custom catalogue (each
+  BfArM-approved FHIR resource → a Pryv event type) plugs into
+  the same extension model. Mapping transformation stays
+  app-side; the schemas being mapped are first-class.
+- ISO 13485 §7.3 — the data-model repo IS the design-control
+  artefact for the data layer (versioned, reviewed, signed off
+  per §7.3.4).
+
+**Matrix encoding:**
+- New `context/custom-event-type-catalogues.md` — full pattern
+  + HDS exemplar + the two-publication-strategies table.
+- `docs/pryv-primitives.md` `data-types` entry extended with
+  the extension model + cross-reference to the context note.
+- `gdpr.Art.20` detail extended with the portability-of-custom-
+  types section.
+- `diga.A1.3.1` (FHIR-R4 interoperability) detail extended with
+  the FHIR-flavoured-custom-catalogue path.
+
+No backlog filed — this is "filled by existing primitive". The
+extension model works today.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:
