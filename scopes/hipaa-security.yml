@@ -463,6 +463,14 @@ requirements:
       layer), to keep the audit path independent of the data path. This
       decouples integrity of the log from issues in the primary engine.
 
+      Audit row content is data-minimal **by construction**: action +
+      source (transport + ip) + URL query + access ref + optional
+      integrity hash of the affected event. The request body is never
+      stored. Consequence: an auditor reviewing the §164.312(b) log
+      sees *who did what when* without the log itself becoming a
+      second copy of PHI — favourable under §164.502(b) minimum-
+      necessary review. See `docs/pryv-primitives.md` audit entry.
+
   - ref: 164.312(c)(1)
     title: Integrity — standard
     text: |

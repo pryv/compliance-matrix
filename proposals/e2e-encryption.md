@@ -49,12 +49,37 @@ server can no longer read the data.
 - Application-layer CMEK on top of the existing storage engines.
   Per user direction, this is left to the infrastructure provider
   (LUKS, TDE, KMS-wrapped backup archives).
-- Field-level encryption inside event content. That is application-
-  layer concern (the implementer encrypts sensitive fields in
-  `event.content` before write). Pryv stores ciphertext as ordinary
-  string content.
 - Server-side decryption-by-key-rotation primitives. Out of scope
   today; in scope for the future E2E direction.
+
+## Adjacent use cases that E2E would help (Q9 data-masking)
+
+Two additional implementer pain-points fall under "application
+layer today, E2E would help when shipped":
+
+- **Static masking of prod data for non-prod environments.** Cloning
+  prod into staging for QA without re-identification risk is today
+  the implementer's clone-and-transform script. A key-per-user E2E
+  scheme would make the non-prod clone cryptographically opaque
+  without the original keys — the clone is simply unreadable in
+  the non-prod environment, no field-by-field rewriting required.
+
+- **Field-level encryption at the schema layer.** A data-types
+  schema could mark fields as `sensitivity: high` and the storage
+  layer could encrypt those with a separate key. Today, field-level
+  encryption is solved either at the at-rest-encryption layer
+  (LUKS / PG TDE / KMS-wrapped backup archives) or by the
+  application encrypting field values before writing to Pryv. E2E
+  encryption is the natural future primitive: it ships per-user
+  (or per-stream, depending on the key scheme) encryption at the
+  storage boundary, giving the field-level effect at the schema
+  layer rather than requiring application-layer pre-encryption.
+
+See `context/data-masking-projection-vs-transformation.md` for the
+broader Q9 framing: Pryv enforces masking by projection (stream-
+level isolation + permissions), not by transformation; E2E
+encryption is the future Pryv-native primitive for transformation-
+flavour use cases.
 
 ## Action items (defer until E2E ships)
 

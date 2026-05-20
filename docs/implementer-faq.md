@@ -319,6 +319,76 @@ preserve chain continuity while removing the personal data.
 
 **Commit:** *(this commit)*.
 
+### Q9 — Data masking. Specifically: read-time per-role redaction, static masking for non-prod environments, audit-log PII leakage, field-level encryption at the schema layer
+
+**Short answer:** **Pryv enforces masking by *projection*, not by
+*transformation*.** Stream-level isolation + permission-scoped access
+tokens hide whole sub-trees from a given role — that's Pryv's
+contribution. Rewriting field values at read time, walking a clone
+to apply faker transforms, hash-on-read — all **application-layer
+concerns by design**. The audit log is **data-minimal by
+construction** (no request body captured). Field-level encryption is
+solved today at the infrastructure layer; **E2E encryption is the
+natural future primitive** for the transformation-flavour use cases.
+
+Per the four flavours asked:
+
+| Flavour | Classification |
+|---|---|
+| Read-time per-role redaction (`j***@example.com`) | **voluntarily missing** — application layer by design; Pryv keeps the storage layer deterministic (no "partially redacted" API response) |
+| Static masking for non-prod environments | **voluntarily missing** — application layer today; E2E encryption would help indirectly (cryptographically opaque clones) |
+| Audit log PII leakage | **filled by existing design** — audit captures action + source + URL query + access ref + integrity hash; **never the request body** (verified at `components/audit/src/Audit.ts:151-166` + `components/middleware/src/setMinimalMethodContext.ts:29`); the `auth=` param is explicitly stripped |
+| Field-level encryption at the schema layer | **voluntarily missing today** — operator/infrastructure layer (LUKS / PG TDE / KMS-wrapped backups) or application-layer pre-encryption; E2E encryption is the natural future primitive |
+
+**Why projection-only.** Rewriting one field for one access at read
+time would require runtime knowledge of which field is "sensitive"
+in the context of that access — a policy decision tied to the
+deployment, the regulatory regime, and the consumer's role. Pryv's
+position: that policy lives in the calling application where
+business context is rich; the storage layer ships the substrate
+(stream isolation + permission scoping) that makes the projection
+mechanically enforceable. Keeps the API deterministic for auditors
+(canonical event or 403, not "partially-redacted").
+
+**Audit-no-content is a non-trivial design property.** It means:
+- The audit log itself doesn't accumulate residual personal data
+  (favourable under GDPR Art.5(1)(c) data minimisation + Art.17
+  erasure).
+- HIPAA §164.502(b) minimum-necessary review of the audit log is
+  trivial — there's no PHI in the audit row to assess in the first
+  place.
+- The §164.528 accounting-of-disclosures description column lives
+  at the API-shape level (e.g., `events.get` on stream X), not at
+  the per-event-content level — sufficient under §164.528 and
+  safer than alternative designs that store more.
+
+**Matrix encoding:**
+- `context/data-masking-projection-vs-transformation.md` — full
+  design rationale + the projection-vs-transformation table.
+- `docs/pryv-primitives.md` audit entry — extended with the
+  "captures / does NOT capture" + "data-minimal by construction"
+  language.
+- `scopes/iso-27001.yml` A.8.11 (Data masking) — overview rewritten
+  to lead with projection-vs-transformation framing; detail block
+  spells out the boundary.
+- `scopes/gdpr.yml` Art.30 technical block — adds the audit no-
+  content + Art.17 + Art.5(1)(c) implications.
+- `scopes/hipaa-security.yml` 164.312(b) detail — adds the
+  "audit is not a second copy of PHI" framing for §164.502(b).
+- `scopes/iso-27001.yml` A.8.15 detail — flags the no-content
+  property as a separate auditor-relevant fact.
+- `scopes/hipaa-privacy.yml` 164.528 detail — sharpens the
+  "description" field guidance (URL query/path, not body).
+- `proposals/e2e-encryption.md` — extended with the static-
+  masking-for-non-prod + field-level-encryption use cases that E2E
+  would help when shipped.
+
+No new backlog filed: transformation-flavour masking is
+intentionally application-layer; the E2E proposal already covers
+the future Pryv-native angle.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

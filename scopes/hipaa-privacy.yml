@@ -356,7 +356,15 @@ requirements:
         - date → audit row timestamp
         - recipient → access holder (`access.id`) or counterparty (for
           shared / CMC accesses)
-        - description → API method + key request params recorded in audit
+        - description → API method + URL query/path params recorded
+          in audit. **The audit log does NOT capture the request
+          body**, so the description is "what was disclosed" at the
+          API-shape level (e.g., `events.get` on a given stream),
+          not the per-event content — sufficient under §164.528 and
+          favourable for data minimisation (the audit row carries
+          no residual PHI when the underlying event is later erased).
+          See `docs/pryv-primitives.md` audit entry for the full
+          capture catalogue.
         - purpose → `access.clientData.purpose` recorded at grant time
       Pre-computing per-subject accounting reports periodically (and
       storing them on a dedicated stream) is a useful operational

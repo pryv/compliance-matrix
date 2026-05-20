@@ -937,7 +937,15 @@ requirements:
     technical: |
       Audit data lives in per-user SQLite
       (`open-pryv.io/components/audit/`); `audit.get` API method exposes
-      it with access-time + method + access reference.
+      it with access-time + method + access reference. The audit row
+      content is data-minimal by construction — it carries action +
+      source (transport + ip) + URL query + access ref + integrity
+      hash, never the request body. So the Article 30 register
+      derived from audit doesn't itself raise Art.5(1)(c) data-
+      minimisation concerns + survives Art.17 erasure of the
+      underlying events with no residual personal data attached to
+      the audit rows themselves (only opaque method names + access
+      ids remain).
 
   - ref: Art.32
     title: Security of processing

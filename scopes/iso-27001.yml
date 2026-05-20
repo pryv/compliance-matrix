@@ -272,6 +272,15 @@ requirements:
       coverage stays Implemented but the cited primitives will
       include `audit-chain`.
 
+      Separate audit property worth flagging to the A.8.15 auditor:
+      Pryv's audit log is data-minimal by construction — it captures
+      action + source + URL query + access ref + integrity hash, but
+      **never the request body**. The log itself therefore qualifies
+      as well-scoped under the "logs that record activities" framing
+      without storing the data being acted on. See
+      `docs/pryv-primitives.md` audit entry for the full capture
+      catalogue.
+
   - ref: A.8.16
     title: A.8.16 — Monitoring activities
     text: |
@@ -559,16 +568,32 @@ requirements:
         backlog: ALIASES
         impact: medium
     overview: |
-      Pryv supports masking by
-      storing the masked (pseudonymised) data on a separate stream
-      tree with different permissioning, and keeping the un-masked /
-      re-identification data on a tightly scoped subtree. System
-      streams add an additional tier for truly privileged identifiers.
-      The actual masking transformation is application-layer code;
-      Pryv stores the inputs + outputs. (Note: the upstream
-      `randomAlias` proposal in macroPryv ALIASES.md would make
-      username-side pseudonymization Pryv-native — see
-      `proposals/aliases-as-pseudonymization-primitive.md`.)
+      Pryv enforces masking by **projection**, not transformation:
+      stream-level isolation + permission-scoped access tokens hide
+      whole sub-trees from a given role. The "rewrite a value before
+      display" flavour of masking (e.g., `j***@example.com`) lives in
+      the calling application — by design.
+    detail: |
+      The boundary is recorded in
+      `context/data-masking-projection-vs-transformation.md`:
+        - Stream-tree split + narrow access tokens = Pryv's
+          projection-side contribution. Auditor-visible via the
+          access permissions matrix.
+        - Field-substring rewrites, hash-on-read, faker substitution,
+          per-role redaction = application layer. Not Pryv's job by
+          design (storage layer stays deterministic; "partially
+          redacted" is not an API response).
+        - Username-side pseudonymisation is the one transformation
+          Pryv would do natively when `randomAlias` ships
+          (`proposals/aliases-as-pseudonymization-primitive.md`).
+        - Static masking for non-prod environments + field-level
+          encryption at the schema layer are both implementer
+          concerns today; end-to-end encryption
+          (`proposals/e2e-encryption.md`) is the natural future
+          primitive for both.
+        - The audit log itself is data-minimal by construction —
+          captures action + access + integrity hash, never the
+          request body (see `docs/pryv-primitives.md` audit entry).
 
   - ref: A.8.12
     title: A.8.12 — Data leakage prevention

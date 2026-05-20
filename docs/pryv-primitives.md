@@ -85,11 +85,22 @@ Records every API method invocation per user.
 
 - **Stored**: per-user SQLite (see `components/audit/`).
 - **Captures**: timestamp, user, access reference (`accessId` +
-  `accessSerial`), method, request key fields, success / error.
+  `accessSerial`), method, source (transport + ip), URL query string,
+  success / error, and an optional integrity checksum of the affected
+  event (`{ key, integrity }`) when the method mutates an event.
+- **Does NOT capture**: the request body. Event content, attachments,
+  user-profile fields submitted in POST/PUT bodies never enter the
+  audit row. The `auth=` query parameter is explicitly stripped.
+  Consequence: the audit log is data-minimal *by construction* — it
+  proves *who did what when* without storing *what data was written*.
+  This is a deliberate design property, not a configuration toggle.
 - **Read surface**: `audit.get` API method (subject to permissions).
 - **Compliance role**: end-to-end accountability chain. With access
   versioning, the audit row points at a specific contract version —
-  the consent state at the moment of the call is recoverable.
+  the consent state at the moment of the call is recoverable. The
+  no-content guarantee means the audit log itself raises no
+  data-minimisation (GDPR Art.5(1)(c)) or audit-PII-residue concerns
+  when the original event is erased.
 
 ### `system-streams`
 
