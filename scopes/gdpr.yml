@@ -1281,6 +1281,29 @@ requirements:
       recipient hosting + the legal basis on the originating access's
       clientData — making Chapter V compliance auditable per transfer
       rather than per system.
+    detail: |
+      The residency guarantee is **core-level** and enforced by the
+      architecture, not by per-event tags: cores share no event /
+      stream / audit / attachment data with each other; the data
+      plane is core-affine + the client ↔ core path is direct over
+      TLS with no Pryv-shipped intermediary. So a subject assigned
+      to an EU core has ALL their data exclusively on that EU
+      core's storage; "transfer" would require a deliberate
+      operator backup-restore between cores (not a runtime
+      primitive). See `context/core-affinity-architecture.md` for
+      the full mechanism + `docs/pryv-primitives.md` data-residency
+      entry for the guarantee detail.
+
+      **CMC counterparty nuance**: when an EU subject's stream is
+      shared with a US-based counterparty via CMC, the US client
+      connects directly to the EU core's `apiEndpoint`. The EU
+      data does not replicate to the US core — it's fetched
+      on-demand. From the EU subject's Art.44 perspective this
+      fetch IS a transfer (data crosses borders to reach the
+      reader), so the operator records the recipient + lawful
+      basis on the access's `clientData` to make the transfer
+      auditable. The data-at-rest residency is preserved (no copy
+      in the US); only the access path crosses.
 
   - ref: Art.45
     title: Transfers on the basis of an adequacy decision

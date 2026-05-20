@@ -298,6 +298,40 @@ hostings (different countries / cloud regions / on-premise locations).
   logical Pryv platform (one `auth.hostings` namespace, one user
   registration surface) backed by multiple physically-distributed cores.
   The implementer doesn't run separate deployments per jurisdiction.
+- **Guarantee level — core-level**: the residency guarantee is
+  enforced by the architecture itself, not by per-event tags or
+  admission checks. **Cores share no event/stream/audit data with
+  each other** — the only horizontal data is PlatformDB, which
+  carries a strictly limited set: `user-core/<username>` lookups,
+  `emailIndex/<email-hash>` uniqueness, DNS records, TLS materials,
+  `access-state/*`, `cluster_kv/*`. No event content, no streams,
+  no attachments, no audit. So a user assigned to an EU core has
+  *all* their events, streams, accesses, audit log, attachments
+  exclusively on that EU core's storage. Cross-region data
+  movement is **not a Pryv-native primitive**; moving a user
+  between cores requires operator action (`bin/backup.js` on the
+  source core + `--restore` on the target). Recorded with full
+  detail in
+  [`../context/core-affinity-architecture.md`](../context/core-affinity-architecture.md).
+- **No intermediary in the data path**: client ↔ core data flow
+  is direct over TLS — no Pryv-shipped reverse-proxy, API gateway,
+  CDN, or backend hop. Each core terminates TLS itself (Plan 35's
+  ACME integration runs the cert on the same Node process serving
+  the API + HFS). Operators *can* place a reverse-proxy in front
+  (sample nginx config in
+  `open-pryv.io/docs/nginx-ingress-sample.conf`) but that's an
+  operator choice + an operator-side compliance concern, not a
+  Pryv-native intermediary. The residency story therefore extends
+  to "no third party in the read/write path that could log,
+  cache, or replicate data" by default.
+- **CMC-counterparty consideration**: when an EU user shares a
+  stream with a US user via the Cross-Modular Capability primitive,
+  the US user's client connects to the **EU user's `apiEndpoint`**
+  (the EU core). The EU data does *not* replicate to the US core
+  — it's fetched on-demand by the US client. From the EU
+  subject's regulator (GDPR Art.44), this fetch *is* an
+  international transfer, but the data-at-rest residency is
+  preserved (no copy in the US).
 
 ### `multi-core-mTLS`
 

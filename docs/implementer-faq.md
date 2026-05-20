@@ -536,6 +536,83 @@ mirror.
 
 **Commit:** *(this commit)*.
 
+### Q12 — Data residency: what actually pins user A's events to region X, and at what guarantee level?
+
+**Short answer:** **core-level guarantee, enforced by the
+architecture.** A user is bound at registration to one core (via
+PlatformDB's `user-core/<username>` mapping); all their events,
+streams, accesses, audit, and attachments live exclusively on that
+core's storage. **Cores share no event/stream/audit data with each
+other** — the only horizontal data is PlatformDB, which carries
+`user-core/*` lookups, `emailIndex/*` uniqueness, DNS records, TLS
+materials, `access-state/*`, `cluster_kv/*` — and nothing else.
+
+**No intermediary in the data path**: client ↔ core data flow is
+direct over TLS. No Pryv-shipped reverse-proxy, API gateway, CDN,
+or backend hop. Each core terminates TLS itself (Plan 35's ACME
+integration runs the cert on the same Node process serving the
+API + HFS endpoints). Operators *can* place a reverse-proxy in
+front of their cores (`docs/nginx-ingress-sample.conf` in
+open-pryv.io is a sample), but that's an operator-side choice +
+an operator-side compliance concern, not a Pryv-native step. The
+residency story therefore extends to "no third party in the
+read/write path that could log, cache, or replicate the data"
+by default.
+
+**The mechanism**: PlatformDB's `user-core/<username>` mapping is
+the residency anchor. Set at registration, immutable in normal
+operation. Cross-region data movement is **not** a Pryv-native
+primitive — moving a user between cores requires deliberate
+operator action (`bin/backup.js` on source + `--restore` on
+target). There is no per-event geographic tag, no per-stream
+region constraint, no admission check at the API layer. The
+architecture itself is the enforcement.
+
+**CMC counterparty consideration** (the one cross-jurisdiction
+runtime case): when an EU subject shares a stream with a US
+counterparty via Cross-Modular Capability, the US counterparty's
+client connects directly to the EU subject's `apiEndpoint` (i.e.,
+the EU core). The EU data does **not** replicate to the US core
+— it's fetched on-demand by the US client. From the EU subject's
+GDPR Art.44 perspective this fetch *is* an international transfer
+(data crosses borders to reach the reader), but the data-at-rest
+residency is preserved (no copy in the US). The implementer
+records the recipient hosting + lawful basis on the access's
+`clientData.cross_border_basis` to make the transfer auditable.
+
+**Multi-core vs single-core**: a multi-core deployment is the only
+way to get per-user-jurisdiction residency on Pryv. A single-core
+deployment in `us-east-1` means every user's data is in
+`us-east-1`. Per-user residency is opt-in at the platform topology
+level (the operator deploys cores in the relevant regions and
+exposes them via `auth.hostings`).
+
+**Why "no separate enforcement layer"**: there's no need for
+per-event tags or admission checks because the data simply never
+leaves the core. Pryv's compliance posture for data residency is
+"no primitive exists to move data between cores", which is a
+stronger guarantee than runtime-enforced rules (a runtime rule
+can be misconfigured or bypassed; an architectural absence
+cannot).
+
+**Matrix encoding:**
+- `docs/pryv-primitives.md` `data-residency` entry extended with
+  the "Guarantee level — core-level" + "No intermediary in the
+  data path" sections.
+- `gdpr.Art.44` detail block extended with the architecture-as-
+  enforcement framing + CMC counterparty nuance.
+- `swiss-nlpd.Art.34` detail block extended with the same.
+- `context/core-affinity-architecture.md` (filed in Q11) is the
+  full mechanism reference — already cited from the relevant
+  rows.
+
+No backlog filed: this is a "filled by existing primitive"
+classification — the architecture is the enforcement, and
+already documented; the gap was the matrix not surfacing the
+guarantee level clearly enough.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

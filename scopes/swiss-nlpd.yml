@@ -345,6 +345,17 @@ requirements:
       in; document the legal basis (adequacy decision, BCRs, etc.) on
       the originating access's `clientData.cross_border_basis`.
 
+      **Residency guarantee level**: core-level, enforced by
+      architecture (see `context/core-affinity-architecture.md`).
+      Cores share no event / stream / audit data; the data plane is
+      core-affine + the client ↔ core path is direct over TLS with
+      no Pryv-shipped intermediary. A CH-assigned subject's data
+      lives exclusively on the CH core. The CMC-counterparty
+      pattern is the one runtime case where a cross-jurisdiction
+      read can happen (a foreign counterparty's client connects to
+      the CH `apiEndpoint`), and that's the moment the implementer
+      records the Art.34 legal basis on the access.
+
   - ref: Art.35
     title: Disclosure of personal data abroad — particular cases
     text: |
