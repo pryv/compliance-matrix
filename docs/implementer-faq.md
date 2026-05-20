@@ -779,6 +779,59 @@ extension model works today.
 
 **Commit:** *(this commit)*.
 
+### Q15 — `bin/backup.js`: does the dump file ship encrypted at rest by Pryv?
+
+**Short answer:** **no — voluntarily missing by design; encryption
+of backups is operator-side.** `bin/backup.js` produces an
+**unencrypted dump file**; the operator wraps it with their
+at-rest encryption layer (LUKS on the backup volume, GPG / age
+before offsite ship, S3 SSE-KMS / Azure SSE / customer-managed
+keys on bucket-level encryption) at the storage boundary. Same
+pattern as the broader bulk-event-data at-rest encryption posture
+(per Q1: at-rest encryption of bulk data is voluntarily
+operator-side; see `proposals/e2e-encryption.md`).
+
+**Why this classification stands** (vs "missing feature"): the
+matrix's `Implemented | High` for HIPAA §164.308(a)(7)(ii)(A) and
+`F: Infrastructure | Medium` for ISO 27001 A.8.13 both hold —
+Pryv ships the backup primitive (`bin/backup.js` per-user dump
++ `--restore`); the *encryption layer* on the dump file is a
+storage-engineering concern handled outside the Pryv runtime.
+Implementer documents the chosen encryption scheme in their
+backup-plan SOP.
+
+**Concrete operator pipelines** (any one of these satisfies the
+"protected at the same security level as the source" expectation
+of ISO A.8.13):
+
+- `bin/backup.js --output-dir /backups/<user>/`, with `/backups`
+  mounted on a LUKS-encrypted volume.
+- `bin/backup.js | gpg --encrypt --recipient backup-keypair`
+  before `aws s3 cp`.
+- `bin/backup.js --output-dir /tmp/backup/`, then
+  `restic backup` (built-in AES-256 encryption + content-
+  addressable storage + de-duplication) to S3 / B2 / Azure.
+- S3 bucket-level SSE-KMS with a customer-managed CMK + IAM
+  least-privilege on the upload role.
+
+**HDS Activity.5** (Outsourced backup) already documents this
+explicitly in its row overview — the operator handles transport
++ retention + at-rest encryption; Pryv provides the
+backup-generation + restoration primitives.
+
+**Matrix encoding:**
+- `hipaa-security.164.308(a)(7)(ii)(A)` detail extended with
+  the operator-side encryption framing + cross-reference to the
+  e2e-encryption proposal as the broader pattern.
+- `iso-27001.A.8.13` detail extended with the same.
+- `hds.Activity.5` already had this language — no change needed.
+
+No backlog filed — this is "voluntarily missing by design" +
+already reflected in existing row tiers; the gap was the prose
+not surfacing the operator-side scope cleanly enough.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

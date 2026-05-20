@@ -230,6 +230,18 @@ requirements:
       "Regularly tested" is the operator's drill. (Backup integration
       tests at the [code] level are a coverage gap — backlog
       candidate for the open-pryv.io test suite.)
+    detail: |
+      **Encryption of the backup archive is operator-side by
+      design.** `bin/backup.js` writes an unencrypted dump file;
+      the operator wraps it with their at-rest encryption layer
+      (LUKS / GPG / age / S3 SSE-KMS / Azure SSE / customer-
+      managed keys) at the storage boundary. Same pattern as the
+      bulk-event-data at-rest encryption posture (operator-side
+      infrastructure layer is the deliberate choice; see
+      `proposals/e2e-encryption.md`). A.8.13's "protected at the
+      same security level as the source data" expectation is met
+      by the operator's encryption pipeline, documented in the
+      backup-policy SOP.
 
   - ref: A.8.15
     title: A.8.15 — Logging

@@ -226,6 +226,19 @@ requirements:
       health-information unit (the subject). They also play well with
       the §164.310(d) media controls (you can encrypt + transport a
       single subject's backup file).
+
+      **Encryption-at-rest of the backup archive is operator-side
+      by design** — Pryv produces an unencrypted dump file; the
+      operator pipes it through their encryption-at-rest layer
+      (LUKS on the backup volume, GPG / age before offsite ship,
+      S3 SSE-KMS / Azure SSE / customer-managed keys on bucket-
+      level encryption) at the storage boundary. Same pattern as
+      the broader bulk-event-data at-rest encryption posture
+      (see `proposals/e2e-encryption.md` — operator-side
+      infrastructure layer is the deliberate choice; CMEK / BYOK
+      / encrypted dumps live there). Implementer documents the
+      chosen encryption scheme in their backup-plan SOP for
+      §164.308(a)(7)(ii)(A) compliance.
     technical: |
       Backup chunking + integrity restored in plan 28 phase 1 (see
       `open-pryv.io/CHANGELOG-v2-back.md`).
