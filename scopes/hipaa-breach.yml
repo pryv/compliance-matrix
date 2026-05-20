@@ -177,6 +177,12 @@ requirements:
     facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, access]
+    planned:
+      - kind: feature
+        summary: "Chained audit log IS the burden-of-proof artefact (row could shift F:Evidence|Med → F:Evidence|High)"
+        proposal: proposals/audit-log-chaining.md
+        backlog: AUDIT-LOG-CHAINING
+        impact: medium
     overview: |
       "Burden of proof" is met
       with evidence; Pryv's audit + access-version chain is the
@@ -287,6 +293,12 @@ requirements:
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS]
     derives_from: [hipaa-breach.164.402, hipaa-security.164.312(a)(2)(iv), hipaa-security.164.312(e)(1)]
+    planned:
+      - kind: feature
+        summary: "End-to-end encryption broadens safe-harbor coverage to bulk event data"
+        proposal: proposals/e2e-encryption.md
+        backlog: E2E-ENCRYPTION
+        impact: low
     overview: |
       The safe-harbor
       narrows what triggers Subpart D notification: PHI that's

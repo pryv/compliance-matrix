@@ -291,6 +291,12 @@ requirements:
     derives_from: [hipaa-security.164.312(d), iso-27001.A.8.5]
     config_keys: [services.mfa.mode]
     tests: [MA01, MA02, MA03, MA04, MA05]
+    planned:
+      - kind: enhancement
+        summary: "Reference WebAuthn plugin meets the BfArM 'strong authentication for sensitive health data' bar without SMS-OTP weakness"
+        proposal: proposals/mfa-modern-methods.md
+        backlog: MFA-MODERN-METHODS
+        impact: medium
     overview: |
       MFA via the `mfa.*` API methods (`services.mfa.mode` enables it);
       personal-token + access-token model gives separation of user

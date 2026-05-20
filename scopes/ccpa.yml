@@ -50,6 +50,17 @@ requirements:
     derives_from: [gdpr.Art.17]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
     tests: [USAD]
+    planned:
+      - kind: bug
+        summary: "PG audit not erased on auth.delete (engine-dependent gap; derives from gdpr.Art.17)"
+        proposal: proposals/audit-on-user-delete.md
+        backlog: AUDIT-ON-USER-DELETE
+        impact: medium
+      - kind: feature
+        summary: "Operator setting audit.onUserDelete: erase | keep | pseudonymise"
+        proposal: proposals/audit-on-user-delete.md
+        backlog: AUDIT-ON-USER-DELETE
+        impact: low
     overview: |
       Same primitive as GDPR Art. 17: `system.users.delete` is the
       per-consumer erasure call. Backup-completeness of the deletion
@@ -274,6 +285,12 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, audit, access]
+    planned:
+      - kind: feature
+        summary: "End-to-end encryption narrows the §1798.150 nonencrypted-PI trigger zone further"
+        proposal: proposals/e2e-encryption.md
+        backlog: E2E-ENCRYPTION
+        impact: low
     overview: |
       Two contributions:
       (1) TLS-in-transit + operator-side at-rest encryption move ePHI
@@ -391,6 +408,12 @@ requirements:
     draft: true
     pryv_primitives: [stream, system-streams, event]
     derives_from: [ccpa.1798.121, gdpr.Art.9]
+    planned:
+      - kind: feature
+        summary: "auth.randomAlias enables an alias-only deployment pattern (don't store linkable identifiers alongside sensitive PI)"
+        proposal: proposals/aliases-as-pseudonymization-primitive.md
+        backlog: ALIASES
+        impact: low
     overview: |
       Sensitive-PI enumeration
       drives stream-layout design — dedicate subtrees per sensitive

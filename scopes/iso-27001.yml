@@ -178,6 +178,12 @@ requirements:
     pryv_primitives: [access, MFA, system-streams]
     config_keys: [services.mfa.mode]
     tests: [MA01, MA02, MA03, MA04, MA05]
+    planned:
+      - kind: enhancement
+        summary: "Reference TOTP / WebAuthn plugins + AAL-tier mapping doc strengthen the A.8.5 evidence chain"
+        proposal: proposals/mfa-modern-methods.md
+        backlog: MFA-MODERN-METHODS
+        impact: medium
     overview: |
       Token-based auth by default; multi-factor via `mfa.*` API methods
       when `services.mfa.mode` is enabled. The MFA test series
@@ -236,6 +242,12 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream]
     tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65]
+    planned:
+      - kind: feature
+        summary: "Chained / signed audit log adds the software-side tamper-resistance signal A.8.15 expects"
+        proposal: proposals/audit-log-chaining.md
+        backlog: AUDIT-LOG-CHAINING
+        impact: low
     overview: |
       Per-user audit log captures every API method invocation; access
       reference (accessId + accessSerial) ties each row to the
@@ -307,6 +319,12 @@ requirements:
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS]
     config_keys: [letsEncrypt.atRestKey]
     tests: [ACMEINT, ATRENC, BUNDLEENC]
+    planned:
+      - kind: feature
+        summary: "End-to-end encryption adds a customer-key flow (CMEK / BYOK) to the cryptography catalogue"
+        proposal: proposals/e2e-encryption.md
+        backlog: E2E-ENCRYPTION
+        impact: low
     overview: |
       TLS 1.3 for transit, AES-256-GCM for at-rest operator secrets
       (HKDF-derived per-key with purpose labels), AES-256-GCM
@@ -534,6 +552,12 @@ requirements:
     facilitation_mode: primitive
     draft: true
     pryv_primitives: [stream, system-streams, event]
+    planned:
+      - kind: feature
+        summary: "auth.randomAlias masks the real username at the access layer (row could move F:Primitive → Configurable)"
+        proposal: proposals/aliases-as-pseudonymization-primitive.md
+        backlog: ALIASES
+        impact: medium
     overview: |
       Pryv supports masking by
       storing the masked (pseudonymised) data on a separate stream
@@ -706,6 +730,12 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [system-streams, MFA, encryption-at-rest-secrets]
+    planned:
+      - kind: enhancement
+        summary: "Reference MFA plugins broaden the authentication-information catalogue"
+        proposal: proposals/mfa-modern-methods.md
+        backlog: MFA-MODERN-METHODS
+        impact: low
     overview: |
       Pryv stores
       credentials on a privileged system-stream (`:_system:password`
@@ -1307,6 +1337,12 @@ requirements:
     draft: true
     pryv_primitives: [audit, observability-provider, access]
     derives_from: [hipaa-security.164.308(a)(6)(i), diga.A1.2.6]
+    planned:
+      - kind: feature
+        summary: "Chained audit log strengthens forensic evidence (row could shift F:Evidence|Med → F:Evidence|High)"
+        proposal: proposals/audit-log-chaining.md
+        backlog: AUDIT-LOG-CHAINING
+        impact: medium
     overview: |
       Pryv contributes detection
       + scoping data (audit + observability) + containment primitive

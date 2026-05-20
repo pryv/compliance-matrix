@@ -180,6 +180,12 @@ requirements:
     pryv_primitives: [system-streams, MFA, access]
     config_keys: [services.mfa.mode, auth.passwordRules]
     tests: [MA01, MA02, MA03]
+    planned:
+      - kind: enhancement
+        summary: "Reference TOTP / WebAuthn plugins reduce dependence on SMS-OTP for the second factor"
+        proposal: proposals/mfa-modern-methods.md
+        backlog: MFA-MODERN-METHODS
+        impact: low
     overview: |
       Pryv stores credentials on a privileged `system-stream`, separate
       from ordinary content. Password rules (complexity, rotation) are
@@ -397,6 +403,12 @@ requirements:
     pryv_primitives: [encryption-at-rest-secrets, letsEncrypt-integration]
     config_keys: [letsEncrypt.atRestKey, storages.engines.postgresql.ssl]
     tests: [ACMEINT, BUNDLEENC, CERTUTILS]
+    planned:
+      - kind: feature
+        summary: "End-to-end (server-blind) encryption via proxy re-encryption brings CMEK / BYOK to the Pryv layer"
+        proposal: proposals/e2e-encryption.md
+        backlog: E2E-ENCRYPTION
+        impact: medium
     overview: |
       Pryv encrypts operator-supplied secrets at rest using AES-256-GCM
       (HKDF-derived per-key), and provides TLS-in-transit via the
@@ -433,6 +445,12 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream]
     tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65]
+    planned:
+      - kind: feature
+        summary: "Chained / signed audit log strengthens tamper-resistance evidence"
+        proposal: proposals/audit-log-chaining.md
+        backlog: AUDIT-LOG-CHAINING
+        impact: low
     overview: |
       Pryv's per-user audit log records every API method invocation —
       timestamp, user, access reference, method, success / error. The
@@ -455,6 +473,12 @@ requirements:
     facilitation_mode: primitive
     draft: true
     pryv_primitives: [event, audit, permissions, backup-restore]
+    planned:
+      - kind: feature
+        summary: "Chained / signed audit log enforces log integrity at the primitive layer"
+        proposal: proposals/audit-log-chaining.md
+        backlog: AUDIT-LOG-CHAINING
+        impact: medium
     overview: |
       Integrity is multi-
       layered: write authorization gated by `permissions`, event
@@ -474,6 +498,12 @@ requirements:
     facilitation_mode: evidence
     draft: true
     pryv_primitives: [event, audit]
+    planned:
+      - kind: feature
+        summary: "Chained / signed audit log authenticates audit data (row moves F:Evidence|Low → F:Evidence|Med)"
+        proposal: proposals/audit-log-chaining.md
+        backlog: AUDIT-LOG-CHAINING
+        impact: medium
     overview: |
       Event versioning preserves
       the prior content on every update, so "is this the original?"
@@ -507,6 +537,12 @@ requirements:
     pryv_primitives: [access, MFA, system-streams]
     config_keys: [services.mfa.mode]
     tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07]
+    planned:
+      - kind: enhancement
+        summary: "Reference MFA plugins (TOTP / WebAuthn) + primitive-catalogue doc surface the pluggability"
+        proposal: proposals/mfa-modern-methods.md
+        backlog: MFA-MODERN-METHODS
+        impact: medium
     overview: |
       Authentication is mediated by the access-token primitive: the
       bearer of a valid token has been authenticated. Strength of

@@ -728,6 +728,12 @@ requirements:
     draft: true
     pryv_primitives: [stream, system-streams, access, clientData]
     derives_from: [hipaa-privacy.164.514(a)]
+    planned:
+      - kind: feature
+        summary: "auth.randomAlias IS the re-identification code (random by construction → satisfies §514(c)(1)(ii))"
+        proposal: proposals/aliases-as-pseudonymization-primitive.md
+        backlog: ALIASES
+        impact: medium
     overview: |
       When re-identification is a
       workflow requirement, the code-to-PHI mapping is a tightly

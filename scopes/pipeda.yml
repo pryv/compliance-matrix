@@ -152,6 +152,12 @@ requirements:
     draft: true
     pryv_primitives: [permissions, system-streams, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-secrets, MFA, backup-restore, audit]
     derives_from: [gdpr.Art.32, hipaa-security.164.312(a)(1), iso-27001.A.8.20]
+    planned:
+      - kind: feature
+        summary: "End-to-end encryption reframes the safeguards posture for high-sensitivity health data"
+        proposal: proposals/e2e-encryption.md
+        backlog: E2E-ENCRYPTION
+        impact: low
     overview: |
       Multi-aspect safeguards
       inherited from the same primitive set as GDPR Art. 32 +
@@ -236,6 +242,12 @@ requirements:
     draft: true
     pryv_primitives: [audit, encryption-at-rest-secrets, access, event]
     derives_from: [gdpr.Art.33, gdpr.Art.34, hipaa-breach.164.402, hipaa-breach.164.404, swiss-nlpd.Art.24]
+    planned:
+      - kind: feature
+        summary: "Chained audit log improves RROSH evidence chain (scoping + non-repudiation)"
+        proposal: proposals/audit-log-chaining.md
+        backlog: AUDIT-LOG-CHAINING
+        impact: low
     overview: |
       Same primitive set as the
       parallel breach-notification regimes (GDPR Art. 33-34,
