@@ -98,10 +98,16 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [event, stream, data-types]
+    pryv_primitives: [event, stream, data-types, account-backup-tool]
     derives_from: [gdpr.Art.15]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [EGSQ, U9HQ]
+    planned:
+      - kind: bug
+        summary: "pryv-account-backup misses audit + HF series data points + webhooks (inherits gdpr.Art.15 tooling gap)"
+        proposal: proposals/account-backup-dsar-completeness.md
+        backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
+        impact: low
     overview: |
       Categories surface from the canonical event-type schemas
       (`event.type` = `<class>/<format>`); specific pieces are the

@@ -478,27 +478,58 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [access, stream, event, audit]
+    pryv_primitives: [access, stream, event, audit, account-backup-tool]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [AA01, EGSQ, U9HQ]
+    planned:
+      - kind: bug
+        summary: "pryv-account-backup misses audit log + HF series data points + webhooks (Art.15(1)(c) gap today)"
+        proposal: proposals/account-backup-dsar-completeness.md
+        backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
+        impact: medium
+      - kind: feature
+        summary: "Single-shot events fetch chunked by time-range for production-scale subjects"
+        proposal: proposals/account-backup-dsar-completeness.md
+        backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
+        impact: low
     overview: |
       Your subject, holding a personal token, reads everything via the
       standard Pryv API — events, streams, accesses (with full history),
       audit records. The supplementary information (purposes, recipients)
-      is in `access.clientData` when you recorded it there. Wrap it in a
-      subject-portal app and you have Art.15 covered end-to-end.
+      is in `access.clientData` when you recorded it there. For
+      ready-made bundling, the `pryv-account-backup` npm tool walks the
+      subject's API endpoints and produces a downloadable folder —
+      operator-independent (the subject runs it with their own
+      credentials).
     detail: |
-      Subject-side reads via standard endpoints:
+      Subject-side reads via standard endpoints (all reachable on v2):
         - `events.get` — all events
         - `streams.get` — all streams
-        - `accesses.get ?includeHistory=true` — all accesses incl. version chain
-        - `audit.get` — all audit rows
+        - `accesses.get ?includeHistory=true` — accesses + version chain
+        - `audit.getLogs` — audit log (`/audit/logs`)
+        - `webhooks.get` — webhook subscriptions
+        - `GET /events/<id>/series` — HF data points per series-event
       Attachments downloadable via the events API.
+
+      **pryv-account-backup tooling caveat (queued for fix — see
+      `proposals/account-backup-dsar-completeness.md`).** The current
+      tool (v0.2.3) covers: account, profiles, streams, accesses,
+      events (single-shot), attachments (opt-in). It does **not**
+      yet fetch the audit log, HF series data points, or webhooks
+      — so a subject who hands the raw export to their DPO is
+      missing the Art.15(1)(c) disclosure-history elements. Until
+      Phase 1 of the backlog ships, augment manually (see
+      `context/account-backup-coverage.md` for the operational
+      step-by-step). The tier stays `Implemented | High` because the
+      data IS exportable — the gap is in the tooling, not the API.
     technical: |
       Personal-token scope is the user's full namespace; no special
       endpoint. Implementers typically wrap this with a small subject-
       portal app (see `samples/get-a-copy-of-my-data/` proposal in
-      `samples/README.md`).
+      `samples/README.md`). For ad-hoc DSARs the `pryv-account-backup`
+      tool is the no-code path. Coverage matrix +
+      operational-guidance-for-today live at
+      `context/account-backup-coverage.md`.
 
   - ref: Art.16
     title: Right to rectification
@@ -626,9 +657,15 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [event, stream, data-types]
+    pryv_primitives: [event, stream, data-types, account-backup-tool]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [EGSQ]
+    planned:
+      - kind: feature
+        summary: "pryv-account-backup restore path repairs HF series + multi-attachment round-trip"
+        proposal: proposals/account-backup-dsar-completeness.md
+        backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
+        impact: medium
     overview: |
       `events.get` + `streams.get` return canonical JSON validated against
       the data-types schemas — structured, commonly used, machine-readable.

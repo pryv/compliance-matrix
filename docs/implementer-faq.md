@@ -389,6 +389,69 @@ the future Pryv-native angle.
 
 **Commit:** *(this commit)*.
 
+### Q10 — DSAR full-loop at production scale: is there a Pryv-native "give me everything" tool, and does it ship a complete Art.15 bundle?
+
+**Short answer:** **Yes there's a tool** —
+[`pryv-account-backup`](https://github.com/pryv/pryv-account-backup)
+(npm `@pryv/account-backup`, v0.2.3) — subjects or implementers
+run it with the subject's credentials and get a downloadable
+folder. **But the bundle it produces today is partial**: it misses
+the audit log + HF series data points + webhooks, and the legacy
+`/followed-slices` call is dead in v2. Classified as bug + feature
+backlog (`ACCOUNT-BACKUP-DSAR-COMPLETENESS`); the matrix's
+`Implemented | High` tier stands because every data piece IS
+reachable via existing v2 API endpoints — the gap is in tooling,
+not API surface.
+
+**Per the five sub-questions:**
+
+| # | Sub-question | Answer |
+|---|---|---|
+| 1 | Pryv-native DSAR export primitive? | **Yes — `pryv-account-backup`** (`npm start`). Walks account / profiles / streams / accesses / events / attachments. Subject-driven (no operator credentials needed). Coverage gaps below. |
+| 2 | HF series read pattern at scale? | `GET /events/<id>/series` per series-event reads data points (HFS worker). The backup tool does NOT call it today — series containers are exported, data points are not. **Phase 1 backlog fix**. |
+| 3 | Attachment download semantics in the bundle? | Backup script downloads bytes inline (10-parallel) via `GET /events/<id>/<attId>?readToken=...`. Inline binaries land in `attachments/` under the bundle folder. Multi-attachment events: only the first attachment makes the round-trip on restore (`src/restore.js` logs "Ignored 2nd attachment"). **Phase 3 backlog fix**. |
+| 4 | Cross-core aggregation in multi-core deployments? | Subject's user-account is core-affine — `apiEndpoint` resolves to the home core. CMC counterparty data lives in the counterparty's account on whichever core hosts that subject. Backup runs against one `apiEndpoint`; the subject must run a separate backup against each CMC-shared account they hold. Not a v2-only concern; same for multi-region deployments. |
+| 5 | Audit log truncation interaction with `audit.onUserDelete` (Q8)? | Today: audit log isn't fetched by the backup tool at all (Q10 gap #1). After the Q8 + Q10 backlog work both ship: `keep` mode means the bundle includes the long audit history; `pseudonymise` mode means the audit content carries aliases rather than the canonical username; `erase` (default) means the audit content matches whatever wasn't already erased by prior `auth.delete` calls. The subject's right to read their own audit log via `audit.getLogs` already works today — they have an authenticated personal token. |
+
+**Audit of pryv-account-backup vs Art.15(1) sub-paragraphs** — full
+table at `context/account-backup-coverage.md`. Highlights:
+
+- (a) purposes — `access.clientData.purpose` ✅
+- (b) categories — derivable from `events.json` ✅
+- (c) recipients — **partial**: accesses ✅; audit + webhooks ❌
+- (d) retention — `access.clientData.retention` + expiry ✅
+- (g) source — partial: events ✅; audit cross-ref ❌
+
+**Operational guidance until the backlog ships** (per
+`context/account-backup-coverage.md`): augment the
+`pryv-account-backup` output by manually fetching `/audit/logs` +
+`GET /events/<id>/series` per series-event + `/webhooks`, then
+combine with the bundle. The subject's personal token has all
+necessary permissions.
+
+**Does Pryv-the-API need additions for this?** Read side: no.
+Every gap is reachable from existing v2 endpoints. Two
+ergonomics ideas (`GET /export` aggregator + `audit/logs?asExport=true`)
+are nice-to-have but not blockers. Restore side: also no — HF
+series data + multi-attachment writes both use existing endpoints
+that the backup tool just doesn't exercise yet.
+
+**Matrix encoding:**
+- `pryv/pryv-account-backup` registered in macroPryv workspace
+  (`_scripts/setup_repositories.sh` + MEMORY.md, 2026-05-20).
+- `proposals/account-backup-dsar-completeness.md` filed (mirror
+  of `_plans/XXX-Backlog/ACCOUNT-BACKUP-DSAR-COMPLETENESS.md`).
+- `context/account-backup-coverage.md` — coverage matrix + Art.15(1)
+  sub-paragraph map + operational guidance for today.
+- `docs/pryv-primitives.md` — new `account-backup-tool` primitive
+  entry.
+- Rows tagged with `account-backup-tool` primitive + `planned:`
+  chips: `gdpr.Art.15` (bug + feature), `gdpr.Art.20` (Art.20
+  round-trip feature), `ccpa.1798.110`, `pipeda.Principle.4.9`,
+  `swiss-nlpd.Art.25`, `hipaa-privacy.164.524`.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

@@ -202,6 +202,31 @@ from a backup file.
 - **Compliance role**: data restorability (GDPR Art.32 §1(c)) +
   per-user erasure path for SQLite engine.
 
+### `account-backup-tool`
+
+`pryv-account-backup` (npm `@pryv/account-backup`) is the
+subject-driven export tool. End-user / implementer runs
+`npm start`, supplies service-info URL + username + password,
+and gets a `./backup/<apiEndpoint>/` folder.
+
+- **Captures today**: account info, public + private profiles, app
+  profiles, streams tree, accesses list, events (single-shot
+  `?fromTime=<MIN>&toTime=<MAX>`), attachments (opt-in).
+- **Does NOT capture today**: audit log (`/audit/logs`), HF series
+  data points (`GET /events/<id>/series`), webhooks; access version
+  history not directly exported; still calls the v1-only
+  `/followed-slices` (404 in v2). See
+  [`../context/account-backup-coverage.md`](../context/account-backup-coverage.md)
+  for the full coverage matrix.
+- **Compliance role**: GDPR Art.15 (right of access) + Art.20 (data
+  portability) substrate. Subject-runnable — no operator dependency
+  for routine DSARs (the subject has their own credentials).
+- **Restore path** is explicitly "experimental" — `npm start restore`
+  re-imports events but loses HF series data + multi-attachment
+  events on the way through.
+- **Backlog**: `ACCOUNT-BACKUP-DSAR-COMPLETENESS` (matrix
+  proposal: `proposals/account-backup-dsar-completeness.md`).
+
 ### `encryption-at-rest-secrets`
 
 AES-256-GCM encrypted storage for operator-supplied secrets in the
