@@ -181,6 +181,23 @@ Proposal: `proposals/mfa-modern-methods.md`
 
 Proposal: `proposals/webhook-cascade-on-access-delete.md`
 
+### `BUILTIN-STORE-OVERRIDE` (DX-only — no matrix row updates)
+
+**Where the work lives**: `open-pryv.io`
+(`components/mall/src/index.ts` register-order change +
+`config-validation` schema addition).
+
+**No matrix impact.** This is operational sugar, not a
+compliance-shifting fix — see
+`_plans/XXX-Backlog/BUILTIN-STORE-OVERRIDE.md` for the
+explicit DX-only classification. When shipped, update
+`context/audit-archival-via-custom-datastore.md` Flavour B
+section with the `override: true` config snippet; no scope
+row changes.
+
+Filed during Q16; flagged as scope-drift example in
+`_claude-memory/feedback_gap_probing_scope_discipline.md`.
+
 ### `RATE-LIMITING-RECIPES` (no proposal mirror yet)
 
 **Where the work lives**: `dev-deploy` or new docs repo

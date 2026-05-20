@@ -832,6 +832,75 @@ not surfacing the operator-side scope cleanly enough.
 
 **Commit:** *(this commit)*.
 
+### Q16 — Audit log archival + pruning: what's the operator's story for a deployment running 5–10 years?
+
+**Short answer:** **no Pryv-shipped pruning primitive** (consistent
+with Pryv-as-end-user-will-enforcement — operators can't reach
+into a user's own audit data freely). Audit growth is the
+operator's storage-engineering problem to solve, **but Pryv
+provides the architectural hook**: the audit log is exposed via
+`@pryv/datastore` (`auditDataStore` registered as `_audit` in
+`Mall.addStore`), so an operator can write a custom
+`auditStorage` engine plugin that tiers hot recent rows + cold
+archived rows behind the same `audit.getLogs` API. End users see
+one continuous log; the operator chooses how the storage backs
+it. Full pattern in
+`context/audit-archival-via-custom-datastore.md`.
+
+**Framing correction recorded during this Q**: HIPAA
+§164.316(b)(2)(i) is a **minimum** 6-year retention rule, not a
+maximum. HIPAA never *requires* destruction at the 6-year mark.
+GDPR Art.5(1)(e) / PIPEDA Principle 4.5 / Swiss nLPD Art.6(4)
+"no longer than necessary" framings exist but audit's lawful
+basis is typically GDPR Art.17(3)(b) "compliance with a legal
+obligation" — long retention is legitimate ground.
+
+| Regulation | Audit retention pressure |
+|---|---|
+| HIPAA §164.316(b)(2)(i) | **minimum** 6 years; no max |
+| MDR Art.10(8) | **minimum** 10 years device records |
+| GDPR Art.5(1)(e) | "no longer than necessary" — but Art.17(3)(b) gives a separate lawful basis for the retention itself |
+| Swiss nLPD Art.6(4) | "no longer than necessary" — same caveat |
+| PIPEDA Principle 4.5 | "no longer than necessary" — same caveat |
+
+So pressure to prune is **operational** (storage cost, query
+performance over 1B+ row scales), not regulatory.
+
+**The two tiering flavours** (full detail in
+`context/audit-archival-via-custom-datastore.md`):
+
+| Flavour | Approach | Available today |
+|---|---|---|
+| A — custom `auditStorage` engine plugin | Write a `storages/engines/<custom-tiered>/` package matching the existing SQLite + PG engine pattern; the `_audit` Mall registration is unchanged, the storage layer beneath it does the tiering | **yes** — engine-plugin system already exists |
+| B — custom `@pryv/datastore` replacing `_audit` | Write a datastore module + register via `custom:dataStores` config with `override: true` to replace the built-in `_audit` registration | **partial** — Mall's `addStore` is a `Map.set(id, store)` and custom entries load before built-ins, so they get silently overwritten. Requires `BUILTIN-STORE-OVERRIDE` enhancement (DX-only, no compliance impact) |
+
+The `BUILTIN-STORE-OVERRIDE` follow-on is filed as a DX
+enhancement (not a compliance-shifting backlog item — the
+extension path A works today; B would be ergonomics-only).
+
+**Matrix encoding:**
+- New context note `context/audit-archival-via-custom-datastore.md`
+  documenting the pattern + the no-pruning-primitive rationale
+  + the two flavours.
+- `hipaa-security.164.316(b)(2)(i)` (Documentation — time
+  limit) overview + detail rewritten to surface the
+  minimum-not-maximum framing + cite the tiering pattern.
+- `iso-27001.A.8.15` (Logging) detail extended with the
+  tiering note for long-running deployments.
+- `UPDATE-TRIGGERS.md` gains the `BUILTIN-STORE-OVERRIDE` entry
+  flagged as DX-only.
+- New macroPryv memory:
+  `feedback_gap_probing_scope_discipline.md` — distinguishes
+  regulator-relevant gaps from DX/operational-sugar. User
+  flagged this Q's drift into the override-by-id detail as the
+  canonical example of where to stop and check scope.
+
+No `planned:` chips added for the DX enhancement — the matrix
+rows are correctly classified today; the extension hook
+provides the operator's path.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

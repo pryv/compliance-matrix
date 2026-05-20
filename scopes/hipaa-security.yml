@@ -821,25 +821,50 @@ requirements:
         backlog: AUDIT-ON-USER-DELETE
         impact: medium
     overview: |
-      Six-year retention is an
-      operational choice. Pryv's audit log stays per-user SQLite by
-      default — retention is operator-driven (the operator schedules
-      archival + pruning per their HIPAA schedule). `bin/backup.js`
-      produces the artefact that the 6-year retention rule attaches
+      Six-year is a **minimum** retention period, not a maximum
+      (the statute says "retain … for 6 years"; covered entities
+      may retain indefinitely). Pryv's audit log persists by
+      default; retention beyond the minimum + any operational
+      pruning are operator-driven choices (operator schedules
+      archival to cold storage per their policy). `bin/backup.js`
+      produces the artefact the §164.316 retention rule attaches
       to.
     detail: |
-      The planned `audit.onUserDelete: keep` operator setting (see
+      **Minimum 6-year retention is the regulatory floor; there
+      is no max.** Pryv never *requires* destruction at the 6-year
+      mark — operators commonly retain indefinitely under
+      GDPR Art.17(3)(b) "compliance with a legal obligation"
+      lawful basis (the §164.316 retention itself, or sectoral
+      regs) or Art.17(3)(e) "legal claims". The pressure to
+      prune is operational (storage cost / DB performance over
+      10B-row scales), not regulatory.
+
+      **Tiering pattern for long-running deployments**: the audit
+      log is exposed via the `@pryv/datastore` abstraction
+      (`auditDataStore` registered as `_audit` in the Mall;
+      `components/audit/src/datastore/auditDataStore.ts`). An
+      operator wanting to tier hot recent rows + cold archived
+      rows writes a custom `auditStorage` engine plugin (per
+      `storages/engines/*/manifest.json`) that routes writes to
+      a hot tier + reads to a union view across hot + cold.
+      End users see one continuous log via `audit.getLogs`; the
+      storage backing it is the operator's choice. Full pattern
+      detail in
+      `context/audit-archival-via-custom-datastore.md`.
+
+      **Cascade with the Q8 erasure setting**: the planned
+      `audit.onUserDelete: keep` operator setting (see
       `proposals/audit-on-user-delete.md`) is the HIPAA-friendly
-      path: when a covered entity deletes a subject's account, the
-      6-year audit-retention obligation under §164.316(b)(2)(i)
-      runs under a separate lawful basis from the deletion itself
-      (GDPR Art.17(3)(b) "compliance with a legal obligation" maps
-      cleanly; HIPAA Privacy Rule §164.530(j) anchors the
-      documentation-retention duty independently of the subject's
-      account state). Today, audit erasure on `auth.delete` is
-      effectively engine-dependent (SQLite wipes, PG retains) — the
-      planned consistency fix surfaces the choice as an explicit
-      operator setting.
+      path when a covered entity deletes a subject's account
+      while needing to retain the audit. The retention obligation
+      runs under a lawful basis separate from the deletion
+      itself (HIPAA Privacy Rule §164.530(j) anchors documentation-
+      retention independently of subject account state).
+
+      Today, audit erasure on `auth.delete` is engine-dependent
+      (SQLite wipes via per-user-directory rm; PG retains in
+      `audit_events` shared table) — the planned Q8 consistency
+      fix surfaces the choice as an explicit operator setting.
 
   - ref: 164.316(b)(2)(iii)
     title: Documentation — updates — Required

@@ -293,6 +293,18 @@ requirements:
       `docs/pryv-primitives.md` audit entry for the full capture
       catalogue.
 
+      **Long-running deployment tiering**: for the "logs … stored,
+      protected, analysed" portion of A.8.15 at multi-year scales,
+      the audit log is exposed via the `@pryv/datastore`
+      abstraction. Operators write a custom `auditStorage` engine
+      plugin to tier hot recent rows + cold archived rows (e.g.,
+      S3 Object Lock, Glacier) behind the same `audit.getLogs`
+      API. No Pryv-shipped pruning primitive — pressure to prune
+      is operational, not regulatory (HIPAA-style retention floors
+      apply; there's no max-retention rule pushing destruction).
+      Full pattern at
+      `context/audit-archival-via-custom-datastore.md`.
+
   - ref: A.8.16
     title: A.8.16 — Monitoring activities
     text: |
