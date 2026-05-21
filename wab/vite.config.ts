@@ -23,7 +23,13 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src')
       }
     },
-    assetsInclude: ['**/*.wasm', '**/*.sqlite']
+    assetsInclude: ['**/*.wasm', '**/*.sqlite'],
+    build: {
+      // dist/ is checked out as the gh-pages branch (see scripts/setup.sh).
+      // Vite must not wipe dist/.git on each build, so we keep emptyOutDir
+      // false and clean stale assets manually in scripts/upload.sh.
+      emptyOutDir: false
+    }
   };
   // Enable backloop.dev (HTTPS + proper hostname) by default in dev mode.
   // Use `npm run dev:raw` to bypass it (plain http://localhost).
