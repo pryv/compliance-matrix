@@ -2176,6 +2176,188 @@ prose tightening rather than feature work.
 
 **Commit:** *(this commit)*.
 
+### Q31 — GDPR Art.5(1)(e) storage limitation: automatic retention of stale data
+
+**Short answer:** **Voluntarily missing at the platform layer +
+operator-owned.** Pryv ships no TTL / auto-delete / scheduler
+primitive — automatic retention enforcement is the operator's
+external scheduled job, composing existing primitives
+(`events.get toTime=<cutoff>` + `events.delete` two-stage +
+`streams.delete` + `auth.delete` + the audit log as inactivity
+oracle). Same shape as Q15 backup encryption: Pryv provides the
+deletion APIs and the audit trace; the operator owns the
+scheduler + retention-rule definitions + legal-hold overrides.
+
+**The customer scenario:**
+
+> "Building a wellness app on Pryv. GDPR Art.5(1)(e) says I must
+> not keep personal data longer than necessary. For active users,
+> 'necessary' is open-ended. But for **inactive users** — say
+> hasn't authenticated in 3 years and never explicitly closed
+> their account — I need to enforce automatic deletion. Does
+> Pryv ship a retention / TTL primitive I can configure
+> declaratively (e.g., 'auto-delete events older than N days for
+> stream X', 'auto-delete account if no audit-log activity in M
+> days'), or is this entirely my external-job problem?"
+
+**Code findings** (verified before classifying):
+
+| Question | Finding |
+|---|---|
+| Built-in event TTL / retention primitive? | **None.** `grep` across `components/business/`, `components/mall/`, `components/storage/`, `components/api-server/src/schema/` shows no retention / TTL / auto-delete config. The only `expires` field is on `access` (authorisation lifetime — not data lifetime); `TokenStore.TTL_MS` exists for Bootstrap one-shot tokens (24 h). |
+| Built-in cron / scheduler? | **None.** No primitive in core. The only background loops shipped are LE certificate renewal and Bootstrap join-token expiry — domain-specific, not generalised. |
+| Event lifecycle | **Two-stage manual delete.** `events.delete` first sets `trashed: true`; a second call hard-deletes. Operator-triggered only. |
+| `clientData.retention` convention | **Advisory metadata only** (Q26 catalogue). Documents the operator's declared retention policy on the access; does NOT enforce deletion. |
+| Audit trace on deletion | **Yes.** `events.delete` is in `AUDITED_METHODS` (`components/audit/src/ApiMethods.ts:56`); every deletion logs with access ref + timestamp. |
+| Account deletion | `auth.delete` exists (caller-triggered); recall Q8 left the `AUDIT-ON-USER-DELETE` gap where PG audit silently survives on user-account delete — relevant when retention triggers account deletion on PG deployments. |
+
+**The recommended operator pattern:**
+
+A scheduled job adjacent to the Pryv API. Concrete shape:
+
+1. **Declare retention rules in operator config** — per stream
+   class, per access purpose, per account-inactivity threshold.
+   Example shape (operator-owned YAML, not a Pryv config):
+
+   ```yaml
+   retention_rules:
+     - stream: "wellness/raw-readings/*"
+       max_age_days: 365
+       action: delete
+     - stream: "audit-trace/*"
+       max_age_days: 540
+       action: delete
+     - account_inactivity:
+         no_auth_for_days: 1095   # 3 years
+         action: delete           # or: anonymise (when ALIASES ships)
+   ```
+
+2. **Schedule via the operator's deployment-native scheduler** —
+   systemd timer / Kubernetes CronJob / AWS EventBridge / GCP
+   Cloud Scheduler / GitHub Actions schedule. Whatever the
+   operator's deployment already has (with retries, alerting,
+   observability already wired). Pryv does NOT impose one.
+
+3. **For each rule**, the job:
+   - Queries the population — `events.get streams=<stream>
+     toTime=<cutoff>` (paged for large populations).
+   - Calls `events.delete` (or `streams.delete` for sub-tree
+     retention) per result.
+   - For account-level retention: uses audit log as the
+     inactivity oracle (`GET /audit/logs` filtered by recent
+     authentication-action types) → `auth.delete` if cutoff
+     crossed.
+   - The audit log automatically captures each deletion (Q9
+     audit-by-construction).
+   - Job results logged into the operator's observability
+     stack (Q23 provider façade) — deleted-count, time
+     elapsed, errors per stream.
+
+**Why "voluntarily missing" not "should-be-built"** — three
+deliberate reasons:
+
+1. **"Necessary" is irreducibly contextual.** A wellness app's
+   30-day raw-reading retention vs a clinical-trial's 15-year
+   retention vs a 7-year financial-services regime vs paediatric
+   "age-of-majority + N years" cannot share a sensible default.
+   Pryv's content-agnostic posture means it doesn't pretend to.
+2. **Retention conflicts with legal-hold / litigation-hold.** A
+   built-in retention loop would need a `legalHold` opt-out
+   surface per-subject, per-stream, per-event-type — a
+   substantial primitive for a slot most operators run as a
+   30-line cron script.
+3. **Scheduler primitives belong to the operator's deployment
+   topology** — Kubernetes CronJob, systemd timer, cloud-managed
+   scheduler — all with retries / alerting / observability
+   already wired. A Pryv-internal scheduler would be redundant
+   at best, conflicting at worst.
+
+**Sub-questions resolved:**
+
+1. **Audit trace on scheduled deletion?** **Yes — automatic
+   via existing audit log.** Every retention deletion captures
+   `accessId` (the retention-job token) + `accessSerial` +
+   `action` (`events.delete`) + `params.id` + `time` + caller
+   IP / UA. Audit minimality (Q9) applies — no request body
+   leaks event content into the audit log. Forensically
+   defensible "deleted within N days of policy boundary" claim.
+
+2. **Recommended scheduler / cron pattern from Pryv?**
+   **None — explicitly operator-choice.** Pryv documents no
+   preferred scheduler. The operator's deployment-native
+   scheduler (Kubernetes / systemd / managed-cloud) IS the
+   right choice; a Pryv-shipped scheduler would compete with
+   already-wired retries / alerting / observability.
+
+3. **Anonymisation as alternative to deletion?** **Planned
+   feature** — `auth.randomAlias` (backlog `ALIASES`, GH
+   [`#38`](https://github.com/pryv/open-pryv.io/issues/38))
+   becomes the de-identification companion to deletion once
+   shipped. The retention job then has two action verbs
+   (`delete` / `anonymise`) instead of one. Currently
+   anonymisation is the operator's own application-layer
+   transformation; the matrix already encodes this on
+   `iso-27701.A.7.4.5`.
+
+4. **Sample-app candidate?** **Possibly.** A reference
+   retention-job (`samples/scheduled-retention-job/` — a
+   ~150-line Node script + systemd-timer + Kubernetes-CronJob
+   examples + a YAML rule-language) would materially reduce the
+   "did I implement this right?" burden for new operators.
+   Added to `SAMPLE-APPS.md` parking buffer (this Plan-internal)
+   for plan-close build/defer/drop decision.
+
+5. **Effect of the Q8 audit-survival gap?** **Operationally
+   minor; documentation-relevant.** When the retention job
+   triggers `auth.delete` on a PG-audit deployment, the deleted
+   subject's audit rows currently survive (PG `audit_events`
+   table not wiped — see `proposals/audit-on-user-delete.md`).
+   For most retention regimes this is fine (audit-log retention
+   is itself a separate obligation under HIPAA §164.316(b)(2)(i)
+   minimum-6-year etc.) — and once GH
+   [`#75`](https://github.com/pryv/open-pryv.io/issues/75) ships
+   the `audit.onUserDelete: erase|keep|pseudonymise` setting,
+   the operator chooses the policy. The retention job's pattern
+   does not change.
+
+**Matrix encoding:**
+
+- `gdpr.Art.5` **§1(e) detail rewritten** — replaces the
+  prior 1-liner deferral ("CONFIGURABLE. Engine-dependent — see
+  Art.17") with the full "voluntarily missing + operator-owned"
+  framing + recipe pointer + audit-trace claim.
+- `gdpr.Art.17` detail extended with the **caller-triggered vs
+  scheduled-deletion** distinction; cross-link to the new
+  context note clarifies the boundary (Art.17 = right-to-erasure
+  caller call; Art.5(1)(e) = operator scheduled-retention).
+- `pipeda.Principle.4.5` overview extended — same operator-
+  owned framing for the Canadian retention obligation.
+- `iso-27701.A.7.4.5` overview extended — "soon as the
+  original PII is no longer necessary" framing + the
+  `auth.randomAlias` anonymisation-companion pointer (already
+  has the planned chip).
+- New canonical `context/data-retention-operator-owned.md` —
+  full treatment: code findings + 5 composable primitives +
+  recommended operator pattern + "why voluntarily missing"
+  rationale + audit-trace details + cross-engine considerations
+  + account-level retention via audit-log oracle + caveats +
+  see-also.
+- **No backlog** filed — voluntarily missing by design.
+- **No `planned:` chips** added — same reason.
+- **No `proposals/` mirror** — same reason.
+
+Classification: **"voluntarily missing + operator-owned"**.
+Same shape as Q15 backup encryption (`gdpr.Art.32` /
+`hipaa-security.164.308(a)(7)(ii)(A)`) — Pryv ships the
+generation primitive, operator owns the wrapping policy +
+scheduling. Distinct from Q22 "voluntarily missing + highly
+facilitated" (special-category data) because retention is
+genuinely operator-territory by-design; even a
+vertically-integrated operator builds the retention job at the
+deployment layer, not the platform.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

@@ -267,6 +267,14 @@ requirements:
       per-stream deletion lives alongside for partial-deletion needs.
       De-identification (Safe Harbor / Expert Determination methods) is
       an application-layer transformation; Pryv stores the result.
+      "**Soon as the original PII is no longer necessary**" is the
+      operator's scheduled-retention obligation — Pryv ships no
+      TTL primitive; the operator composes `events.get toTime=` +
+      `events.delete` + audit-log inactivity oracle in an external
+      retention job (`context/data-retention-operator-owned.md`).
+      `auth.randomAlias` (backlog `ALIASES`) is the planned
+      anonymisation companion for "render in a non-identifying
+      form" rather than "delete".
 
   - ref: A.7.4.6
     title: A.7.4.6 — Temporary files

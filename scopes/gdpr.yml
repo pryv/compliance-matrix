@@ -246,8 +246,19 @@ requirements:
         versioning + `GET /events/:id?includeHistory=true`
         preserves the prior value for traceability. Full split
         in `context/data-accuracy-structural-vs-semantic.md`.
-      - Storage limitation (§1(e)) — CONFIGURABLE. Engine-dependent —
-        see Art.17 for full erasure mechanics.
+      - Storage limitation (§1(e)) — VOLUNTARILY MISSING +
+        OPERATOR-OWNED at the retention-enforcement layer +
+        CONFIGURABLE at the erasure-mechanics layer. Pryv exposes
+        no TTL / auto-delete / scheduler primitive — automatic
+        retention is the operator's external job, composing
+        `events.get toTime=<cutoff>` + `events.delete` (two-stage)
+        + `streams.delete` + `auth.delete` + the audit log as
+        inactivity oracle. Every retention deletion is captured
+        by the audit log automatically (Q9 audit-by-construction).
+        Engine-dependent backup-tail considerations apply (see
+        Art.17). Full pattern + cron-job recipe + audit-trace
+        treatment + "why not built-in" rationale in
+        `context/data-retention-operator-owned.md`.
       - Integrity & confidentiality (§1(f)) — covered separately at Art.32.
       - Accountability (§2) — IMPLEMENTED. Every API call audited with
         the access reference + version; access carries the consent state
@@ -737,6 +748,14 @@ requirements:
           DB-engine-level snapshots; per-user erasure within a backup
           file requires either backup rotation (oldest pruned per
           policy) or a backup-rewriting procedure you build yourself.
+
+      Erasure here is **caller-triggered** — the subject (or operator
+      on their behalf) issues the DELETE call. The **scheduled /
+      automatic** erasure obligation under Art.5(1)(e) "storage
+      limitation" is operator-owned by design — see Art.5 detail +
+      `context/data-retention-operator-owned.md` for the retention-
+      job pattern that composes `events.delete` + `auth.delete` +
+      the audit log.
 
       `bin/backup.js` supports per-user backup files alongside DB-engine
       backups; using per-user backups improves erasure semantics

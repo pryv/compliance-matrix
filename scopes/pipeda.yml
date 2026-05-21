@@ -122,6 +122,11 @@ requirements:
       configurable engine-dependent erasure mechanics noted under
       GDPR Art. 17 + HIPAA-Security §164.310(d)(1): SQLite per-user
       file deletion vs PG/Mongo row deletion + backup rotation.
+      Automatic / scheduled retention enforcement is **operator-
+      owned** (Pryv ships no TTL primitive; the operator's external
+      retention job composes `events.get toTime=<cutoff>` +
+      `events.delete` + audit-log inactivity oracle —
+      `context/data-retention-operator-owned.md`).
 
   - ref: Principle.4.6
     title: Schedule 1 — Principle 6 — Accuracy
