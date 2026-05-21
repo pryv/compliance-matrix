@@ -81,6 +81,36 @@ detail block — decision output events carry
 range that fed the decision + `decision_logic_version` for
 reproducibility.
 
+### `account.clientData.age_verification_method` + `clientData.parental_holder_consent_event_id(s)` — Art.8 (Q29)
+
+When the deployment targets children (under 16 EU / lower in
+specific Member States — see Art.8(1)), the controller must
+verify parental responsibility. Pryv is age-blind by design
+(no `birthDate` / `minor` field in the default account schema);
+the operator extends `customExtensions.systemStreams` to add an
+age field + records the verification trail on `clientData`:
+
+- `account.clientData.age_verification_method` — free-text or
+  structured record of HOW age was verified (self-declaration /
+  ID upload / parental-attestation / government-eID-flow).
+- `clientData.parental_holder_consent_event_id` (singular,
+  single-holder case) OR `clientData.parental_holder_consent_event_ids`
+  (array, dual / multi-holder case — divorced parents,
+  jurisdictions requiring both biological parents, foster care,
+  etc.) — pointer(s) to the actual `consent/parental-*` event(s).
+
+**The `consent/parental-cmc` event format does NOT ship** in
+the built-in `data-types` catalogue (verified 2026-05-21). The
+operator authors it themselves and publishes via
+`service.eventTypes` URL (Q14 custom-catalogue extension
+pattern). HDS-style data-model repos targeting paediatric /
+adolescent use-cases are the natural home for this format.
+
+Re-verification on age-of-majority transitions is operator-side
+(Pryv has no scheduler primitive). Multi-holder revocation is
+the operator's signal to revoke or scope-down the access per
+Q19 / Q28 mechanisms.
+
 ### `clientData.objection_outcome` + `objection_rationale` + `objection_notice` — Art.21 (Q28)
 
 When a subject invokes their Art.21 right to object (distinct

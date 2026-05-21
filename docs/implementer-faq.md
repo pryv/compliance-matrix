@@ -2009,6 +2009,74 @@ bases.
 
 **Commit:** *(this commit)*.
 
+### Q29 — GDPR Art.8 children's consent + parental verification
+
+**Short answer:** **Voluntarily missing at platform layer +
+`clientData` convention for the recording trail.** Pryv is
+age-blind by design — the default account schema ships only
+`email`; no `birthDate` / `dateOfBirth` / `minor` field. The
+operator extends `customExtensions.systemStreams` to add an age
+field and records the verification trail on `clientData`.
+
+**Four sub-questions verified in code:**
+
+1. **Age-gate primitive at registration?** **No.** Verified at
+   `config/default-config.yml` `custom.systemStreams.account:`
+   — ships only `email`. Operator extends the system streams to
+   add `birthDate` (or equivalent) if their deployment targets
+   minors.
+
+2. **`consent/parental-cmc` event format in `data-types`?**
+   **No** (verified at `data-types/dist/event-types.json` —
+   only the five CMC-flow events ship: `request-cmc`,
+   `accept-cmc`, `revoke-cmc`, `scope-request-cmc`,
+   `invalidate-link-cmc`). The Art.8 matrix row's existing
+   reference to `consent/parental-cmc` is **aspirational** — a
+   convention the implementer authors in their custom catalogue
+   (Q14 pattern). HDS-style data-model repos targeting
+   paediatric use-cases are the natural home for upstreaming
+   this format.
+
+3. **Scheduled re-verification surface?** **No.** Pryv has no
+   cron / scheduler primitive. The operator runs an external
+   job that watches `birthDate` + access `created` timestamp +
+   chosen jurisdiction's age of majority and triggers a
+   re-consent prompt at the crossing date.
+
+4. **Dual / multi-parental-holder convention?** Supported by
+   the array form `clientData.parental_holder_consent_event_ids:
+   [...]` (operator's editorial discipline; not enforced).
+   App code at access-mint time enforces "both parents must
+   accept" or whichever jurisdiction-specific rule applies.
+   Each parental-holder consent event independently satisfies
+   the access-history record; revocation of any one of them
+   is the operator's signal to revoke or scope-down the
+   access (Q19 + Q28 mechanisms).
+
+**Matrix encoding:**
+
+- `gdpr.Art.8` overview sharpened with the code-verified
+  age-blindness framing (was implicit; now explicit at
+  `custom.systemStreams.account` level).
+- `gdpr.Art.8` detail block added — the convention with both
+  singular and array forms, the catalogue-extension note for
+  `consent/parental-cmc`, the operator-side cron concern, the
+  multi-holder framing.
+- `context/client-data-conventions.md` gains the Art.8
+  section in the convention catalogue.
+- No tier shift (`facilitated/storage/low` correct).
+- No backlog or proposal — same posture as other "voluntarily
+  missing + clientData convention" rows (Q6 Art.6, Q22 Art.9,
+  Q25 Art.46, Q26 Art.22, Q28 Art.21).
+
+Classification: **"voluntarily missing + clientData convention
+(operator-implemented)"**. Same architectural shape as the rest
+of the convention family — the platform substrate doesn't
+enforce the regulatory specifics; it persists the operator's
+claim alongside the technical authorisation, audit-traceable.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

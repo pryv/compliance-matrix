@@ -430,14 +430,60 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, event]
     overview: |
-      Pryv neither knows nor
-      validates a subject's age — age + parental-authority verification
-      happens at your app's registration / consent UX. Once verified,
-      the artefacts you keep travel alongside the access:
-      `account.clientData.age_verification_method` +
-      `clientData.parental_holder_consent_event_id` (pointing at a
-      `consent/parental-cmc` event when applicable). Re-verification
-      on age-of-majority transitions is your scheduled-process concern.
+      Pryv neither knows nor validates a subject's age — age +
+      parental-authority verification happens at your app's
+      registration / consent UX. The platform is age-blind by
+      design (verified: default `custom.systemStreams.account`
+      ships only `email`; no `birthDate` / `dateOfBirth` /
+      `minor` field in the catalogue). Once verified, the
+      artefacts you keep travel alongside the access via the
+      `clientData` convention family (see
+      `context/client-data-conventions.md`).
+    detail: |
+      Convention (operator-side editorial discipline; no Pryv
+      enforcement):
+
+      - `account.clientData.age_verification_method` —
+        free-text or structured record of HOW age was verified
+        (self-declaration / ID upload / parental-attestation /
+        government-eID-flow). Travels with the account; reachable
+        via the system-stream account event.
+      - `clientData.parental_holder_consent_event_id` (singular,
+        single-holder case) or `clientData.
+        parental_holder_consent_event_ids` (array, dual /
+        multi-holder case — divorced parents, jurisdictions
+        requiring both biological parents, foster care, etc.) —
+        pointer(s) to the actual `consent/parental-*` event(s)
+        recording the parental consent text + the holder's
+        identity / verification trail.
+
+      **The `consent/parental-cmc` event format does NOT ship in
+      the built-in `data-types` catalogue.** Operators needing
+      this format author it themselves and publish via
+      `service.eventTypes` URL (the Q14 custom-catalogue
+      extension pattern). HDS-style data-model repos that target
+      paediatric / adolescent use-cases are the natural home for
+      this format. Backlog candidate: if a critical mass of
+      health deployments converges on a common shape, upstream
+      it into `data-types` proper.
+
+      **Re-verification on age-of-majority transitions** —
+      voluntarily missing at platform layer. Pryv has no
+      cron / scheduler primitive. Operator runs an external job
+      that watches `birthDate` (extended-account-field) +
+      access `created` timestamp + chosen jurisdiction's age of
+      majority (typically 16 EU / 13 US under COPPA / etc.) and
+      triggers a re-consent prompt at the crossing date.
+
+      **Multi-holder consent** — supported by the array form
+      above; the operator's app code at access-mint time
+      enforces "both parents must accept" (or whichever
+      jurisdiction-specific rule applies) before calling
+      `accesses.create`. Each parental-holder consent event
+      independently satisfies the access-history record;
+      revocation of any one of them is the operator's signal
+      to revoke or scope-down the access (per Q19 + Q28
+      mechanisms).
 
   - ref: Art.10
     title: Processing of personal data relating to criminal convictions and offences
