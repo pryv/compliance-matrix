@@ -198,11 +198,11 @@ export function ScopeDetail () {
                             Evidence
                           </div>
                           <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                            <LinkSection title='Tests' items={links.tests} />
+                            <LinkSection title='Tests' items={links.tests} urlFor={testUrl} />
                             <LinkSection title='Docs' items={links.docs} />
                             <LinkSection title='QMS' items={links.qms} />
                             <LinkSection title='Config keys' items={links.configs} mono />
-                            <LinkSection title='Functional specs' items={links.specs} mono />
+                            <LinkSection title='Functional specs' items={links.specs} mono urlFor={specUrl} />
                             <LinkSection title='Derives from' items={links.derives} mono />
                           </div>
                         </section>
@@ -237,17 +237,36 @@ function FilterPill ({
   );
 }
 
-function LinkSection ({ title, items, mono = false }: { title: string; items: string[]; mono?: boolean }) {
+const testUrl = (code: string) => `https://pryv.github.io/tests/#${code}`;
+const specUrl = (code: string) => `https://pryv.github.io/functional-specifications/#REQ_${code.replace(/\./g, '_')}`;
+
+function LinkSection ({
+  title,
+  items,
+  mono = false,
+  urlFor
+}: {
+  title: string;
+  items: string[];
+  mono?: boolean;
+  urlFor?: (item: string) => string;
+}) {
   if (items.length === 0) return null;
   return (
     <div>
       <div className='text-xs font-medium text-slate-500 uppercase tracking-wide'>{title}</div>
       <ul className='mt-1 flex flex-wrap gap-1'>
-        {items.map((i) => (
-          <li key={i} className={`text-xs px-2 py-0.5 rounded bg-white border border-slate-200 ${mono ? 'font-mono' : ''}`}>
-            {i}
-          </li>
-        ))}
+        {items.map((i) => {
+          const pillClass = `text-xs px-2 py-0.5 rounded bg-white border border-slate-200 ${mono ? 'font-mono' : ''}`;
+          const url = urlFor?.(i);
+          return (
+            <li key={i} className={url ? `${pillClass} hover:border-slate-500 hover:bg-slate-50` : pillClass}>
+              {url
+                ? <a href={url} target='_blank' rel='noopener noreferrer' className='text-slate-700 no-underline hover:text-slate-900'>{i}</a>
+                : i}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
