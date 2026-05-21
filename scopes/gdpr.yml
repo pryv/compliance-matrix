@@ -1014,26 +1014,73 @@ requirements:
       defaults (token scopes, audit-on, retention) are the part still
       in your hands.
     detail: |
-      Design alignment Pryv gives you:
-        - Per-user storage isolation: each subject's data is operationally
-          separable. **Per-engine semantics differ** — physical
-          (per-file) on SQLite vs logical (per-row, filtered by
-          userId in app code) on PG / Mongo. See
-          `context/per-engine-isolation.md` for the full per-engine
-          breakdown + operator mitigation patterns (RLS, per-schema,
-          per-account-DB, per-tenant deployment).
-        - Permissions per stream: the smallest-permission default is
-          "none"; you choose what to grant.
-        - System streams: privileged user data (account, password, mfa)
-          is technically separated from ordinary content.
-        - Audit-by-default: every API call recorded.
-        - Encryption-by-default: TLS in transit; AES-256-GCM for at-rest
-          operator secrets.
+      Pryv's architecture is privacy-by-design **by founding
+      pattern**, not retrofitted. Canonical treatment + the
+      12-default catalogue: `context/privacy-by-design-and-
+      default.md`. Source: the Pryv-authored
+      "Privacy by design by default — Technical Implementation"
+      reference; matrix prose adapts that material with
+      verified code citations.
 
-      Still in your hands (Art.25 §2 by-default settings):
+      **Architectural commitment (§1)** — the topology:
+      Data Governance + Access Control + Audit-per-Subject as
+      separate layers that every process traverses; not direct
+      personal-data access with after-the-fact audit (the PbD
+      anti-pattern). Process registry is self-documented via
+      `GET /accesses` + audit log (= the Art.30 records-of-
+      processing register, derivable on demand).
+
+      **Data-model commitment** — streams + events segregated
+      by data-subject AND context. Granular consent (each
+      access targets a specific stream subtree, not a wall of
+      tables); adapt data collection per subject without schema
+      migration. Substrate for Art.5(1)(c) minimisation +
+      Art.7 granular consent + Art.17 erasure + Art.20
+      portability.
+
+      **By-default catalogue (§2)** — 12 platform defaults that
+      satisfy "by default, only data necessary for each
+      specific purpose are processed":
+
+      1. **Default-deny on permissions** (empty `permissions: []`).
+      2. **Audit-on by default** (invariant, no opt-out).
+      3. **TLS enforced** (Plan 35 LE integration).
+      4. **Hosting region pinned per user** (Q12 architectural
+         residency).
+      5. **Stream-permission granularity** (Q22 — no "public"
+         tier exists).
+      6. **Data-minimal audit** (Q9 — never captures request
+         body).
+      7. **Schema validation at ingest** (Q21 — ajv-draft-04
+         rejects out-of-shape payloads by default).
+      8. **Zero mandatory subprocessors** (Q23 — every
+         integration opt-in).
+      9. **Audit-minimal logger** (Q23 — `inspectAndHide`
+         credential redaction invariant, `[BIH1-6]` tests).
+      10. **CMC requires explicit subject consent**
+          (`consent/accept-cmc` blocking).
+      11. **PlatformDB encrypted secrets** (Plan 35 / 38
+          patterns).
+      12. **Withdrawal API exists by default** (Q19 —
+          `DELETE /accesses/:id` always available).
+
+      **Still in your hands (Art.25 §2 — operator's
+      by-default settings)**:
         - Are app tokens minted with the smallest possible scope?
         - Is your subject's notice-of-collection on by default?
         - Is data retention set to the shortest necessary period?
+        - Is your auth UI surface using the opt-in pattern
+          (privacy-by-default UX from the Pryv-authored
+          reference) rather than the standard "by continuing
+          you agree" anti-pattern?
+
+      Privacy-enhancing technologies (PETs) catalogued in the
+      Pryv reference: pseudonymisation (partial — `ALIASES`
+      backlog upgrades), proxy re-encryption (`E2E-ENCRYPTION`
+      backlog + the github.com/perki/test-proxy-re-encrypt PoC),
+      homomorphic encryption + differential privacy + MPC
+      (out-of-scope at platform layer; implementer's enrichment
+      path).
 
   - ref: Art.28
     title: Processor

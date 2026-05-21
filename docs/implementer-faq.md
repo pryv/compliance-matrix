@@ -1853,6 +1853,109 @@ enforcement**:
 
 **Commit:** *(this commit)*.
 
+### Q27 — GDPR Art.25 privacy by design + by default: what Pryv ships out of the box
+
+**Short answer:** Pryv's architecture is **privacy-by-design by
+founding pattern, not retrofitted** — Data Governance + Access
+Control + per-Subject audit are separate layers every process
+traverses; the process registry is self-documented (`GET
+/accesses` + audit log IS the Art.30 register). Twelve concrete
+defaults satisfy Art.25(2). Source-of-truth: the Pryv-authored
+"Privacy by design by default — Technical Implementation"
+reference; the matrix encodes it canonically in
+`context/privacy-by-design-and-default.md`.
+
+**Architectural commitment (§1)** — Pryv's topology contrasts
+with the standard PbD anti-pattern:
+
+| Standard (PbD anti-pattern) | Pryv (privacy-by-design) |
+|---|---|
+| Processes have direct access to personal data | Access Control is a separate layer every process traverses |
+| Cannot track per-resource access | Audit captures every API call per-subject (invariant — no opt-out) |
+| Process registry maintained manually (drifts) | Process registry self-documented (`GET /accesses` + audit) |
+
+**Data-model commitment** — streams + events segregated by
+**data-subject AND context**. Enables granular consent
+(per-stream-subtree grants, not wall-of-text privacy policies)
++ data minimisation (Art.5(1)(c)) + adapt data collection per
+subject without schema migration.
+
+**Privacy-by-default UI pattern** — `app-web-auth3` ships the
+opt-in flow (explicit permissions per stream + Accept/Refuse
+buttons) rather than the "by continuing you agree" anti-pattern.
+The auth UI primitive doesn't support the anti-pattern, so
+operators can't accidentally ship it.
+
+**12 platform defaults** (the catalogue answer):
+
+1. Default-deny on permissions (empty `permissions: []`).
+2. Audit-on by default (invariant, no opt-out — Q9).
+3. TLS enforced (Plan 35 LE integration).
+4. Hosting region pinned per user (Q12 architectural residency).
+5. Stream-permission granularity (Q22 — no "public" tier exists).
+6. Data-minimal audit (Q9 — never captures request body).
+7. Schema validation at ingest (Q21 — ajv rejects out-of-shape).
+8. Zero mandatory subprocessors (Q23 — every integration opt-in).
+9. Audit-minimal logger (Q23 — `inspectAndHide` invariant,
+   `[BIH1-6]` tests).
+10. CMC requires explicit subject consent (`consent/accept-cmc`).
+11. PlatformDB encrypted secrets (Plan 35 / 38 patterns).
+12. Withdrawal API exists by default (Q19 — `DELETE
+    /accesses/:id` always available).
+
+**Still in the operator's hands (Art.25 §2 — operator's
+by-default settings)**:
+
+- Are app tokens minted with the smallest possible scope?
+- Is subject's notice-of-collection on by default?
+- Is data retention set to the shortest necessary period?
+- Is the operator's auth UI using the opt-in pattern, or a
+  "by continuing you agree" anti-pattern?
+
+**Privacy-enhancing technologies (PETs)** the Pryv reference
+catalogues — operator's enrichment path:
+
+- **Pseudonymisation** — partial; `auth.randomAlias` planned
+  (`ALIASES` backlog).
+- **Proxy re-encryption** — `E2E-ENCRYPTION` backlog +
+  github.com/perki/test-proxy-re-encrypt PoC. Client-side
+  keying during consent request; backend re-crypts data for
+  the accredited recipient on demand. Full-dataset breach
+  resistance.
+- Homomorphic encryption / Differential privacy / Multiparty
+  computation — out-of-scope at platform layer; implementer
+  enrichment.
+
+**Customer-facing surface** — proposing
+`dev-site/src/guides/privacy-by-design.md` as a new Guides page
+exposing the architecture story to customers + auditors
+directly. The Pryv-authored reference PDF lives in
+`_plans/71-...` (Plan-71-internal); the dev-site page surfaces
+the same content under a customer-facing URL.
+
+**Matrix encoding:**
+
+- `gdpr.Art.25` detail rewritten with the 12-default catalogue
+  + architectural commitment + PET catalogue + operator's-
+  hand items.
+- New canonical `context/privacy-by-design-and-default.md`
+  with the full PbD treatment (architecture diagram, data-model
+  contrast, UI pattern, 12 defaults, PETs, operator citation
+  recipe for DPIA Section (d) safeguards inventory).
+- No tier shift on `gdpr.Art.25` — existing
+  `facilitated/infrastructure/high` is correct; the row gains
+  richer prose.
+- No backlog or new proposal — Pryv's architectural posture IS
+  the answer; existing primitives carry it. PET catalogue
+  cross-references existing backlogs (`ALIASES`,
+  `E2E-ENCRYPTION`).
+
+Classification: **"filled by existing primitive
+(architecturally enforced)"** for §1 + §2; matrix tier remains
+`facilitated` because §2 still has operator's-hand items.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:
