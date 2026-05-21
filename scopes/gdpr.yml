@@ -1048,7 +1048,7 @@ requirements:
     pryv_effort_saved: medium
     facilitation_mode: storage
     draft: true
-    pryv_primitives: [audit, access, clientData, encryption-at-rest-secrets, letsEncrypt-integration]
+    pryv_primitives: [audit, access, clientData, encryption-at-rest-secrets, letsEncrypt-integration, observability-provider]
     overview: |
       When the Pryv operator and
       the controller are distinct legal entities (typical SaaS
@@ -1060,19 +1060,74 @@ requirements:
       controller instructions" (§3(a)) and the records that
       demonstrate compliance (§3(h)).
     detail: |
-      Sub-processor relations (§2 + §4) — when the operator subcontracts
-      part of the processing (e.g., hosting infrastructure, monitoring
-      provider), each sub-processor is named in the DPA. The
-      observability-provider primitive (New Relic adapter) is the only
-      built-in subprocessor candidate; using it = New Relic becomes a
-      sub-processor under Art.28(4). Defaults: observability disabled.
+      **Zero mandatory subprocessors.** Pryv-the-software ships with
+      no required third-party-service relationships. The default
+      deployment (operator's chosen cloud provider only — opaque to
+      Pryv) has no sub-processors from the platform's perspective.
+      Every external integration is opt-in through config.
 
-      §3(g) deletion / return of personal data at the end of provision —
-      `bin/backup.js` + `system.users.delete` cover both directions.
+      **Opt-in integration inventory (§2 + §4 sub-processor list when
+      activated)** — see `context/subprocessor-posture-and-data-flow.md`
+      for code anchors + per-integration data-flow analysis:
 
-      §3(h) auditability — the operator demonstrates compliance partly
-      via Pryv's audit log + this compliance matrix (evidence-backed
-      assertion structure).
+      | Config gate | Subprocessor | What flows out |
+      |---|---|---|
+      | `letsEncrypt.enabled: true` | LE (or any `letsEncrypt.directoryUrl` ACME CA) | hostnames only for ACME challenges; **no user data** |
+      | `services.email.smtp.*` | operator's SMTP relay | email + name + one-time tokens (templated bodies) — PII |
+      | `services.mfa.mode: enabled` + `sms.endpoints[*]` | operator's SMS provider | phone number + MFA code — PII |
+      | `observability.provider: newrelic` | New Relic | aggregated metrics + error traces; PII filters platform-defined (see below) |
+      | `service.eventTypes: https://...` | upstream catalogue host | **no personal data flows out** — fetch-only of JSON Schema fragments |
+
+      **Let's Encrypt posture (operator clarification)**: ships as a
+      **dev-platform facilitator** — the easy on-ramp for `*.pryv.me`-
+      style dev clusters. **Production deployments should treat CA
+      choice as an operator decision.** Keep LE if its compliance
+      posture matches yours, swap to a commercial CA / internal CA /
+      air-gapped issuance pipeline if not. The ACME orchestrator
+      reads `letsEncrypt.directoryUrl`, so any ACME-compatible CA
+      drops in without code changes.
+
+      **Data-flow guarantees that limit subprocessor exposure** —
+      three real layers, each tested:
+
+      1. **Audit-by-construction (Q9)** — audit captures method +
+         access ref + URL query + integrity hash; **never the
+         request body**; `auth=` query-string params stripped.
+         `components/audit/src/Audit.ts:151-166`.
+      2. **Logger sanitization** — every `logger.{info,warn,error,
+         debug}` call passes args through `inspectAndHide`
+         (`components/boiler/src/logging.ts:253-298`): object keys
+         `password`/`passwordHash`/`newPassword` → `'(hidden
+         password)'`; string regex `auth=c[a-z0-9-]*` → `'auth=
+         (hidden)'`; serialised JSON password fields →
+         `'$1=(hidden)'`. Tested by `[BIH1]`-`[BIH6]` in
+         `components/api-server/test/boiler-inspectAndHide.test.js`
+         + `system-seq.test.js:533`. Honest scope: redacts
+         credentials, not PII broadly — emails / usernames / event
+         payloads only leak if a caller explicitly logs them.
+      3. **Observability PII filters** (when observability opt-in) —
+         hard-coded attribute exclude list at
+         `components/business/src/observability/providers/newrelic/
+         newrelic.ts:39-49`: strips `request.headers.{authorization,
+         cookie,proxy-authorization,set-cookie*,x-*}` + `request.
+         body`; `record_sql: 'off'`; `allow_all_headers: false`.
+
+      **§3(g) deletion / return of personal data at the end of
+      provision** — `bin/backup.js` + `system.users.delete` cover
+      both directions.
+
+      **§3(h) auditability** — the operator demonstrates compliance
+      partly via Pryv's audit log + this compliance matrix
+      (evidence-backed assertion structure).
+
+      **Future: machine-readable subprocessor inventory** — Plan 60
+      A.9 (`CONFIG-EFFECTIVE-EXPOSURE` per
+      `UPDATE-TRIGGERS.md`) will expose the merged effective config
+      per core as a single JSON artefact the operator's DPA
+      register + Art.30 records-of-processing pipeline can consume
+      directly. Pre-Plan-60, the operator reads `override-config.
+      yml` + per-host overlays + identifies non-default integrations
+      by hand.
 
   - ref: Art.30
     title: Records of processing activities

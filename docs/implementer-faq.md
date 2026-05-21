@@ -1302,6 +1302,159 @@ saw in Q15 (backup encryption).
 
 **Commit:** *(this commit)*.
 
+### Q23 — GDPR Art.28 processor agreements: what subprocessors come with Pryv, and what flows where?
+
+**Short answer:** **Zero mandatory subprocessors.** Every external
+integration is opt-in through config. Let's Encrypt ships as a
+**dev-platform facilitator** (production operators should choose
+their CA). When integrations ARE activated, **three real
+data-flow guarantees** limit what the subprocessor sees:
+audit-by-construction (Q9), logger `inspectAndHide` credential
+redaction (`[BIH]` test set), observability PII attribute
+exclude list.
+
+**Three sub-questions answered:**
+
+1. **Does Pryv emit any artefact listing my deployment's
+   subprocessors?** — Not today. The operator reads
+   `override-config.yml` + per-host overlays and identifies
+   which optional integrations are non-default. **Plan 60 A.9
+   (Q20 absorption)** will fix this — `GET /system/admin/config/
+   effective` exposes the merged effective config per core as a
+   single JSON artefact ready to feed the operator's DPA
+   register + Art.30 pipeline.
+
+2. **Does Pryv differentiate PII-handling subprocessors vs.
+   non-PII?** — Not as a structured flag, but the integration
+   type implicitly classifies:
+   - **PII-handling (when configured)**: SMTP (email + name +
+     templated bodies), SMS endpoints (phone + MFA code), CMC
+     peer cores (cross-account share of subject's events).
+   - **Non-PII**: Let's Encrypt (hostnames only), upstream
+     catalogue fetch (`service.eventTypes` URL — fetch-only of
+     JSON Schema fragments; no personal data crosses the
+     boundary).
+   - **Filtered PII**: observability vendor (currently New
+     Relic) — receives aggregated metrics + error traces with
+     a hard-coded attribute-exclude list.
+
+3. **Are there platform guarantees about what flows where?** —
+   Yes, three layers, each verified in code + tests:
+
+   **Layer 1 — Audit-by-construction (Q9 finding):**
+   `components/audit/src/Audit.ts:151-166` — audit captures
+   method + access ref + URL query + integrity hash; never
+   request body; `auth=` query-string params stripped before
+   write.
+
+   **Layer 2 — Logger `inspectAndHide` credential redaction:**
+   `components/boiler/src/logging.ts:253-298`. Every
+   `Logger.{info,warn,error,debug}` call passes args through
+   `inspectAndHide` before emission. Two mechanisms:
+   - Object-key redaction: `password` / `passwordHash` /
+     `newPassword` → `'(hidden password)'`.
+   - String regex strip (`hideSensitiveValues`): `auth=c[a-z0-
+     9-]*` → `'auth=(hidden)'`; serialised JSON password
+     fields → `'$1=(hidden)'`.
+
+   Tested by `[BIH1]`-`[BIH6]` in
+   `components/api-server/test/boiler-inspectAndHide.test.js`.
+   `[BIH6]` specifically asserts the password-redaction shape.
+   End-to-end coverage at `system-seq.test.js:533` checks the
+   `(hidden password)` substitution against `passwordHash` log
+   payloads.
+
+   **Honest scope** — `inspectAndHide` redacts **credentials**
+   (auth tokens + password fields), not PII broadly. Email
+   addresses, usernames, phone numbers, event payloads are
+   NOT auto-redacted from log lines — they only leak if a
+   caller explicitly logs them. The guarantee is "no
+   credentials leak via logs", not "no PII whatsoever". The
+   operator's log-aggregator destination + their broader
+   PII-in-logs policy fill the rest of the picture.
+
+   **Layer 3 — Observability PII filter** (when observability
+   opt-in): hard-coded attribute exclude list at
+   `components/business/src/observability/providers/newrelic/
+   newrelic.ts:39-49`:
+
+   ```js
+   allow_all_headers: false,
+   attributes: {
+     exclude: [
+       'request.headers.authorization',
+       'request.headers.cookie',
+       'request.headers.proxy-authorization',
+       'request.headers.set-cookie*',
+       'request.headers.x-*',
+       'request.body'
+     ]
+   },
+   transaction_tracer: { record_sql: 'off' }
+   ```
+
+   Plus `high_security: false` default — operator opts into
+   account-side HSM if their observability account supports
+   it. The exclude list is platform-defined; the operator can
+   tighten further but not loosen the credential-strip
+   guarantees without modifying source.
+
+**Subprocessor inventory at deployment level** — five opt-in
+integrations, each off by default:
+
+| Config gate | Subprocessor | Data crossing the boundary |
+|---|---|---|
+| `letsEncrypt.enabled: true` (Plan 35) | LE — or any ACME directory you point `directoryUrl` at | Hostnames for ACME challenges only — no user data. Operator's call whether LE matches their compliance posture; alternative CAs drop in without code changes |
+| `services.email.smtp.*` (Plan 39) | Operator's SMTP relay | Email + name + one-time tokens; body templates operator-owned via admin panel |
+| `services.mfa.mode: enabled` + `sms.endpoints[*]` (Plan 26) | Operator's SMS provider | Phone number + MFA code |
+| `observability.provider: newrelic` (Plan 38) | New Relic (or pluggable provider) | Aggregated metrics + error traces; Layer 3 PII filter in front |
+| `service.eventTypes: <URL>` (default points at upstream `pryv/data-types`) | Catalogue host | **Fetch-only of schemas INTO the core; no personal data flows out** — pinning to self-hosted URL severs the dependency entirely |
+
+**Where Pryv-the-software is NOT the Art.28 answer-source**:
+
+- **Cloud provider** (AWS / Azure / Hetzner / on-prem) — opaque
+  to Pryv; operator-to-provider relationship.
+- **CDN / reverse-proxy** if you deploy one (nginx /
+  Cloudflare). Pryv doesn't ship one; operator's deployment
+  topology choice (per `RATE-LIMITING-RECIPES` backlog Q6)
+  determines whether a CDN vendor is in scope.
+- **External monitoring** beyond the observability-provider
+  integration (Prometheus + Grafana operator runs themselves,
+  log aggregator like Loki / ELK / Splunk). Pryv emits logs;
+  the operator routes them.
+
+**Matrix encoding**:
+
+- `gdpr.Art.28` detail extended with the zero-mandatory-
+  subprocessor framing + the 5-integration enumeration with
+  data-flow per integration + the LE-as-dev-facilitator
+  distinction + the three-layer data-flow guarantee table +
+  the post-Plan-60-A.9 inventory pipeline cross-reference.
+- `gdpr.Art.28` `pryv_primitives:` extended with
+  `observability-provider` (was missing; the row already cited
+  `letsEncrypt-integration` + `encryption-at-rest-secrets`).
+- New canonical context note
+  `context/subprocessor-posture-and-data-flow.md` with the
+  full per-integration code-anchor analysis + the three
+  data-flow layers + the "where Pryv is NOT the answer"
+  honest-limits section.
+- `gdpr.Art.30(1)(f)` unchanged — the existing register-field
+  mapping table already covers "categories of recipients"; the
+  subprocessor framing flows through naturally.
+- `docs/pryv-primitives.md` `observability-provider` entry
+  unchanged (already documents the PII filter; this Q
+  cross-references rather than duplicating).
+
+No backlog, no proposal, no chips — classification is
+**"filled by existing primitive" + "operator-configured"**
+for the integrations themselves + **"voluntarily missing
+(absorbed by Plan 60 A.9)"** for the structured-inventory
+artefact. The future inventory pipeline already has its slot
+in `UPDATE-TRIGGERS.md` (`CONFIG-EFFECTIVE-EXPOSURE` from
+Q20); no separate Art.28 backlog needed.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:
