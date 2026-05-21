@@ -231,6 +231,40 @@ protection.md`). Likely affected rows when configs ship:
 | iso-27001 | A.8.21 | enhancement | cite the recipes |
 | hipaa-security | 164.308(a)(5)(ii)(C) | enhancement | cite the recipes |
 
+### `CONFIG-EFFECTIVE-EXPOSURE` (no proposal mirror yet)
+
+**Where the work lives**: `open-pryv.io` — new
+`GET /system/admin/config/effective` admin route + SPA
+"Configuration" tab. Absorbed by the macroPryv `60-bootstrap-
+admin-panel-later` plan in its Phase A.9 + Phase C.3 #13
+(planned MVP1 slice). Read-only, per-core, merged effective
+config including the YAML-only key families (no SSH-the-box
+requirement to read deployment safeguards). Secrets redacted
+per a `SECRET_KEYS` constant + JSON-schema `secret: true`
+annotations. `?digest=true` short-circuit for cross-core drift
+pings.
+
+Surfaced by Plan 71 Q20 (2026-05-21) — DPIA Section (d)
+safeguards inventory feed. Also unlocks cross-core drift
+detection + operator runbook + post-hoc debugging use-cases.
+
+Likely affected rows when the endpoint ships:
+
+| Scope | Ref | Suggested kind | Impact | After shipping |
+|---|---|---|---|---|
+| gdpr | Art.30(1)(g) | feature | medium | cite endpoint as evidence-emitter for "description of technical security measures"; coverage tier could shift F:Awareness → F:Evidence Med |
+| gdpr | Art.32 | feature | low | strengthen evidence narrative around operator-visible safeguards |
+| gdpr | Art.35 | feature | medium | DPIA Section (d) safeguards inventory cites the endpoint output; coverage tier shifts F:Awareness Low → F:Evidence Med |
+| iso-27001 | A.8.9 | feature | medium | direct match — configuration management evidence; row could move F:Storage / F:Primitive → Configurable |
+| hipaa-security | 164.308(a)(8) | feature | medium | evaluation evidence — technical baseline snapshot; coverage strengthens |
+
+No `proposals/<slug>.md` mirror filed yet — the work absorbs
+cleanly into Plan 60 A.9 + C.3 #13 spec. File one if Plan 71
+Q20 classification later wants `planned:` chips on the matrix
+rows above (in which case `_plans/XXX-Backlog/CONFIG-EFFECTIVE-
+EXPOSURE.md` becomes a one-line stub pointing at Plan 60 to
+satisfy the validator's chip → backlog resolution requirement).
+
 ## Section B — Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued
