@@ -366,16 +366,35 @@ Canonical `class/format` JSON Schemas at
 Includes `consent/*`, `notification/*-cmc`, `message/chat-cmc`.
 
 - **Compliance role**: standardised data semantics; auditable type
-  conformance.
-- **Server-side validation**: `events.create` runs every event
-  through `typeRepo.lookup(type).validate(content)`; unknown
-  types + content schema violations are rejected with `400`. No
-  silent downgrade.
+  conformance; structural-accuracy enforcement at ingest
+  (Art.5(1)(d) layer 1).
+- **Server-side validation**: `events.create` AND `events.update`
+  run every payload through `typeRepo.lookup(type).validate(
+  content)`; unknown types + content schema violations are
+  rejected with HTTP `400`. No silent downgrade, no truncation.
+  Backed by **`ajv-draft-04`** + `ajv-formats` under the
+  `components/utils/src/jsonValidator.ts` façade (validation
+  errors are reshaped to the legacy `z-schema` wire-shape for
+  back-compat; consumers don't need to care).
+- **What the validator enforces**: everything expressible in JSON
+  Schema draft-04 — `type`, `required`, `enum`, `pattern`,
+  `properties`, `additionalProperties`, `minimum` / `maximum` /
+  `exclusiveMinimum` / `exclusiveMaximum`, `minLength` /
+  `maxLength`, format strings. Primitive-type coercion (e.g.,
+  string `"42"` → number `42`) runs *before* schema validation
+  via `valueTypes` (`components/business/src/types/basic_type.ts:
+  60-65`); coercion is a convenience for form-post clients and
+  does not relax range constraints.
 - **Built-in default**: `components/business/src/types/event-
   types.default.json` (~4750 lines mirroring upstream
   `pryv/data-types`) is the baked-in fallback; the server starts
   with this catalogue even if no `service.eventTypes` config is
-  set.
+  set. **Bounds usage is sparse in defaults** — only `mood/rating`
+  (0..1) and `note/*` (4 MB `maxLength`) declare numerical or
+  length limits. Physical-measurement types (`mass/kg`,
+  `temperature/c`, `pressure/mmhg`, `frequency/bpm`, …) ship as
+  `"type": "number"` with no bounds, so the operator opts into
+  strictness by extending via the custom-catalogue model.
 - **Extension model — no fork required.** Implementers needing
   custom event types (e.g., niche health measurements not in the
   upstream catalogue, FHIR-R4 bindings, regulated-deployment-
@@ -386,11 +405,16 @@ Includes `consent/*`, `notification/*-cmc`, `message/chat-cmc`.
   `deepMerge`s on top of the baked-in defaults
   (`components/business/src/types.ts:143-186`
   `TypeRepository.tryUpdate`). **Custom types are first-class** —
-  same z-schema validation pipeline, same canonical
+  same ajv-draft-04 validation pipeline, same canonical
   serialisation in `events.get`, same portability in
-  `events.json` exports. Full extension-pattern detail +
-  HDS-data-model exemplar in
-  [`../context/custom-event-type-catalogues.md`](../context/custom-event-type-catalogues.md).
+  `events.json` exports. The **HDS data-model exemplar** declares
+  28 `minimum` / 23 `maximum` / 7 `pattern` constraints across
+  its health-data types — the working reference for how to
+  tighten structural-accuracy guarantees beyond the defaults.
+  Full extension-pattern detail + HDS exemplar in
+  [`../context/custom-event-type-catalogues.md`](../context/custom-event-type-catalogues.md);
+  structural-vs-semantic accuracy split in
+  [`../context/data-accuracy-structural-vs-semantic.md`](../context/data-accuracy-structural-vs-semantic.md).
 
 ### `app-web-auth3`
 

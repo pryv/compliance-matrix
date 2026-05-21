@@ -1079,6 +1079,84 @@ the regulatory framing correctly.
 
 **Commit:** *(this commit)*.
 
+## Session 2026-05-21
+
+### Q21 — Data accuracy at ingest: what does Pryv reject, and where does the implementer take over?
+
+**Short answer:** Pryv enforces **structural** accuracy at ingest
+(JSON Schema validation via ajv-draft-04, including
+`minimum`/`maximum`/`pattern`/`maxLength` where the catalogue
+declares them); **semantic** accuracy (is THIS medication right
+for THIS patient?) is implementer-owned by design. The
+built-in catalogue uses bounds sparingly — operators tighten
+structural guarantees by extending via `service.eventTypes`
+URL (Q14 pattern). Rectification is auditable via
+`events.update` + `?includeHistory=true`.
+
+**Sub-question matrix:**
+
+| Sub-question | Pryv's answer | Where it lives |
+|---|---|---|
+| Does Pryv reject payloads that don't match the event-type's JSON Schema? | Yes — ajv-draft-04 validation on every `events.create` AND `events.update`; HTTP 400 with structured field-path error | `components/api-server/src/methods/events.ts:273, 564, 755-774` (`validateEventContentAndCoerce` middleware); `components/utils/src/jsonValidator.ts` (façade); `components/business/src/types/basic_type.ts:60-65` (`callValidator`) |
+| Are numerical bounds expressible in event-types? | Yes — `minimum` / `maximum` / `exclusiveMinimum` / `exclusiveMaximum` / `minLength` / `maxLength` all enforced | JSON Schema draft-04 spec |
+| Do the **built-in** event-types use bounds? | Sparingly: only `mood/rating` (0..1) and `note/*` (4 MB `maxLength`). Physical-measurement types (`temperature/c`, `mass/kg`, `frequency/bpm`, …) ship as `"type": "number"` with no bounds | `components/business/src/types/event-types.default.json` (5 bound directives total across ~4750 lines) |
+| Can implementers add bounds via custom catalogue? | Yes — the Q14 extension model (`service.eventTypes` URL → `deepMerge` over defaults) | `components/business/src/types.ts:143-186` (`TypeRepository.tryUpdate`); HDS exemplar at `hds.com/data-model` declares 28 `minimum` + 23 `maximum` + 7 `pattern` constraints |
+| Does `events.update` preserve the prior (inaccurate) value? | Yes — event versioning; `GET /events/:id?includeHistory=true` returns the chain via `mall.events.getHistory()` | `components/api-server/src/methods/events.ts:178-200` |
+| Is the rectification itself audited? | Yes — `events.update` is in `AUDITED_METHODS`; audit captures method + access ref + timestamp (not the request body, per Q9 audit-minimality) | `components/audit/src/ApiMethods.ts` |
+| Does Pryv detect semantic inaccuracy? | **No, by design** — the platform lacks the patient's clinical record, drug-interaction context, device calibration state, treatment plan; implementer's app layer carries that context | — |
+
+**Why this is the right split** — the regulator-relevance test:
+when an Art.5(1)(d) complaint lands ("my health data showed an
+impossible value"), the implementer can defensibly say:
+
+1. Pryv rejected anything that violated the declared schema
+   (cite the ajv pipeline + the failing-payload HTTP 400
+   semantics).
+2. The deployment used a bounded catalogue (cite the custom
+   `service.eventTypes` URL + the relevant per-type bounds — OR
+   acknowledge the deployment is on built-in defaults and
+   commit to a catalogue tightening).
+3. Semantic checks are the implementer's responsibility and run
+   at the app layer before `events.create`; provide the specific
+   service / rule responsible.
+4. When inaccuracy was detected, `events.update` corrected it
+   and the prior value is preserved + the rectification is
+   audited.
+
+If the platform attempted to enforce semantic accuracy, it would
+require seeing clinical context, drug-interaction databases,
+calibration metadata — which would violate Pryv's data-
+minimisation posture. The split is consistent with the broader
+implementer-owns-clinical-logic architecture (Q9 audit-minimality,
+Q12 core-affinity, Q15 backup-encryption-is-operator-side, Q19
+revocation-UI-is-implementer-side, Q20 DPIA-section-(d)-is-
+implementer-assembled).
+
+**Matrix encoding:**
+- `gdpr.Art.5` detail block — Art.5(1)(d) bullet rewritten with
+  the structural-vs-semantic split + ajv-draft-04 citation +
+  HDS exemplar reference + the implementer-hand boundary.
+- `gdpr.Art.16` row gained a `detail:` block (was overview-only)
+  covering rectification mechanics + the ajv-validation-on-update
+  guarantee + `includeHistory` + audit-trail behaviour + the
+  detection-is-implementer-side cross-reference.
+- `docs/pryv-primitives.md` `data-types` entry extended with
+  the ajv-draft-04 backing + built-in-bounds sparsity + HDS
+  exemplar.
+- New canonical context note
+  `context/data-accuracy-structural-vs-semantic.md` carries the
+  full architecture treatment in 4 layers (structural
+  validation; range bounds via catalogue extension; semantic
+  out-of-scope; rectification trail).
+
+No backlog filed, no proposal, no `planned:` chips —
+classification is **"filled by existing primitive"** for the
+structural / rectification slice + **"voluntarily missing"** for
+the semantic slice. The matrix needed prose tightening, not new
+features.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

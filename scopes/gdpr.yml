@@ -225,8 +225,26 @@ requirements:
       - Data minimisation (§1(c)) — FACILITATED. Permissions + stream
         design let apps see only what's in their scope; the rest is
         invisible to them.
-      - Accuracy (§1(d)) — FACILITATED. `events.update` rectifies events
-        (Art.16); event versioning preserves the prior value for traceability.
+      - Accuracy (§1(d)) — FACILITATED + IMPLEMENTER-OWNED.
+        Pryv enforces **structural** accuracy at ingest: every
+        `events.create` and `events.update` validates against the
+        declared event-type's JSON Schema (ajv-draft-04 via
+        `components/utils/src/jsonValidator.ts`), rejecting
+        out-of-shape or out-of-range payloads with HTTP 400.
+        Numerical bounds (`minimum`/`maximum`), string patterns,
+        and length limits are expressible per type — the HDS
+        data-model exemplar declares 28 `minimum`/23 `maximum`
+        constraints across health-data types. The built-in
+        catalogue uses bounds sparingly (operator opts into
+        strictness by extending via `service.eventTypes` URL,
+        Q14 pattern). **Semantic** accuracy — "is this medication
+        right for THIS patient?" — is out of scope by design;
+        the implementer's app layer carries the clinical /
+        domain context Pryv intentionally doesn't see.
+        `events.update` rectifies events (Art.16); event
+        versioning + `GET /events/:id?includeHistory=true`
+        preserves the prior value for traceability. Full split
+        in `context/data-accuracy-structural-vs-semantic.md`.
       - Storage limitation (§1(e)) — CONFIGURABLE. Engine-dependent —
         see Art.17 for full erasure mechanics.
       - Integrity & confidentiality (§1(f)) — covered separately at Art.32.
@@ -538,13 +556,41 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [event]
+    pryv_primitives: [event, audit]
     functional_specs: [EVENT.BASE]
     tests: [PTU1]
     overview: |
       `events.update` rectifies an event; event versioning preserves the
       prior (inaccurate) value for traceability — addressing the
       Art.5(1)(d) accuracy principle without losing the audit trail.
+    detail: |
+      Rectification mechanics:
+
+      - **API**: `events.update` (PUT /events/:id) writes the new
+        value AND emits a new event version. The route validates
+        the updated payload through the same ajv-draft-04 pipeline
+        as `events.create` (`components/api-server/src/methods/
+        events.ts:564` middleware chain), so a "rectification"
+        that itself fails schema validation is rejected — you
+        can't replace one inaccurate value with another that
+        violates the type's structural constraints.
+      - **History retrieval**: `GET /events/:id?includeHistory=true`
+        returns the full version chain. The history is queried via
+        `mall.events.getHistory(userId, eventId)` (same file
+        line 185) and exposed at the implementer's API surface
+        when requested.
+      - **Audit trail**: every `events.update` call is in the
+        audited methods set (`components/audit/src/ApiMethods.ts`).
+        The audit log records method + access ref + timestamp;
+        per the audit-minimality posture (Q9), the request body
+        is NOT captured — the history chain on the event itself
+        is the durable record of the prior value, not the audit
+        log.
+      - **Detection of inaccuracy**: out of scope at the platform
+        layer. Pryv enforces structural validity at ingest (ajv
+        schema validation); semantic inaccuracy detection is the
+        implementer's app responsibility. See
+        `context/data-accuracy-structural-vs-semantic.md`.
 
   - ref: Art.17
     title: Right to erasure ("right to be forgotten")
