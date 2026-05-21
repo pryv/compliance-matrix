@@ -10,13 +10,22 @@ import {
   type Coverage,
   type RequirementLinks
 } from '../db';
-import { CoverageBadge, DraftBadge, PlannedBadge, RequirementBadge } from './CoverageBadge';
+import { DraftBadge, PlannedBadge, RequirementBadge } from './CoverageBadge';
 
 type PlannedFilter = 'all' | 'planned' | 'bugs';
+type TierFilter = Coverage | 'all';
 
 const COVERAGE_ORDER: Coverage[] = [
   'implemented', 'configurable', 'facilitated', 'documented', 'out-of-scope'
 ];
+
+const COVERAGE_LABELS_SHORT: Record<Coverage, string> = {
+  implemented: 'Implements',
+  configurable: 'Configurable',
+  facilitated: 'Facilitates',
+  documented: 'Documents',
+  'out-of-scope': 'Out of scope'
+};
 
 export function ScopeDetail () {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +36,7 @@ export function ScopeDetail () {
   const [openRef, setOpenRef] = useState<string | null>(null);
   const [links, setLinks] = useState<RequirementLinks | null>(null);
   const [plannedFilter, setPlannedFilter] = useState<PlannedFilter>('all');
+  const [tierFilter, setTierFilter] = useState<TierFilter>('all');
 
   useEffect(() => {
     if (!id) return;
@@ -63,34 +73,43 @@ export function ScopeDetail () {
         )}
       </div>
 
-      <div className='mt-4 flex flex-wrap gap-2'>
-        {COVERAGE_ORDER.map((c) => (
-          <div key={c} className='flex items-center gap-2'>
-            <CoverageBadge coverage={c} />
-            <span className='text-sm text-slate-600'>{histogram[c] ?? 0}</span>
-          </div>
-        ))}
-      </div>
+      <CoverageDistribution
+        histogram={histogram}
+        total={reqs.length}
+        active={tierFilter}
+        onSelect={(t) => setTierFilter(tierFilter === t ? 'all' : t)}
+      />
 
       {(() => {
         const plannedTotal = reqs.reduce((n, r) => n + r.planned.length, 0);
         const bugsTotal = reqs.reduce(
           (n, r) => n + r.planned.filter((p) => p.kind === 'bug').length, 0
         );
-        if (plannedTotal === 0) return null;
+        const hasUtility = plannedTotal > 0;
+        const hasTier = tierFilter !== 'all';
+        if (!hasUtility && !hasTier) return null;
         return (
-          <div className='mt-3 flex flex-wrap gap-2 items-center text-xs'>
+          <div className='mt-3 flex flex-wrap gap-1.5 items-center text-xs'>
             <span className='text-slate-500'>Filter:</span>
-            <FilterPill active={plannedFilter === 'all'} onClick={() => setPlannedFilter('all')}>
-              All ({reqs.length})
-            </FilterPill>
-            <FilterPill active={plannedFilter === 'planned'} onClick={() => setPlannedFilter('planned')}>
-              Has planned changes ({plannedTotal})
-            </FilterPill>
-            {bugsTotal > 0 && (
-              <FilterPill active={plannedFilter === 'bugs'} onClick={() => setPlannedFilter('bugs')}>
-                Has queued bug ({bugsTotal})
-              </FilterPill>
+            {hasTier && (
+              <UtilityFilterPill active onClick={() => setTierFilter('all')}>
+                {COVERAGE_LABELS_SHORT[tierFilter as Coverage]} ✕
+              </UtilityFilterPill>
+            )}
+            {hasUtility && (
+              <>
+                <UtilityFilterPill active={plannedFilter === 'all'} onClick={() => setPlannedFilter('all')}>
+                  All ({reqs.length})
+                </UtilityFilterPill>
+                <UtilityFilterPill active={plannedFilter === 'planned'} onClick={() => setPlannedFilter('planned')}>
+                  Planned ({plannedTotal})
+                </UtilityFilterPill>
+                {bugsTotal > 0 && (
+                  <UtilityFilterPill active={plannedFilter === 'bugs'} onClick={() => setPlannedFilter('bugs')}>
+                    Bug ({bugsTotal})
+                  </UtilityFilterPill>
+                )}
+              </>
             )}
           </div>
         );
@@ -114,6 +133,7 @@ export function ScopeDetail () {
           <tbody>
             {reqs
               .filter((r) => {
+                if (tierFilter !== 'all' && r.coverage !== tierFilter) return false;
                 if (plannedFilter === 'planned') return r.planned.length > 0;
                 if (plannedFilter === 'bugs') return r.planned.some((p) => p.kind === 'bug');
                 return true;
@@ -219,16 +239,90 @@ export function ScopeDetail () {
   );
 }
 
-function FilterPill ({
+/**
+ * Interactive coverage distribution bar. Each tier is a clickable
+ * segment whose width is proportional to its count. Click a segment
+ * to filter the table to that tier; click again (or the pill in the
+ * utility row below) to clear.
+ *
+ * Above the bar: total + active-state breadcrumb hint.
+ * Below the bar: a tight legend with tier label + count + a small
+ * coloured swatch (also clickable, mirrors segment clicks). Helps
+ * narrow segments stay scannable and gives keyboard-only users the
+ * same affordance.
+ */
+function CoverageDistribution ({
+  histogram,
+  total,
+  active,
+  onSelect
+}: {
+  histogram: Record<Coverage, number>;
+  total: number;
+  active: Coverage | 'all';
+  onSelect: (tier: Coverage) => void;
+}) {
+  const present = COVERAGE_ORDER.filter((c) => (histogram[c] ?? 0) > 0);
+  return (
+    <div className='mt-5'>
+      <div className='flex items-baseline gap-2 mb-1.5'>
+        <span className='text-sm text-slate-700 font-medium'>{total}</span>
+        <span className='text-xs text-slate-500'>requirements</span>
+      </div>
+      <div className='flex h-3 rounded overflow-hidden border border-slate-200'>
+        {present.map((c) => {
+          const count = histogram[c] ?? 0;
+          const isActive = active === c;
+          const isMuted = active !== 'all' && !isActive;
+          return (
+            <button
+              key={c}
+              type='button'
+              onClick={() => onSelect(c)}
+              style={{ flex: count }}
+              className={`cov-${c} block transition-opacity ${
+                isMuted ? 'opacity-30' : 'opacity-100'
+              } ${isActive ? 'ring-2 ring-slate-700 ring-inset' : ''} hover:opacity-90`}
+              title={`${COVERAGE_LABELS_SHORT[c]}: ${count} (click to filter)`}
+              aria-label={`Filter to ${COVERAGE_LABELS_SHORT[c]} (${count})`}
+            />
+          );
+        })}
+      </div>
+      <div className='mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs'>
+        {present.map((c) => {
+          const count = histogram[c] ?? 0;
+          const isActive = active === c;
+          return (
+            <button
+              key={c}
+              type='button'
+              onClick={() => onSelect(c)}
+              className={`inline-flex items-center gap-1.5 ${
+                isActive ? 'text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <span className={`cov-${c} w-2 h-2 rounded-sm inline-block`} />
+              <span>{COVERAGE_LABELS_SHORT[c]}</span>
+              <span className='tabular-nums'>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function UtilityFilterPill ({
   active, onClick, children
 }: { active: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button
       type='button'
       onClick={onClick}
-      className={`px-2 py-0.5 rounded border text-xs ${
+      className={`px-2 py-0.5 rounded-full border text-xs transition-colors ${
         active
-          ? 'bg-slate-700 text-white border-slate-700'
+          ? 'bg-slate-800 text-white border-slate-800'
           : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'
       }`}
     >
