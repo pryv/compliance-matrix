@@ -254,6 +254,266 @@ export async function listPrimitiveCoverage (
     });
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Backlog / planned-change perspective
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface BacklogSummary {
+  /** Backlog slug (e.g. VULNERABILITY-DISCLOSURE-PROGRAM). */
+  slug: string;
+  /** Distinct chip count across the matrix. */
+  chip_count: number;
+  /** kind breakdown — { bug, feature, enhancement }. */
+  kinds: Record<PlannedKind, number>;
+  /** Highest impact among the chips (high > medium > low > null). */
+  max_impact: PlannedImpact | null;
+  /** Distinct (scope_id, ref) requirement pairs affected. */
+  requirement_count: number;
+  scope_count: number;
+  /** Any chip's tracking_url — typically the same GH issue for all chips. */
+  tracking_url: string | null;
+}
+
+const IMPACT_ORDER: Record<PlannedImpact, number> = { high: 3, medium: 2, low: 1 };
+
+export async function listBacklogs (): Promise<BacklogSummary[]> {
+  const db = await loadDb();
+  const raw = rows<any>(
+    db,
+    `SELECT backlog AS slug, kind, impact, tracking_url, scope_id, ref
+     FROM planned_changes
+     WHERE backlog IS NOT NULL`
+  );
+  const m = new Map<string, BacklogSummary>();
+  for (const r of raw) {
+    const slug = r.slug as string;
+    let entry = m.get(slug);
+    if (!entry) {
+      entry = {
+        slug,
+        chip_count: 0,
+        kinds: { bug: 0, feature: 0, enhancement: 0 },
+        max_impact: null,
+        requirement_count: 0,
+        scope_count: 0,
+        tracking_url: null
+      };
+      (entry as any)._reqs = new Set<string>();
+      (entry as any)._scopes = new Set<string>();
+      m.set(slug, entry);
+    }
+    entry.chip_count++;
+    entry.kinds[r.kind as PlannedKind] = (entry.kinds[r.kind as PlannedKind] ?? 0) + 1;
+    if (r.impact && (entry.max_impact == null ||
+        IMPACT_ORDER[r.impact as PlannedImpact] > IMPACT_ORDER[entry.max_impact])) {
+      entry.max_impact = r.impact as PlannedImpact;
+    }
+    if (r.tracking_url && !entry.tracking_url) entry.tracking_url = r.tracking_url;
+    (entry as any)._reqs.add(`${r.scope_id}::${r.ref}`);
+    (entry as any)._scopes.add(r.scope_id);
+  }
+  return Array.from(m.values()).map((e) => {
+    const reqs = (e as any)._reqs as Set<string>;
+    const scopes = (e as any)._scopes as Set<string>;
+    delete (e as any)._reqs;
+    delete (e as any)._scopes;
+    return { ...e, requirement_count: reqs.size, scope_count: scopes.size };
+  }).sort((a, b) => b.requirement_count - a.requirement_count);
+}
+
+export interface BacklogRow {
+  scope_id: string;
+  scope_short: string;
+  ref: string;
+  title: string;
+  coverage: Coverage;
+  facilitation_mode: FacilitationMode | null;
+  pryv_effort_saved: EffortSaved | null;
+  draft: boolean;
+  kind: PlannedKind;
+  impact: PlannedImpact | null;
+  summary: string;
+}
+
+export async function listBacklogCoverage (slug: string): Promise<BacklogRow[]> {
+  const db = await loadDb();
+  const raw = rows<any>(
+    db,
+    `SELECT r.scope_id, COALESCE(s.short, s.title) AS scope_short,
+            r.ref, r.title, r.coverage, r.facilitation_mode,
+            r.pryv_effort_saved, r.draft,
+            pc.kind, pc.impact, pc.summary
+     FROM planned_changes pc
+     JOIN requirements r ON r.scope_id = pc.scope_id AND r.ref = pc.ref
+     JOIN scopes s ON s.id = r.scope_id
+     WHERE pc.backlog = ?
+     ORDER BY r.scope_id, r.ref`,
+    [slug]
+  );
+  return raw.map((r) => ({ ...r, draft: !!r.draft }));
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Facilitation mode perspective
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface ModeSummary {
+  mode: FacilitationMode;
+  requirement_count: number;
+  scope_count: number;
+}
+
+export async function listFacilitationModes (): Promise<ModeSummary[]> {
+  const db = await loadDb();
+  const raw = rows<{ mode: FacilitationMode; rc: number; sc: number }>(
+    db,
+    `SELECT facilitation_mode AS mode,
+            COUNT(*) AS rc,
+            COUNT(DISTINCT scope_id) AS sc
+     FROM requirements
+     WHERE facilitation_mode IS NOT NULL
+     GROUP BY facilitation_mode
+     ORDER BY rc DESC`
+  );
+  return raw.map((r) => ({ mode: r.mode, requirement_count: r.rc, scope_count: r.sc }));
+}
+
+export async function listModeCoverage (
+  mode: FacilitationMode,
+  scopeIds: string[] = []
+): Promise<PrimitiveCoverageRow[]> {
+  const db = await loadDb();
+  let sql = `
+    SELECT r.scope_id, COALESCE(s.short, s.title) AS scope_short,
+           r.ref, r.title, r.coverage, r.facilitation_mode,
+           r.pryv_effort_saved, r.draft
+    FROM requirements r
+    JOIN scopes s ON s.id = r.scope_id
+    WHERE r.facilitation_mode = ?
+  `;
+  const params: unknown[] = [mode];
+  if (scopeIds.length > 0) {
+    sql += ` AND r.scope_id IN (${scopeIds.map(() => '?').join(',')})`;
+    params.push(...scopeIds);
+  }
+  sql += ' ORDER BY r.scope_id, r.ref';
+  const raw = rows<any>(db, sql, params);
+  return raw.map((r) => ({ ...r, draft: !!r.draft }));
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Global coverage view (across all scopes)
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface GlobalRow extends PrimitiveCoverageRow {}
+
+export async function listGlobalCoverage (
+  coverage: Coverage | null = null,
+  scopeIds: string[] = []
+): Promise<GlobalRow[]> {
+  const db = await loadDb();
+  let sql = `
+    SELECT r.scope_id, COALESCE(s.short, s.title) AS scope_short,
+           r.ref, r.title, r.coverage, r.facilitation_mode,
+           r.pryv_effort_saved, r.draft
+    FROM requirements r
+    JOIN scopes s ON s.id = r.scope_id
+    WHERE 1=1
+  `;
+  const params: unknown[] = [];
+  if (coverage) { sql += ' AND r.coverage = ?'; params.push(coverage); }
+  if (scopeIds.length > 0) {
+    sql += ` AND r.scope_id IN (${scopeIds.map(() => '?').join(',')})`;
+    params.push(...scopeIds);
+  }
+  sql += ' ORDER BY r.scope_id, r.ref';
+  const raw = rows<any>(db, sql, params);
+  return raw.map((r) => ({ ...r, draft: !!r.draft }));
+}
+
+export async function globalCoverageHistogram (): Promise<Record<Coverage, number>> {
+  const db = await loadDb();
+  const raw = rows<{ coverage: Coverage; c: number }>(
+    db,
+    'SELECT coverage, COUNT(*) c FROM requirements GROUP BY coverage'
+  );
+  const out: Record<Coverage, number> = {
+    implemented: 0, configurable: 0, facilitated: 0, documented: 0, 'out-of-scope': 0
+  };
+  for (const r of raw) out[r.coverage] = r.c;
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Context-note perspective
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface ContextNote {
+  id: string;
+  title: string;
+  summary: string;
+  requirement_count: number;
+  scope_counts: Record<string, number>;
+}
+
+export async function listContextNotes (): Promise<ContextNote[]> {
+  const db = await loadDb();
+  const notes = rows<{ id: string; title: string; summary: string }>(
+    db,
+    'SELECT id, title, summary FROM context_notes ORDER BY id'
+  );
+  const linkRows = rows<{ context_id: string; scope_id: string; c: number }>(
+    db,
+    `SELECT context_id, scope_id, COUNT(*) c
+     FROM context_links
+     GROUP BY context_id, scope_id`
+  );
+  const totals = new Map<string, number>();
+  const byScope = new Map<string, Record<string, number>>();
+  for (const r of linkRows) {
+    totals.set(r.context_id, (totals.get(r.context_id) ?? 0) + r.c);
+    const m = byScope.get(r.context_id) ?? {};
+    m[r.scope_id] = r.c;
+    byScope.set(r.context_id, m);
+  }
+  return notes.map((n) => ({
+    id: n.id,
+    title: n.title,
+    summary: n.summary,
+    requirement_count: totals.get(n.id) ?? 0,
+    scope_counts: byScope.get(n.id) ?? {}
+  }));
+}
+
+export async function getContextNote (id: string): Promise<ContextNote | null> {
+  const all = await listContextNotes();
+  return all.find((c) => c.id === id) ?? null;
+}
+
+export async function listContextNoteCoverage (
+  id: string,
+  scopeIds: string[] = []
+): Promise<PrimitiveCoverageRow[]> {
+  const db = await loadDb();
+  let sql = `
+    SELECT r.scope_id, COALESCE(s.short, s.title) AS scope_short,
+           r.ref, r.title, r.coverage, r.facilitation_mode,
+           r.pryv_effort_saved, r.draft
+    FROM context_links cl
+    JOIN requirements r ON r.scope_id = cl.scope_id AND r.ref = cl.ref
+    JOIN scopes s ON s.id = r.scope_id
+    WHERE cl.context_id = ?
+  `;
+  const params: unknown[] = [id];
+  if (scopeIds.length > 0) {
+    sql += ` AND cl.scope_id IN (${scopeIds.map(() => '?').join(',')})`;
+    params.push(...scopeIds);
+  }
+  sql += ' ORDER BY r.scope_id, r.ref';
+  const raw = rows<any>(db, sql, params);
+  return raw.map((r) => ({ ...r, draft: !!r.draft }));
+}
+
 export async function requirementLinks (scopeId: string, ref: string): Promise<RequirementLinks> {
   const db = await loadDb();
   const fetch1 = (table: string, col: string): string[] =>

@@ -118,6 +118,20 @@ db.exec(`
     summary TEXT NOT NULL
   );
 
+  CREATE TABLE context_notes (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL
+  );
+
+  CREATE TABLE context_links (
+    scope_id TEXT NOT NULL,
+    ref TEXT NOT NULL,
+    context_id TEXT NOT NULL,
+    FOREIGN KEY (scope_id, ref) REFERENCES requirements(scope_id, ref),
+    FOREIGN KEY (context_id) REFERENCES context_notes(id)
+  );
+
   CREATE TABLE meta (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -145,6 +159,8 @@ const insPlanned = db.prepare(`INSERT INTO planned_changes
   (scope_id, ref, seq, kind, summary, proposal, backlog, impact, tracking_url, eta_release)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 const insPrimRow = db.prepare('INSERT INTO pryv_primitives (id, summary) VALUES (?, ?)');
+const insCtxNote = db.prepare('INSERT INTO context_notes (id, title, summary) VALUES (?, ?, ?)');
+const insCtxLink = db.prepare('INSERT INTO context_links (scope_id, ref, context_id) VALUES (?, ?, ?)');
 const insMeta    = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?)');
 
 /**
@@ -183,9 +199,49 @@ const PRIMITIVES_DOC = path.join(ROOT, 'docs/pryv-primitives.md');
 const primitivesMd = fs.existsSync(PRIMITIVES_DOC) ? fs.readFileSync(PRIMITIVES_DOC, 'utf8') : '';
 const primitives = parsePrimitives(primitivesMd);
 
+/**
+ * Parse a context note file → { id, title, summary }.
+ * - id = filename without `.md`
+ * - title = first `# Heading` line (stripped of leading '# ')
+ * - summary = first non-heading, non-empty paragraph (joined into one line)
+ */
+function parseContextNote (filepath) {
+  const id = path.basename(filepath, '.md');
+  const md = fs.readFileSync(filepath, 'utf8');
+  const lines = md.split('\n');
+  let title = id;
+  let i = 0;
+  while (i < lines.length) {
+    const m = lines[i].match(/^#\s+(.+)$/);
+    if (m) { title = m[1].trim(); i++; break; }
+    i++;
+  }
+  while (i < lines.length && lines[i].trim() === '') i++;
+  const paragraphLines = [];
+  while (i < lines.length && lines[i].trim() !== '' && !lines[i].startsWith('#')) {
+    paragraphLines.push(lines[i].trim());
+    i++;
+  }
+  const summary = paragraphLines.join(' ').trim() || '(no summary)';
+  return { id, title, summary };
+}
+
+const CONTEXT_DIR = path.join(ROOT, 'context');
+const contextNotes = fs.existsSync(CONTEXT_DIR)
+  ? (await glob(path.join(CONTEXT_DIR, '*.md'))).map(parseContextNote).sort((a, b) => a.id.localeCompare(b.id))
+  : [];
+const contextIds = new Set(contextNotes.map((c) => c.id));
+
 const scopeFiles = await glob(path.join(ROOT, 'scopes/*.yml'));
 
 const tx = db.transaction(() => {
+  // Insert context_notes BEFORE the scope loop so that per-requirement
+  // context_links inserts can satisfy their FK constraint against
+  // context_notes(id) immediately.
+  for (const c of contextNotes) {
+    insCtxNote.run(c.id, c.title, c.summary);
+  }
+
   for (const f of scopeFiles) {
     const scope = yaml.load(fs.readFileSync(f, 'utf8'));
     insScope.run({
@@ -228,6 +284,16 @@ const tx = db.transaction(() => {
       for (const x of r.derives_from || []) insDerives.run(scope.id, r.ref, x);
       for (const x of r.pryv_primitives || []) insPrim.run(scope.id, r.ref, x);
       for (const x of r.sample_apps || []) insSample.run(scope.id, r.ref, x);
+      // Context-note refs harvested from prose. Pattern: `context/<id>.md`
+      // appearing in any of overview / detail / technical / text.
+      const proseBlob = [r.text, r.overview, r.detail, r.technical].filter(Boolean).join('\n');
+      const ctxSeen = new Set();
+      for (const m of proseBlob.matchAll(/context\/([a-z0-9-]+)\.md/g)) {
+        if (contextIds.has(m[1]) && !ctxSeen.has(m[1])) {
+          ctxSeen.add(m[1]);
+          insCtxLink.run(scope.id, r.ref, m[1]);
+        }
+      }
       let plannedSeq = 0;
       for (const p of r.planned || []) {
         insPlanned.run(
@@ -251,6 +317,7 @@ const tx = db.transaction(() => {
   insMeta.run('built_at', new Date().toISOString());
   insMeta.run('scope_count', String(scopeFiles.length));
   insMeta.run('primitive_count', String(primitives.length));
+  insMeta.run('context_note_count', String(contextNotes.length));
 });
 
 tx();
@@ -261,6 +328,8 @@ const stats = {
   test_links: db.prepare('SELECT COUNT(*) c FROM test_links').get().c,
   doc_links: db.prepare('SELECT COUNT(*) c FROM doc_links').get().c,
   primitives: db.prepare('SELECT COUNT(*) c FROM pryv_primitives').get().c,
+  context_notes: db.prepare('SELECT COUNT(*) c FROM context_notes').get().c,
+  context_links: db.prepare('SELECT COUNT(DISTINCT context_id) c FROM context_links').get().c,
   drafts: db.prepare('SELECT COUNT(*) c FROM requirements WHERE draft=1').get().c,
   planned: db.prepare('SELECT COUNT(*) c FROM planned_changes').get().c,
   planned_bugs: db.prepare("SELECT COUNT(*) c FROM planned_changes WHERE kind='bug'").get().c
@@ -271,5 +340,5 @@ db.close();
 console.log(`[OK]   built ${path.relative(ROOT, OUT)}`);
 console.log(`[OK]   ${stats.scopes} scope(s), ${stats.requirements} requirement(s) (${stats.drafts} draft)`);
 console.log(`[OK]   ${stats.test_links} test link(s), ${stats.doc_links} doc link(s)`);
-console.log(`[OK]   ${stats.primitives} pryv primitive(s)`);
+console.log(`[OK]   ${stats.primitives} pryv primitive(s), ${stats.context_notes} context note(s) (${stats.context_links} cited)`);
 console.log(`[OK]   ${stats.planned} planned change(s) (${stats.planned_bugs} queued bug fix(es))`);
