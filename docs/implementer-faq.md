@@ -2358,6 +2358,133 @@ deployment layer, not the platform.
 
 **Commit:** *(this commit)*.
 
+### Q32 — GDPR Art.32(1)(d): "regular testing, assessing, evaluating effectiveness of TOMs" — what does upstream Pryv ship?
+
+**Short answer:** **Mixed — three layers are filled by existing
+primitives + one layer is a genuine queued gap.**
+
+| Sub-question | Classification |
+|---|---|
+| Pen-test report? | Voluntarily missing |
+| Vulnerability disclosure program? | **Bug + small dev** — backlog `VULNERABILITY-DISCLOSURE-PROGRAM` |
+| Test suite as effectiveness evidence? | Filled by existing primitive |
+| Deploy-validation runbook? | Filled (with documentation gap — sample-app candidate) |
+
+**The customer scenario:**
+
+> "GDPR Art.32(1)(d) requires me to demonstrate regular testing,
+> assessing, and evaluating the effectiveness of TOMs. For my own
+> code, I run my own CI. But for the **Pryv platform itself** —
+> the substrate I rely on — what testing/assessment evidence does
+> upstream open-pryv.io ship that I can cite in my Art.32
+> compliance file?"
+
+**Code findings (verified before classifying):**
+
+| Question | Finding |
+|---|---|
+| Pen-test / security audit report? | **None published.** No `pen-test`, `penetration`, `security audit`, `security review` text in `open-pryv.io/*.md`. No CVE / GHSA references in CHANGELOG. |
+| Vulnerability disclosure program? | **Minimal.** `SECURITY.md` exists at `open-pryv.io/SECURITY.md` but is **6 lines** total; the only directive is "report to the [support team](https://github.com/pryv/open-pryv.io/issues)" — i.e., the public issue tracker. No `security@pryv.com` mailbox, no PGP key, no GitHub Security Advisories private-report flow enabled, no bounty, no scope statement, no response-time SLA, no safe-harbor language, no security.txt at deployment hosts. |
+| Test-suite scale | **~1816 tests PG baseline / ~1783 Mongo baseline / ~175 test files**. Two-engine matrix (PG default, Mongo opt-in). Lint + typecheck + per-component unit + integration + acceptance. CI green on both engines per Plan 56 close. |
+| Deploy-validation runbook? | **Yes (partial).** 8-row scenario deploy-validation matrix exercised on every release (internal artefact); post-deploy `lib-js` conformance suite at 168/169 baseline (per-deployment runnable) — but neither is packaged as a customer-facing "verify your deployment" guide. |
+| Dependabot / supply-chain | Covered by Q24 (`SUPPLY-CHAIN-SCANNING-PIPELINE` backlog filed; 22 alerts → 0 on `open-pryv.io` master per Plan 56). |
+
+**Per sub-question resolution:**
+
+1. **Pen-test / published security audit — voluntarily
+   missing.** No shipped pen-test report; operator commissions
+   their own if their deployment-tier compliance regime requires
+   it (HIPAA-CE / HDS / SOC 2). Pre-empting this gap is
+   operator-territory; a published redacted summary of any
+   internal review would be a "facilitated" addition if it
+   surfaces later but isn't required.
+
+2. **Vulnerability disclosure program — bug + small dev.**
+   `SECURITY.md` is materially under-specified for a substrate
+   that markets at GDPR / HIPAA / HDS / Swiss nLPD compliance
+   markets. The current "report via the public issue tracker"
+   directive is the **opposite** of responsible disclosure —
+   any researcher following the documented guidance creates a
+   public issue exposing the exploitable gap before the fix is
+   shipped. Modern open-source norm: private channel via
+   **GitHub Security Advisories** (free, GitHub-native) + a
+   `security@<domain>` mailbox + **PGP** key + explicit
+   **scope statement** + **response-time SLA**
+   (ack ≤ 72h / triage ≤ 14d / fix-or-mitigation ≤ 90d high
+   severity) + **safe-harbor** language for good-faith
+   researchers + a **published advisory history**. Three-phase
+   plan in `_plans/XXX-Backlog/VULNERABILITY-DISCLOSURE-PROGRAM.md`
+   (Tier 1 minimum viable VDP, Tier 2 process maturity, Tier 3
+   discoverability + ongoing assurance).
+
+3. **Test-suite scale as effectiveness evidence — filled by
+   existing primitive.** ~1816 tests passing on PostgreSQL +
+   ~1783 on MongoDB + ~175 test files across `components/*/
+   test/` + CI green on every commit + lint + typecheck gates +
+   the multi-engine matrix architecture — together this **is**
+   §1(d) "regular testing" effectiveness evidence under any
+   reasonable reading. Auditors will accept it; what's been
+   lacking is matrix prose that makes the claim explicit and
+   cites the concrete numbers. The Art.32 §1(d) detail block
+   has been rewritten this Q to surface the test-matrix
+   evidence inline (previously a 1-liner "DOCUMENTED").
+
+4. **Deploy-validation runbook — filled (with doc gap).** The
+   Plan-28-era 8-row deploy-validation matrix + the `lib-js`
+   conformance suite (168/169 baseline) together cover the
+   "verify your deployment behaves as the upstream tests
+   expect" use-case, but neither is packaged as a customer-
+   facing guide. Filed as sample-app proposal #6
+   (`deployment-verification-runbook`) in this plan's
+   `SAMPLE-APPS.md` parking buffer for plan-close build / defer /
+   drop decision. If accepted, it becomes a
+   `compliance-matrix/samples/deployment-verification-runbook/`
+   directory shipping a one-command operator-side script that
+   runs the lib-js conformance suite + reports
+   pass/fail against the deployed core.
+
+**Matrix encoding:**
+
+- `gdpr.Art.32` **§1(d) detail rewritten** — replaces the
+  prior 1-liner "DOCUMENTED — multi-engine test matrix
+  runbook" with the full evidence catalogue (CI test matrix +
+  lint + typecheck + deploy-validation + conformance suite +
+  supply-chain pipeline once shipped) **plus** explicit
+  partial-gap framing for VDP. New `planned:` chip for
+  `VULNERABILITY-DISCLOSURE-PROGRAM` (kind: enhancement,
+  impact: medium).
+- `iso-27001.A.5.7` (threat intelligence) overview rewritten
+  + new `planned:` chip — "Pryv's VDP + GHSA log becomes the
+  substrate-vulnerability threat-intelligence feed".
+- `iso-27001.A.5.24` (info-sec-incident-management planning)
+  overview extended + new `planned:` chip — VDP as the
+  externally-facing intake channel.
+- `hipaa-security.164.308(a)(6)(i)` (security incident
+  procedures) overview extended + new `planned:` chip — same
+  external-intake-channel framing.
+- `hipaa-security.164.308(a)(8)` (evaluation) overview
+  extended + new `planned:` chip — VDP + GHSA history as one
+  evidence input.
+- New `_plans/XXX-Backlog/VULNERABILITY-DISCLOSURE-PROGRAM.md`
+  — 3-tier plan with the full SECURITY.md template + scope
+  statement + SLA + safe harbor + security.txt notes.
+- New `compliance-matrix/proposals/vulnerability-disclosure-
+  program.md` — matrix-side mirror.
+- New `UPDATE-TRIGGERS.md` Section A entry
+  `VULNERABILITY-DISCLOSURE-PROGRAM`.
+- New `SAMPLE-APPS.md` proposal #6
+  (`deployment-verification-runbook`) for the Q4 sub-question.
+
+Classification: **mixed** — sub-questions Q1 / Q3 / Q4 are
+**"filled by existing primitive"** (with documentation
+tightening) or **"voluntarily missing"**; sub-question Q2 is
+**"bug + small dev"** with regulator-defensible work
+queued. The composite outcome is one new backlog file + one
+new sample-app candidate + matrix-prose strengthening on
+5 rows + new planned chips on 5 rows.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

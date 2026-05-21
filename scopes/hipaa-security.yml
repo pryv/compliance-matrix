@@ -973,13 +973,28 @@ requirements:
     draft: true
     pryv_primitives: [audit, observability-provider, access]
     derives_from: [hipaa-security.164.308(a)(1)(i)]
+    planned:
+      - kind: enhancement
+        summary: "Published vulnerability disclosure program becomes the externally-facing intake channel for substrate-vulnerability reports — strengthens the security-incident-procedure intake layer"
+        proposal: proposals/vulnerability-disclosure-program.md
+        backlog: VULNERABILITY-DISCLOSURE-PROGRAM
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/84
+        impact: low
     overview: |
       Incident-response procedure
       is the operator's organizational programme. Pryv contributes
       the detection + scoping data layer: audit log shows who
       accessed what; observability gives system-level anomaly
       signals; access primitives provide the containment mechanism
-      (revoke or scope-down the implicated access).
+      (revoke or scope-down the implicated access). For
+      substrate-vulnerability intake specifically (operator
+      learning that the Pryv version they run has a confirmed
+      vulnerability), the upstream's vulnerability disclosure
+      program is the externally-facing channel — today minimal
+      (SECURITY.md is a 6-line pointer at the public issue
+      tracker); modernised by backlog
+      `VULNERABILITY-DISCLOSURE-PROGRAM` (private GHSA flow +
+      `security@` mailbox + PGP + advisory history).
 
   - ref: 164.308(a)(7)(ii)(C)
     title: Emergency mode operation plan — Required
@@ -1027,12 +1042,25 @@ requirements:
     draft: true
     pryv_primitives: [audit, observability-provider]
     derives_from: [hipaa-security.164.316(b)(2)(iii)]
+    planned:
+      - kind: enhancement
+        summary: "Published vulnerability disclosure program + GHSA advisory history becomes one of the evidence inputs to the periodic evaluation (alongside audit log + test matrix + supply-chain pipeline)"
+        proposal: proposals/vulnerability-disclosure-program.md
+        backlog: VULNERABILITY-DISCLOSURE-PROGRAM
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/84
+        impact: low
     overview: |
       Evaluation is the operator's
       cyclical assessment. Pryv-side inputs: audit log (control-
       effectiveness sample), observability (operational stability
-      data), this matrix (control inventory to evaluate against).
-      The assessment write-up is operator-side.
+      data), this matrix (control inventory to evaluate against),
+      Pryv's test matrix (~1816 PG / ~1783 Mongo passing on every
+      commit — concrete §164.308(a)(8) effectiveness evidence),
+      Pryv's supply-chain pipeline (Q24 backlog `SUPPLY-CHAIN-
+      SCANNING-PIPELINE` once shipped), Pryv's vulnerability
+      disclosure program + GHSA advisory history (backlog
+      `VULNERABILITY-DISCLOSURE-PROGRAM` once shipped). The
+      assessment write-up is operator-side.
 
   - ref: "164.310(a)(1)"
     title: Facility access controls — standard

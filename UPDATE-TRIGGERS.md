@@ -312,6 +312,34 @@ software-supply-chain scope.
 
 Proposal: `proposals/supply-chain-scanning-pipeline.md`.
 
+### `VULNERABILITY-DISCLOSURE-PROGRAM`
+
+**Where the work lives**: `open-pryv.io` — rewrite
+`SECURITY.md`, enable GitHub Security Advisories private
+reporting on the repo, provision `security@<domain>` mailbox +
+PGP, publish scope + SLA + safe-harbor language + advisory
+history page; federate to sister repos (`dev-site`, `lib-js`,
+`data-types`, `app-web-auth3`, `pryv-account-backup`,
+`compliance-matrix`). Three-tier: minimum viable VDP (~1 day),
+process maturity (~3-5 days cumulative), discoverability +
+assurance (~1 day per quarter).
+
+Surfaced by Plan 71 Q32 (2026-05-21) — Art.32(1)(d) testing /
+effectiveness evidence gap-probing. Today's `SECURITY.md` is
+6 lines + directs reporters at the public issue tracker
+(opposite of responsible-disclosure norms).
+
+| Scope | Ref | Kind | Impact | After shipping |
+|---|---|---|---|---|
+| gdpr | Art.32 | enhancement | medium | §1(d) detail cites the published VDP + GHSA advisory history alongside the existing test-matrix evidence; operator-side Art.32 citability strengthens |
+| iso-27001 | A.5.7 | enhancement | medium | "threat intelligence" overview cites Pryv's VDP + GHSA flow + CVE history as the substrate-vulnerability threat-intelligence feed |
+| iso-27001 | A.5.24 | enhancement | low | info-sec-incident-management-planning overview cites VDP as the externally-facing intake channel |
+| hipaa-security | 164.308(a)(6)(i) | enhancement | low | security-incident-procedures overview cites VDP as the substrate-vulnerability intake channel |
+| hipaa-security | 164.308(a)(8) | enhancement | low | periodic-evaluation overview cites VDP + GHSA history as one evidence input |
+
+Proposal: `proposals/vulnerability-disclosure-program.md`.
+Backlog: `_plans/XXX-Backlog/VULNERABILITY-DISCLOSURE-PROGRAM.md`.
+
 ### `CONFIG-EFFECTIVE-EXPOSURE` (no proposal mirror yet)
 
 **Where the work lives**: `open-pryv.io` — new

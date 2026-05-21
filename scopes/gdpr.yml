@@ -1379,6 +1379,12 @@ requirements:
         backlog: PLATFORMDB-PII-HASHING
         tracking_url: https://github.com/pryv/open-pryv.io/issues/80
         impact: medium
+      - kind: enhancement
+        summary: "Published vulnerability disclosure program (security mailbox + PGP + GHSA + scope + SLA + safe harbor) strengthens §1(d) testing/effectiveness evidence; modernises today's bare SECURITY.md"
+        proposal: proposals/vulnerability-disclosure-program.md
+        backlog: VULNERABILITY-DISCLOSURE-PROGRAM
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/84
+        impact: medium
     overview: |
       Multi-aspect article —
       Pryv implements several aspects for you (access control,
@@ -1407,8 +1413,36 @@ requirements:
           HA via rqlite cluster, health-checks, audit log.
         - Restoration (§1(c)): IMPLEMENTED — `bin/backup.js --restore`
           per-user.
-        - Regular testing (§1(d)): DOCUMENTED — multi-engine test matrix
-          runbook.
+        - Regular testing (§1(d)): FILLED BY EXISTING PRIMITIVES +
+          PARTIALLY MISSING on the vulnerability-intake side.
+          **Existing evidence (citable today)**:
+            - **Multi-engine CI test matrix** — ~1816 tests on
+              PostgreSQL baseline + ~1783 on MongoDB baseline,
+              ~175 test files across `components/*/test/`; runs
+              on every commit + every PR.
+            - **Lint + typecheck gates** (`just lint` + `just
+              typecheck`) — neostandard with `{ semi: true }`,
+              `noUnused*` strict.
+            - **Deploy-validation matrix** (Plan-28-era internal
+              artefact) — 8-row scenario matrix exercised on
+              every release.
+            - **Conformance suite** (`lib-js` 168/169 baseline
+              against deployed core) — runnable per-deployment
+              for operator-side verification (sample-app
+              proposal queued to package this as a customer-
+              facing "verify your deployment" runbook).
+            - **Supply-chain pipeline** (Q24 backlog) —
+              once shipped, adds SBOM + signed images + CI gate
+              on `npm audit` + Trivy/Grype scan.
+          **Partial gap (queued)**: the vulnerability-intake
+          program. Today's `SECURITY.md` directs reporters at
+          the **public** issue tracker — opposite of responsible
+          disclosure norms. Backlog
+          `VULNERABILITY-DISCLOSURE-PROGRAM` ships the modern
+          shape (private channel via GitHub Security Advisories +
+          `security@` mailbox + PGP + scope + SLA + safe harbor
+          + advisory history) so operator can cite Pryv's VDP +
+          GHSA log as part of their Art.32(1)(d) evidence file.
 
   - ref: Art.33
     title: Notification of personal data breach to the supervisory authority
