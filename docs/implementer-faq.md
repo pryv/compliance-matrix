@@ -1747,6 +1747,112 @@ for Surface 3.
 
 **Commit:** *(this commit)*.
 
+### Q26 — GDPR Art.22 automated decision-making + profiling: what does Pryv do, what's on the implementer?
+
+**Short answer:** **Pryv does no automated decision-making or
+profiling — substrate only.** No inference, no classification,
+no scoring, no anomaly detection, no recommendation surface
+ships with open-pryv.io. Everything Art.22-relevant happens in
+**operator app code on top of Pryv**, with the consent +
+contract claims recorded on `access.clientData` per the
+established convention family.
+
+The Art.22 row's existing prose already encodes this correctly
+— Q26 is a **confirmation Q** rather than a gap-discovery one.
+What this Q surfaces is the consolidation of all the
+`clientData.*` conventions discovered across the gap-probing
+arc into a single canonical reference.
+
+**The three sub-questions:**
+
+1. **Does Pryv do automated decision-making or profiling?**
+   **No.** The platform is content-agnostic — it stores events,
+   carries access semantics, manages permissions, audit-logs
+   methods. It does not classify event content, score subjects,
+   detect anomalies, or surface recommendations. If your
+   deployment needs any of those, you run them in your app
+   layer (your ML model reads events via an access, computes,
+   writes the decision back as a `decisions/*` event).
+
+2. **Recording the "this access feeds automated decisions"
+   classification** — `access.clientData` carries it, same
+   pattern as every other regulatory basis claim. The Art.22
+   row's existing detail block documents the convention:
+
+   ```json
+   {
+     "clientData": {
+       "processing_purpose": "automated_decision_making",
+       "art22_basis": "(c) consent",
+       "decision_logic_version": "risk-model-v2.3.1"
+     }
+   }
+   ```
+
+   And the decision OUTPUT event (written to a `decisions/*`
+   stream by the operator's ML pipeline) carries
+   `clientData.input_audit_ref` pointing back to the audit-row
+   range that fed the decision — making "human intervention"
+   requests per Art.22(3) tractable (the subject can locate
+   the specific decision record).
+
+3. **Human-in-the-loop workflow (Art.22(3))** — not a Pryv
+   primitive. The implementer builds it on top of existing
+   primitives: a queue of decisions needing review (a stream
+   of pending-decision events), an admin app that surfaces
+   them, an audit-log entry for the human reviewer's
+   intervention. Pryv's existing `accesses.update` +
+   event-streaming machinery is sufficient; no platform
+   feature gap.
+
+**The broader pattern this Q surfaces** — `access.clientData`
+has emerged as **Pryv's unified compliance-claim surface**
+across the gap-probing arc:
+
+- `clientData.lawful_basis` — Art.6 (Q6)
+- `clientData.consent` + `clientData.consent_event_id` — Art.7
+- `clientData.special_category_basis` — Art.9 (Q22)
+- `clientData.transfer_basis` — Art.46 (Q25)
+- `clientData.processing_purpose` + `clientData.art22_basis` —
+  Art.22 (Q26 / existing matrix prose)
+- `clientData.purpose` — Art.30 general
+- `clientData.retention` — Art.5(1)(e)
+
+Each convention is **operator-side editorial discipline** —
+none require Pryv code changes. Together they make
+`GET /accesses` a near-complete Art.30 records-of-processing
+register, queryable in one `jq` command. Full consolidated
+reference: `context/client-data-conventions.md`.
+
+**Why this pattern is regulator-defensible without platform
+enforcement**:
+
+- **Durable persistence** — `clientData` survives access
+  updates; version chain preserved; deletions audit-logged.
+- **Single source of truth** — every basis claim is on the
+  same object as the technical authorisation it justifies.
+  Auditor can't claim "you said one thing in your notice and
+  authorised something else technically" — both are linked.
+- **Per-access granularity** — different accesses against the
+  same subject can carry different basis claims (research
+  under Art.6(1)(f), billing under Art.6(1)(b)). The register
+  reflects reality, not a global per-deployment assumption.
+
+**Matrix encoding:**
+
+- `gdpr.Art.22` unchanged — existing prose correctly encodes
+  the substrate-only + clientData-convention framing.
+- New `context/client-data-conventions.md` consolidating all
+  seven conventions discovered across the gap-probing arc into
+  a single canonical reference for implementers.
+- No backlog, no proposal, no `planned:` chips — classification
+  is **"filled by existing primitive (via documented
+  convention)"** for Q26.1 + Q26.2; **"voluntarily missing
+  (implementer-built workflow on existing primitives)"** for
+  Q26.3 human-in-the-loop.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:
