@@ -76,14 +76,28 @@ discloses them per Art.13(1)(f) where recipients exist.
 - **Code anchor**: `components/mfa/` module; CHANGELOG-v2
   Plan 26 entry.
 
-### Observability vendor (currently New Relic)
+### Observability vendor (pluggable façade — operator chooses)
 
-- **Config gate**: `observability.provider: newrelic` + the
-  encrypted-PlatformDB license key (Plan 38). Default
-  `observability.provider: disabled`.
-- **What flows out**: aggregated transaction metrics + error
-  traces. **With PII filters explicitly configured.** Concrete
-  attribute exclude list at
+- **Architecture**: the observability primitive is a
+  **provider-agnostic façade** at
+  `components/business/src/observability/index.ts` —
+  business-layer callers invoke
+  `{init, setTransactionName, recordError, recordCustomEvent,
+  startBackgroundTransaction}` without knowing which vendor's
+  adapter is attached. Vendor adapters live at
+  `providers/<id>/`. **New Relic ships as the first concrete
+  adapter** (`providers/newrelic/`); operators are free to
+  write or contribute adapters for any APM vendor — Datadog,
+  Honeycomb, OpenTelemetry collectors, internal Prometheus
+  pipelines, etc. The façade contract doesn't bind operators
+  to any specific vendor.
+- **Config gate**: `observability.provider: <id>` + the
+  vendor-specific encrypted-PlatformDB credentials (Plan 38
+  pattern). Default `observability.provider: disabled`.
+- **What flows out (NR adapter shipped today)**: aggregated
+  transaction metrics + error traces. **With PII filters
+  explicitly configured in the adapter.** Concrete attribute
+  exclude list at
   `components/business/src/observability/providers/newrelic/newrelic.ts:39-49`:
   ```
   allow_all_headers: false
@@ -98,15 +112,26 @@ discloses them per Art.13(1)(f) where recipients exist.
   transaction_tracer.record_sql: 'off'
   ```
   Plus `high_security` toggle off-by-default (account-side
-  HSM, irreversible — operator opts in).
-- **Posture**: opt-in; PII filters are platform-defined defaults
-  (operator can tighten further but cannot disable the
-  authorization/cookie/body excludes without modifying source).
-  The provider façade (`components/business/src/observability/`)
-  is pluggable — a future provider would inherit the same
-  attribute-exclude posture.
+  HSM, irreversible — operator opts in if their NR account
+  supports it).
+- **What flows out (custom adapter)**: vendor-specific.
+  **The façade does NOT enforce PII filtering across all
+  providers** — every custom adapter implements filtering
+  through its vendor's mechanism (Datadog's attribute filters,
+  Honeycomb's redaction processor, OTel's span processor
+  attribute filter, etc.). The operator writing or installing
+  a custom adapter owns the PII-filter equivalence check
+  against the NR adapter's posture; the reviewer asking "what
+  does my observability vendor see?" needs an answer specific
+  to the adapter in use.
+- **Posture**: pluggable + opt-in. New Relic adapter ships with
+  strict defaults the operator can tighten further but cannot
+  loosen without modifying source. Custom adapters require
+  operator review.
 - **Code anchor**: `components/business/src/observability/`
-  module; CHANGELOG-v2 Plan 38 entry.
+  module (façade + envBuilder + logForwarder);
+  `providers/newrelic/` (first concrete adapter); CHANGELOG-v2
+  Plan 38 entry.
 
 ### Upstream catalogue fetch (`service.eventTypes`)
 

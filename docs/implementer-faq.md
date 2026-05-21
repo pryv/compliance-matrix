@@ -1334,9 +1334,14 @@ exclude list.
      catalogue fetch (`service.eventTypes` URL — fetch-only of
      JSON Schema fragments; no personal data crosses the
      boundary).
-   - **Filtered PII**: observability vendor (currently New
-     Relic) — receives aggregated metrics + error traces with
-     a hard-coded attribute-exclude list.
+   - **Filtered PII**: observability vendor (operator's choice
+     — the façade is pluggable; New Relic ships as the first
+     adapter). With the NR adapter, aggregated metrics + error
+     traces flow with a hard-coded attribute-exclude list in
+     front. Custom adapters (Datadog, Honeycomb, OpenTelemetry,
+     internal Prometheus pipelines, etc.) implement PII
+     filtering through their vendor's mechanism; the operator
+     owns the equivalence check.
 
 3. **Are there platform guarantees about what flows where?** —
    Yes, three layers, each verified in code + tests:
@@ -1374,7 +1379,17 @@ exclude list.
    PII-in-logs policy fill the rest of the picture.
 
    **Layer 3 — Observability PII filter** (when observability
-   opt-in): hard-coded attribute exclude list at
+   opt-in, provider-specific): the **observability primitive
+   is a pluggable façade** at
+   `components/business/src/observability/index.ts` — any APM
+   vendor's adapter plugs in via the
+   `{init, setTransactionName, recordError, recordCustomEvent,
+   startBackgroundTransaction}` contract. **New Relic ships as
+   the first concrete adapter**; operators free to write
+   adapters for Datadog, Honeycomb, OpenTelemetry, an internal
+   Prometheus pipeline, or any vendor the deployment requires.
+
+   The NR adapter's hard-coded attribute exclude list at
    `components/business/src/observability/providers/newrelic/
    newrelic.ts:39-49`:
 
@@ -1395,9 +1410,13 @@ exclude list.
 
    Plus `high_security: false` default — operator opts into
    account-side HSM if their observability account supports
-   it. The exclude list is platform-defined; the operator can
-   tighten further but not loosen the credential-strip
-   guarantees without modifying source.
+   it. For the NR adapter, the exclude list is platform-defined
+   in the adapter source; the operator can tighten further but
+   not loosen the credential-strip guarantees without modifying
+   adapter source. For custom adapters, **the operator owns the
+   PII-filter equivalence** — every custom adapter must be
+   reviewed for its own PII-exposure surface; the façade
+   contract doesn't enforce filtering across all providers.
 
 **Subprocessor inventory at deployment level** — five opt-in
 integrations, each off by default:
@@ -1407,7 +1426,7 @@ integrations, each off by default:
 | `letsEncrypt.enabled: true` (Plan 35) | LE — or any ACME directory you point `directoryUrl` at | Hostnames for ACME challenges only — no user data. Operator's call whether LE matches their compliance posture; alternative CAs drop in without code changes |
 | `services.email.smtp.*` (Plan 39) | Operator's SMTP relay | Email + name + one-time tokens; body templates operator-owned via admin panel |
 | `services.mfa.mode: enabled` + `sms.endpoints[*]` (Plan 26) | Operator's SMS provider | Phone number + MFA code |
-| `observability.provider: newrelic` (Plan 38) | New Relic (or pluggable provider) | Aggregated metrics + error traces; Layer 3 PII filter in front |
+| `observability.provider: <id>` (Plan 38) | Operator's chosen APM vendor — pluggable façade; New Relic ships as the first adapter; Datadog / Honeycomb / OpenTelemetry / internal Prometheus / etc. drop in as custom `providers/<id>/` adapters | Aggregated metrics + error traces; Layer 3 PII filter is adapter-specific (NR adapter ships a strict exclude list) |
 | `service.eventTypes: <URL>` (default points at upstream `pryv/data-types`) | Catalogue host | **Fetch-only of schemas INTO the core; no personal data flows out** — pinning to self-hosted URL severs the dependency entirely |
 
 **Where Pryv-the-software is NOT the Art.28 answer-source**:

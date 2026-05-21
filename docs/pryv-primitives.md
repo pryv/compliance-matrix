@@ -343,11 +343,35 @@ mTLS-protected Raft. PlatformDB pre-registration + DNS auto-publish.
 
 ### `observability-provider`
 
-`PRYV_OBSERVABILITY_PROVIDER` env (New Relic adapter shipped first).
-Filtered attributes (strips authorization / cookie / x-* / body).
+**Provider-agnostic façade**. The primitive is the façade contract
+at `components/business/src/observability/index.ts` — a clean
+`{init, isActive, setTransactionName, recordError,
+recordCustomEvent, startBackgroundTransaction}` interface that any
+provider plugs into without business-layer code edits. **New Relic
+ships as the first concrete adapter** at
+`components/business/src/observability/providers/newrelic/` —
+operators free to write or contribute adapters for Datadog,
+Honeycomb, OpenTelemetry, an internal Prometheus pipeline, or any
+APM the deployment requires. `PRYV_OBSERVABILITY_PROVIDER` env
+selects which adapter is loaded.
 
-- **Compliance role**: monitoring (ISO 27001 A.8.16) without leaking
-  PII to the provider.
+- **Compliance role**: monitoring (ISO 27001 A.8.16) without
+  leaking PII to the provider.
+- **PII filtering posture**: provider-specific. The shipped NR
+  adapter's exclude list at
+  `providers/newrelic/newrelic.ts:39-49` strips
+  `authorization` / `cookie` / `proxy-authorization` /
+  `set-cookie*` / `x-*` request headers + `request.body` + SQL
+  statements; `allow_all_headers: false`; `record_sql: 'off'`.
+  Custom adapters are responsible for implementing equivalent
+  safeguards through their vendor's mechanism — the façade
+  contract doesn't enforce filtering across all providers, so
+  every custom adapter must be reviewed for its own PII
+  exposure surface.
+- **No-op when disabled**: the façade is a cheap pass-through
+  when no provider is attached (`activeProvider === null`), so
+  business-layer callers can invoke it unconditionally with
+  zero overhead.
 
 ### `CMC`
 

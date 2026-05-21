@@ -1075,7 +1075,7 @@ requirements:
       | `letsEncrypt.enabled: true` | LE (or any `letsEncrypt.directoryUrl` ACME CA) | hostnames only for ACME challenges; **no user data** |
       | `services.email.smtp.*` | operator's SMTP relay | email + name + one-time tokens (templated bodies) — PII |
       | `services.mfa.mode: enabled` + `sms.endpoints[*]` | operator's SMS provider | phone number + MFA code — PII |
-      | `observability.provider: newrelic` | New Relic | aggregated metrics + error traces; PII filters platform-defined (see below) |
+      | `observability.provider: <id>` | Operator's chosen APM vendor (New Relic ships as the first adapter; the façade is pluggable — Datadog, Honeycomb, OpenTelemetry, internal Prometheus pipelines, etc. all drop in via a custom adapter under `providers/<id>/`) | aggregated metrics + error traces; PII filter is provider-specific (NR adapter ships a strict attribute-exclude list — see Layer 3 below) |
       | `service.eventTypes: https://...` | upstream catalogue host | **no personal data flows out** — fetch-only of JSON Schema fragments |
 
       **Let's Encrypt posture (operator clarification)**: ships as a
@@ -1105,12 +1105,19 @@ requirements:
          + `system-seq.test.js:533`. Honest scope: redacts
          credentials, not PII broadly — emails / usernames / event
          payloads only leak if a caller explicitly logs them.
-      3. **Observability PII filters** (when observability opt-in) —
+      3. **Observability PII filters** (when observability opt-in,
+         provider-specific) — the shipped New Relic adapter's
          hard-coded attribute exclude list at
          `components/business/src/observability/providers/newrelic/
          newrelic.ts:39-49`: strips `request.headers.{authorization,
          cookie,proxy-authorization,set-cookie*,x-*}` + `request.
          body`; `record_sql: 'off'`; `allow_all_headers: false`.
+         The façade contract itself is pluggable — a custom
+         adapter (Datadog, Honeycomb, OpenTelemetry, internal
+         Prometheus, etc.) implements PII filtering through its
+         vendor's mechanism. **Operators writing custom adapters
+         own the PII-filter equivalence** — review every custom
+         adapter for its own PII-exposure surface.
 
       **§3(g) deletion / return of personal data at the end of
       provision** — `bin/backup.js` + `system.users.delete` cover
