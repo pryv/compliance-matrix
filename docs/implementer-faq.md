@@ -1860,9 +1860,9 @@ founding pattern, not retrofitted** — Data Governance + Access
 Control + per-Subject audit are separate layers every process
 traverses; the process registry is self-documented (`GET
 /accesses` + audit log IS the Art.30 register). Twelve concrete
-defaults satisfy Art.25(2). Source-of-truth: the Pryv-authored
-"Privacy by design by default — Technical Implementation"
-reference; the matrix encodes it canonically in
+defaults satisfy Art.25(2). Customer-facing reference at
+[`pryv.github.io/guides/privacy-by-design.html`](https://pryv.github.io/guides/privacy-by-design.html);
+matrix-internal canonical treatment at
 `context/privacy-by-design-and-default.md`.
 
 **Architectural commitment (§1)** — Pryv's topology contrasts
@@ -1912,7 +1912,7 @@ by-default settings)**:
 - Is the operator's auth UI using the opt-in pattern, or a
   "by continuing you agree" anti-pattern?
 
-**Privacy-enhancing technologies (PETs)** the Pryv reference
+**Privacy-enhancing technologies (PETs)** the dev-site guide
 catalogues — operator's enrichment path:
 
 - **Pseudonymisation** — partial; `auth.randomAlias` planned
@@ -1926,12 +1926,11 @@ catalogues — operator's enrichment path:
   computation — out-of-scope at platform layer; implementer
   enrichment.
 
-**Customer-facing surface** — proposing
-`dev-site/src/guides/privacy-by-design.md` as a new Guides page
-exposing the architecture story to customers + auditors
-directly. The Pryv-authored reference PDF lives in
-`_plans/71-...` (Plan-71-internal); the dev-site page surfaces
-the same content under a customer-facing URL.
+**Customer-facing surface** — shipped: the new dev-site Guides
+page [`pryv.github.io/guides/privacy-by-design.html`](https://pryv.github.io/guides/privacy-by-design.html)
+exposes the architecture story to customers + auditors
+directly. This is the citable public artefact; the matrix
+context note mirrors it for internal cross-referencing.
 
 **Matrix encoding:**
 

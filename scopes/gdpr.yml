@@ -1036,10 +1036,8 @@ requirements:
       Pryv's architecture is privacy-by-design **by founding
       pattern**, not retrofitted. Canonical treatment + the
       12-default catalogue: `context/privacy-by-design-and-
-      default.md`. Source: the Pryv-authored
-      "Privacy by design by default — Technical Implementation"
-      reference; matrix prose adapts that material with
-      verified code citations.
+      default.md` (matrix-internal); customer-facing surface
+      [`pryv.github.io/guides/privacy-by-design.html`](https://pryv.github.io/guides/privacy-by-design.html).
 
       **Architectural commitment (§1)** — the topology:
       Data Governance + Access Control + Audit-per-Subject as
@@ -1089,12 +1087,12 @@ requirements:
         - Is your subject's notice-of-collection on by default?
         - Is data retention set to the shortest necessary period?
         - Is your auth UI surface using the opt-in pattern
-          (privacy-by-default UX from the Pryv-authored
+          (privacy-by-default UX from the dev-site
           reference) rather than the standard "by continuing
           you agree" anti-pattern?
 
       Privacy-enhancing technologies (PETs) catalogued in the
-      Pryv reference: pseudonymisation (partial — `ALIASES`
+      dev-site guide: pseudonymisation (partial — `ALIASES`
       backlog upgrades), proxy re-encryption (`E2E-ENCRYPTION`
       backlog + the github.com/perki/test-proxy-re-encrypt PoC),
       homomorphic encryption + differential privacy + MPC

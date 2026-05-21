@@ -14,14 +14,15 @@ catalogue of **Pryv defaults that satisfy Art.25(2)** plus the
 an operator can point an auditor at it as the "single
 regulator-defensible reference for the platform's PbD posture".
 
-Source of truth: the Pryv-authored technical-implementation
-reference (PDF: *"Privacy by design by default - Technical
-Implementation"*, 2021). This context note adapts that material
-into the matrix-internal format with verified code citations.
+Source of truth: the customer-facing dev-site guide at
+[`pryv.github.io/guides/privacy-by-design.html`](https://pryv.github.io/guides/privacy-by-design.html)
+(`dev-site/src/guides/privacy-by-design.md`). This context note
+mirrors that material into the matrix-internal format with
+verified code citations + matrix-style cross-references.
 
 ## The architectural commitment (Art.25(1))
 
-The Pryv-architecture diagram contrasts **standard** vs.
+The Pryv architecture contrasts **standard** vs.
 **privacy-by-design** topology:
 
 **Standard topology** (PbD anti-pattern):
@@ -69,7 +70,7 @@ Every implementer who deploys Pryv inherits the topology.
 
 ## The data-model commitment (Art.25(1) + §5(c) data minimisation)
 
-The Pryv-authored reference contrasts **standard relational**
+The dev-site guide contrasts **standard relational**
 vs. **Pryv streams-and-events**:
 
 **Standard relational data model** (PbD anti-pattern):
@@ -107,7 +108,7 @@ per-table SQL gymnastics.
 
 ## Privacy-by-default UI pattern (Art.25(2))
 
-The Pryv reference contrasts **standard cookie-banner UX** vs.
+The dev-site guide contrasts **standard cookie-banner UX** vs.
 **privacy-by-default UX**:
 
 **Standard "by continuing" pattern** (Art.25(2) anti-pattern):
@@ -243,7 +244,7 @@ even if UI is implementer-built (per Q19 backlog).
 
 ## The four PbD principles (regulatory framing)
 
-Maps the Pryv-authored reference's four-quadrant model to the
+Maps the dev-site guide's four-quadrant model to the
 GDPR Art.25 axes:
 
 | PbD principle | What Pryv ships |
@@ -255,7 +256,7 @@ GDPR Art.25 axes:
 
 ## Cryptographic technologies for privacy (deferred / brainstorm)
 
-The Pryv-authored reference catalogues four PETs (privacy-
+The dev-site guide catalogues four PETs (privacy-
 enhancing technologies) the platform could absorb. Status:
 
 | PET | Today | Backlog status |
@@ -302,7 +303,7 @@ narrative recipe:
 - No backlog or proposal — Pryv's architectural posture IS
   the answer; existing primitives carry it.
 - The `E2E-ENCRYPTION` backlog (existing) covers the
-  proxy-re-encryption PET; the Pryv-authored reference's
+  proxy-re-encryption PET; the dev-site guide's
   PoC at github.com/perki/test-proxy-re-encrypt should be
   cited in `proposals/e2e-encryption.md`.
 
@@ -324,8 +325,7 @@ narrative recipe:
   mandatory subprocessors + data-flow guarantees.
 - `proposals/e2e-encryption.md` + the
   github.com/perki/test-proxy-re-encrypt PoC.
-- Pryv-authored source PDF: *"Privacy by design by default -
-  Technical Implementation"* (2021) — held in
-  `_plans/71-compliance-regulation-matrix-atwork/` for
-  Plan-71-internal reference; consider re-publishing on
-  `dev-site` as the customer-facing artefact.
+- Customer-facing dev-site guide:
+  [`pryv.github.io/guides/privacy-by-design.html`](https://pryv.github.io/guides/privacy-by-design.html)
+  (`dev-site/src/guides/privacy-by-design.md`) — the citable
+  public artefact this note mirrors.
