@@ -143,6 +143,45 @@ processing register. Less structured than the others; useful
 when the operator wants a human-readable purpose statement
 alongside the lit-letter claims above.
 
+### `clientData.compatibility_assessment_event_id` + `purpose_change_basis` + `previous_purpose` — Art.6(4) (Q34)
+
+For Art.6(4) further-processing pivots — the §4 "compatible
+purpose OR fresh lawful basis" test. Three-field set:
+
+- **`compatibility_assessment_event_id`** — pointer to the
+  `compliance/compatibility-assessments/<id>` event recording
+  the 5-factor (§6(4)(a)-(e)) reasoning + the affected data
+  scope + the decision outcome. The assessment artefact is
+  operator-authored (Q14 custom catalogue extension); the
+  pointer lives on every access whose purpose was justified
+  by it.
+- **`purpose_change_basis`** — enum of
+  `compatible_purpose` / `new_consent` / `new_legal_obligation`
+  / `new_legitimate_interest`. Names the Art.6(4) pivot
+  justification — compatibility test passed vs. fresh-basis
+  applied.
+- **`previous_purpose`** — free-text or structured record of
+  the prior purpose claim (the pivot record). Trivially
+  recoverable from the access-version history, but the
+  redundant copy at the new-purpose moment makes
+  "what changed and when" answerable from a single row
+  rather than a chain walk.
+
+Usage pattern depends on which of the four Art.6(4) operator
+patterns applies (see `gdpr.Art.6` detail):
+
+| Pattern | Where the three fields live |
+|---|---|
+| A (mint new access for new purpose) | On the **new** access's `clientData`; `previous_purpose` records the old purpose; old access's `clientData` unchanged. |
+| B (update existing access) | On the updated access; access-version chain preserves the pre-mutation copy automatically. |
+| C (separate assessment event) | `compatibility_assessment_event_id` is mandatory on the access; the other two fields ride alongside. |
+| D (sub-access from app seed) | On the new sub-access; parent app access unchanged. `createdBy` on the sub-access traces back to the seed. |
+
+Decision rule: when the new purpose is **outside** the original
+AND not covered by a fresh override-by-law basis → Pattern A
+mint-new-access + force fresh consent via app-web-auth3. See
+`gdpr.Art.6` §4 detail for the full decision tree.
+
 ### `clientData.retention` + `access.expires` — Art.5(1)(e) / Art.30
 
 The retention policy / expiry attached to the access — both

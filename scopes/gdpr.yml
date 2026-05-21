@@ -276,12 +276,14 @@ requirements:
     text: |
       Processing lawful only if at least one of six bases applies (consent,
       contract, legal obligation, vital interests, public interest,
-      legitimate interests).
+      legitimate interests). §4 — further processing for a purpose other
+      than the original is lawful only if compatible per the five-factor
+      test OR a fresh lawful basis applies.
     coverage: facilitated
     pryv_effort_saved: low
     facilitation_mode: storage
     draft: true
-    pryv_primitives: [access, clientData]
+    pryv_primitives: [access, clientData, audit, event]
     overview: |
       You decide which Art.6 basis
       you're relying on for each processing activity. Pryv doesn't
@@ -289,12 +291,102 @@ requirements:
       `access.clientData.lawful_basis` so it travels alongside the
       technical authorization and lives in the audit trail — handy
       when an auditor asks "under what basis was this access made?".
+      For Art.6(4) further processing (purpose pivot), Pryv exposes
+      four composable patterns + a clear decision rule for when the
+      purpose pivot demands fresh consent vs. an in-place update —
+      see detail.
     detail: |
       Recording the basis on the access gives you a durable, versioned
       artefact tying the basis to the specific processing scope it
       justifies. Determination of which basis applies remains your
       responsibility — Pryv neither enforces nor refuses on the basis
       claim.
+
+      **§4 — further processing (purpose pivot).** Four composable
+      patterns; choose per the compatibility-vs-fresh-consent
+      decision rule below.
+
+      **Pattern A — Mint a new access for the new purpose.** The
+      cleanest fit when the new purpose is **outside** the original
+      OR is not covered by a fresh override-by-law basis (Art.6(4)(a)
+      compatibility test fails). The subject sees a fresh auth flow;
+      `app-web-auth3` presents the new notice + new purpose explicitly;
+      the new access carries `clientData.purpose: <new>` +
+      `clientData.lawful_basis: <fresh>`. Old access keeps operating
+      for its original purpose (or is revoked separately if
+      withdrawn). This pattern is the **mandatory** path when the
+      compatibility test fails — fresh consent is required.
+
+      **Pattern B — Update existing access** (`accesses.update`).
+      Suitable when the purpose change is narrow / compatible (e.g.,
+      scope-down or compatible expansion). The pre-mutation
+      `permissions` + `clientData` snapshot into a history row
+      automatically (see `context/access-versioning.md`), preserving
+      the purpose-history chain end-to-end. The bumped `accessSerial`
+      threads through the audit log so post-pivot rows correctly
+      attribute to the new purpose state.
+
+      **Pattern C — Separate compatibility-assessment event.** When
+      the operator wants the Art.6(4) 5-factor analysis itself
+      recorded as a first-class artefact, write a
+      `compliance/compatibility-assessments/<id>` event on a
+      dedicated stream (operator-authored format via Q14 custom
+      catalogue) capturing the §6(4)(a)-(e) reasoning + the affected
+      data scope + the decision outcome. The relevant access(es)
+      then reference it via
+      `clientData.compatibility_assessment_event_id`. This pattern
+      composes with A or B (the assessment artefact justifies the
+      pattern choice).
+
+      **Pattern D — Sub-access derivation from an `app` access**
+      (`createdBy` mechanism, see `context/workforce-access-patterns.md`
+      Pattern 2). When the operator's app holds an `app`-type access
+      with broad scope, it can mint per-purpose **sub-accesses** —
+      each carrying its own narrower `permissions[]` +
+      `clientData.purpose` — and the audit log records each
+      sub-access's id independently, **feeding purpose-driven access
+      matching into the audit trail at query time** (`audit.get` →
+      group by `accessId` → distinct purposes touched). Especially
+      clean when the same app legitimately operates under multiple
+      compatible-purpose facets — each facet gets its own sub-access,
+      so per-purpose disclosure accounting (Art.30 / §164.528)
+      reconstructs from the audit log without operator-side
+      bookkeeping.
+
+      **Decision rule** (operator-side):
+
+      1. New purpose is **inside** the original purpose's scope (a
+         compatible refinement / narrowing) → **Pattern B** update
+         existing access. No fresh consent. Update notice if material.
+      2. New purpose is **alongside** the original (compatible
+         expansion, same app, multiple facets) → **Pattern D**
+         sub-access mint, OR **Pattern A** new access. No fresh
+         consent required if compatibility test passes;
+         transparency-notice update may be required under Art.13(3).
+      3. New purpose is **outside** the original AND not covered by
+         a fresh override-by-law basis (Art.6(1)(c)/(d)/(e)) →
+         **Pattern A** mint new access + force fresh consent. The
+         subject's positive opt-in is mandatory under Art.6(4) when
+         compatibility fails. App-web-auth3's grant flow IS the
+         re-prompt mechanism.
+      4. In **any** case where the 5-factor compatibility analysis
+         was non-trivial → **Pattern C** separate compatibility-
+         assessment event for audit-defensibility.
+
+      **Re-prompt surface (§4 fallback):** Pryv has no built-in
+      "notice changed → automatically re-prompt subject" workflow.
+      The operator's app layer triggers re-auth by minting a new
+      access (Pattern A) — `app-web-auth3` presents the updated
+      notice; the subject's positive consent IS the fresh-basis
+      capture. For revocation of the old access alongside the
+      new mint, `accesses.delete` is the standard path (Q19 / Q28
+      mechanism family).
+
+      **clientData convention extension** for §4 purpose pivots:
+      `compatibility_assessment_event_id` + `purpose_change_basis`
+      (`compatible_purpose` / `new_consent` / `new_legal_obligation`
+      / `new_legitimate_interest`) + `previous_purpose` (the pivot
+      record). See `context/client-data-conventions.md`.
 
   - ref: Art.7
     title: Conditions for consent

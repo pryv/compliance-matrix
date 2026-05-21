@@ -2622,6 +2622,121 @@ operators — they already have the comms stack.
 
 **Commit:** *(this commit)*.
 
+### Q34 — GDPR Art.6(4) compatible-purpose secondary processing
+
+**Short answer:** **Filled by existing primitives (via clientData
+convention + 4 composable patterns).** Pryv exposes four
+composable access-management patterns for purpose pivot — the
+operator picks per the compatibility-vs-fresh-consent decision
+rule. The fourth pattern (sub-access from an `app` seed) feeds
+**purpose-driven access matching directly into the audit
+trail**, which is the Pryv-native answer when an app
+legitimately operates under multiple compatible-purpose facets.
+A new three-field clientData convention records the §6(4) pivot
+metadata for regulator-defensibility.
+
+**The customer scenario:**
+
+> "GDPR Art.6(4) lets me process for a new purpose ONLY if
+> compatible per the 5-factor test OR I have a new lawful basis.
+> When the purpose changes for already-collected wellness data
+> (e.g., health-tracking → ML model training), what's the
+> Pryv-side mechanism, how is purpose-history audited, and is
+> there platform support for re-prompting the subject?"
+
+**Three sub-questions resolved one by one:**
+
+### Sub-Q1 — mechanism for purpose change
+
+**Four composable patterns** + a clear decision rule.
+
+| Pattern | Mechanism | When to use |
+|---|---|---|
+| **A — Mint new access** | `accesses.create` with `clientData.purpose: <new>` + fresh consent flow via app-web-auth3 | **Mandatory** when new purpose is outside the original AND no fresh override-by-law basis applies (Art.6(4)(a) compatibility test fails → fresh consent required) |
+| **B — Update existing access** | `accesses.update` with new `permissions` + `clientData`; access-version chain preserves prior state | Narrow / compatible change (scope-down or compatible expansion); audit chain reconstructs purpose-history automatically |
+| **C — Separate compatibility-assessment event** | `compliance/compatibility-assessments/<id>` event on dedicated stream (operator-authored format via Q14); access carries `compatibility_assessment_event_id` pointer | Whenever the 5-factor analysis is non-trivial; composes with A or B |
+| **D — Sub-access derivation from `app` seed** | App access mints per-purpose sub-accesses via `createdBy` mechanism (`context/workforce-access-patterns.md` Pattern 2); each sub-access has its own narrower `permissions[]` + `clientData.purpose` | When same app legitimately operates under multiple compatible-purpose facets — **audit log records each sub-access id independently, feeding purpose-driven access matching at query time** (operator addition; key correction to my initial analysis) |
+
+**Decision rule** (operator-side):
+
+1. New purpose **inside** the original (compatible refinement /
+   narrowing) → Pattern B; no fresh consent.
+2. New purpose **alongside** the original (compatible expansion,
+   same app, multiple facets) → Pattern D sub-access OR Pattern
+   A new access; no fresh consent if compatibility passes; Art.13(3)
+   notice update may be required.
+3. New purpose **outside** the original AND not covered by fresh
+   override-by-law basis → **Pattern A + force fresh consent**.
+   "If the purpose is outside the initial one or not in cases
+   covered by law, the logic would require a new consent"
+   (operator confirmation).
+4. Any non-trivial 5-factor analysis → **Pattern C**
+   compatibility-assessment event for audit-defensibility.
+
+### Sub-Q2 — purpose-history audit chain
+
+**Yes — access-versioning preserves it automatically.** Pattern
+B's `accesses.update` snapshots the pre-mutation `permissions` +
+`clientData` (including prior `purpose`) into a history row;
+`accesses.get ?includeHistory=true` returns the full chain. The
+bumped `accessSerial` threads through every audit row so
+post-pivot reads/writes correctly attribute to the new purpose
+state, and pre-pivot rows resolve via history-walk to the prior
+state. Cross-link to `context/access-versioning.md` for the
+snapshot semantics + the wire-format details.
+
+### Sub-Q3 — re-prompt support
+
+**No built-in re-prompt workflow** — operator's app layer
+triggers fresh consent by minting a new access (Pattern A) and
+presenting the updated notice via `app-web-auth3`. The subject's
+positive opt-in IS the fresh-basis capture under Art.6(4) when
+compatibility fails. For revocation of the old access alongside
+the new mint, `accesses.delete` is the standard path (Q19 / Q28
+withdrawal mechanism family).
+
+**clientData convention extension** (added to
+`context/client-data-conventions.md` — 9 conventions total):
+
+- `clientData.compatibility_assessment_event_id` — pointer to
+  the §6(4) 5-factor assessment artefact.
+- `clientData.purpose_change_basis` — enum
+  (`compatible_purpose` / `new_consent` /
+  `new_legal_obligation` / `new_legitimate_interest`).
+- `clientData.previous_purpose` — redundant prior-purpose copy
+  at the pivot moment; recoverable from access-version chain
+  but makes "what changed and when" answerable from a single
+  row.
+
+**Matrix encoding:**
+
+- `gdpr.Art.6` **detail rewritten** — replaces the §1-only
+  treatment with §1 + §4 coverage. §4 detail introduces the
+  4 patterns + the decision rule + the re-prompt surface
+  paragraph + the three-field clientData convention pointer.
+  `text` field extended to mention §4 explicitly.
+  `pryv_primitives` extended (audit + event added).
+- New three-field convention added to
+  `context/client-data-conventions.md` — 9 conventions total
+  (8 + Q34's compatibility/pivot trio).
+- **No backlog** filed — filled by existing primitives.
+- **No `planned:` chips** added — same reason.
+- **No `proposals/` mirror** — same reason.
+- **No new context note** — the 4-pattern treatment fits the
+  Art.6 detail + cross-links to existing `access-versioning`
+  + `workforce-access-patterns` (Pattern 2) + `client-data-
+  conventions` notes.
+
+Classification: **"filled by existing primitive (via clientData
+convention)"** — same shape as Q26 / Q28 / Q29 confirmation
+Q's, plus the key operator addition of Pattern D sub-access
+derivation that I missed in my initial analysis. The
+**purpose-driven access matching** that sub-accesses feed into
+the audit log is the Pryv-native answer for multi-facet apps
+under compatible-purpose pivots.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:
