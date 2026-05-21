@@ -81,6 +81,31 @@ detail block — decision output events carry
 range that fed the decision + `decision_logic_version` for
 reproducibility.
 
+### `clientData.objection_outcome` + `objection_rationale` + `objection_notice` — Art.21 (Q28)
+
+When a subject invokes their Art.21 right to object (distinct
+from Art.7(3) withdrawal — applies to legitimate-interests /
+public-interest bases, plus the absolute-right §2 for direct
+marketing), the technical mechanism is the **same as Art.7(3)
+withdrawal**: `DELETE /accesses/:id` or `accesses.update` to
+narrow permissions. What's recorded on the access is the
+operator's review outcome:
+
+- `clientData.objection_outcome` — one of `"honoured"` (access
+  revoked / narrowed), `"overridden_compelling_grounds"` (Art.21(3)
+  override applied), `"out_of_scope"` (the access didn't actually
+  do the objected-to processing).
+- `clientData.objection_rationale` — free-text or URI pointer to
+  the operator's compelling-grounds memo / legal-basis document
+  when overriding.
+- `clientData.objection_notice` — the Art.21(5) "right to object
+  presented clearly and separately from any other information" notice
+  text shown to the subject at first communication; persisted at
+  access mint time so the version chain proves what the subject was
+  told when.
+
+All three travel with the access version chain — auditable.
+
 ### `clientData.purpose` — Art.30 (general)
 
 Free-text purpose-of-processing for the Art.30 records-of-

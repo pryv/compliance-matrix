@@ -1956,6 +1956,60 @@ Classification: **"filled by existing primitive
 
 **Commit:** *(this commit)*.
 
+### Q28 — GDPR Art.21 right to object: same mechanism as Art.7(3)
+
+**Short answer (operator's framing):** **The mechanism is the
+same as Art.7(3) withdrawal (Q19)** — `DELETE /accesses/:id`
+or `accesses.update` to narrow permissions. The legal
+distinction is semantic (legitimate-interests / public-interest
+basis under Art.6(1)(e)/(f) vs. consent basis under
+Art.6(1)(a)); the platform primitives are basis-agnostic.
+
+**Three sub-questions resolved:**
+
+1. **Pryv mechanism for Art.21**: same as Art.7(3). Subject
+   uses `DELETE /accesses/:id` (full revocation) or
+   `accesses.update` (scope-down). No separate "objection"
+   semantic on the platform — the access-revocation primitive
+   covers both Art.7(3) and Art.21 because the EFFECT is the
+   same (stop the processing); the regulatory framing is
+   recorded on `clientData`.
+
+2. **Art.21(3) "compelling legitimate grounds" exception**:
+   record the operator-side review outcome on
+   `clientData.objection_outcome` — one of `"honoured"` (access
+   revoked / narrowed), `"overridden_compelling_grounds"`
+   (override applied), `"out_of_scope"` (the access didn't
+   actually do the objected-to processing). Add
+   `clientData.objection_rationale` (free-text or URI pointer)
+   when overriding. Both travel with the access version chain
+   — auditable.
+
+3. **Art.21(5) transparency** ("right to object presented
+   clearly and separately from any other information at the
+   time of the first communication"): same convention family as
+   Art.7 consent text. Persist `clientData.objection_notice` at
+   access mint time so the version chain proves what the
+   subject was told when.
+
+**Matrix encoding:**
+
+- `gdpr.Art.21` overview tightened to lead with "mechanism is
+  the same as Art.7(3)" framing; detail extended with the
+  three-field convention (`objection_outcome`,
+  `objection_rationale`, `objection_notice`).
+- `context/client-data-conventions.md` extended with a new
+  Art.21 section in the convention catalogue.
+- No tier shift (`facilitated/primitive/medium` correct).
+- No backlog, no proposal, no `planned:` chips.
+
+Classification: **"filled by existing primitive"** —
+Art.21 is the Art.7(3) primitive applied to a different legal
+basis; the access-revocation mechanism is invariant across
+bases.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

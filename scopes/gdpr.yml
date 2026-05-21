@@ -795,13 +795,17 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, clientData, event]
     overview: |
-      Pryv doesn't do profiling
-      or marketing itself, but if your app does either using Pryv-
-      stored data, your subjects have the right to object. Pryv gives
-      you the primitives to honor objection: revoke or scope-down the
-      access that powers the marketing/profiling job, and record the
-      objection on the access's `clientData` or as a dedicated event
-      for audit.
+      Pryv doesn't do profiling or marketing itself, but if your
+      app does either using Pryv-stored data, your subjects have
+      the right to object. **The mechanism is the same as Art.7(3)
+      withdrawal (Q19)** — `DELETE /accesses/:id` or
+      `accesses.update` to narrow permissions; Pryv's primitives
+      are basis-agnostic. The legal distinction between Art.21
+      objection (legitimate-interests / public-interest basis) and
+      Art.7(3) withdrawal (consent basis) is semantic, not
+      technical. Record the objection on the access's `clientData`
+      per the consolidated convention catalogue at
+      `context/client-data-conventions.md`.
     detail: |
       For direct marketing (absolute right per §2), the typical pattern is:
         - Subject submits objection (via your app's UI).
@@ -816,6 +820,21 @@ requirements:
       For Art.21(1) objections (legitimate interests / public interest),
       same pattern; you also need a "compelling legitimate grounds"
       review process before deciding to override the objection.
+      Record the operator-side review outcome on the access's
+      `clientData.objection_outcome` (one of `"honoured"`,
+      `"overridden_compelling_grounds"`, `"out_of_scope"`) plus
+      a free-text `clientData.objection_rationale` pointing at
+      the legal-basis document — both versioned + audit-traceable
+      via access-versioning (`context/access-versioning.md`).
+
+      For Art.21(5) transparency ("right to object presented
+      clearly and separately from any other information at the
+      time of the first communication") — same convention family
+      as Art.7 consent text: persist the notice on
+      `clientData.objection_notice` so the version chain proves
+      what the subject was told when the access was minted.
+      See `context/client-data-conventions.md` for the full
+      catalogue.
 
   - ref: Art.19
     title: Notification obligation regarding rectification / erasure / restriction
