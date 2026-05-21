@@ -345,15 +345,20 @@ requirements:
     draft: true
     pryv_primitives: [stream, system-streams, access, clientData, permissions]
     overview: |
-      Pryv doesn't classify
-      event content as "special-category" for you — that's your
-      editorial judgement at design time. Once classified, the
-      platform gives you tools to isolate it: put special-category
-      data on dedicated stream subtrees (`health/*`, `biometrics/*`,
-      etc.) and tightly scope every access touching them. The
-      Art.9(2) condition relied on for each processing instance can
-      travel in `access.clientData.special_category_basis` so it
-      lives next to the technical grant.
+      Pryv is content-agnostic at the platform layer — no
+      `sensitivity:` flag on event-type schemas, no server-side hook
+      that refuses writes to "health" streams without a recorded
+      Art.9(2) basis. **Classification is voluntarily missing at the
+      platform.** But for **vertically-integrated operators** (you
+      run the core AND ship the clients AND design the stream tree
+      AND curate the event-type catalogue — typical for
+      health deployments), Pryv exposes enough composable primitives
+      that you build a strong Art.9 enforcement layer without
+      platform-imposed assumptions. The Art.9(2) condition relied on
+      lives in `access.clientData.special_category_basis` next to
+      the technical grant. Full operator-toolkit treatment +
+      two-deployment-topologies framing in
+      `context/special-categories-operator-facilitated.md`.
     detail: |
       Recommended stream-layout pattern for special-category-heavy
       deployments:
@@ -368,10 +373,48 @@ requirements:
         - Audit log automatically captures every read / write under
           the access.
 
-      Caveat: Pryv's permission model is per-stream, not per-field within
-      an event. If an event mixes ordinary and special-category fields,
-      you must split it or design your event types so the special-
-      category subset is its own event.
+      **Operator-toolkit composition** (vertically-integrated
+      deployments — operator controls both ends):
+
+      1. **Stream-tree design** — operator's client code routes
+         sensitive writes exclusively to reserved subtrees;
+         Pryv enforces the per-stream permission boundary
+         (`AccessLogic`).
+      2. **clientData.special_category_basis** — Art.9(2) lit-letter
+         recorded on every access touching a sensitive subtree;
+         access-versioning preserves the basis over edits.
+      3. **Custom event-type catalogue annotations** — operator
+         extends `service.eventTypes` URL with
+         `x-art9-category` / `x-swiss-nlpd-sensitive` / etc. fields
+         the client code reads to gate writes; Pryv passes the
+         annotations through unchanged (Q14 / Q21 pattern).
+      4. **Custom dataStore (`@pryv/datastore`)** — sensitive
+         subtree owned by a dedicated store with stricter at-rest
+         encryption + access controls (Q16 pattern;
+         `context/audit-archival-via-custom-datastore.md`).
+      5. **Per-engine isolation** — sensitive tier on a separate
+         PostgreSQL instance / WAL / replicas (Plan 9 plugins).
+      6. **`customExtensions.customAuthStepFn`** — operator-side
+         gate that demands the Art.9(2) basis claim at
+         access-grant time before minting the access.
+      7. **Audit log** — automatic capture of every read/write
+         under any access; audit-minimality (Q9: no request body)
+         is a feature for sensitive data, not a limitation.
+      8. **Backup tiering (Q15)** — operator wraps sensitive-tier
+         dumps with stricter encryption + retention than ordinary
+         tiers; `bin/backup.js` is the integration point.
+
+      The toolkit's reach varies by deployment topology — full
+      strength for vertically-integrated operators, partial for
+      open Pryv platforms hosting third-party apps the operator
+      doesn't author. The two-topology framing is canonical in
+      `context/special-categories-operator-facilitated.md`.
+
+      Caveat: Pryv's permission model is per-stream, not per-field
+      within an event. If an event mixes ordinary and
+      special-category fields, you must split it or design your
+      event types so the special-category subset is its own
+      event-type.
 
   - ref: Art.8
     title: Conditions applicable to child's consent in relation to information society services

@@ -1157,6 +1157,151 @@ features.
 
 **Commit:** *(this commit)*.
 
+### Q22 — GDPR Art.9 special categories: does Pryv "know" my streams hold health data?
+
+**Short answer:** **No — voluntarily missing at the platform
+layer, highly facilitated for vertically-integrated operators**
+who control both the Pryv core AND the clients writing to it AND
+the stream-tree design AND the event-type catalogue. Pryv ships
+no `sensitivity:` flag, no server-side hook refusing writes to
+"health" streams, no auto-encryption tier for sensitive data — by
+design, because hard-coding "what counts as special-category"
+would either over-classify (forcing wellness apps into HIPAA-grade
+overhead) or under-classify (missing categories specific to a
+regulator Pryv didn't model). But the operator composes a strong
+Art.9 enforcement layer from a toolkit of 8 levers.
+
+**Three sub-questions answered:**
+
+1. **Does Pryv know any of this is "health data"?** — No.
+   `body/temperature`, `body/heart-rate`, `body/sleep` are
+   "a number with a unit" to the platform. The operator's
+   classification decision is editorial and lives in three
+   operator-owned places: (a) the stream-tree convention
+   (`health/*`, `biometrics/*`, etc.), (b) `clientData` metadata
+   on accesses, (c) custom catalogue annotations like
+   `x-art9-category: health` on event-type schemas (passed
+   through Pryv unchanged; client-side code reads + gates on
+   them).
+
+2. **Does Pryv require an Art.9(2) exception before accepting
+   writes?** — No, but the operator can add this themselves via
+   `customExtensions.customAuthStepFn` — a hook into the
+   access-grant flow that demands the lit-letter claim before
+   minting the access. The claim is then persisted on the
+   access's `clientData.special_category_basis` and survives
+   version updates.
+
+3. **Does any platform layer treat special-category data
+   differently?** — Not automatically, but every relevant layer
+   has an operator-side knob:
+   - Storage tiering via custom `@pryv/datastore` per subtree.
+   - Per-engine isolation (separate PG instance + WAL +
+     replicas) per Plan 9.
+   - Audit log automatically captures every read/write —
+     audit-minimality (Q9) means the audit is safe to retain
+     at long horizons.
+   - Backup encryption tiering via `bin/backup.js` wrapping
+     (Q15 operator-side encryption framing).
+
+**The two-deployment-topology distinction** — central to
+classifying this row honestly:
+
+| | Vertically-integrated operator | Open Pryv platform |
+|---|---|---|
+| Operator runs core + ships clients + designs stream tree | Yes | No (or only partially) |
+| Third-party apps register against the platform | Rare | Common |
+| Art.9 facilitation strength | **High** — operator composes every lever | **Medium** — operator enforces at the access-permission boundary; third-party app code is opaque beyond that |
+
+Most regulated health deployments built on open-pryv.io are
+vertically-integrated by design — the operator wants control over
+the client-side classification UX, the consent flow, and the data
+custody. The matrix encoding (`coverage: facilitated`,
+`facilitation_mode: primitive`, `pryv_effort_saved: medium`) is
+deliberately a single tier that holds across topologies; the
+deployment-specific facilitation strength is in the detail prose.
+
+**The 8-lever operator toolkit** (full treatment in
+`context/special-categories-operator-facilitated.md`):
+
+1. Stream-tree design with reserved sensitive subtrees.
+2. `clientData.special_category_basis` recording on accesses.
+3. Custom event-type catalogue with sensitivity annotations
+   (`x-art9-category`, `x-swiss-nlpd-sensitive`, etc. — passed
+   through, client-side enforced).
+4. Custom `@pryv/datastore` for per-subtree storage tiering.
+5. Per-engine isolation at storage layer (Plan 9 plugins).
+6. `customExtensions.customAuthStepFn` access-grant gate.
+7. Audit log automatic capture (Pryv-invariant).
+8. Backup encryption tiering (operator-side, Q15 pattern).
+
+CMC consent flows (Q18) are a ninth lever for cross-account
+sensitive sharing: `consent/accept-cmc` IS the Art.9(2)(a)
+explicit-consent record for the cross-account flow.
+
+**Honest limits — when the toolkit doesn't reach:**
+
+- Third-party apps the operator doesn't author. The
+  access-permission scope IS the enforcement boundary; if the
+  third-party's access is scoped to non-sensitive streams, its
+  client-side classification logic is moot.
+- Per-field sensitivity within a single event (Pryv permissions
+  are per-stream, not per-field). Operator splits the event
+  type so sensitive subset is its own event-type.
+- Free-form `note/txt` or `picture/attached` events where
+  implementers embed Art.9 data without the platform knowing.
+  Client-side input validation + operator training; out of
+  scope for platform enforcement.
+
+**Why this is the right posture** — the regulator-relevance test:
+when the supervisory authority asks "how does your deployment
+enforce Art.9 protection?", a vertically-integrated implementer
+gives a concrete claim like:
+
+> *"Sensitive data is classified at design time via our
+> `data-model` repo's `x-art9-category` annotations; the operator's
+> mobile + web clients route writes exclusively to `health/*` /
+> `biometrics/*` subtrees; every access touching a sensitive
+> subtree carries `clientData.special_category_basis` populated by
+> the custom-auth-step hook; the `health/*` subtree is backed by a
+> dedicated PostgreSQL instance with at-rest encryption; the audit
+> log captures every read/write against sensitive streams; backups
+> of the sensitive tier are encrypted with a separate KMS key with
+> quarterly rotation."*
+
+Every clause cites a Pryv-side primitive the deployment composes;
+none of them is "Pryv enforces Art.9". Same architectural shape
+as Q19 (revocation UI is implementer's), Q20 (DPIA section (d) is
+implementer-assembled), Q21 (semantic accuracy is implementer's).
+
+**Matrix encoding:**
+
+- `gdpr.Art.9` overview rewritten to lead with the "voluntarily
+  missing + highly facilitated for vertically-integrated
+  operators" framing; the prior implicit "operator builds it"
+  prose was correct but didn't surface the topology distinction.
+- `gdpr.Art.9` detail block extended with the 8-lever toolkit
+  enumeration + topology framing.
+- New canonical context note
+  `context/special-categories-operator-facilitated.md` with
+  the full operator-toolkit treatment + the two-topology
+  comparison table + honest limits.
+- No tier shift on `gdpr.Art.9` (`coverage: facilitated`,
+  `facilitation_mode: primitive`, `pryv_effort_saved: medium`
+  hold across topologies; deployment-specific strength is in
+  prose).
+- Related rows (`swiss-nlpd.Art.5`, `hipaa-privacy.164.502`)
+  unchanged — their existing `derives_from` cross-refs to the
+  GDPR row carry the framing along.
+
+No backlog, no proposal, no `planned:` chips. Classification is
+**"voluntarily missing + highly facilitated"** — a useful sub-
+pattern of "voluntarily missing" worth naming explicitly
+alongside the simpler "voluntarily missing + operator-owned" we
+saw in Q15 (backup encryption).
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:
