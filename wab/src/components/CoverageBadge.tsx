@@ -8,10 +8,19 @@ const COVERAGE_LABELS: Record<Coverage, string> = {
   'out-of-scope': 'Out of scope'
 };
 
-const EFFORT_LABELS_SHORT: Record<EffortSaved, string> = {
-  high: 'High',
-  medium: 'Med',
-  low: 'Low'
+/** Verb form used by the per-requirement Coverage column. */
+const COVERAGE_VERBS: Record<Coverage, string> = {
+  implemented: 'Implements',
+  configurable: 'Configurable',
+  facilitated: 'Facilitates',
+  documented: 'Documents',
+  'out-of-scope': 'Out of scope'
+};
+
+const EFFORT_DOTS: Record<EffortSaved, number> = {
+  high: 3,
+  medium: 2,
+  low: 1
 };
 
 const EFFORT_LABELS_FULL: Record<EffortSaved, string> = {
@@ -37,16 +46,18 @@ const MODE_LABELS_FULL: Record<FacilitationMode, string> = {
 };
 
 /**
- * Combined single-pill badge that summarises a requirement row:
- *   Facilitated rows:  [F: <Mode>][<Effort>]
- *   Other tiers:       [<Coverage>][<Effort>]
- *   Out of scope:      [Out of scope]    (no effort tail)
+ * Per-requirement Coverage cell. Verb-first reading: how Pryv addresses
+ * the obligation + a 3-dot meter for Pryv's effort share.
  *
- * The pill is split into two coloured segments:
- *   - left: coverage-tier color (cov-*)
- *   - right: effort color (effort-pill-*) -- emerald/amber/rose for
- *     high/medium/low. Visually conveys "how much effort Pryv saves"
- *     at a glance.
+ *   Implements             ●●●
+ *   Configurable           ●●○
+ *   Facilitates · Storage  ●●○
+ *   Documents              ●○○
+ *   Out of scope               (no meter — definitional)
+ *
+ * Verb in slate-700, mode suffix in slate-500 (muted). Filled dots in
+ * teal-600 (single accent), hollow in slate-300. Tooltip carries the
+ * full mode + effort explanations for hover details.
  */
 export function RequirementBadge ({
   coverage,
@@ -57,32 +68,38 @@ export function RequirementBadge ({
   mode: FacilitationMode | null;
   effort: EffortSaved | null;
 }) {
-  const leftLabel = (coverage === 'facilitated' && mode)
-    ? `F: ${MODE_LABELS[mode]}`
-    : COVERAGE_LABELS[coverage];
+  const verb = COVERAGE_VERBS[coverage];
+  const modeSuffix = (coverage === 'facilitated' && mode) ? MODE_LABELS[mode] : null;
 
   const titleParts: string[] = [COVERAGE_LABELS[coverage]];
   if (mode) titleParts.push(`${MODE_LABELS[mode]} — ${MODE_LABELS_FULL[mode]}`);
   if (effort) titleParts.push(EFFORT_LABELS_FULL[effort]);
   const title = titleParts.join(' · ');
 
-  // No effort tail (out-of-scope rows) -> single-segment pill.
-  if (!effort) {
-    return (
-      <span
-        className={`cov-${coverage} inline-block px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap`}
-        title={title}
-      >
-        {leftLabel}
-      </span>
-    );
-  }
+  const isOOS = coverage === 'out-of-scope';
+  const verbClass = isOOS ? 'text-slate-400 italic' : 'text-slate-700 font-medium';
 
-  // Two-segment pill: coverage color on the left, effort color on the right.
   return (
-    <span className='inline-flex rounded overflow-hidden text-xs font-medium whitespace-nowrap' title={title}>
-      <span className={`cov-${coverage} px-2 py-0.5`}>{leftLabel}</span>
-      <span className={`effort-pill-${effort} px-2 py-0.5`}>{EFFORT_LABELS_SHORT[effort]}</span>
+    <span className='inline-flex items-center gap-2 text-xs whitespace-nowrap' title={title}>
+      <span className={verbClass}>
+        {verb}
+        {modeSuffix && <span className='text-slate-500 font-normal'> · {modeSuffix}</span>}
+      </span>
+      {effort && <DotMeter level={EFFORT_DOTS[effort]} />}
+    </span>
+  );
+}
+
+/** 3-dot meter: filled dots = Pryv's share of effort (3=high, 2=med, 1=low). */
+function DotMeter ({ level }: { level: number }) {
+  return (
+    <span className='inline-flex items-center gap-0.5' aria-label={`Pryv effort: ${level}/3`}>
+      {[1, 2, 3].map((i) => (
+        <span
+          key={i}
+          className={`inline-block w-1.5 h-1.5 rounded-full ${i <= level ? 'bg-teal-600' : 'bg-slate-300'}`}
+        />
+      ))}
     </span>
   );
 }
