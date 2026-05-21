@@ -42,7 +42,7 @@ discloses them per Art.13(1)(f) where recipients exist.
 - **Code anchor**: `components/business/src/acme/` module
   (8 files); `default-config.yml` `letsEncrypt:` block.
 
-### SMTP — transactional mail
+### SMTP — transactional mail (per-core configurable)
 
 - **Config gate**: `services.email.smtp.*` (host, port, auth,
   from). Plan 39 introduced the integration after service-mail
@@ -57,6 +57,14 @@ discloses them per Art.13(1)(f) where recipients exist.
   endpoint ships. The operator's relay choice IS the
   subprocessor relationship — naming it in the DPA + Art.30
   register is on them.
+- **Pryv recommends per-core SMTP configuration** for
+  residency-sensitive deployments: the `services.email.smtp.*`
+  block is per-core, so an EU core routes its outbound mail
+  through an EU SMTP relay independently of a US core's relay.
+  Use this when "EU subjects' password-reset emails must not
+  touch a US-jurisdiction relay" is a hard requirement. Same
+  pattern applies to the SMS endpoints (Plan 26) — the
+  `services.mfa.sms.endpoints.*` config block is per-core too.
 - **Code anchor**: `components/business/src/mail/` module;
   `default-config.yml` `services.email:` block; CHANGELOG-v2
   Plan 39 entry.

@@ -1586,6 +1586,167 @@ defensible upgrade.
 
 **Commit:** *(this commit)*.
 
+### Q25 — GDPR Art.46 cross-border transfers: operationalisation in a Pryv deployment
+
+**Short answer:** Three cross-border surfaces in a typical
+deployment, each with its own answer. Access-bound transfers
+(CMC counterparty fetches + third-party-app reads across
+jurisdictions): **filled by existing primitive** via the
+documented `clientData.transfer_basis` convention (zero Pryv
+code change; existing primitives carry persistence + versioning
++ audit). PlatformDB cluster replication in multi-region clusters:
+**Tier 1 of the two-tier residency model — IS a continuous
+cross-border transfer**; Art.46 mechanism required; two mitigation
+backlogs filed (at-rest encryption + PII hashing); structural
+answer (tokenisation) staying brainstorm-tier until operator
+direction. Subprocessor outbound (Q23 follow-on): **per-core
+SMTP / SMS configuration recommended** so the relay matches each
+core's region/country when residency is a hard requirement.
+
+**The three surfaces in detail:**
+
+### Surface 1 — Access-bound transfers (CMC + cross-jurisdiction app reads)
+
+Convention: `access.clientData.transfer_basis` structured shape
+per `context/transfer-basis-convention.md`. Same pattern as
+`clientData.lawful_basis` (Q6) + `clientData.special_category_
+basis` (Q22). Existing primitives carry persistence + audit
+trail + version chain for free. Art.30(1)(e) register answer
+becomes a one-liner:
+
+```bash
+curl https://core.example.com/accesses -H "Authorization: <token>" \
+  | jq '[.accesses[] | select(.clientData.transfer_basis) | {...}]'
+```
+
+Field reference (mechanism, scc_module, scc_version,
+scc_signed_date, scc_document_ref, origin_country,
+destination_country, adequacy_decision) detailed in the
+context note. Operator-owned editorial metadata; no Pryv
+enforcement; convention only.
+
+### Surface 2 — Multi-region PlatformDB replication (the deep one)
+
+**Two-tier residency model** the matrix now makes explicit:
+
+- **Tier 2 — Content + audit (residency-pinned):** events,
+  streams, audit, attachments, access metadata. NOT replicated.
+  Q12 core-affinity holds cleanly here.
+- **Tier 1 — Identification + routing (cluster-replicated):**
+  usernames, emails, DNS subdomains, user-core mappings,
+  ephemeral access-state, MFA SessionStore. PER USER ~50-200
+  bytes; for 100k users ~5-20 MB cluster-wide. **Quantity
+  doesn't change the legal analysis** — it's still personal
+  data crossing borders.
+
+Full keyspace inventory + threat-model framing in
+`context/cross-border-platformdb-implications.md`.
+
+**A/B/C mitigation options** (filed as backlog where committed):
+
+- **(A) At-rest encryption of PlatformDB**
+  (`PLATFORMDB-AT-REST-ENCRYPTION` backlog, ~1d Path 1 / ~2-3d
+  Path 2). Protects against SSD-forfeiture / backup-tape /
+  decommissioned-hardware / filesystem-read scenarios. Does NOT
+  change the legal status of cross-border replication; runtime
+  + Raft stream still in cleartext. **Real defence-in-depth.**
+- **(B) HMAC-pseudonymisation of PII at PlatformDB layer**
+  (`PLATFORMDB-PII-HASHING` backlog, ~4-5d for three postures:
+  cleartext / hashed / **minimised** [email stripped from
+  PlatformDB; user's preferred posture]). Strengthens Art.32(1)(a)
+  pseudonymisation evidence + SCCs + pseudonymisation combined
+  narrative. **Does NOT make PlatformDB Art.46-free under EDPB
+  guidance** — hashing of low-entropy identifiers is
+  pseudonymisation, not anonymisation (Recital 26 keeps it in
+  scope; brute-force re-identification feasible by reasonable
+  means).
+- **(C) Tokenisation with per-region mapping table** (not yet
+  backlogged — brainstorm-tier). Random opaque token replaces
+  username in PlatformDB; the `username ↔ token` mapping lives
+  only on home core. **The structural answer** to "no PII
+  leaves home region" — many weeks of architectural work; pairs
+  with the `ALIASES` backlog.
+
+**The hash-vs-tokenisation distinction** is regulator-important:
+the user's intuition that "a hash is not invertible, so it
+shouldn't be pseudonymisation" is **cryptographically correct
+but legally incorrect under EDPB guidance**. The legal test is
+re-identifiability by "reasonable means" (Recital 26 + WP29
+Opinion 05/2014), not whether the function itself is invertible.
+Brute-forcing HMAC of a username dictionary at 10⁹/sec is
+"reasonable means". Only random-token mapping (Option C) reaches
+the legal threshold for "no longer attributable to a natural
+person" because the cluster-replicated value has effectively
+unbounded entropy.
+
+**Posture recommendation** (per operator's deployment topology):
+
+- Single-region cluster: **A** worth doing as baseline.
+- Multi-region cluster + SCCs in place: **A + B**. SCCs legally
+  authorise the transfer; A + B strengthen the defence-in-depth
+  + Art.32 narrative.
+- Multi-region cluster + "no PII may leave EU" hard requirement:
+  **A + C** is the structural answer (B is insufficient).
+- Multi-region cluster + no Art.46 mechanism: stop multi-region
+  until the legal basis is established. Hashing doesn't
+  substitute.
+
+### Surface 3 — Subprocessor outbound (Q23 follow-on)
+
+**Pryv recommends per-core SMTP configuration** so the relay can
+match each core's region/country when residency matters: the
+`services.email.smtp.*` config block is per-core (Plan 39), so
+an EU core routes mail through an EU SMTP relay independently
+of a US core's relay. **Same pattern for SMS endpoints
+(Plan 26)** — `services.mfa.sms.endpoints.*` is per-core.
+Operators configuring residency-sensitive deployments take
+advantage of this to keep "EU subjects' password-reset emails
+never touch a US-jurisdiction relay" as a hard guarantee.
+
+Observability vendor is harder — the façade is pluggable (Q23)
+but most APM vendors don't have per-region account routing built
+in; operator-side concern.
+
+### Matrix encoding
+
+- `gdpr.Art.46` overview + detail rewritten to lead with the
+  three-surface model + the `clientData.transfer_basis`
+  convention; cross-references both new context notes.
+- `gdpr.Art.44` detail rewritten to surface the two-tier
+  residency model explicitly (was previously the single-tier
+  "core-affine" narrative which is true for Tier 2 but
+  incomplete).
+- `gdpr.Art.28` detail (subprocessor table) gets the **per-core
+  SMTP recommendation** for residency-sensitive deployments.
+- `gdpr.Art.32` `planned:` chips added for the two new backlog
+  items (alongside existing `E2E-ENCRYPTION`, `ALIASES`,
+  `SUPPLY-CHAIN-SCANNING-PIPELINE` chips).
+- New `context/transfer-basis-convention.md` — full
+  convention shape + Art.30 register query recipe + honest
+  limits.
+- New `context/cross-border-platformdb-implications.md` — the
+  canonical two-tier model + A/B/C mitigation options +
+  posture recommendation + the hash-vs-token-vs-Recital-26
+  legal framing.
+- `context/subprocessor-posture-and-data-flow.md` SMTP section
+  updated with the per-core recommendation.
+- `UPDATE-TRIGGERS.md` Section A entries filed for
+  `PLATFORMDB-AT-REST-ENCRYPTION` + `PLATFORMDB-PII-HASHING`
+  with the per-row tier shifts.
+- New proposals: `proposals/platformdb-at-rest-encryption.md` +
+  `proposals/platformdb-pii-hashing.md`.
+- macroPryv-side backlog files:
+  `_plans/XXX-Backlog/PLATFORMDB-AT-REST-ENCRYPTION.md` +
+  `_plans/XXX-Backlog/PLATFORMDB-PII-HASHING.md`.
+
+Classification: **"filled by existing primitive (via documented
+convention)"** for Surface 1; **"planned (two backlog items A +
+B; structural option C deferred)"** for Surface 2; **"filled by
+existing primitive (per-core configuration recommendation)"**
+for Surface 3.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

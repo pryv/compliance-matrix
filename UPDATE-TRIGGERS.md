@@ -231,6 +231,60 @@ protection.md`). Likely affected rows when configs ship:
 | iso-27001 | A.8.21 | enhancement | cite the recipes |
 | hipaa-security | 164.308(a)(5)(ii)(C) | enhancement | cite the recipes |
 
+### `PLATFORMDB-AT-REST-ENCRYPTION`
+
+**Where the work lives**: `open-pryv.io` — `storages/engines/rqlite/`
++ `storages/interfaces/platformStorage/` + INSTALL.md. Two
+implementation paths: rqlite native disk encryption (Path 1, ~1d)
+or storage-adapter envelope encryption (Path 2, ~2-3d). Operator-
+supplied `platformDB.atRestKey` (32-byte base64) — operator-sync
+identical to `letsEncrypt.atRestKey`. Surfaced by Plan 71 Q25
+(2026-05-21) — multi-region PlatformDB cross-border analysis.
+
+Defence-in-depth against SSD / backup-tape / decommissioned-
+hardware forfeiture + filesystem-level read breach + foreign-
+jurisdiction subpoena of the storage layer. Does NOT cover runtime
+memory dumps or application-level breaches; pairs with
+`PLATFORMDB-PII-HASHING` for the replication-stream side.
+
+| Scope | Ref | Kind | Impact | After shipping |
+|---|---|---|---|---|
+| gdpr | Art.32 | feature | medium | concrete encryption-at-rest evidence at PlatformDB layer; chip removed |
+| gdpr | Art.46 | enhancement | low | reduces residual passive-forfeiture risk even with SCCs in place; detail prose tightens |
+| iso-27001 | A.5.33 | feature | medium | record protection — concrete cryptographic control on PlatformDB |
+| iso-27001 | A.8.24 | feature | medium | use-of-cryptography clause gains the PlatformDB instance |
+
+Proposal: `proposals/platformdb-at-rest-encryption.md`.
+
+### `PLATFORMDB-PII-HASHING`
+
+**Where the work lives**: `open-pryv.io` — `components/platform/`
++ `storages/engines/rqlite/` + system-streams config +
+registration flow + `bin/migrate.js`. Three configurable postures:
+`cleartext` (today, default), `hashed` (HMAC username + email),
+`minimised` (HMAC username only; email stripped from PlatformDB
+entirely, accepting loss of "find username by email" recovery
+flow). Operator opts via new `platform.piiMode` config key.
+Surfaced by Plan 71 Q25 (2026-05-21).
+
+**Legal framing**: hashing is pseudonymisation, NOT anonymisation
+under EDPB / WP29 Opinion 05/2014. Art.46 mechanism still
+required for cross-border replication; this work is
+**defence-in-depth + Art.32(1)(a) pseudonymisation evidence**,
+not an Art.46 escape. Tokenisation (option C from Q25 brainstorm)
+is the structural answer if "no PII leaves home region" is a
+hard requirement; not yet backlogged.
+
+| Scope | Ref | Kind | Impact | After shipping |
+|---|---|---|---|---|
+| gdpr | Art.32 | feature | medium | concrete pseudonymisation evidence on PlatformDB layer; chip removed |
+| gdpr | Art.5(1)(f) | feature | low | confidentiality strengthened at the cluster-replicated identification layer |
+| gdpr | Art.46 | enhancement | low | residual exposure reduced even with SCCs; SCCs + pseudonymisation combined narrative materially stronger than SCCs alone |
+| iso-27001 | A.8.11 | feature | medium | data-masking control gains the PlatformDB-layer instance |
+| iso-27001 | A.8.24 | feature | medium | use-of-cryptography (HMAC) at the platform layer |
+
+Proposal: `proposals/platformdb-pii-hashing.md`.
+
 ### `SUPPLY-CHAIN-SCANNING-PIPELINE`
 
 **Where the work lives**: `open-pryv.io` — CI workflow
