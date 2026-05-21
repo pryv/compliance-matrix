@@ -231,6 +231,33 @@ protection.md`). Likely affected rows when configs ship:
 | iso-27001 | A.8.21 | enhancement | cite the recipes |
 | hipaa-security | 164.308(a)(5)(ii)(C) | enhancement | cite the recipes |
 
+### `SUPPLY-CHAIN-SCANNING-PIPELINE`
+
+**Where the work lives**: `open-pryv.io` — CI workflow
+(`.github/workflows/ci.yml`) + `Dockerfile` + (optionally) a
+release-time SBOM publishing step. Three-phase: in-CI gates (npm
+audit + base-image digest pin + rqlite tarball checksum); pipeline
+tooling (Syft + Grype for SBOM + image scan; CycloneDX artefact
+publishing); provenance + signing (cosign + SLSA attestation).
+Surfaced by Plan 71 Q24 (2026-05-21) — supply-chain compliance
+gap-probing.
+
+User-recommended candidate tools (Q24): OWASP-ZAP / Snyk / Grype.
+Noting OWASP-ZAP is DAST not SCA — Phase 3 candidate as separate
+web-app security testing if Pryv wants to extend beyond the
+software-supply-chain scope.
+
+| Scope | Ref | Kind | Impact | After shipping |
+|---|---|---|---|---|
+| iso-27001 | A.5.21 | feature | medium | drop overstated "published dependency-audit pipeline" prose; add `tests: [CIYAML]` citation; coverage F:Awareness Low → F:Evidence Medium |
+| gdpr | Art.32 | feature | low | detail block gains "supply-chain hygiene" sub-bullet under §1(b)/(c) ongoing CIA |
+| hipaa-security | 164.308(a)(8) | feature | low | periodic technical evaluation gains a concrete artefact (SBOM + latest scan output) |
+| iso-27001 | A.5.23 | feature | low | strengthens cloud-services exit narrative — operator hands SBOM + signed-image proof to the next CSP for migration |
+| iso-27001 | A.8.30 | enhancement | low | when operator's "supplier" is Pryv, the SBOM + signed image + CHANGELOG combine into the supplier-monitoring artefact set |
+| iso-27001 | A.5.22 | feature | medium | row may need to be ADDED — A.5.22 "Monitoring of supplier services" doesn't currently have matrix coverage; the supply-chain pipeline gives it concrete content |
+
+Proposal: `proposals/supply-chain-scanning-pipeline.md`.
+
 ### `CONFIG-EFFECTIVE-EXPOSURE` (no proposal mirror yet)
 
 **Where the work lives**: `open-pryv.io` — new

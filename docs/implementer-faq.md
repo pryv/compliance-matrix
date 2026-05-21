@@ -1474,6 +1474,118 @@ Q20); no separate Art.28 backlog needed.
 
 **Commit:** *(this commit)*.
 
+### Q24 — Software supply-chain compliance: what does Pryv tell me about its OWN dependency hygiene?
+
+**Short answer:** Pryv follows **`npm audit` + GitHub Dependabot
+security alerts** today (partial + passive — Plan 56 close cleared
+22 alerts → 0 on 2026-04-30). A **full SCA pipeline using tools
+like OWASP-Dependency-Check / Snyk / Grype is planned** — backlog
+`SUPPLY-CHAIN-SCANNING-PIPELINE` filed with a three-phase
+implementation plan. When shipped, ISO 27001 A.5.21 coverage
+shifts F:Awareness Low → F:Evidence Medium.
+
+**What's verified in code TODAY** (the partial-and-passive baseline):
+
+| Control | Status | Code anchor |
+|---|---|---|
+| npm `package-lock.json` committed | ✅ | `open-pryv.io/package-lock.json` (`lockfileVersion: 3`) |
+| CI `npm install --ignore-scripts` | ✅ | `.github/workflows/ci.yml:44, 70, 84` |
+| Per-commit Docker SHA tag | ✅ | `.github/workflows/ci.yml` last `tags:` block (`pryvio/open-pryv.io:2.0.0-pre-${{ github.sha }}`) |
+| rqlite version pin | ✅ | `Dockerfile` `ARG RQLITE_VERSION=9.4.5` |
+| Dependabot security alerts | ✅ | GitHub Security tab — Plan 56 close cleared 22→0 |
+| Manual `npm audit` triage | ✅ | (procedural — no CI gate) |
+| **CI gate on `npm audit`** | ❌ | (not in workflow) |
+| **SCA tool integration** | ❌ | (no OWASP Dep-Check / Snyk / FOSSA) |
+| **Container image scan** | ❌ | (no Trivy / Grype in Docker job) |
+| **Base image digest-pinned** | ❌ | `FROM node:24-bookworm` — moving tag |
+| **rqlite tarball checksum verification** | ❌ | `Dockerfile:17` `curl -fsSL` with no `sha256sum -c` |
+| **SBOM emission** | ❌ | (no CycloneDX / SPDX manifest per release) |
+| **Image signing** | ❌ | (no cosign / Docker Content Trust on pushed images) |
+| **SLSA attestation** | ❌ | (no in-toto / provenance) |
+
+**The three-phase pipeline** (per
+`_plans/XXX-Backlog/SUPPLY-CHAIN-SCANNING-PIPELINE.md`):
+
+**Phase 1 — In-CI gates** (~0.5 day):
+
+- `npm audit --audit-level=high` step in CI fails the build on
+  high / critical CVE. Operators get build-time confirmation
+  instead of waiting for the GitHub UI to surface alerts.
+- Pin base image: `FROM node:24-bookworm@sha256:<digest>`.
+- rqlite tarball: add `RQLITE_SHA256` `ARG` + `sha256sum -c`
+  before `tar xzf`.
+
+**Phase 2 — Pipeline tooling** (~1.5 days):
+
+User-recommended tools (operator framing 2026-05-21): OWASP-ZAP,
+Snyk, Grype. Note OWASP-ZAP is a DAST proxy scanner, not a
+dependency tool — fits Phase 3 candidate as separate web-app
+security testing. Recommended Phase 2 stack:
+
+- **Syft** — CycloneDX SBOM emission for npm tree + Docker
+  image.
+- **Grype** — vulnerability scan against NVD; CI gate on
+  Critical / High; report Medium / Low without failing.
+- **SBOM as GitHub Release artefact** — every release publishes
+  the CycloneDX JSON.
+
+Alternative: Snyk (commercial; free for open-source repos) — at
+the cost of a vendor relationship.
+
+**Phase 3 — Provenance + signing** (~2 days):
+
+- **cosign image signing** — `cosign sign` after Docker push;
+  documented `cosign verify` step in `INSTALL.md`.
+- **SLSA Level 2+ attestation** — provenance attached via
+  cosign's in-toto attestation flow.
+- **Release-notes SBOM link** — every GitHub Release body links
+  to the CycloneDX SBOM.
+
+**Why a regulator would care**:
+
+- ISO 27001 **A.5.21** "ICT supply chain" — direct match;
+  shifts F:Awareness Low → F:Evidence Medium when shipped.
+- ISO 27001 **A.5.22** "Monitoring of supplier services" — the
+  ongoing-monitoring artefact (continuous SCA scan + dependabot
+  + manual triage cadence) is what this control wants. Matrix
+  row may need to be ADDED.
+- GDPR **Art.32 §1(b)/(c)** "ongoing CIA + integrity" — the
+  Pryv-internal supply-chain hygiene strengthens the integrity
+  side of the equation; chip filed alongside the existing
+  `E2E-ENCRYPTION` + `ALIASES` chips.
+- HIPAA Security **§164.308(a)(8)** periodic technical
+  evaluation — the SBOM + latest scan output are the concrete
+  artefact for the periodic evaluation.
+
+**Matrix encoding**:
+
+- `iso-27001.A.5.21` overview rewritten to honestly reflect
+  current state (dropped overstated "published dependency-audit
+  pipeline" claim — that prose was forward-looking; today's
+  reality is npm audit + dependabot, manual). `planned:` chip
+  added pointing at the proposal mirror + backlog slug.
+- `gdpr.Art.32` `planned:` chip added (third chip on the row,
+  alongside `E2E-ENCRYPTION` + `ALIASES`); chip `impact: low`
+  since Art.32 is multi-aspect and supply-chain is one axis
+  among many.
+- New `proposals/supply-chain-scanning-pipeline.md` with the
+  current-state-verified table + 3-phase plan + per-row tier
+  shifts.
+- New macroPryv-side backlog file
+  `_plans/XXX-Backlog/SUPPLY-CHAIN-SCANNING-PIPELINE.md`.
+- New Section A entry in `UPDATE-TRIGGERS.md`.
+- No context note filed — the proposal + backlog carry the
+  full treatment; no architectural framing to capture
+  separately.
+
+Classification: **"filled by existing primitive (partial /
+passive)" + "planned (3-phase pipeline)"**. The partial baseline
+is real and defensible — Plan 56 close evidence that dependabot
+triage works in practice. The full pipeline is the regulator-
+defensible upgrade.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

@@ -1210,6 +1210,11 @@ requirements:
         proposal: proposals/aliases-as-pseudonymization-primitive.md
         backlog: ALIASES
         impact: medium
+      - kind: feature
+        summary: "Three-phase supply-chain scanning pipeline strengthens the §1(b)/(c) ongoing-CIA + integrity axis with concrete SCA + SBOM + signed-image evidence"
+        proposal: proposals/supply-chain-scanning-pipeline.md
+        backlog: SUPPLY-CHAIN-SCANNING-PIPELINE
+        impact: low
     overview: |
       Multi-aspect article —
       Pryv implements several aspects for you (access control,
