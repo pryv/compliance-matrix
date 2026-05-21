@@ -2077,6 +2077,105 @@ claim alongside the technical authorisation, audit-traceable.
 
 **Commit:** *(this commit)*.
 
+### Q30 — GDPR Art.37-39 DPO designation, position, tasks
+
+**Short answer:** DPO **designation** (Art.37) and **independence /
+position** (Art.38 §1-§3) are organisational — out-of-scope for
+the platform. But the **DPO contact-point obligation** (Art.38(4)
++ Art.13(1)(b)) is **filled by an existing primitive**: the
+`serviceInfo.support` URL returned by `GET /service/info` on every
+core. Operators publish DPO contact details on their support page;
+`app-web-auth3` already renders the link in its consent UI; zero
+extra Pryv code needed.
+
+**Two sub-questions:**
+
+1. **Pryv-side surface for DPO contact info?** **Yes — existing**:
+   the `serviceInfo` fields shipped today already include
+   `home` (controller identity), `support` (DPO contact +
+   support), `terms` (ToS) — all operator-controlled, propagated
+   to every client app via the standard `GET /service/info`
+   read. Verified at
+   `open-pryv.io/components/api-server/src/schema/service-info.ts:25-26`.
+
+   Implementation patterns:
+   - **Easiest** (most operators): DPO contact section on the
+     support page that `support` URL points at. Zero extra
+     surface needed; matches the existing ToS pattern via the
+     `terms` field.
+   - **Dedicated**: a separate DPO page (`https://operator.example.com/dpo`),
+     linked from the support page header.
+   - **Future enhancement** (not currently needed): add an
+     optional `serviceInfo.dpo` field — requires schema change
+     + `app-web-auth3` to render. Filed as candidate only if a
+     critical mass of operators wants a dedicated structured
+     field beyond the `support`-URL convention.
+
+   Companion convention catalogue:
+   `context/service-info-conventions.md` (new this Q) — the
+   serviceInfo-side complement to
+   `context/client-data-conventions.md` (per-access claims).
+
+2. **DPO-scoped audit-log access across all accounts?** **Not
+   today** — audit-log access is currently bound to per-user
+   permissions; no built-in "cross-account audit reader"
+   personal-token tier. Operators granting DPOs platform-wide
+   audit visibility use one of:
+   - `auth.adminAccessKey` style admin auth (high-trust;
+     coarse-grained).
+   - A side-process exporting audit events into the DPO's
+     observability / SIEM stack (Q23 observability-provider
+     pluggable façade).
+   - A custom dataStore (`@pryv/datastore`) that mirrors audit
+     events into a DPO-readable destination.
+
+   Probably "voluntarily missing + operator-built" at this
+   layer — the operator's DPO-monitoring tooling is org-specific
+   enough that a one-size primitive doesn't make sense. If
+   demand emerges, a backlog candidate would be a dedicated
+   "DPO audit reader" role tier with `GET /audit/*` cross-user
+   scope.
+
+**Matrix encoding:**
+
+- `gdpr.Art.37` unchanged (out-of-scope; HR / org decision).
+- `gdpr.Art.38` **shifted from out-of-scope to facilitated**
+  for §4 specifically; overview updated to surface
+  `serviceInfo.support` as the contact-point primitive; cross-
+  reference to the new context note.
+- `gdpr.Art.39` detail extended — practical DPO-monitoring
+  patterns (audit-log access mechanics, compliance-matrix as
+  evidence trail, DPIA / breach-scope tooling threading from
+  Q17 / Q20).
+- `gdpr.Art.13` overview rewritten — the information-items
+  split is now explicit between the **deployment-wide
+  serviceInfo surface** (`home` / `support` / `terms`) and the
+  **per-access clientData surface** (the convention family
+  from Q26). `docs:` extended to include the new
+  `guides/privacy-by-design.md` dev-site page.
+- New canonical `context/service-info-conventions.md` —
+  serviceInfo schema + the 5 compliance-relevant convention
+  uses (Art.13(1)(a)/(b) identity + DPO; Art.13(1)(d)
+  recipients; Art.13(2)(f) automated decisions; Art.7
+  transparency) + comparison with clientData conventions +
+  honest limits.
+- No tier shift on Art.13 (existing `facilitated/storage/medium`
+  correct).
+- No backlog or proposal (existing primitives carry the
+  contact-point obligation; cross-account audit reader is a
+  candidate-only enhancement pending demand).
+
+Classification: **"filled by existing primitive"** for
+Art.38(4) + Art.13(1)(b) contact point + controller identity
+(via existing `serviceInfo.support` + `home` URLs);
+**"out-of-scope"** for Art.37 designation + Art.38 §1-§3
+independence; **"facilitated (evidence-only)"** for Art.39
+monitoring tasks. Same shape as Q26 / Q28 / Q29 confirmation
+Q's — existing primitives + documented convention; matrix
+prose tightening rather than feature work.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

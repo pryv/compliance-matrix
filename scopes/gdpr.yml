@@ -543,13 +543,26 @@ requirements:
     facilitation_mode: storage
     draft: true
     pryv_primitives: [access, clientData, event]
-    docs: [guides/consent.md]
+    docs: [guides/consent.md, guides/privacy-by-design.md]
     overview: |
-      The information items you
-      must show at collection time map naturally to `access.clientData`
-      (or a `consent/request-cmc` event when using CMC). Pryv
-      preserves them immutably; your app surfaces them at the right
-      moment.
+      The information items split across two operator-controlled
+      surfaces:
+
+      - **Deployment-wide** (controller identity, DPO contact,
+        Terms of Service): the `serviceInfo` fields `home`,
+        `support`, `terms` — propagated to every client app via
+        `GET /service/info`; `app-web-auth3` renders them in its
+        consent UI by default. Full convention treatment in
+        `context/service-info-conventions.md`.
+      - **Per-access** (purposes, lawful basis, recipients,
+        retention, the specific rights notice): `access.clientData`
+        per the convention family in
+        `context/client-data-conventions.md` —
+        `lawful_basis`, `purpose`, `transfer_basis`, `retention`,
+        `consent`, `consent_event_id`, etc. (or a
+        `consent/request-cmc` event when using CMC). Pryv preserves
+        them immutably with version chain (`?includeHistory=true`);
+        your app surfaces them at the right moment.
 
   - ref: Art.14
     title: Information to be provided where data have not been obtained from the data subject
@@ -1490,11 +1503,24 @@ requirements:
       shall directly report to the highest management level; shall not
       receive any instructions regarding exercise of those tasks;
       cannot be dismissed or penalised for performing tasks.
-    coverage: out-of-scope
+      Data subjects may contact the DPO with regard to all issues
+      related to processing (§4).
+    coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: storage
     draft: true
+    pryv_primitives: []
     overview: |
-      DPO independence + reporting structure is an organizational
-      arrangement. No software role.
+      DPO independence + reporting structure (§1-§3) is an
+      organizational arrangement — no software role. **§4 DPO
+      contact-point for data subjects IS facilitated** by the
+      existing `serviceInfo.support` URL (returned by
+      `GET /service/info` on every core). Operators publish DPO
+      contact details on the page that `support` points at — the
+      same surface that `app-web-auth3` already renders in its
+      consent UI. Zero extra platform code required. Full
+      convention treatment in
+      `context/service-info-conventions.md`.
 
   - ref: Art.39
     title: Tasks of the data protection officer
@@ -1510,10 +1536,35 @@ requirements:
     draft: true
     pryv_primitives: [audit, observability-provider]
     overview: |
-      DPO duties are organizational.
-      Pryv contributes the data sources the DPO uses for "monitoring
-      compliance" — the audit log, observability metrics, this
-      matrix's evidence trail. Equips the DPO; doesn't replace them.
+      DPO duties are organizational. Pryv contributes the data
+      sources the DPO uses for "monitoring compliance" — the
+      audit log, observability metrics, this matrix's evidence
+      trail. The DPO contact-point obligation per Art.38(4) is
+      covered separately via the `serviceInfo.support` URL
+      convention (see `context/service-info-conventions.md`).
+      Pryv equips the DPO; it doesn't replace them.
+    detail: |
+      Practical DPO-monitoring patterns:
+
+      - **Audit-log access** for the DPO is currently bound to
+        per-user-scoped permissions; no built-in "cross-account
+        audit reader" personal-token tier exists. Operators
+        granting DPOs platform-wide audit visibility typically
+        use `auth.adminAccessKey` style admin auth, OR run a
+        side-process that exports audit events into the DPO's
+        observability / SIEM stack (Q23 observability-provider
+        primitive — pluggable façade).
+      - **Compliance matrix as evidence trail**: this
+        compliance-matrix repository itself is the structured
+        artefact the DPO references for "what does the platform
+        contribute to each regulatory control?" — see how
+        scopes / requirements / pryv_primitives / planned chips
+        / context notes interlink for the auditable claim graph.
+      - **DPIA / breach-scope tooling** the DPO consumes when
+        active: future Plan 60 admin-panel surfaces (Q20 → Plan
+        60 A.9 effective-config endpoint for DPIA Section (d);
+        Q17 → `BREACH-SCOPE-TOOL` backlog for the breach scoping
+        artefact).
 
   - ref: Art.40
     title: Codes of conduct
