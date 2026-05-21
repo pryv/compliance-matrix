@@ -2485,6 +2485,143 @@ new sample-app candidate + matrix-prose strengthening on
 
 **Commit:** *(this commit)*.
 
+### Q33 — GDPR Art.34: communication of breach to data subjects (delivery side)
+
+**Short answer:** **Two-surface split.** **Identification**
+is filled by existing primitives + Q17 BREACH-SCOPE-TOOL (audit
+log → per-subject roster). **Delivery** is **voluntarily missing
++ operator-owned** — same shape as Q15 backup encryption + Q31
+retention. The audit-trace bridge that lands per-recipient
+send-receipts inside Pryv's event chain uses operator-authored
+`compliance/breach-notification/sent-cmc` events satisfying
+the §164.414-equivalent burden-of-proof obligation.
+
+**The customer scenario:**
+
+> "Q17 covers the identification side (BREACH-SCOPE-TOOL once
+> shipped — `accessId → userId` reverse-index + `recordCount`
+> + `affectedStreamIds`). But once I know **who** was affected,
+> how does Pryv help me **deliver** the notifications? For a
+> multi-thousand-user platform, this is bulk-send + retries +
+> rate-limiting + receipt tracking + audit trace, all 'without
+> undue delay'. Or is breach-comm entirely my external email/
+> SMS/in-app infrastructure?"
+
+**Code findings (verified before classifying):**
+
+| Question | Finding |
+|---|---|
+| Bulk-send primitive? | **None.** `components/api-server/src/methods/helpers/mailing.ts` `sendmail()` is single-recipient, single-template, per-call. Three delivery methods (`in-process` / `microservice` / `mandrill`) all designed for transactional one-off (welcome / password-reset / MFA code). |
+| Template registry | **Yes (but transactional)** — `components/mail/src/TemplateRepository.ts` + `Template.ts` + `TemplateSeeder.ts`; Pug templates seeded into PlatformDB; refreshed via master broadcast. Per-language support inherited; bulk-send orchestration absent. |
+| Subject-notification primitive (write to subject's account) | **None native.** The CMC `consent/*-cmc` family covers counterparty consent flows; an unsolicited operator-to-subject notification event format would be operator-authored via Q14 custom-catalogue extension. |
+| Webhooks for subject-side | **No.** Webhooks are app-side outbound (apps subscribe to event changes); subjects don't have webhooks. |
+| Audit trace of notification | **None native** — operator's mail provider has the send-log; not in Pryv's audit log. |
+| Rate-limiting / throttling | **None native** for bulk send. SMTP provider limits apply. |
+| Multi-lang template render | **Partial** — `sendmail()` takes `lang` parameter for the existing transactional templates; bulk-send orchestration missing. |
+| Existing Art.34 row treatment (pre-Q33) | **Thin** — `coverage: documented`, 3-line overview deferring to "operational". |
+
+**Why "voluntarily missing + operator-owned":**
+
+1. **Operators have established notification stacks.** Most
+   regulated-market deployments already have a CRM-side bulk
+   email pipeline (SendGrid / Mailgun / AWS SES), an SMS
+   provider (Twilio / Vonage), an in-app push channel,
+   sometimes a legal-comms-team escalation route. Building
+   a Pryv-shipped breach-comm would be redundant.
+2. **Operators without one would need legal/comms expertise
+   to use it well anyway.** Art.34 §2 mandates specific
+   content elements (nature of breach + DPO contact + likely
+   consequences + measures taken). The phrasing + the timing
+   + the regulator-defensibility narrative aren't something
+   a Pryv-side template can pre-fab without operator-specific
+   tailoring.
+3. **The Art.34 §3 exemptions** (encryption made data
+   unintelligible, subsequent measures eliminated high risk,
+   disproportionate effort) are legal judgements operator-
+   counsel makes — a platform primitive can't determine them.
+
+**The operator pattern (recommended):**
+
+Composes the identification primitive (Q17 BREACH-SCOPE-TOOL
+once shipped) with the operator's existing comms stack:
+
+1. **Identification** — `bin/breach-scope.js --access-id X
+   --window-start ... --window-end ...` produces
+   `affected.json` with per-subject `userId` + `recordCount`
+   + `affectedStreamIds` + audit-row hashes.
+2. **Delivery** — operator's CRM / mail provider ingests
+   `affected.json`, joins against subscriber-contact records
+   (email + lang + timezone + preferred channel), renders
+   breach-notice template with Art.34 §2 content elements,
+   queues for send through the operator's normal
+   transactional pipeline.
+3. **Audit-trace bridge** — operator writes
+   `compliance/breach-notification/sent-cmc` event per
+   recipient on a compliance system stream, capturing
+   `recipient.userId` + `recipient.email_hash` (HMAC-SHA256
+   to avoid plaintext) + `channel` + `provider.message_id`
+   + `time` + `notice_version`. These events become the
+   §164.414-equivalent burden-of-proof artefact + are
+   queryable per subject (`events.get streams=
+   compliance/breach-notification/* recipient.userId=<X>`).
+4. **Incident-response record** — operator's
+   `compliance/incidents/<id>/*` event tree cross-references
+   the affected.json input + the per-recipient send-receipt
+   subtree.
+
+**Multi-jurisdiction nuance:** subjects in different
+jurisdictions face different timing regimes (GDPR Art.34
+"undue delay" / HIPAA-Breach §164.404 ≤60d / PIPEDA s.10.1
+"as soon as feasible" / California §1798.82 ≤45d / Swiss
+nLPD Art.24 conditional). Operator's runbook derives per-
+subject timing from `clientData.jurisdiction` recorded on
+the account.
+
+**Matrix encoding:**
+
+- `gdpr.Art.34` **detail rewritten** — replaces the
+  3-line `coverage: documented` overview with the full
+  two-surface split (identification filled-by-existing-
+  primitive + delivery voluntarily-missing-operator-owned)
+  + recipe pointer + audit-trace bridge pattern. Tier
+  shifted `documented` → `facilitated/evidence/low`;
+  `pryv_primitives` populated with `audit, access,
+  encryption-at-rest-secrets, event, system-streams`.
+- `hipaa-breach.164.404` overview rewritten + detail
+  extended — same two-surface split framing; cross-link
+  to the new context note.
+- `pipeda.s.10.1` detail extended — explicit operator-
+  owned delivery framing; 24-month record-retention rides
+  on the same `compliance/breach-notification/sent-cmc`
+  event chain.
+- `swiss-nlpd.Art.24` unchanged — already notes the
+  conditional subject-side trigger (Art.24 makes subject
+  notification narrower than GDPR Art.34); the delivery
+  pattern applies whenever the operator elects to notify.
+- `ccpa` — no specific subject-breach row exists in the
+  matrix scope (Cal Civ Code §1798.82 is separate
+  statute); §1798.150 civil-action row covers the
+  encryption-narrowing-trigger side only.
+- New canonical `context/breach-notification-delivery-
+  operator-owned.md` — code findings + two-surface split
+  treatment + recommended operator pattern + audit-trace
+  bridge details + multi-jurisdiction nuance + cross-engine
+  considerations + implementer takeaway + see-also.
+- **No backlog** filed — voluntarily missing by design.
+- **No `planned:` chips** added — same reason.
+- **No `proposals/` mirror** — same reason.
+
+Classification: **"voluntarily missing + operator-owned"**
+(delivery side) + **"filled by existing primitive"**
+(identification side, with Q17 BREACH-SCOPE-TOOL completing
+the per-subject roster). Same shape as Q15 backup encryption,
+Q31 retention. Distinct from Q22 "voluntarily missing +
+highly facilitated" because breach-comm delivery is
+genuinely operator-territory even for vertically-integrated
+operators — they already have the comms stack.
+
+**Commit:** *(this commit)*.
+
 ## How to use this FAQ
 
 When evaluating Pryv:

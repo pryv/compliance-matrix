@@ -285,6 +285,17 @@ requirements:
       content + delivery are the operator's; record-keeping rides on
       Pryv.
 
+      **Notification delivery** (s.10.1 "notify affected individuals")
+      — voluntarily missing + operator-owned at the platform layer.
+      Pryv ships the identification primitive (audit log + Q17
+      BREACH-SCOPE-TOOL); operator composes delivery via their
+      existing CRM / mail / SMS pipeline. Per-recipient send-
+      receipts captured back as
+      `compliance/breach-notification/sent-cmc` events satisfy
+      the 24-month record-retention obligation on the same Pryv
+      event chain. Full pattern in
+      `context/breach-notification-delivery-operator-owned.md`.
+
   - ref: s.11
     title: Right to file a complaint with the Privacy Commissioner
     text: |

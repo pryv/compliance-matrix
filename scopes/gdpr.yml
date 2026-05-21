@@ -1485,14 +1485,75 @@ requirements:
     text: |
       Where breach likely to result in high risk, controller shall
       communicate to data subjects without undue delay.
-    coverage: documented
+    coverage: facilitated
     pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
+    pryv_primitives: [audit, access, encryption-at-rest-secrets, event, system-streams]
     docs: [customer-resources/audit-setup.md]
     overview: |
-      Communication to your subjects is operational. Pryv's audit data
-      lets you scope per-subject impact; encryption-at-rest may scope
-      the high-risk determination.
+      Two-surface split. **Identification** is filled by the audit
+      log + the Q17 BREACH-SCOPE-TOOL backlog (per-subject roster
+      derivable from the breached access's read/write history);
+      **delivery** is voluntarily missing + operator-owned (Pryv's
+      mail surface is transactional per-recipient, not bulk-send;
+      operators compose with their existing CRM / SMS / push
+      pipeline). The audit-trace bridge that lands per-recipient
+      send-receipts inside Pryv's event chain (satisfying
+      §164.414-equivalent burden-of-proof) uses an operator-
+      authored `compliance/breach-notification/sent-cmc` event
+      pattern. Full treatment in
+      `context/breach-notification-delivery-operator-owned.md`.
+      Encryption-at-rest may scope the high-risk determination
+      (Art.34 §3(a) exemption).
+    detail: |
+      **Identification surface** — derive the affected-subject
+      list from `audit.get` filtered by (`breachedAccessId`,
+      time window). Q17 BREACH-SCOPE-TOOL packages this into
+      `bin/breach-scope.js` + adds the §164.404(c) content
+      elements (`recordCount` + `affectedStreamIds[]`) via
+      audit-row schema extensions. Once that ships,
+      identification is single-command + audit-defensible.
+
+      **Delivery surface** — operator-owned by design. Pryv's
+      transactional mail (`mail.send` / `email-templates`) is
+      designed for welcome / password-reset / MFA-code emails,
+      not bulk breach broadcasts. Operators compose:
+        - Identification → `affected.json` roster from
+          BREACH-SCOPE-TOOL.
+        - Operator's CRM / mail provider (SendGrid / Mailgun /
+          AWS SES / Mandrill) renders Art.34 §2 content
+          elements per recipient + sends with retries +
+          rate-limiting.
+        - Send-receipts captured back into Pryv as
+          `compliance/breach-notification/sent-cmc` events
+          (recipient.userId + email_hash + channel +
+          provider.message_id + notice_version + time) on a
+          dedicated compliance system stream — these become
+          the §164.414-equivalent burden-of-proof artefact.
+        - Operator's incident-response record on
+          `compliance/incidents/<id>/*` cross-references the
+          affected.json input + the per-recipient send-receipt
+          event tree.
+
+      **Why voluntarily missing**: most regulated-market
+      operators already run a CRM / mail / SMS pipeline with
+      established rate-limiting + retry + send-receipt tracking
+      + legal-comms escalation; a Pryv-shipped breach-comm
+      would be redundant. Operators without one need legal/
+      comms expertise to use Art.34 §2 content + timing well
+      anyway — beyond what a platform-side template can pre-
+      fab. The Art.34 §3 exemptions (encryption-renders-
+      unintelligible / subsequent-measures-eliminate-high-risk
+      / disproportionate-effort) are legal judgements operator-
+      counsel makes.
+
+      **Multi-jurisdiction nuance** — subjects in different
+      jurisdictions face different timing regimes (GDPR "undue
+      delay" / HIPAA ≤60d / PIPEDA "as soon as feasible" /
+      California ≤45d / Swiss nLPD Art.24 conditional).
+      Operator's runbook derives per-subject timing from
+      `clientData.jurisdiction` on the account.
 
   - ref: Art.35
     title: Data protection impact assessment

@@ -87,20 +87,31 @@ requirements:
     draft: true
     pryv_primitives: [audit, access]
     overview: |
-      The notification process
-      (drafting, sending, tracking receipts) is operational. Pryv
-      contributes to scoping: the audit log lets you derive the
-      per-subject impact (which subjects' streams were touched by the
-      breached access), so the individual-notification list is
-      auditable rather than estimated.
+      The notification process splits into **identification**
+      (Pryv-shipped — audit-log-driven per-subject roster, packaged
+      by Q17 BREACH-SCOPE-TOOL once shipped) and **delivery**
+      (voluntarily missing + operator-owned — Pryv's transactional
+      mail surface isn't bulk-send; operators compose with their
+      existing CRM / mail / SMS pipeline). The per-recipient
+      audit-trace bridge uses operator-authored
+      `compliance/breach-notification/sent-cmc` events on a
+      compliance system stream, satisfying the §164.414 burden-
+      of-proof obligation. Full delivery-side treatment in
+      `context/breach-notification-delivery-operator-owned.md`.
     detail: |
       Per-subject impact query: filter audit rows by (breachedAccessId,
       timeWindow) → distinct user ids. That's your §164.404
-      notification list, with evidence.
+      notification list, with evidence. Q17 BREACH-SCOPE-TOOL
+      packages this into `bin/breach-scope.js` + adds §164.404(c)(1)
+      (`recordCount` per audit row) + the "types of PHI" element
+      (`affectedStreamIds[]`) via audit-row schema extensions.
 
       §404(c) content elements (description of breach, types of PHI,
       steps individual should take, what entity is doing, contact
       info) are editorial; Pryv has no opinion on the wording.
+      Delivery — including rate-limiting + retries + send-receipt
+      tracking — uses the operator's existing notification stack
+      (`context/breach-notification-delivery-operator-owned.md`).
 
   - ref: "164.406"
     title: Notification to media
