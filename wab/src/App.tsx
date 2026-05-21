@@ -1,6 +1,13 @@
-import { Routes, Route, Link } from 'react-router-dom';
+import { NavLink, Routes, Route, Link } from 'react-router-dom';
 import { ScopeList } from './components/ScopeList';
 import { ScopeDetail } from './components/ScopeDetail';
+import { PrimitiveList } from './components/PrimitiveList';
+import { PrimitiveDetail } from './components/PrimitiveDetail';
+
+const NAV_TABS = [
+  { to: '/', label: 'Regulations', end: true },
+  { to: '/primitives', label: 'Pryv primitives', end: false }
+];
 
 export default function App () {
   return (
@@ -10,9 +17,25 @@ export default function App () {
           <Link to='/' className='text-base font-semibold text-slate-800'>
             open-pryv.io · Compliance Matrix
           </Link>
-          <nav className='text-sm text-slate-500'>
+          <nav className='flex items-center gap-1'>
+            {NAV_TABS.map((t) => (
+              <NavLink
+                key={t.to}
+                to={t.to}
+                end={t.end}
+                className={({ isActive }) =>
+                  `px-3 py-1 rounded text-sm transition-colors ${
+                    isActive
+                      ? 'bg-slate-100 text-slate-900 font-medium'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`
+                }
+              >
+                {t.label}
+              </NavLink>
+            ))}
             <a
-              className='hover:text-slate-700'
+              className='px-3 py-1 text-sm text-slate-500 hover:text-slate-700'
               href='https://github.com/pryv/compliance-matrix'
               target='_blank'
               rel='noreferrer'
@@ -27,6 +50,8 @@ export default function App () {
         <Routes>
           <Route path='/' element={<ScopeList />} />
           <Route path='/scope/:id' element={<ScopeDetail />} />
+          <Route path='/primitives' element={<PrimitiveList />} />
+          <Route path='/primitive/:id' element={<PrimitiveDetail />} />
         </Routes>
       </main>
 

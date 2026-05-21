@@ -113,6 +113,11 @@ db.exec(`
   );
   CREATE INDEX idx_planned_kind ON planned_changes(kind);
 
+  CREATE TABLE pryv_primitives (
+    id TEXT PRIMARY KEY,
+    summary TEXT NOT NULL
+  );
+
   CREATE TABLE meta (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -139,7 +144,44 @@ const insExcl    = db.prepare('INSERT INTO excluded_items (scope_id, ref, reason
 const insPlanned = db.prepare(`INSERT INTO planned_changes
   (scope_id, ref, seq, kind, summary, proposal, backlog, impact, tracking_url, eta_release)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+const insPrimRow = db.prepare('INSERT INTO pryv_primitives (id, summary) VALUES (?, ?)');
 const insMeta    = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?)');
+
+/**
+ * Parse docs/pryv-primitives.md → [{id, summary}]. Convention per file:
+ *   ### `<id>`
+ *
+ *   <one-line summary>
+ *
+ *   - **Field**: ...
+ *   - **Field**: ...
+ *
+ * The single non-empty paragraph immediately after the heading is the
+ * summary (used for the primitives index card). Detail bullets are
+ * not stored — the WAB links to the rendered docs page for the deep dive.
+ */
+function parsePrimitives (md) {
+  const out = [];
+  const lines = md.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^###\s+`([^`]+)`\s*$/);
+    if (!m) continue;
+    const id = m[1];
+    let j = i + 1;
+    while (j < lines.length && lines[j].trim() === '') j++;
+    const paragraphLines = [];
+    while (j < lines.length && lines[j].trim() !== '' && !lines[j].startsWith('-')) {
+      paragraphLines.push(lines[j].trim());
+      j++;
+    }
+    out.push({ id, summary: paragraphLines.join(' ').trim() || '(no summary)' });
+  }
+  return out;
+}
+
+const PRIMITIVES_DOC = path.join(ROOT, 'docs/pryv-primitives.md');
+const primitivesMd = fs.existsSync(PRIMITIVES_DOC) ? fs.readFileSync(PRIMITIVES_DOC, 'utf8') : '';
+const primitives = parsePrimitives(primitivesMd);
 
 const scopeFiles = await glob(path.join(ROOT, 'scopes/*.yml'));
 
@@ -202,8 +244,13 @@ const tx = db.transaction(() => {
     }
   }
 
+  for (const p of primitives) {
+    insPrimRow.run(p.id, p.summary);
+  }
+
   insMeta.run('built_at', new Date().toISOString());
   insMeta.run('scope_count', String(scopeFiles.length));
+  insMeta.run('primitive_count', String(primitives.length));
 });
 
 tx();
@@ -213,6 +260,7 @@ const stats = {
   requirements: db.prepare('SELECT COUNT(*) c FROM requirements').get().c,
   test_links: db.prepare('SELECT COUNT(*) c FROM test_links').get().c,
   doc_links: db.prepare('SELECT COUNT(*) c FROM doc_links').get().c,
+  primitives: db.prepare('SELECT COUNT(*) c FROM pryv_primitives').get().c,
   drafts: db.prepare('SELECT COUNT(*) c FROM requirements WHERE draft=1').get().c,
   planned: db.prepare('SELECT COUNT(*) c FROM planned_changes').get().c,
   planned_bugs: db.prepare("SELECT COUNT(*) c FROM planned_changes WHERE kind='bug'").get().c
@@ -223,4 +271,5 @@ db.close();
 console.log(`[OK]   built ${path.relative(ROOT, OUT)}`);
 console.log(`[OK]   ${stats.scopes} scope(s), ${stats.requirements} requirement(s) (${stats.drafts} draft)`);
 console.log(`[OK]   ${stats.test_links} test link(s), ${stats.doc_links} doc link(s)`);
+console.log(`[OK]   ${stats.primitives} pryv primitive(s)`);
 console.log(`[OK]   ${stats.planned} planned change(s) (${stats.planned_bugs} queued bug fix(es))`);
