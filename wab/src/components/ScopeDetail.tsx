@@ -240,16 +240,17 @@ export function ScopeDetail () {
 }
 
 /**
- * Interactive coverage distribution bar. Each tier is a clickable
- * segment whose width is proportional to its count. Click a segment
- * to filter the table to that tier; click again (or the pill in the
- * utility row below) to clear.
+ * Coverage breakdown as equal-width count tiles per tier. Each tile
+ * is a clickable filter button. No proportional bar — that visual
+ * implies "Pryv covers X% of total project work", which misleads:
+ * matrix rows aren't equal-weight units of compliance effort, and
+ * the operator-side scope on each row (especially out-of-scope rows)
+ * is unbounded. The tiles count rows present in the matrix, full
+ * stop.
  *
- * Above the bar: total + active-state breadcrumb hint.
- * Below the bar: a tight legend with tier label + count + a small
- * coloured swatch (also clickable, mirrors segment clicks). Helps
- * narrow segments stay scannable and gives keyboard-only users the
- * same affordance.
+ * Active state: filled tile with tier-color accent border; siblings
+ * dim slightly so the filter direction is obvious. Empty tiers
+ * (count = 0) are omitted.
  */
 function CoverageDistribution ({
   histogram,
@@ -265,11 +266,15 @@ function CoverageDistribution ({
   const present = COVERAGE_ORDER.filter((c) => (histogram[c] ?? 0) > 0);
   return (
     <div className='mt-5'>
-      <div className='flex items-baseline gap-2 mb-1.5'>
-        <span className='text-sm text-slate-700 font-medium'>{total}</span>
-        <span className='text-xs text-slate-500'>requirements</span>
+      <div className='flex items-baseline gap-2 mb-2'>
+        <span className='text-xs text-slate-500 uppercase tracking-wide font-medium'>
+          Coverage breakdown
+        </span>
+        <span className='text-xs text-slate-400'>
+          · {total} requirements in this matrix
+        </span>
       </div>
-      <div className='flex h-3 rounded overflow-hidden border border-slate-200'>
+      <div className='flex flex-wrap gap-2'>
         {present.map((c) => {
           const count = histogram[c] ?? 0;
           const isActive = active === c;
@@ -279,32 +284,25 @@ function CoverageDistribution ({
               key={c}
               type='button'
               onClick={() => onSelect(c)}
-              style={{ flex: count }}
-              className={`cov-${c} block transition-opacity ${
-                isMuted ? 'opacity-30' : 'opacity-100'
-              } ${isActive ? 'ring-2 ring-slate-700 ring-inset' : ''} hover:opacity-90`}
-              title={`${COVERAGE_LABELS_SHORT[c]}: ${count} (click to filter)`}
-              aria-label={`Filter to ${COVERAGE_LABELS_SHORT[c]} (${count})`}
-            />
-          );
-        })}
-      </div>
-      <div className='mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs'>
-        {present.map((c) => {
-          const count = histogram[c] ?? 0;
-          const isActive = active === c;
-          return (
-            <button
-              key={c}
-              type='button'
-              onClick={() => onSelect(c)}
-              className={`inline-flex items-center gap-1.5 ${
-                isActive ? 'text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-700'
+              className={`flex-1 min-w-[6.5rem] px-3 py-2 rounded-md border text-left transition-all ${
+                isActive
+                  ? 'bg-slate-50 border-slate-700 shadow-sm'
+                  : isMuted
+                    ? 'bg-white border-slate-200 opacity-50 hover:opacity-80'
+                    : 'bg-white border-slate-200 hover:border-slate-400'
               }`}
+              title={`Click to filter to ${COVERAGE_LABELS_SHORT[c]} rows`}
+              aria-label={`Filter to ${COVERAGE_LABELS_SHORT[c]} (${count})`}
             >
-              <span className={`cov-${c} w-2 h-2 rounded-sm inline-block`} />
-              <span>{COVERAGE_LABELS_SHORT[c]}</span>
-              <span className='tabular-nums'>{count}</span>
+              <div className='flex items-baseline gap-1.5'>
+                <span className={`cov-${c} w-1.5 h-1.5 rounded-full inline-block`} />
+                <span className='text-2xl font-semibold text-slate-800 tabular-nums leading-none'>
+                  {count}
+                </span>
+              </div>
+              <div className='mt-1 text-xs text-slate-600'>
+                {COVERAGE_LABELS_SHORT[c]}
+              </div>
             </button>
           );
         })}
