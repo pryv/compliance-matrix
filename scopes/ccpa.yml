@@ -55,11 +55,13 @@ requirements:
         summary: "PG audit not erased on auth.delete (engine-dependent gap; derives from gdpr.Art.17)"
         proposal: proposals/audit-on-user-delete.md
         backlog: AUDIT-ON-USER-DELETE
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/75
         impact: medium
       - kind: feature
         summary: "Operator setting audit.onUserDelete: erase | keep | pseudonymise"
         proposal: proposals/audit-on-user-delete.md
         backlog: AUDIT-ON-USER-DELETE
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/75
         impact: low
     overview: |
       Same primitive as GDPR Art. 17: `system.users.delete` is the
@@ -107,6 +109,7 @@ requirements:
         summary: "pryv-account-backup misses audit + HF series data points + webhooks (inherits gdpr.Art.15 tooling gap)"
         proposal: proposals/account-backup-dsar-completeness.md
         backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
         impact: low
     overview: |
       Categories surface from the canonical event-type schemas
@@ -296,6 +299,7 @@ requirements:
         summary: "End-to-end encryption narrows the §1798.150 nonencrypted-PI trigger zone further"
         proposal: proposals/e2e-encryption.md
         backlog: E2E-ENCRYPTION
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/34
         impact: low
     overview: |
       Two contributions:
@@ -419,6 +423,7 @@ requirements:
         summary: "auth.randomAlias enables an alias-only deployment pattern (don't store linkable identifiers alongside sensitive PI)"
         proposal: proposals/aliases-as-pseudonymization-primitive.md
         backlog: ALIASES
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/38
         impact: low
     overview: |
       Sensitive-PI enumeration

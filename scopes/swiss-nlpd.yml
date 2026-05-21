@@ -209,6 +209,7 @@ requirements:
         summary: "bin/breach-scope.js inherits from gdpr.Art.33 — same scoping artefact serves the FDPIC 'as soon as possible' regime"
         proposal: proposals/breach-scope-tool.md
         backlog: BREACH-SCOPE-TOOL
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/76
         impact: medium
     overview: |
       Same Pryv contribution as
@@ -248,6 +249,7 @@ requirements:
         summary: "pryv-account-backup misses audit + HF series + webhooks (inherits gdpr.Art.15 tooling gap)"
         proposal: proposals/account-backup-dsar-completeness.md
         backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
         impact: low
     overview: |
       Same implementation as GDPR Art. 15: subject holding a personal

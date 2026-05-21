@@ -183,6 +183,7 @@ requirements:
         summary: "Reference TOTP / WebAuthn plugins + AAL-tier mapping doc strengthen the A.8.5 evidence chain"
         proposal: proposals/mfa-modern-methods.md
         backlog: MFA-MODERN-METHODS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/78
         impact: medium
     overview: |
       Token-based auth by default; multi-factor via `mfa.*` API methods
@@ -259,6 +260,7 @@ requirements:
         summary: "Chained / signed audit log adds the software-side tamper-resistance signal A.8.15 expects"
         proposal: proposals/audit-log-chaining.md
         backlog: AUDIT-LOG-CHAINING
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/74
         impact: low
     overview: |
       Per-user audit log captures every API method invocation; access
@@ -357,6 +359,7 @@ requirements:
         summary: "End-to-end encryption adds a customer-key flow (CMEK / BYOK) to the cryptography catalogue"
         proposal: proposals/e2e-encryption.md
         backlog: E2E-ENCRYPTION
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/34
         impact: low
     overview: |
       TLS 1.3 for transit, AES-256-GCM for at-rest operator secrets
@@ -590,6 +593,7 @@ requirements:
         summary: "auth.randomAlias masks the real username at the access layer (row could move F:Primitive → Configurable)"
         proposal: proposals/aliases-as-pseudonymization-primitive.md
         backlog: ALIASES
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/38
         impact: medium
     overview: |
       Pryv enforces masking by **projection**, not transformation:
@@ -756,6 +760,7 @@ requirements:
         summary: "accesses.delete doesn't cascade to webhooks (terminate path leaves dangling outbound channel)"
         proposal: proposals/webhook-cascade-on-access-delete.md
         backlog: WEBHOOK-CASCADE-ON-ACCESS-DELETE
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/82
         impact: medium
     overview: |
       Pryv's account + access primitives implement the full identity
@@ -790,6 +795,7 @@ requirements:
         summary: "Reference MFA plugins broaden the authentication-information catalogue"
         proposal: proposals/mfa-modern-methods.md
         backlog: MFA-MODERN-METHODS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/78
         impact: low
     overview: |
       Pryv stores
@@ -816,6 +822,7 @@ requirements:
         summary: "accesses.delete doesn't cascade to webhooks; removal step is incomplete for the outbound-channel obligation"
         proposal: proposals/webhook-cascade-on-access-delete.md
         backlog: WEBHOOK-CASCADE-ON-ACCESS-DELETE
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/82
         impact: low
     overview: |
       Same primitive surface as A.5.15 + A.5.16 — accesses.create /
@@ -975,6 +982,7 @@ requirements:
         summary: "Bootstrap-join + pre-cert-load clock-skew detection (would shift row to F:Awareness|Low)"
         proposal: proposals/clock-skew-cluster-checks.md
         backlog: CLOCK-SKEW-CLUSTER-CHECKS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/77
         impact: medium
     overview: |
       Clock sync is the host-OS concern (chronyd / ntpd); Pryv stores
@@ -1414,6 +1422,7 @@ requirements:
         summary: "Three-phase supply-chain scanning pipeline (CI npm audit gate + SBOM via Syft + image scan via Grype + cosign signing); shifts row F:Awareness Low → F:Evidence Medium when shipped"
         proposal: proposals/supply-chain-scanning-pipeline.md
         backlog: SUPPLY-CHAIN-SCANNING-PIPELINE
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/81
         impact: medium
     overview: |
       Supply-chain risk at the Pryv layer today is **partial and
@@ -1451,6 +1460,7 @@ requirements:
         summary: "Chained audit log strengthens forensic evidence (row could shift F:Evidence|Med → F:Evidence|High)"
         proposal: proposals/audit-log-chaining.md
         backlog: AUDIT-LOG-CHAINING
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/74
         impact: medium
     overview: |
       Pryv contributes detection

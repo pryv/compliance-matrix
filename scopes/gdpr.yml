@@ -162,6 +162,7 @@ requirements:
         summary: "auth.randomAlias names pseudonymisation as a primitive (Art.4(5) maps to a concrete switch)"
         proposal: proposals/aliases-as-pseudonymization-primitive.md
         backlog: ALIASES
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/38
         impact: medium
     overview: |
       Article 4 defines GDPR
@@ -606,11 +607,13 @@ requirements:
         summary: "pryv-account-backup misses audit log + HF series data points + webhooks (Art.15(1)(c) gap today)"
         proposal: proposals/account-backup-dsar-completeness.md
         backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
         impact: medium
       - kind: feature
         summary: "Single-shot events fetch chunked by time-range for production-scale subjects"
         proposal: proposals/account-backup-dsar-completeness.md
         backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
         impact: low
     overview: |
       Your subject, holding a personal token, reads everything via the
@@ -711,11 +714,13 @@ requirements:
         summary: "PG audit not erased on auth.delete (engine-dependent gap)"
         proposal: proposals/audit-on-user-delete.md
         backlog: AUDIT-ON-USER-DELETE
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/75
         impact: medium
       - kind: feature
         summary: "Operator setting audit.onUserDelete: erase|keep|pseudonymise"
         proposal: proposals/audit-on-user-delete.md
         backlog: AUDIT-ON-USER-DELETE
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/75
         impact: low
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
@@ -813,6 +818,7 @@ requirements:
         summary: "pryv-account-backup restore path repairs HF series + multi-attachment round-trip"
         proposal: proposals/account-backup-dsar-completeness.md
         backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
         impact: medium
     overview: |
       `events.get` + `streams.get` return canonical JSON validated against
@@ -1276,6 +1282,7 @@ requirements:
         summary: "Chained / signed audit log makes the Article 30 register tamper-evident"
         proposal: proposals/audit-log-chaining.md
         backlog: AUDIT-LOG-CHAINING
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/74
         impact: low
     overview: |
       The combination of access + clientData + audit + (cross-account)
@@ -1327,26 +1334,31 @@ requirements:
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
         proposal: proposals/e2e-encryption.md
         backlog: E2E-ENCRYPTION
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/34
         impact: low
       - kind: feature
         summary: "auth.randomAlias would name pseudonymisation as a switch-on primitive at Art.32 §1(a)"
         proposal: proposals/aliases-as-pseudonymization-primitive.md
         backlog: ALIASES
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/38
         impact: medium
       - kind: feature
         summary: "Three-phase supply-chain scanning pipeline strengthens the §1(b)/(c) ongoing-CIA + integrity axis with concrete SCA + SBOM + signed-image evidence"
         proposal: proposals/supply-chain-scanning-pipeline.md
         backlog: SUPPLY-CHAIN-SCANNING-PIPELINE
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/81
         impact: low
       - kind: feature
         summary: "PlatformDB at-rest encryption strengthens §1(a) encryption evidence at the cluster-replicated identification + routing layer"
         proposal: proposals/platformdb-at-rest-encryption.md
         backlog: PLATFORMDB-AT-REST-ENCRYPTION
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/79
         impact: medium
       - kind: feature
         summary: "PlatformDB HMAC-pseudonymisation gives §1(a) pseudonymisation evidence at the PlatformDB layer; reduces cross-border PII exposure in multi-region clusters"
         proposal: proposals/platformdb-pii-hashing.md
         backlog: PLATFORMDB-PII-HASHING
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/80
         impact: medium
     overview: |
       Multi-aspect article —
@@ -1395,6 +1407,7 @@ requirements:
         summary: "bin/breach-scope.js — emits §33(1)(b-d) scoping report from audit + access-version data for a compromised accessId"
         proposal: proposals/breach-scope-tool.md
         backlog: BREACH-SCOPE-TOOL
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/76
         impact: medium
     overview: |
       Pryv's audit log helps you

@@ -157,6 +157,7 @@ requirements:
         summary: "End-to-end encryption reframes the safeguards posture for high-sensitivity health data"
         proposal: proposals/e2e-encryption.md
         backlog: E2E-ENCRYPTION
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/34
         impact: low
     overview: |
       Multi-aspect safeguards
@@ -204,6 +205,7 @@ requirements:
         summary: "pryv-account-backup misses audit + HF series + webhooks (inherits gdpr.Art.15 tooling gap)"
         proposal: proposals/account-backup-dsar-completeness.md
         backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
         impact: low
     overview: |
       Individual access is the same primitive surface as GDPR Art. 15 +
@@ -253,11 +255,13 @@ requirements:
         summary: "Chained audit log improves RROSH evidence chain (scoping + non-repudiation)"
         proposal: proposals/audit-log-chaining.md
         backlog: AUDIT-LOG-CHAINING
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/74
         impact: low
       - kind: feature
         summary: "bin/breach-scope.js produces the RROSH-input artefact in a single CLI call (records affected, methods invoked, streams touched)"
         proposal: proposals/breach-scope-tool.md
         backlog: BREACH-SCOPE-TOOL
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/76
         impact: medium
     overview: |
       Same primitive set as the

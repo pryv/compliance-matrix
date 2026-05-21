@@ -307,6 +307,7 @@ requirements:
         summary: "Reference WebAuthn plugin meets the BfArM 'strong authentication for sensitive health data' bar without SMS-OTP weakness"
         proposal: proposals/mfa-modern-methods.md
         backlog: MFA-MODERN-METHODS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/78
         impact: medium
     overview: |
       MFA via the `mfa.*` API methods (`services.mfa.mode` enables it);

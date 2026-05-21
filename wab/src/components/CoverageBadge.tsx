@@ -124,13 +124,39 @@ export function PlannedBadge ({ change }: { change: PlannedChange }) {
   ];
   if (change.backlog) titleParts.push(`Backlog: ${change.backlog}`);
   if (change.eta_release) titleParts.push(`ETA: ${change.eta_release}`);
-  return (
-    <span
-      className={`planned-${change.kind} planned-impact-${impact} inline-block px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap`}
-      title={titleParts.join('\n')}
-    >
+  if (change.tracking_url) titleParts.push(`Tracker: ${change.tracking_url}`);
+
+  const className = `planned-${change.kind} planned-impact-${impact} inline-block px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap`;
+  const content = (
+    <>
       {labelKind}
       {change.impact && <span className='ml-1 opacity-80'>· {change.impact}</span>}
+    </>
+  );
+
+  // When `tracking_url` is populated (GitHub issue / project link), render
+  // as a clickable anchor so the operator can jump straight to the tracker.
+  // Otherwise render the static span as before.
+  if (change.tracking_url) {
+    return (
+      <a
+        href={change.tracking_url}
+        target='_blank'
+        rel='noopener noreferrer'
+        className={`${className} hover:opacity-90 hover:underline`}
+        title={titleParts.join('\n')}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <span
+      className={className}
+      title={titleParts.join('\n')}
+    >
+      {content}
     </span>
   );
 }

@@ -253,11 +253,13 @@ requirements:
         summary: "auth.randomAlias supplies a de-identification primitive alongside the deletion path"
         proposal: proposals/aliases-as-pseudonymization-primitive.md
         backlog: ALIASES
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/38
         impact: low
       - kind: bug
         summary: "PG audit not erased on auth.delete (engine-dependent gap; derives from gdpr.Art.17)"
         proposal: proposals/audit-on-user-delete.md
         backlog: AUDIT-ON-USER-DELETE
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/75
         impact: medium
     overview: |
       Per-user deletion via `system.users.delete` (engine-dependent

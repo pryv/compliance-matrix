@@ -89,6 +89,7 @@ requirements:
         summary: "accesses.delete doesn't cascade to webhooks; dangling webhook keeps firing on matching events"
         proposal: proposals/webhook-cascade-on-access-delete.md
         backlog: WEBHOOK-CASCADE-ON-ACCESS-DELETE
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/82
         impact: medium
     overview: |
       Workforce access to ePHI is mediated by Pryv accesses. Termination
@@ -191,6 +192,7 @@ requirements:
         summary: "Reference TOTP / WebAuthn plugins reduce dependence on SMS-OTP for the second factor"
         proposal: proposals/mfa-modern-methods.md
         backlog: MFA-MODERN-METHODS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/78
         impact: low
     overview: |
       Pryv stores credentials on a privileged `system-stream`, separate
@@ -427,6 +429,7 @@ requirements:
         summary: "End-to-end (server-blind) encryption via proxy re-encryption brings CMEK / BYOK to the Pryv layer"
         proposal: proposals/e2e-encryption.md
         backlog: E2E-ENCRYPTION
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/34
         impact: medium
     overview: |
       Pryv encrypts operator-supplied secrets at rest using AES-256-GCM
@@ -469,6 +472,7 @@ requirements:
         summary: "Chained / signed audit log strengthens tamper-resistance evidence"
         proposal: proposals/audit-log-chaining.md
         backlog: AUDIT-LOG-CHAINING
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/74
         impact: low
     overview: |
       Pryv's per-user audit log records every API method invocation —
@@ -505,6 +509,7 @@ requirements:
         summary: "Chained / signed audit log enforces log integrity at the primitive layer"
         proposal: proposals/audit-log-chaining.md
         backlog: AUDIT-LOG-CHAINING
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/74
         impact: medium
     overview: |
       Integrity is multi-
@@ -530,6 +535,7 @@ requirements:
         summary: "Chained / signed audit log authenticates audit data (row moves F:Evidence|Low → F:Evidence|Med)"
         proposal: proposals/audit-log-chaining.md
         backlog: AUDIT-LOG-CHAINING
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/74
         impact: medium
     overview: |
       Event versioning preserves
@@ -569,6 +575,7 @@ requirements:
         summary: "Reference MFA plugins (TOTP / WebAuthn) + primitive-catalogue doc surface the pluggability"
         proposal: proposals/mfa-modern-methods.md
         backlog: MFA-MODERN-METHODS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/78
         impact: medium
     overview: |
       Authentication is mediated by the access-token primitive: the
@@ -819,6 +826,7 @@ requirements:
         summary: "audit.onUserDelete: keep mode preserves audit across subject erasure"
         proposal: proposals/audit-on-user-delete.md
         backlog: AUDIT-ON-USER-DELETE
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/75
         impact: medium
     overview: |
       Six-year is a **minimum** retention period, not a maximum

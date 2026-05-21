@@ -292,6 +292,7 @@ requirements:
         summary: "pryv-account-backup misses audit + HF series + webhooks (inherits gdpr.Art.15 tooling gap)"
         proposal: proposals/account-backup-dsar-completeness.md
         backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
         impact: low
     overview: |
       Your subject, holding a personal token, reads everything via the
@@ -747,6 +748,7 @@ requirements:
         summary: "auth.randomAlias IS the re-identification code (random by construction → satisfies §514(c)(1)(ii))"
         proposal: proposals/aliases-as-pseudonymization-primitive.md
         backlog: ALIASES
+        tracking_url: https://github.com/pryv/open-pryv.io/issues/38
         impact: medium
     overview: |
       When re-identification is a
