@@ -1,6 +1,12 @@
 # Proposal: webhook cascade on access delete
 
-**Status:** **bug fix queued.** Small dev. Mirror of the upstream
+**Status: SHIPPED 2026-05-27** on `pryv/open-pryv.io` master at [`e009ac9`](https://github.com/pryv/open-pryv.io/commit/e009ac9) (Plan 72 Phase B). `accesses.delete` now cascades to `webhooksRepository.deleteByAccess` for the app access + all descendant shared accesses; `Webhook.send()` fire-time check self-deactivates orphan webhooks; `[WCAD]` 3 + `[WCAD-FIRE]` 3 tests pin the behaviour. Discharges 3 bug chips on `hipaa-security.164.308(a)(3)(ii)(C)`, `iso-27001.A.5.16`, `iso-27001.A.5.18`. GH#82 closed. macroPryv backlog file archived to `_plans/_archives/77-webhook-cascade-on-access-delete-done.md`.
+
+---
+
+**(historical proposal preserved below)**
+
+**Status (when open):** **bug fix queued.** Small dev. Mirror of the upstream
 backlog item (filed 2026-05-20 from the gap-probing session —
 Q13 on webhook subscription lifecycle).
 

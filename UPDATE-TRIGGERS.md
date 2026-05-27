@@ -46,23 +46,13 @@ sqlite3 compliance-matrix/dist/compliance.sqlite \
   "SELECT backlog, scope_id, ref, kind, impact, summary FROM planned_changes ORDER BY backlog, scope_id, ref;"
 ```
 
-### `ACCOUNT-BACKUP-DSAR-COMPLETENESS`
+### `ACCOUNT-BACKUP-DSAR-COMPLETENESS` (mostly shipped — 1 feature chip remains)
 
-**Where the work lives**: `pryv-account-backup` repo (npm
-`@pryv/account-backup`). Phase 1 = audit-log fetch + HF series data
-fetch + webhooks fetch + drop v1-only `/followed-slices` + chunk
-events. Phase 2 = access history + CMC counterparty metadata. Phase 3 =
-restore-path Art.20 round-trip.
+**Where the work lives**: `pryv-account-backup` repo (npm `@pryv/account-backup`). Shipped 2026-05-27 in v0.4.0 (commits `1a05482` v0.3.0 + `30b1661` C.4 partial + `ea6ae6a` v0.4.0). 5 bug chips (Art.15 / 1798.110 / 164.524 / Principle.4.9 / Art.25) + 1 feature chip (Art.20 restore) discharged. The remaining feature chip below ("events chunking") was NOT in Plan 72 Phase C scope.
 
-| Scope | Ref | Kind | Impact | After shipping |
+| Scope | Ref | Kind | Impact | Status |
 |---|---|---|---|---|
-| gdpr | Art.15 | bug | medium | drop "tooling caveat" prose in detail; chip removed |
-| gdpr | Art.15 | feature | low | chip removed; events chunking documented |
-| gdpr | Art.20 | feature | medium | restore-side tightens after Phase 3 |
-| ccpa | 1798.110 | bug | low | chip removed |
-| pipeda | Principle.4.9 | bug | low | chip removed |
-| swiss-nlpd | Art.25 | bug | low | chip removed |
-| hipaa-privacy | 164.524 | bug | low | chip removed |
+| gdpr | Art.15 | feature | low | **still queued** — chunked-events fetch for production-scale subjects |
 
 Proposal: `proposals/account-backup-dsar-completeness.md`
 
@@ -101,24 +91,6 @@ checkpoints. Precondition: per-core monotonic time (see
 | pipeda | s.10.1 | feature | low | strengthen RROSH evidence narrative |
 
 Proposal: `proposals/audit-log-chaining.md`
-
-### `AUDIT-ON-USER-DELETE`
-
-**Where the work lives**: `open-pryv.io`. Bug: `accesses.delete`
-pipeline lacks `auditStorage.deleteUser` (PG audit silently survives
-`auth.delete`). Feature: operator setting `audit.onUserDelete: erase |
-keep | pseudonymise` (default `erase`).
-
-| Scope | Ref | Kind | Impact | After shipping |
-|---|---|---|---|---|
-| gdpr | Art.17 | bug | medium | drop "engine-dependent gap" prose; chip removed |
-| gdpr | Art.17 | feature | low | document operator setting |
-| ccpa | 1798.105 | bug | medium | chip removed |
-| ccpa | 1798.105 | feature | low | chip removed |
-| iso-27701 | A.7.4.5 | bug | medium | chip removed |
-| hipaa-security | 164.316(b)(2)(i) | feature | medium | `keep` mode = HIPAA-friendly retention path |
-
-Proposal: `proposals/audit-on-user-delete.md`
 
 ### `CLOCK-SKEW-CLUSTER-CHECKS`
 
@@ -165,21 +137,6 @@ AAL-tier mapping docs.
 | diga | A1.2.4 | enhancement | medium | meet BfArM "strong authentication" bar without SMS-OTP |
 
 Proposal: `proposals/mfa-modern-methods.md`
-
-### `WEBHOOK-CASCADE-ON-ACCESS-DELETE`
-
-**Where the work lives**: `open-pryv.io`
-(`components/business/src/webhooks/repository.ts` +
-`components/api-server/src/methods/accesses.ts`). Small dev. Bug fix —
-`accesses.delete` should cascade to webhooks; today it doesn't.
-
-| Scope | Ref | Kind | Impact | After shipping |
-|---|---|---|---|---|
-| hipaa-security | 164.308(a)(3)(ii)(C) | bug | medium | termination procedures story tightens |
-| iso-27001 | A.5.16 | bug | medium | dangling-webhook gap closes |
-| iso-27001 | A.5.18 | bug | low | removal step now complete |
-
-Proposal: `proposals/webhook-cascade-on-access-delete.md`
 
 ### `BREACH-SCOPE-TOOL`
 

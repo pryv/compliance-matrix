@@ -1,6 +1,14 @@
 # Proposal: pryv-account-backup DSAR completeness
 
-**Status:** **bug fix queued** + tooling enhancement. Mirror of the
+**Status: SHIPPED 2026-05-27** on `pryv/pryv-account-backup` master at [`ea6ae6a`](https://github.com/pryv/pryv-account-backup/commit/ea6ae6a) (Plan 72 Phase C, v0.4.0). The full DSAR-completeness fix landed in 3 commits: [`1a05482`](https://github.com/pryv/pryv-account-backup/commit/1a05482) v0.3.0 (audit log + HFS data points + webhooks + per-file integrity manifest), [`30b1661`](https://github.com/pryv/pryv-account-backup/commit/30b1661) C.4 partial (series event containers + HFS data-points round-trip on restore), [`ea6ae6a`](https://github.com/pryv/pryv-account-backup/commit/ea6ae6a) v0.4.0 (full dependency upgrade + multi-attachment restore). Discharges 5 bug chips (`gdpr.Art.15`, `ccpa.1798.110`, `hipaa-privacy.164.524`, `pipeda.Principle.4.9`, `swiss-nlpd.Art.25`) + 1 feature chip (`gdpr.Art.20` multi-attachment / HFS restore). GH#73 closed. macroPryv backlog file archived to `_plans/_archives/78-account-backup-dsar-completeness-done.md`.
+
+**One feature chip remains on `gdpr.Art.15`:** "Single-shot events fetch chunked by time-range for production-scale subjects" — separate concern, not shipped in Phase C. The chip stays on the matrix; a future iteration can pick it up.
+
+---
+
+**(historical proposal preserved below)**
+
+**Status (when open):** **bug fix queued** + tooling enhancement. Mirror of the
 upstream backlog item (filed 2026-05-20 from the implementer-
 perspective gap-probing session — Q10 on DSAR full-loop performance
 + completeness at production scale).

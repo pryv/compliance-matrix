@@ -205,13 +205,6 @@ requirements:
     derives_from: [gdpr.Art.15, gdpr.Art.16, hipaa-privacy.164.524, ccpa.1798.100]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [AA01, EGSQ, U9HQ, PTU1]
-    planned:
-      - kind: bug
-        summary: "pryv-account-backup misses audit + HF series + webhooks (inherits gdpr.Art.15 tooling gap)"
-        proposal: proposals/account-backup-dsar-completeness.md
-        backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
-        impact: low
     overview: |
       Individual access is the same primitive surface as GDPR Art. 15 +
       HIPAA-Privacy § 164.524 + CCPA § 1798.100: subject holding a

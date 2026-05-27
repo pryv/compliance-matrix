@@ -772,13 +772,6 @@ requirements:
     pryv_primitives: [access, system-streams, audit]
     derives_from: [iso-27001.A.5.15, hipaa-security.164.308(a)(4)(ii)(C)]
     tests: [AA01, AA02, ACCP, U9HQ]
-    planned:
-      - kind: bug
-        summary: "accesses.delete doesn't cascade to webhooks (terminate path leaves dangling outbound channel)"
-        proposal: proposals/webhook-cascade-on-access-delete.md
-        backlog: WEBHOOK-CASCADE-ON-ACCESS-DELETE
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/82
-        impact: medium
     overview: |
       Pryv's account + access primitives implement the full identity
       lifecycle: create (registration), enable (login + access mint),
@@ -834,13 +827,6 @@ requirements:
     pryv_primitives: [access, permissions, audit]
     derives_from: [iso-27001.A.5.15, iso-27001.A.5.16, hipaa-security.164.308(a)(3)(ii)(C)]
     tests: [AA01, AA02, ACCP]
-    planned:
-      - kind: bug
-        summary: "accesses.delete doesn't cascade to webhooks; removal step is incomplete for the outbound-channel obligation"
-        proposal: proposals/webhook-cascade-on-access-delete.md
-        backlog: WEBHOOK-CASCADE-ON-ACCESS-DELETE
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/82
-        impact: low
     overview: |
       Same primitive surface as A.5.15 + A.5.16 — accesses.create /
       .update / .delete cover the lifecycle stages; access version

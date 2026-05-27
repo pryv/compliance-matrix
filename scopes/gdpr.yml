@@ -706,12 +706,6 @@ requirements:
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [AA01, EGSQ, U9HQ]
     planned:
-      - kind: bug
-        summary: "pryv-account-backup misses audit log + HF series data points + webhooks (Art.15(1)(c) gap today)"
-        proposal: proposals/account-backup-dsar-completeness.md
-        backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
-        impact: medium
       - kind: feature
         summary: "Single-shot events fetch chunked by time-range for production-scale subjects"
         proposal: proposals/account-backup-dsar-completeness.md
@@ -812,19 +806,6 @@ requirements:
     pryv_primitives: [event, stream, backup-restore]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
     tests: [USAD]
-    planned:
-      - kind: bug
-        summary: "PG audit not erased on auth.delete (engine-dependent gap)"
-        proposal: proposals/audit-on-user-delete.md
-        backlog: AUDIT-ON-USER-DELETE
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/75
-        impact: medium
-      - kind: feature
-        summary: "Operator setting audit.onUserDelete: erase|keep|pseudonymise"
-        proposal: proposals/audit-on-user-delete.md
-        backlog: AUDIT-ON-USER-DELETE
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/75
-        impact: low
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -924,13 +905,6 @@ requirements:
     pryv_primitives: [event, stream, data-types, account-backup-tool]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [EGSQ]
-    planned:
-      - kind: feature
-        summary: "pryv-account-backup restore path repairs HF series + multi-attachment round-trip"
-        proposal: proposals/account-backup-dsar-completeness.md
-        backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
-        impact: medium
     overview: |
       `events.get` + `streams.get` return canonical JSON validated against
       the data-types schemas — structured, commonly used, machine-readable.

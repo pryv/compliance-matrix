@@ -1,6 +1,12 @@
 # Proposal: audit-log erasure on user account delete (engine-consistency fix + operator setting)
 
-**Status:** **bug fix queued** + future setting. Mirror of the upstream
+**Status: SHIPPED 2026-05-27** on `pryv/open-pryv.io` master. A.1 (engine-agnostic erasure) at [`891090d`](https://github.com/pryv/open-pryv.io/commit/891090d) + audit-routing follow-up at [`853e1cb`](https://github.com/pryv/open-pryv.io/commit/853e1cb) + A.2 (operator setting `audit.onUserDelete: erase|keep|pseudonymise`) at [`405b3a1`](https://github.com/pryv/open-pryv.io/commit/405b3a1) + test-file rename at [`a143de5`](https://github.com/pryv/open-pryv.io/commit/a143de5). Both bug chips (3: `gdpr.Art.17` / `ccpa.1798.105` / `iso-27701.A.7.4.5`) and companion feature chips (3: `gdpr.Art.17` / `ccpa.1798.105` / `hipaa-security.164.316(b)(2)(i)`) discharged on this commit. GH#75 closed. macroPryv backlog file archived to `_plans/_archives/`.
+
+---
+
+**(historical proposal preserved below)**
+
+**Status (when open):** **bug fix queued** + future setting. Mirror of the upstream
 backlog item (filed 2026-05-20 from the compliance-matrix
 implementer-perspective gap-probing session — Q8 on right-to-erasure
 end-to-end including the audit log itself).

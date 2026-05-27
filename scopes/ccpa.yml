@@ -50,19 +50,6 @@ requirements:
     derives_from: [gdpr.Art.17]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
     tests: [USAD]
-    planned:
-      - kind: bug
-        summary: "PG audit not erased on auth.delete (engine-dependent gap; derives from gdpr.Art.17)"
-        proposal: proposals/audit-on-user-delete.md
-        backlog: AUDIT-ON-USER-DELETE
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/75
-        impact: medium
-      - kind: feature
-        summary: "Operator setting audit.onUserDelete: erase | keep | pseudonymise"
-        proposal: proposals/audit-on-user-delete.md
-        backlog: AUDIT-ON-USER-DELETE
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/75
-        impact: low
     overview: |
       Same primitive as GDPR Art. 17: `system.users.delete` is the
       per-consumer erasure call. Backup-completeness of the deletion
@@ -104,13 +91,6 @@ requirements:
     derives_from: [gdpr.Art.15]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [EGSQ, U9HQ]
-    planned:
-      - kind: bug
-        summary: "pryv-account-backup misses audit + HF series data points + webhooks (inherits gdpr.Art.15 tooling gap)"
-        proposal: proposals/account-backup-dsar-completeness.md
-        backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
-        impact: low
     overview: |
       Categories surface from the canonical event-type schemas
       (`event.type` = `<class>/<format>`); specific pieces are the

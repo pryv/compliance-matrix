@@ -244,13 +244,6 @@ requirements:
     derives_from: [gdpr.Art.15]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [AA01, EGSQ, U9HQ]
-    planned:
-      - kind: bug
-        summary: "pryv-account-backup misses audit + HF series + webhooks (inherits gdpr.Art.15 tooling gap)"
-        proposal: proposals/account-backup-dsar-completeness.md
-        backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
-        impact: low
     overview: |
       Same implementation as GDPR Art. 15: subject holding a personal
       token reads everything via the standard Pryv API (events, streams,

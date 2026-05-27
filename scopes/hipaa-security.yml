@@ -84,13 +84,6 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, audit]
     tests: [AA02, ACCP, LG20]
-    planned:
-      - kind: bug
-        summary: "accesses.delete doesn't cascade to webhooks; dangling webhook keeps firing on matching events"
-        proposal: proposals/webhook-cascade-on-access-delete.md
-        backlog: WEBHOOK-CASCADE-ON-ACCESS-DELETE
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/82
-        impact: medium
     overview: |
       Workforce access to ePHI is mediated by Pryv accesses. Termination
       is a single API call (`accesses.delete`) which immediately revokes
@@ -821,13 +814,6 @@ requirements:
     facilitation_mode: storage
     draft: true
     pryv_primitives: [backup-restore, audit]
-    planned:
-      - kind: feature
-        summary: "audit.onUserDelete: keep mode preserves audit across subject erasure"
-        proposal: proposals/audit-on-user-delete.md
-        backlog: AUDIT-ON-USER-DELETE
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/75
-        impact: medium
     overview: |
       Six-year is a **minimum** retention period, not a maximum
       (the statute says "retain … for 6 years"; covered entities
