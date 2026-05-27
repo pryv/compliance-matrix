@@ -846,19 +846,25 @@ requirements:
       detail in
       `context/audit-archival-via-custom-datastore.md`.
 
-      **Cascade with the Q8 erasure setting**: the planned
-      `audit.onUserDelete: keep` operator setting (see
-      `proposals/audit-on-user-delete.md`) is the HIPAA-friendly
-      path when a covered entity deletes a subject's account
-      while needing to retain the audit. The retention obligation
-      runs under a lawful basis separate from the deletion
-      itself (HIPAA Privacy Rule §164.530(j) anchors documentation-
-      retention independently of subject account state).
+      **Cascade with the Q8 erasure setting** (shipped 2026-05-27,
+      open-pryv.io master `405b3a1`): the `audit.onUserDelete:
+      keep` operator setting is the HIPAA-friendly path when a
+      covered entity deletes a subject's account while needing to
+      retain the audit. The retention obligation runs under a
+      lawful basis separate from the deletion itself (HIPAA
+      Privacy Rule §164.530(j) anchors documentation-retention
+      independently of subject account state).
 
-      Today, audit erasure on `auth.delete` is engine-dependent
-      (SQLite wipes via per-user-directory rm; PG retains in
-      `audit_events` shared table) — the planned Q8 consistency
-      fix surfaces the choice as an explicit operator setting.
+      Audit erasure on `auth.delete` now converges across engines
+      (SQLite + PostgreSQL — open-pryv.io `891090d` + `853e1cb`):
+      with `audit.onUserDelete: erase` (default), both engines
+      reach zero audit rows for the deleted subject. With
+      `keep`, the PG path retains rows as designed; the SQLite
+      path still has the parent `deleteAuditData` filesystem-wipe
+      step running afterwards (known caveat — operators wanting
+      `keep` on SQLite need either a PG audit migration or a
+      follow-up teaching `deleteAuditData` to skip when
+      `mode === 'keep'`).
 
   - ref: 164.316(b)(2)(iii)
     title: Documentation — updates — Required

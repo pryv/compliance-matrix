@@ -46,15 +46,21 @@ sqlite3 compliance-matrix/dist/compliance.sqlite \
   "SELECT backlog, scope_id, ref, kind, impact, summary FROM planned_changes ORDER BY backlog, scope_id, ref;"
 ```
 
-### `ACCOUNT-BACKUP-DSAR-COMPLETENESS` (mostly shipped — 1 feature chip remains)
+### `ACCOUNT-BACKUP-DSAR-COMPLETENESS` (SHIPPED 2026-05-27 — split out one follow-up)
 
-**Where the work lives**: `pryv-account-backup` repo (npm `@pryv/account-backup`). Shipped 2026-05-27 in v0.4.0 (commits `1a05482` v0.3.0 + `30b1661` C.4 partial + `ea6ae6a` v0.4.0). 5 bug chips (Art.15 / 1798.110 / 164.524 / Principle.4.9 / Art.25) + 1 feature chip (Art.20 restore) discharged. The remaining feature chip below ("events chunking") was NOT in Plan 72 Phase C scope.
+**Where the work lived**: `pryv-account-backup` repo. Shipped in v0.4.0 (commits `1a05482` v0.3.0 + `30b1661` C.4 partial + `ea6ae6a` v0.4.0). 5 bug chips (Art.15 / 1798.110 / 164.524 / Principle.4.9 / Art.25) + 1 feature chip (Art.20 restore) discharged. The remaining feature work (events chunking) split into its own backlog slug below.
 
-| Scope | Ref | Kind | Impact | Status |
+Proposal: `proposals/account-backup-dsar-completeness.md` (kept; the file's Status: SHIPPED header tracks both the discharged chips and the follow-up).
+
+### `ACCOUNT-BACKUP-CHUNKED-EVENTS-FETCH`
+
+**Where the work lives**: `pryv-account-backup` repo. Single-shot events fetch is fine for typical subjects; multi-GB subjects (long-running research participants, fitness-tracker subjects with years of HF data) need a chunked fetch to avoid API-gateway timeouts and memory pressure on the subject's environment.
+
+| Scope | Ref | Kind | Impact | After shipping |
 |---|---|---|---|---|
-| gdpr | Art.15 | feature | low | **still queued** — chunked-events fetch for production-scale subjects |
+| gdpr | Art.15 | feature | low | chip removed; events chunking documented |
 
-Proposal: `proposals/account-backup-dsar-completeness.md`
+Proposal: `proposals/account-backup-dsar-completeness.md` (shared with the now-shipped DSAR-completeness work; the surviving feature is the chunking follow-up).
 
 ### `ALIASES`
 

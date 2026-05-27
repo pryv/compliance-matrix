@@ -709,8 +709,7 @@ requirements:
       - kind: feature
         summary: "Single-shot events fetch chunked by time-range for production-scale subjects"
         proposal: proposals/account-backup-dsar-completeness.md
-        backlog: ACCOUNT-BACKUP-DSAR-COMPLETENESS
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/73
+        backlog: ACCOUNT-BACKUP-CHUNKED-EVENTS-FETCH
         impact: low
     overview: |
       Your subject, holding a personal token, reads everything via the
@@ -731,17 +730,18 @@ requirements:
         - `GET /events/<id>/series` — HF data points per series-event
       Attachments downloadable via the events API.
 
-      **pryv-account-backup tooling caveat (queued for fix — see
-      `proposals/account-backup-dsar-completeness.md`).** The current
-      tool (v0.2.3) covers: account, profiles, streams, accesses,
-      events (single-shot), attachments (opt-in). It does **not**
-      yet fetch the audit log, HF series data points, or webhooks
-      — so a subject who hands the raw export to their DPO is
-      missing the Art.15(1)(c) disclosure-history elements. Until
-      Phase 1 of the backlog ships, augment manually (see
-      `context/account-backup-coverage.md` for the operational
-      step-by-step). The tier stays `Implemented | High` because the
-      data IS exportable — the gap is in the tooling, not the API.
+      `pryv-account-backup` v0.4.0 (shipped 2026-05-27, commits
+      `1a05482` + `30b1661` + `ea6ae6a`) covers: account, profiles,
+      streams, accesses, events (single-shot), attachments (opt-in),
+      audit log, HF series data points (`GET /events/<id>/series`),
+      webhooks, plus a per-file sha256 integrity manifest. The
+      Art.15(1)(c) disclosure-history elements are now in the raw
+      export by default. Restore-path round-trip handles series event
+      containers + HFS data points + multi-attachment events as well.
+      One follow-up remains in `proposals/account-backup-dsar-
+      completeness.md` (the "chunked-events fetch for production-scale
+      subjects" feature — separate concern, not in the DSAR-
+      completeness Phase C scope).
     technical: |
       Personal-token scope is the user's full namespace; no special
       endpoint. Implementers typically wrap this with a small subject-
@@ -834,26 +834,38 @@ requirements:
       backups; using per-user backups improves erasure semantics
       regardless of engine.
 
-      Audit-log erasure caveat (queued for fix — see
-      `proposals/audit-on-user-delete.md`). The `auth.delete` pipeline
-      includes a `deleteAuditData` step that wipes the per-user
-      filesystem directory. That happens to erase SQLite audit (the
-      per-user `.sqlite` file lives there) but does **not** touch
-      PostgreSQL audit (rows in the shared `audit_events` table keyed
-      by `user_id`). The PG `auditStorage.deleteUser(userId)` method
-      exists but is currently only wired into the backup-restore
-      preflight, not the user-delete pipeline. On a PG-audit
-      deployment, audit rows referencing the deleted subject
-      (`accessId`, action `userId`, params) silently survive. Queued
-      consistency fix: add `deleteAuditDataStorage` as its own explicit
-      middleware in `auth.delete` so both engines converge.
+      Audit-log erasure converges across engines (since 2026-05-27 —
+      open-pryv.io master `891090d` + `853e1cb`). `auth.delete` now
+      includes an explicit `deleteAuditDataStorage` middleware that
+      calls `auditStorage.deleteUser(userId)` regardless of the
+      configured audit engine. SQLite + PostgreSQL audit deployments
+      converge on the same end-state: zero audit rows for the deleted
+      subject. The `[USAD]` test suite asserts engine-agnostically via
+      `auditStorage.forUser(userId).countEvents() === 0`.
 
-      Planned operator setting `audit.onUserDelete: erase | keep |
-      pseudonymise` (default `erase`) — `keep` for HIPAA / MDR
-      retention regimes under GDPR Art.17(3)(b); `pseudonymise`
-      composes with the `randomAlias` primitive
-      (`proposals/aliases-as-pseudonymization-primitive.md`) for
-      audit-row PII null-out while preserving forensic value.
+      Operator setting `audit.onUserDelete` (shipped in `405b3a1`)
+      gates the behaviour:
+        - `erase` (default) — runs the audit erasure (GDPR Art.17 /
+          CCPA §1798.105 / PIPEDA Principle 4.5 default).
+        - `keep` — skips the wipe with an info-log. For HIPAA
+          §164.316(b)(2)(i) (6-year audit retention), MDR Art.10(8)
+          (10-year device-history retention), or any regime keeping the
+          audit under a separate lawful basis (GDPR Art.17(3)(b)). The
+          operator documents the retention in their DPIA.
+        - `pseudonymise` — REFUSED AT BOOT by `config/plugins/config-
+          validation.js`. Depends on the not-yet-shipped
+          `auth.randomAlias` primitive (`proposals/aliases-as-
+          pseudonymization-primitive.md`); will compose with it once
+          ALIASES ships, for audit-row PII null-out while preserving
+          forensic value.
+
+      SQLite-audit + `keep` mode known caveat: the parent
+      `deleteAuditData` filesystem-wipe step still runs after
+      `deleteAuditDataStorage` returns from `keep`, so the per-user
+      `.sqlite` audit file is removed regardless. PG-audit deployments
+      get `keep` semantics as designed (rows survive). Operators
+      wanting `keep` on SQLite need a PG audit migration or a follow-
+      up teaching `deleteAuditData` to skip when `mode === 'keep'`.
     technical: |
       Tested via `[USAD]`
       (`open-pryv.io/components/api-server/test/deletion-seq.test.js` —

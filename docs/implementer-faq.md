@@ -393,34 +393,33 @@ the future Pryv-native angle.
 
 **Short answer:** **Yes there's a tool** —
 [`pryv-account-backup`](https://github.com/pryv/pryv-account-backup)
-(npm `@pryv/account-backup`, v0.2.3) — subjects or implementers
-run it with the subject's credentials and get a downloadable
-folder. **But the bundle it produces today is partial**: it misses
-the audit log + HF series data points + webhooks, and the legacy
-`/followed-slices` call is dead in v2. Classified as bug + feature
-backlog (`ACCOUNT-BACKUP-DSAR-COMPLETENESS`); the matrix's
-`Implemented | High` tier stands because every data piece IS
-reachable via existing v2 API endpoints — the gap is in tooling,
-not API surface.
+(npm `@pryv/account-backup`, **v0.4.0** since 2026-05-27) — subjects or
+implementers run it with the subject's credentials and get a downloadable
+folder. The Q10 original gaps (audit log + HF series data points + webhooks
++ dead `/followed-slices` v1 leftover) all **closed in Plan 72 Phase C**
+(commits `1a05482` v0.3.0 + `30b1661` C.4 partial + `ea6ae6a` v0.4.0).
+Tier stays `Implemented | High`; one tooling follow-up remains
+(chunked-events fetch for production-scale subjects — feature chip on
+`gdpr.Art.15`).
 
-**Per the five sub-questions:**
+**Per the five sub-questions (updated 2026-05-27):**
 
 | # | Sub-question | Answer |
 |---|---|---|
-| 1 | Pryv-native DSAR export primitive? | **Yes — `pryv-account-backup`** (`npm start`). Walks account / profiles / streams / accesses / events / attachments. Subject-driven (no operator credentials needed). Coverage gaps below. |
-| 2 | HF series read pattern at scale? | `GET /events/<id>/series` per series-event reads data points (HFS worker). The backup tool does NOT call it today — series containers are exported, data points are not. **Phase 1 backlog fix**. |
-| 3 | Attachment download semantics in the bundle? | Backup script downloads bytes inline (10-parallel) via `GET /events/<id>/<attId>?readToken=...`. Inline binaries land in `attachments/` under the bundle folder. Multi-attachment events: only the first attachment makes the round-trip on restore (`src/restore.js` logs "Ignored 2nd attachment"). **Phase 3 backlog fix**. |
+| 1 | Pryv-native DSAR export primitive? | **Yes — `pryv-account-backup`** (`npm start`). Walks account / profiles / streams / accesses / events / attachments / **audit log** / **HF series data points** / **webhooks** / per-file integrity manifest. Subject-driven (no operator credentials needed). |
+| 2 | HF series read pattern at scale? | `GET /events/<id>/series` per series-event reads data points (HFS worker). The backup tool calls this for every `series:*`-typed event as of v0.3.0 (Plan 72 C.2); data points land in `hf-data/<eventId>.json`. Per-series 4xx is non-fatal (series may be empty / unreadable; skip + log). |
+| 3 | Attachment download semantics in the bundle? | Backup script downloads bytes inline (10-parallel) via `GET /events/<id>/<attId>?readToken=...`. Inline binaries land in `attachments/` under the bundle folder. Multi-attachment events round-trip in full as of v0.4.0 (Plan 72 multi-attachment restore). |
 | 4 | Cross-core aggregation in multi-core deployments? | Subject's user-account is core-affine — `apiEndpoint` resolves to the home core. CMC counterparty data lives in the counterparty's account on whichever core hosts that subject. Backup runs against one `apiEndpoint`; the subject must run a separate backup against each CMC-shared account they hold. Not a v2-only concern; same for multi-region deployments. |
-| 5 | Audit log truncation interaction with `audit.onUserDelete` (Q8)? | Today: audit log isn't fetched by the backup tool at all (Q10 gap #1). After the Q8 + Q10 backlog work both ship: `keep` mode means the bundle includes the long audit history; `pseudonymise` mode means the audit content carries aliases rather than the canonical username; `erase` (default) means the audit content matches whatever wasn't already erased by prior `auth.delete` calls. The subject's right to read their own audit log via `audit.getLogs` already works today — they have an authenticated personal token. |
+| 5 | Audit log truncation interaction with `audit.onUserDelete` (Q8)? | Both Q8 + Q10 fixes shipped 2026-05-27. The backup tool fetches audit via `/audit/logs`. `audit.onUserDelete: keep` mode means the bundle includes the long audit history; `pseudonymise` mode (REFUSED AT BOOT until `auth.randomAlias` ships) will mean the audit content carries aliases rather than the canonical username; `erase` (default) means the audit content matches whatever wasn't already erased by prior `auth.delete` calls. The subject's right to read their own audit log via `audit.getLogs` works directly with their personal token. |
 
-**Audit of pryv-account-backup vs Art.15(1) sub-paragraphs** — full
+**Audit of pryv-account-backup v0.4.0 vs Art.15(1) sub-paragraphs** — full
 table at `context/account-backup-coverage.md`. Highlights:
 
 - (a) purposes — `access.clientData.purpose` ✅
 - (b) categories — derivable from `events.json` ✅
-- (c) recipients — **partial**: accesses ✅; audit + webhooks ❌
+- (c) recipients — accesses ✅, audit ✅, webhooks ✅
 - (d) retention — `access.clientData.retention` + expiry ✅
-- (g) source — partial: events ✅; audit cross-ref ❌
+- (g) source — events ✅, audit cross-ref ✅
 
 **Operational guidance until the backlog ships** (per
 `context/account-backup-coverage.md`): augment the
