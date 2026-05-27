@@ -199,6 +199,22 @@ audit row extensions (`recordCount` + `affectedStreamIds`),
 
 Proposal: `proposals/breach-scope-tool.md`
 
+### `QUICKSTART-DOCKER-HTTP-EXAMPLE` (DX-only — no matrix row updates)
+
+**Where the work lives**: `open-pryv.io/INSTALL.md` + `dev-site/src/customer-resources/pryv.io-setup.md` documentation. Three reader-experience papercuts surfaced during a walk-through of the dnsLess + HTTP + Docker quickstart on a fresh box (mbp2, 2026-05-27): (1) env-var placeholders in `production-config.yml` aren't expanded; (2) the Docker image bundles rqlite + SQLite but not PostgreSQL/MongoDB; (3) the "Minimal production config" example omits several required `storages.engines.*` path keys.
+
+**No matrix impact.** Pure installation ergonomics — doesn't change any tier coverage on any scope row. When shipped, INSTALL.md's worked example becomes complete; no matrix scope row changes. Partial mitigation already in dev-site (`bc67e79` on dev-site master, deployed to `pryv.github.io` `12f726f` 2026-05-27) — the customer-facing `pryv.io-setup.md` now flags all three papercuts.
+
+Filed in `_plans/XXX-Backlog/QUICKSTART-DOCKER-HTTP-EXAMPLE.md`.
+
+### `MBP2-MULTICORE-SIMULATION` (DX-only — no matrix row updates)
+
+**Where the work lives**: `macroPryv/_local/scripts/` launcher + workflow doc. A `mbp2-multicore.sh` that boots two `pryvio/open-pryv.io` Docker containers + shared PG + does the full `bin/bootstrap.js` cluster-CA + mTLS + rqlite-peering + dnsLess cross-core-forwarding dance end-to-end on the local LAN test box.
+
+**No matrix impact.** Operational sugar for dev verification of multi-core PRs without a Dokku pre-prod cycle. When shipped, future multi-core changes (Plans 34/35/53/54 follow-ups, eventually upstream changes to bootstrap CLI / mTLS material / rqlite TLS) gain a fast local verification path; no scope row changes.
+
+Filed in `_plans/XXX-Backlog/MBP2-MULTICORE-SIMULATION.md`. Pairs naturally with `PLAN54-LE-STAGING-DRILL-RUNBOOK.md` (the LE drill becomes easier once the multi-core launcher exists).
+
 ### `BUILTIN-STORE-OVERRIDE` (DX-only — no matrix row updates)
 
 **Where the work lives**: `open-pryv.io`
