@@ -84,8 +84,8 @@ APIs remain identical.
 
 (Cleaner config, but requires the `BUILTIN-STORE-OVERRIDE`
 backlog enhancement to ship first — today the load order
-silently overwrites the operator's custom entry. See
-`_plans/XXX-Backlog/BUILTIN-STORE-OVERRIDE.md` for the
+silently overwrites the operator's custom entry. See the
+`BUILTIN-STORE-OVERRIDE` internal backlog slug for the
 `override: true` config-flag proposal.)
 
 1. Write a custom datastore module:
@@ -161,7 +161,7 @@ In their DPIA / ISMS:
 
 ## Related
 
-- `_plans/XXX-Backlog/BUILTIN-STORE-OVERRIDE.md` (DX
+- Internal backlog slug `BUILTIN-STORE-OVERRIDE` (DX
   enhancement to make Flavour B usable via config alone).
 - `proposals/audit-on-user-delete.md` (Q8 — the
   `audit.onUserDelete: keep` mode + this tiering pattern are

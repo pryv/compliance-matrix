@@ -22,7 +22,7 @@ keys (CMEK / BYOK) sit at the same infrastructure layer.
 
 **Future direction:** end-to-end encryption where the server itself
 never holds plaintext — research direction is proxy re-encryption,
-tracked in `_plans/XXX-Backlog/E2E-ENCRYPTION.md`.
+tracked under internal backlog slug `E2E-ENCRYPTION`.
 
 **Matrix encoding:**
 - `proposals/e2e-encryption.md` — mirror of the upstream backlog;
@@ -43,8 +43,8 @@ mounts, append-only flags, file-integrity monitoring like AIDE /
 Tripwire, out-of-band SIEM forwarding to a WORM store).
 
 **Future direction:** chained / hashed / signed audit log (per-row
-`prev_hash` + periodic operator-signed checkpoints). Tracked at
-`_plans/XXX-Backlog/AUDIT-LOG-CHAINING.md`.
+`prev_hash` + periodic operator-signed checkpoints). Tracked under
+internal backlog slug `AUDIT-LOG-CHAINING`.
 
 **Matrix encoding:**
 - `proposals/audit-log-chaining.md` — mirror of the upstream
@@ -106,9 +106,9 @@ provider: SMS-only = AAL1; TOTP+push or WebAuthn = AAL2.
 **Future direction:** ship reference plugins for server-side TOTP +
 WebAuthn (the latter needs a `LocalService` abstraction since
 WebAuthn ceremonies don't fit the HTTP-roundtrip `Service` shape).
-Tracked at `_plans/XXX-Backlog/MFA-MODERN-METHODS.md`, in the
-perspective of `_plans/40-OAUTH2-Account-based-signatures-later/`
-(broader auth-modernisation arc).
+Tracked under internal backlog slug `MFA-MODERN-METHODS`, as part
+of the broader OAuth2 / account-based-signatures auth-modernisation
+arc.
 
 **Matrix encoding:**
 - `proposals/mfa-modern-methods.md` — mirror of the upstream
@@ -195,8 +195,8 @@ reverse-proxy / WAF / API-gateway stack.
 **Future direction:** ship reference reverse-proxy configs (nginx,
 HAProxy, Cloudflare, Traefik, Caddy) per workload profile
 (consumer-app, B2B research, hospital) + matching fail2ban jail
-definitions. Tracked at
-`_plans/XXX-Backlog/RATE-LIMITING-RECIPES.md`. Doesn't change the
+definitions. Tracked under internal backlog slug
+`RATE-LIMITING-RECIPES`. Doesn't change the
 Pryv-side stance; closes the operator-experience gap of "what do
 I actually configure?"
 
@@ -315,7 +315,7 @@ preserve chain continuity while removing the personal data.
   `detail` block added — calls out the `keep` mode as the
   HIPAA-friendly path + the §164.530(j) separate-lawful-basis
   framing.
-- Upstream backlog: `_plans/XXX-Backlog/AUDIT-ON-USER-DELETE.md`.
+- Upstream backlog: internal slug `AUDIT-ON-USER-DELETE`.
 
 **Commit:** *(this commit)*.
 
@@ -396,7 +396,7 @@ the future Pryv-native angle.
 (npm `@pryv/account-backup`, **v0.4.0** since 2026-05-27) — subjects or
 implementers run it with the subject's credentials and get a downloadable
 folder. The Q10 original gaps (audit log + HF series data points + webhooks
-+ dead `/followed-slices` v1 leftover) all **closed in Plan 72 Phase C**
++ dead `/followed-slices` v1 leftover) all **closed 2026-05-27**
 (commits `1a05482` v0.3.0 + `30b1661` C.4 partial + `ea6ae6a` v0.4.0).
 Tier stays `Implemented | High`; one tooling follow-up remains
 (chunked-events fetch for production-scale subjects — feature chip on
@@ -407,8 +407,8 @@ Tier stays `Implemented | High`; one tooling follow-up remains
 | # | Sub-question | Answer |
 |---|---|---|
 | 1 | Pryv-native DSAR export primitive? | **Yes — `pryv-account-backup`** (`npm start`). Walks account / profiles / streams / accesses / events / attachments / **audit log** / **HF series data points** / **webhooks** / per-file integrity manifest. Subject-driven (no operator credentials needed). |
-| 2 | HF series read pattern at scale? | `GET /events/<id>/series` per series-event reads data points (HFS worker). The backup tool calls this for every `series:*`-typed event as of v0.3.0 (Plan 72 C.2); data points land in `hf-data/<eventId>.json`. Per-series 4xx is non-fatal (series may be empty / unreadable; skip + log). |
-| 3 | Attachment download semantics in the bundle? | Backup script downloads bytes inline (10-parallel) via `GET /events/<id>/<attId>?readToken=...`. Inline binaries land in `attachments/` under the bundle folder. Multi-attachment events round-trip in full as of v0.4.0 (Plan 72 multi-attachment restore). |
+| 2 | HF series read pattern at scale? | `GET /events/<id>/series` per series-event reads data points (HFS worker). The backup tool calls this for every `series:*`-typed event as of v0.3.0; data points land in `hf-data/<eventId>.json`. Per-series 4xx is non-fatal (series may be empty / unreadable; skip + log). |
+| 3 | Attachment download semantics in the bundle? | Backup script downloads bytes inline (10-parallel) via `GET /events/<id>/<attId>?readToken=...`. Inline binaries land in `attachments/` under the bundle folder. Multi-attachment events round-trip in full as of v0.4.0 (multi-attachment restore). |
 | 4 | Cross-core aggregation in multi-core deployments? | Subject's user-account is core-affine — `apiEndpoint` resolves to the home core. CMC counterparty data lives in the counterparty's account on whichever core hosts that subject. Backup runs against one `apiEndpoint`; the subject must run a separate backup against each CMC-shared account they hold. Not a v2-only concern; same for multi-region deployments. |
 | 5 | Audit log truncation interaction with `audit.onUserDelete` (Q8)? | Both Q8 + Q10 fixes shipped 2026-05-27. The backup tool fetches audit via `/audit/logs`. `audit.onUserDelete: keep` mode means the bundle includes the long audit history; `pseudonymise` mode (REFUSED AT BOOT until `auth.randomAlias` ships) will mean the audit content carries aliases rather than the canonical username; `erase` (default) means the audit content matches whatever wasn't already erased by prior `auth.delete` calls. The subject's right to read their own audit log via `audit.getLogs` works directly with their personal token. |
 
@@ -436,10 +436,10 @@ series data + multi-attachment writes both use existing endpoints
 that the backup tool just doesn't exercise yet.
 
 **Matrix encoding:**
-- `pryv/pryv-account-backup` registered in macroPryv workspace
-  (`_scripts/setup_repositories.sh` + MEMORY.md, 2026-05-20).
+- `pryv/pryv-account-backup` registered in the workspace
+  (2026-05-20).
 - `proposals/account-backup-dsar-completeness.md` filed (mirror
-  of `_plans/XXX-Backlog/ACCOUNT-BACKUP-DSAR-COMPLETENESS.md`).
+  of internal backlog slug `ACCOUNT-BACKUP-DSAR-COMPLETENESS`).
 - `context/account-backup-coverage.md` — coverage matrix + Art.15(1)
   sub-paragraph map + operational guidance for today.
 - `docs/pryv-primitives.md` — new `account-backup-tool` primitive
@@ -471,12 +471,12 @@ bootstrap-join + pre-cert-load.
   `user-core/<username>` lookup).
 - Cores never proxy a user's data calls to each other. The only
   cross-core flow is the registration-time `forwardIfCrossCore`
-  handshake (Plan 37) + the CMC counterparty pattern where user
+  handshake + the CMC counterparty pattern where user
   B's client talks directly to user A's home core (B's client has
   two `apiEndpoint`s, not one core talking to another).
 - PlatformDB carries: `user-core/*` lookups, `emailIndex/*`
-  uniqueness, DNS records, TLS materials, `access-state/*` (Plan
-  55), `cluster_kv/*` (Plan 55). **Not** events / streams /
+  uniqueness, DNS records, TLS materials, `access-state/*`,
+  `cluster_kv/*`. **Not** events / streams /
   accesses / audit / attachments.
 
 **Per the three sub-questions:**
@@ -516,11 +516,10 @@ helper; operator still runs NTP.
 chain reconstructs per-core only because the data plane is
 per-core; the chain requires per-core monotonic time, not
 cluster-wide clock agreement. Added as an explicit constraint to
-`_plans/XXX-Backlog/AUDIT-LOG-CHAINING.md` and its proposal
-mirror.
+the `AUDIT-LOG-CHAINING` backlog and its proposal mirror.
 
 **Matrix encoding:**
-- New backlog `_plans/XXX-Backlog/CLOCK-SKEW-CLUSTER-CHECKS.md`.
+- New internal backlog slug `CLOCK-SKEW-CLUSTER-CHECKS`.
 - New proposal `proposals/clock-skew-cluster-checks.md`.
 - New architecture context `context/core-affinity-architecture.md`
   (the mental-model correction made during this Q).
@@ -529,7 +528,7 @@ mirror.
   framing + `planned:` chip.
 - `docs/pryv-primitives.md` audit entry extended with
   time-semantics + `serverTime` cross-reference.
-- `proposals/audit-log-chaining.md` + the macroPryv backlog
+- `proposals/audit-log-chaining.md` + its internal-backlog
   twin both gain the "per-core monotonic time is the
   precondition" constraint section.
 
@@ -548,8 +547,8 @@ materials, `access-state/*`, `cluster_kv/*` — and nothing else.
 
 **No intermediary in the data path**: client ↔ core data flow is
 direct over TLS. No Pryv-shipped reverse-proxy, API gateway, CDN,
-or backend hop. Each core terminates TLS itself (Plan 35's ACME
-integration runs the cert on the same Node process serving the
+or backend hop. Each core terminates TLS itself (the optional
+ACME integration runs the cert on the same Node process serving the
 API + HFS endpoints). Operators *can* place a reverse-proxy in
 front of their cores (`docs/nginx-ingress-sample.conf` in
 open-pryv.io is a sample), but that's an operator-side choice +
@@ -680,8 +679,8 @@ token needs to still be valid when walking `webhooks.get`).
   tagged with `planned: kind: bug, impact: medium`.
 - `iso-27001.A.5.16` (Identity management) + `A.5.18` (Access
   rights) tagged with the same.
-- Upstream backlog: `_plans/XXX-Backlog/
-  WEBHOOK-CASCADE-ON-ACCESS-DELETE.md`.
+- Upstream backlog: internal slug
+  `WEBHOOK-CASCADE-ON-ACCESS-DELETE`.
 
 **Commit:** *(this commit)*.
 
@@ -888,11 +887,10 @@ extension path A works today; B would be ergonomics-only).
   tiering note for long-running deployments.
 - `UPDATE-TRIGGERS.md` gains the `BUILTIN-STORE-OVERRIDE` entry
   flagged as DX-only.
-- New macroPryv memory:
-  `feedback_gap_probing_scope_discipline.md` — distinguishes
-  regulator-relevant gaps from DX/operational-sugar. User
-  flagged this Q's drift into the override-by-id detail as the
-  canonical example of where to stop and check scope.
+- New internal scope-discipline feedback note distinguishing
+  regulator-relevant gaps from DX/operational-sugar. User flagged
+  this Q's drift into the override-by-id detail as the canonical
+  example of where to stop and check scope.
 
 No `planned:` chips added for the DX enhancement — the matrix
 rows are correctly classified today; the extension hook
@@ -929,7 +927,7 @@ HTTP request log. With that anchor, what's missing for
 
 - Per-access audit query via stream filter `access-<accessId>`
   (every audit row carries the access stream + access-serial
-  variant from Plan 66 + an `action-<methodId>` stream).
+  variant + an `action-<methodId>` stream).
 - Time-range filter via `fromTime`/`toTime` on `audit.getLogs`.
 - Action / method invoked in `content.action`.
 - URL query in `content.query` (Q9 — body never captured).
@@ -948,8 +946,8 @@ against PlatformDB (cluster-replicated) but the audit query
 runs against one core's storage. No cross-core aggregation
 required for a single compromised access.
 
-**Phasing** (full detail in
-`_plans/XXX-Backlog/BREACH-SCOPE-TOOL.md`):
+**Phasing** (full detail under internal backlog slug
+`BREACH-SCOPE-TOOL`):
 1. `GET /system/accesses/<accessId>` + PlatformDB reverse-index
    — ~1-2 days.
 2. Audit row extensions (`recordCount` + `affectedStreamIds`) —
@@ -1196,7 +1194,7 @@ Art.9 enforcement layer from a toolkit of 8 levers.
    has an operator-side knob:
    - Storage tiering via custom `@pryv/datastore` per subtree.
    - Per-engine isolation (separate PG instance + WAL +
-     replicas) per Plan 9.
+     replicas) per the storages-as-plugins model.
    - Audit log automatically captures every read/write —
      audit-minimality (Q9) means the audit is safe to retain
      at long horizons.
@@ -1229,7 +1227,7 @@ deployment-specific facilitation strength is in the detail prose.
    (`x-art9-category`, `x-swiss-nlpd-sensitive`, etc. — passed
    through, client-side enforced).
 4. Custom `@pryv/datastore` for per-subtree storage tiering.
-5. Per-engine isolation at storage layer (Plan 9 plugins).
+5. Per-engine isolation at storage layer (storage-engine plugins).
 6. `customExtensions.customAuthStepFn` access-grant gate.
 7. Audit log automatic capture (Pryv-invariant).
 8. Backup encryption tiering (operator-side, Q15 pattern).
@@ -1317,10 +1315,10 @@ exclude list.
 1. **Does Pryv emit any artefact listing my deployment's
    subprocessors?** — Not today. The operator reads
    `override-config.yml` + per-host overlays and identifies
-   which optional integrations are non-default. **Plan 60 A.9
-   (Q20 absorption)** will fix this — `GET /system/admin/config/
-   effective` exposes the merged effective config per core as a
-   single JSON artefact ready to feed the operator's DPA
+   which optional integrations are non-default. **The planned
+   bootstrap-admin-panel work** will fix this — `GET /system/admin/
+   config/effective` exposes the merged effective config per core
+   as a single JSON artefact ready to feed the operator's DPA
    register + Art.30 pipeline.
 
 2. **Does Pryv differentiate PII-handling subprocessors vs.
@@ -1422,10 +1420,10 @@ integrations, each off by default:
 
 | Config gate | Subprocessor | Data crossing the boundary |
 |---|---|---|
-| `letsEncrypt.enabled: true` (Plan 35) | LE — or any ACME directory you point `directoryUrl` at | Hostnames for ACME challenges only — no user data. Operator's call whether LE matches their compliance posture; alternative CAs drop in without code changes |
-| `services.email.smtp.*` (Plan 39) | Operator's SMTP relay | Email + name + one-time tokens; body templates operator-owned via admin panel |
-| `services.mfa.mode: enabled` + `sms.endpoints[*]` (Plan 26) | Operator's SMS provider | Phone number + MFA code |
-| `observability.provider: <id>` (Plan 38) | Operator's chosen APM vendor — pluggable façade; New Relic ships as the first adapter; Datadog / Honeycomb / OpenTelemetry / internal Prometheus / etc. drop in as custom `providers/<id>/` adapters | Aggregated metrics + error traces; Layer 3 PII filter is adapter-specific (NR adapter ships a strict exclude list) |
+| `letsEncrypt.enabled: true` | LE — or any ACME directory you point `directoryUrl` at | Hostnames for ACME challenges only — no user data. Operator's call whether LE matches their compliance posture; alternative CAs drop in without code changes |
+| `services.email.smtp.*` | Operator's SMTP relay | Email + name + one-time tokens; body templates operator-owned via admin panel |
+| `services.mfa.mode: enabled` + `sms.endpoints[*]` | Operator's SMS provider | Phone number + MFA code |
+| `observability.provider: <id>` | Operator's chosen APM vendor — pluggable façade; New Relic ships as the first adapter; Datadog / Honeycomb / OpenTelemetry / internal Prometheus / etc. drop in as custom `providers/<id>/` adapters | Aggregated metrics + error traces; Layer 3 PII filter is adapter-specific (NR adapter ships a strict exclude list) |
 | `service.eventTypes: <URL>` (default points at upstream `pryv/data-types`) | Catalogue host | **Fetch-only of schemas INTO the core; no personal data flows out** — pinning to self-hosted URL severs the dependency entirely |
 
 **Where Pryv-the-software is NOT the Art.28 answer-source**:
@@ -1447,7 +1445,7 @@ integrations, each off by default:
   subprocessor framing + the 5-integration enumeration with
   data-flow per integration + the LE-as-dev-facilitator
   distinction + the three-layer data-flow guarantee table +
-  the post-Plan-60-A.9 inventory pipeline cross-reference.
+  the future config-effective inventory-pipeline cross-reference.
 - `gdpr.Art.28` `pryv_primitives:` extended with
   `observability-provider` (was missing; the row already cited
   `letsEncrypt-integration` + `encryption-at-rest-secrets`).
@@ -1466,18 +1464,18 @@ integrations, each off by default:
 No backlog, no proposal, no chips — classification is
 **"filled by existing primitive" + "operator-configured"**
 for the integrations themselves + **"voluntarily missing
-(absorbed by Plan 60 A.9)"** for the structured-inventory
-artefact. The future inventory pipeline already has its slot
-in `UPDATE-TRIGGERS.md` (`CONFIG-EFFECTIVE-EXPOSURE` from
-Q20); no separate Art.28 backlog needed.
+(absorbed by the planned bootstrap-admin-panel work)"** for the
+structured-inventory artefact. The future inventory pipeline
+already has its slot in `UPDATE-TRIGGERS.md`
+(`CONFIG-EFFECTIVE-EXPOSURE`); no separate Art.28 backlog needed.
 
 **Commit:** *(this commit)*.
 
 ### Q24 — Software supply-chain compliance: what does Pryv tell me about its OWN dependency hygiene?
 
 **Short answer:** Pryv follows **`npm audit` + GitHub Dependabot
-security alerts** today (partial + passive — Plan 56 close cleared
-22 alerts → 0 on 2026-04-30). A **full SCA pipeline using tools
+security alerts** today (partial + passive — a 2026-04-30 sweep
+cleared 22 alerts → 0). A **full SCA pipeline using tools
 like OWASP-Dependency-Check / Snyk / Grype is planned** — backlog
 `SUPPLY-CHAIN-SCANNING-PIPELINE` filed with a three-phase
 implementation plan. When shipped, ISO 27001 A.5.21 coverage
@@ -1491,7 +1489,7 @@ shifts F:Awareness Low → F:Evidence Medium.
 | CI `npm install --ignore-scripts` | ✅ | `.github/workflows/ci.yml:44, 70, 84` |
 | Per-commit Docker SHA tag | ✅ | `.github/workflows/ci.yml` last `tags:` block (`pryvio/open-pryv.io:2.0.0-pre-${{ github.sha }}`) |
 | rqlite version pin | ✅ | `Dockerfile` `ARG RQLITE_VERSION=9.4.5` |
-| Dependabot security alerts | ✅ | GitHub Security tab — Plan 56 close cleared 22→0 |
+| Dependabot security alerts | ✅ | GitHub Security tab — 2026-04-30 sweep cleared 22→0 |
 | Manual `npm audit` triage | ✅ | (procedural — no CI gate) |
 | **CI gate on `npm audit`** | ❌ | (not in workflow) |
 | **SCA tool integration** | ❌ | (no OWASP Dep-Check / Snyk / FOSSA) |
@@ -1502,8 +1500,8 @@ shifts F:Awareness Low → F:Evidence Medium.
 | **Image signing** | ❌ | (no cosign / Docker Content Trust on pushed images) |
 | **SLSA attestation** | ❌ | (no in-toto / provenance) |
 
-**The three-phase pipeline** (per
-`_plans/XXX-Backlog/SUPPLY-CHAIN-SCANNING-PIPELINE.md`):
+**The three-phase pipeline** (per the
+`SUPPLY-CHAIN-SCANNING-PIPELINE` backlog):
 
 **Phase 1 — In-CI gates** (~0.5 day):
 
@@ -1570,8 +1568,7 @@ the cost of a vendor relationship.
 - New `proposals/supply-chain-scanning-pipeline.md` with the
   current-state-verified table + 3-phase plan + per-row tier
   shifts.
-- New macroPryv-side backlog file
-  `_plans/XXX-Backlog/SUPPLY-CHAIN-SCANNING-PIPELINE.md`.
+- New internal backlog slug `SUPPLY-CHAIN-SCANNING-PIPELINE`.
 - New Section A entry in `UPDATE-TRIGGERS.md`.
 - No context note filed — the proposal + backlog carry the
   full treatment; no architectural framing to capture
@@ -1579,9 +1576,9 @@ the cost of a vendor relationship.
 
 Classification: **"filled by existing primitive (partial /
 passive)" + "planned (3-phase pipeline)"**. The partial baseline
-is real and defensible — Plan 56 close evidence that dependabot
-triage works in practice. The full pipeline is the regulator-
-defensible upgrade.
+is real and defensible — the 2026-04-30 sweep is evidence that
+dependabot triage works in practice. The full pipeline is the
+regulator-defensible upgrade.
 
 **Commit:** *(this commit)*.
 
@@ -1694,10 +1691,10 @@ unbounded entropy.
 
 **Pryv recommends per-core SMTP configuration** so the relay can
 match each core's region/country when residency matters: the
-`services.email.smtp.*` config block is per-core (Plan 39), so
+`services.email.smtp.*` config block is per-core, so
 an EU core routes mail through an EU SMTP relay independently
-of a US core's relay. **Same pattern for SMS endpoints
-(Plan 26)** — `services.mfa.sms.endpoints.*` is per-core.
+of a US core's relay. **Same pattern for SMS endpoints** —
+`services.mfa.sms.endpoints.*` is per-core.
 Operators configuring residency-sensitive deployments take
 advantage of this to keep "EU subjects' password-reset emails
 never touch a US-jurisdiction relay" as a hard guarantee.
@@ -1734,9 +1731,9 @@ in; operator-side concern.
   with the per-row tier shifts.
 - New proposals: `proposals/platformdb-at-rest-encryption.md` +
   `proposals/platformdb-pii-hashing.md`.
-- macroPryv-side backlog files:
-  `_plans/XXX-Backlog/PLATFORMDB-AT-REST-ENCRYPTION.md` +
-  `_plans/XXX-Backlog/PLATFORMDB-PII-HASHING.md`.
+- Internal backlog slugs:
+  `PLATFORMDB-AT-REST-ENCRYPTION` +
+  `PLATFORMDB-PII-HASHING`.
 
 Classification: **"filled by existing primitive (via documented
 convention)"** for Surface 1; **"planned (two backlog items A +
@@ -1889,7 +1886,7 @@ operators can't accidentally ship it.
 
 1. Default-deny on permissions (empty `permissions: []`).
 2. Audit-on by default (invariant, no opt-out — Q9).
-3. TLS enforced (Plan 35 LE integration).
+3. TLS enforced (the optional Let's Encrypt integration).
 4. Hosting region pinned per user (Q12 architectural residency).
 5. Stream-permission granularity (Q22 — no "public" tier exists).
 6. Data-minimal audit (Q9 — never captures request body).
@@ -1898,7 +1895,7 @@ operators can't accidentally ship it.
 9. Audit-minimal logger (Q23 — `inspectAndHide` invariant,
    `[BIH1-6]` tests).
 10. CMC requires explicit subject consent (`consent/accept-cmc`).
-11. PlatformDB encrypted secrets (Plan 35 / 38 patterns).
+11. PlatformDB encrypted secrets (LE + observability patterns).
 12. Withdrawal API exists by default (Q19 — `DELETE
     /accesses/:id` always available).
 
@@ -2384,9 +2381,9 @@ primitives + one layer is a genuine queued gap.**
 |---|---|
 | Pen-test / security audit report? | **None published.** No `pen-test`, `penetration`, `security audit`, `security review` text in `open-pryv.io/*.md`. No CVE / GHSA references in CHANGELOG. |
 | Vulnerability disclosure program? | **Minimal.** `SECURITY.md` exists at `open-pryv.io/SECURITY.md` but is **6 lines** total; the only directive is "report to the [support team](https://github.com/pryv/open-pryv.io/issues)" — i.e., the public issue tracker. No `security@pryv.com` mailbox, no PGP key, no GitHub Security Advisories private-report flow enabled, no bounty, no scope statement, no response-time SLA, no safe-harbor language, no security.txt at deployment hosts. |
-| Test-suite scale | **~1816 tests PG baseline / ~1783 Mongo baseline / ~175 test files**. Two-engine matrix (PG default, Mongo opt-in). Lint + typecheck + per-component unit + integration + acceptance. CI green on both engines per Plan 56 close. |
+| Test-suite scale | **~1816 tests PG baseline / ~1783 Mongo baseline / ~175 test files**. Two-engine matrix (PG default, Mongo opt-in). Lint + typecheck + per-component unit + integration + acceptance. CI green on both engines (2026-04-30 baseline). |
 | Deploy-validation runbook? | **Yes (partial).** 8-row scenario deploy-validation matrix exercised on every release (internal artefact); post-deploy `lib-js` conformance suite at 168/169 baseline (per-deployment runnable) — but neither is packaged as a customer-facing "verify your deployment" guide. |
-| Dependabot / supply-chain | Covered by Q24 (`SUPPLY-CHAIN-SCANNING-PIPELINE` backlog filed; 22 alerts → 0 on `open-pryv.io` master per Plan 56). |
+| Dependabot / supply-chain | Covered by Q24 (`SUPPLY-CHAIN-SCANNING-PIPELINE` backlog filed; 22 alerts → 0 on `open-pryv.io` master per 2026-04-30 sweep). |
 
 **Per sub-question resolution:**
 
@@ -2412,7 +2409,7 @@ primitives + one layer is a genuine queued gap.**
    (ack ≤ 72h / triage ≤ 14d / fix-or-mitigation ≤ 90d high
    severity) + **safe-harbor** language for good-faith
    researchers + a **published advisory history**. Three-phase
-   plan in `_plans/XXX-Backlog/VULNERABILITY-DISCLOSURE-PROGRAM.md`
+   plan under internal backlog slug `VULNERABILITY-DISCLOSURE-PROGRAM`
    (Tier 1 minimum viable VDP, Tier 2 process maturity, Tier 3
    discoverability + ongoing assurance).
 
@@ -2429,7 +2426,7 @@ primitives + one layer is a genuine queued gap.**
    evidence inline (previously a 1-liner "DOCUMENTED").
 
 4. **Deploy-validation runbook — filled (with doc gap).** The
-   Plan-28-era 8-row deploy-validation matrix + the `lib-js`
+   8-row deploy-validation matrix + the `lib-js`
    conformance suite (168/169 baseline) together cover the
    "verify your deployment behaves as the upstream tests
    expect" use-case, but neither is packaged as a customer-
@@ -2464,7 +2461,7 @@ primitives + one layer is a genuine queued gap.**
 - `hipaa-security.164.308(a)(8)` (evaluation) overview
   extended + new `planned:` chip — VDP + GHSA history as one
   evidence input.
-- New `_plans/XXX-Backlog/VULNERABILITY-DISCLOSURE-PROGRAM.md`
+- New internal backlog slug `VULNERABILITY-DISCLOSURE-PROGRAM`
   — 3-tier plan with the full SECURITY.md template + scope
   statement + SLA + safe harbor + security.txt notes.
 - New `compliance-matrix/proposals/vulnerability-disclosure-

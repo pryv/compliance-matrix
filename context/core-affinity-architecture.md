@@ -31,10 +31,9 @@ keyed across the cluster:
 - **DNS records** for `<coreId>.<domain>` + subject CNAMEs.
 - **TLS materials** (`tls-cert/<hostname>`, `tls-acme-account`,
   bootstrap-bundle CA artefacts).
-- **`access-state/<key>`** (Plan 55) — cross-core access state
-  for short-lived per-flow tokens.
-- **`cluster_kv/<key>`** (Plan 55) — operator-shared ephemeral
-  state.
+- **`access-state/<key>`** — cross-core access state for
+  short-lived per-flow tokens.
+- **`cluster_kv/<key>`** — operator-shared ephemeral state.
 
 PlatformDB does **not** carry events, streams, accesses (other
 than the short-lived state above), profiles, audit, or attachments.
@@ -99,11 +98,10 @@ It is **not** the right mental model for:
   produce per-core decryption failures.
 - **Cluster-wide config drift** — `override-config.yml` is per-
   host; operator hygiene applies. Pryv doesn't enforce config
-  alignment between cores beyond the bootstrap-bundle inheritance
-  (Plan 34, Plan 54 Phase B).
-- **DNS / discovery** — Plan 53 added a `cluster.discoveryEnabled`
-  opt-in for rqlite DNS-based join; that needs cluster-wide
-  agreement on `<coreId>.<domain>` names.
+  alignment between cores beyond the bootstrap-bundle inheritance.
+- **DNS / discovery** — a `cluster.discoveryEnabled` opt-in
+  enables rqlite DNS-based join; that needs cluster-wide agreement
+  on `<coreId>.<domain>` names.
 
 ## Related
 
@@ -117,8 +115,7 @@ It is **not** the right mental model for:
   on peer cores is the one "cross-core" concern for DSAR; resolved
   by the subject running the backup against the counterparty's
   endpoint separately.
-- macroPryv Plan 37 close notes — `forwardIfCrossCore` is the
-  registration-time exception.
-- macroPryv Plan 55 close notes — `cluster_kv` + `access-state`
+- Internal architecture notes — `forwardIfCrossCore` is the
+  registration-time exception; `cluster_kv` + `access-state`
   are the ephemeral cross-core state surfaces (the only
   non-registration coupling besides CMC).

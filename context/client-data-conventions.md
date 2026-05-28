@@ -248,8 +248,8 @@ For each `clientData.*` convention above:
 - [ ] Wire your access-minting code (the `app-web-auth3` rebrand
       + admin tooling) to populate the field at grant time.
 - [ ] Wire your Art.30 register pipeline to consume the field.
-- [ ] (Optional, deferred to Plan 60 admin panel) — surface the
-      conventions in the admin panel's access editor so manual
+- [ ] (Optional, deferred to the planned admin panel) — surface
+      the conventions in the admin panel's access editor so manual
       operator interventions don't break the convention.
 
 ## See also

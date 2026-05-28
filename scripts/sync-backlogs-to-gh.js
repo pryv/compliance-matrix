@@ -78,9 +78,9 @@ function listBacklogFiles () {
  * referenced from compliance-matrix as either a `planned: backlog:`
  * chip in `scopes/*.yml` OR a `proposals/<slug>.md` mirror file.
  *
- * Pure-engineering backlogs in _plans/XXX-Backlog/ (Express migration,
- * memory-leak investigation, deploy-from-CI-image, etc.) are NOT in
- * scope for compliance-matrix sync.
+ * Pure-engineering backlogs (Express migration, memory-leak
+ * investigation, deploy-from-CI-image, etc.) are NOT in scope for
+ * compliance-matrix sync.
  */
 function matrixRelevantSlugs () {
   const slugs = new Set();
@@ -254,8 +254,8 @@ function createIssue (slug, titleLine, backlogPath) {
   const body = readFileSync(backlogPath, 'utf8');
   const title = `${ISSUE_TITLE_PREFIX} ${titleLine}`;
   const fullBody = [
-    `Tracked from the compliance-matrix backlog at`,
-    `\`_plans/XXX-Backlog/${slug}.md\` (macroPryv repo).`,
+    `Tracked from the compliance-matrix backlog`,
+    `(backlog slug: ${slug}).`,
     ``,
     `---`,
     ``,
@@ -295,11 +295,11 @@ async function main () {
   const relevant = allBacklogs.filter(b => matrixSlugs.has(b.slug));
   const missingFiles = [...matrixSlugs].filter(slug => !allBacklogs.find(b => b.slug === slug));
   if (missingFiles.length) {
-    console.log(`WARN: ${missingFiles.length} chip(s) reference backlog slug(s) with no .md file in _plans/XXX-Backlog/:`);
+    console.log(`WARN: ${missingFiles.length} chip(s) reference backlog slug(s) with no matching backlog file:`);
     for (const m of missingFiles) console.log(`      - ${m}`);
     console.log('');
   }
-  console.log(`Of ${allBacklogs.length} files in _plans/XXX-Backlog/, ${relevant.length} are matrix-relevant + ${allBacklogs.length - relevant.length} are pure-engineering (out of scope).`);
+  console.log(`Of ${allBacklogs.length} backlog files, ${relevant.length} are matrix-relevant + ${allBacklogs.length - relevant.length} are pure-engineering (out of scope).`);
   console.log('');
 
   const dxOnly = relevant.filter(b => isDxOnlyBacklog(b.path));
@@ -358,7 +358,7 @@ async function main () {
 
   // Phase 5 — also discover BUGS.md orphan bugs
   const orphanBugs = parseBugsFile();
-  console.log(`Found ${orphanBugs.length} orphan bug(s) in _plans/BUGS.md "Open" section.`);
+  console.log(`Found ${orphanBugs.length} orphan bug(s) in the orphan-bugs registry "Open" section.`);
   for (const bug of orphanBugs) {
     // Match against issues by bug ID in title (gh CLI search would find it via `B-2026-`)
     const match = existingIssues.find(i => i.title.includes(bug.id));
@@ -455,7 +455,7 @@ async function main () {
 function extractBugBody (bugId) {
   const body = readFileSync(BUGS_FILE, 'utf8');
   const startIdx = body.indexOf(`### ${bugId}`);
-  if (startIdx < 0) return `Bug ${bugId} — see _plans/BUGS.md`;
+  if (startIdx < 0) return `Bug ${bugId} — see the orphan-bugs registry`;
   const restAfterStart = body.slice(startIdx);
   const nextEntry = restAfterStart.search(/^### B-/m);
   const nextSection = restAfterStart.search(/^## /m);
@@ -464,7 +464,7 @@ function extractBugBody (bugId) {
   );
   const section = restAfterStart.slice(0, endIdx === Infinity ? undefined : endIdx);
   return [
-    `Tracked from \`_plans/BUGS.md\` orphan-bugs registry (macroPryv).`,
+    `Tracked from the orphan-bugs registry.`,
     ``,
     `---`,
     ``,

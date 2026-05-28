@@ -142,9 +142,8 @@ which schema versions are in force at audit time.
 - `pryv/data-types` upstream:
   https://github.com/pryv/data-types — the baked-in default
   (`event-types.default.json` mirrors it at build time).
-- `hds-macro/data-model` exemplar:
-  `/Users/perki/code/hds/_macro/data-model/data-model/`
-  (sibling repo; not part of macroPryv workspace).
+- `hds-macro/data-model` exemplar — a sibling project (external
+  to the open-pryv.io workspace).
 - `docs/pryv-primitives.md` `data-types` primitive entry —
   references this context note.
 - Server code: `components/business/src/types.ts`,

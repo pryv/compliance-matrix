@@ -166,8 +166,9 @@ hide what you did).
 
 ### 3. TLS enforced by default
 
-LE integration (Plan 35 — `letsEncrypt.enabled: true` opt-in
-in dev, default-on posture in production deployments) makes
+The optional Let's Encrypt integration (`letsEncrypt.enabled:
+true` opt-in in dev, default-on posture in production deployments)
+makes
 HTTPS the default. HTTP-only is a deliberate dev-mode opt-in
 that gets flagged by `config-validation` warnings. The
 `Dockerfile` + INSTALL.md surface point operators toward
@@ -227,13 +228,13 @@ Cross-account sharing via CMC requires the subject's
 can't accidentally share an EU subject's data with a US
 counterparty without the subject's explicit consent.
 
-### 11. PlatformDB encrypted secrets (Plan 35 / 38)
+### 11. PlatformDB encrypted secrets (LE + observability)
 
 Sensitive operator credentials (LE account keys, observability
-license keys, SMTP credentials when migrated via Plan 60 A.4
-step 7, etc.) are AES-256-GCM encrypted with HKDF-derived keys
-from `letsEncrypt.atRestKey`. Operators can't accidentally
-expose secrets in plaintext PlatformDB dumps.
+license keys, SMTP credentials once the planned admin-panel
+template migration ships, etc.) are AES-256-GCM encrypted with
+HKDF-derived keys from `letsEncrypt.atRestKey`. Operators can't
+accidentally expose secrets in plaintext PlatformDB dumps.
 
 ### 12. Withdrawal API exists by default (Q19)
 

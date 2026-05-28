@@ -22,9 +22,8 @@ discloses them per Art.13(1)(f) where recipients exist.
 ### Let's Encrypt — TLS certificate issuance
 
 - **Config gate**: `letsEncrypt.enabled: true` (default `false`).
-  Plan 35 introduced the integration; operators opting in get
-  automated ACME issuance, renewal, cluster-wide cert
-  replication.
+  Operators opting in get automated ACME issuance, renewal,
+  cluster-wide cert replication.
 - **What flows out**: the deployment's hostnames (for the ACME
   DNS-01 / HTTP-01 challenge). **No user personal data.**
 - **Posture**: Let's Encrypt ships as a **dev-platform
@@ -45,14 +44,15 @@ discloses them per Art.13(1)(f) where recipients exist.
 ### SMTP — transactional mail (per-core configurable)
 
 - **Config gate**: `services.email.smtp.*` (host, port, auth,
-  from). Plan 39 introduced the integration after service-mail
-  was merged into open-pryv.io.
+  from). Built into open-pryv.io v2 as an in-process module
+  (the former standalone service-mail component is now part of
+  the unified binary).
 - **What flows out**: rendered templated bodies — typically
   user's email address + name + a one-time token (password
   reset, account verification, MFA setup mail). The body
-  template is operator-owned (manageable via the admin panel
-  per Plan 60 C.3 #7), so the operator controls exactly which
-  PII their SMTP relay sees.
+  template is operator-owned (manageable via the planned admin
+  panel), so the operator controls exactly which PII their SMTP
+  relay sees.
 - **Posture**: **operator must configure**. No default SMTP
   endpoint ships. The operator's relay choice IS the
   subprocessor relationship — naming it in the DPA + Art.30
@@ -63,26 +63,26 @@ discloses them per Art.13(1)(f) where recipients exist.
   through an EU SMTP relay independently of a US core's relay.
   Use this when "EU subjects' password-reset emails must not
   touch a US-jurisdiction relay" is a hard requirement. Same
-  pattern applies to the SMS endpoints (Plan 26) — the
+  pattern applies to the SMS endpoints — the
   `services.mfa.sms.endpoints.*` config block is per-core too.
 - **Code anchor**: `components/business/src/mail/` module;
-  `default-config.yml` `services.email:` block; CHANGELOG-v2
-  Plan 39 entry.
+  `default-config.yml` `services.email:` block.
 
 ### SMS endpoints — MFA delivery
 
 - **Config gate**: `services.mfa.sms.endpoints.*` (URL,
-  bearer-token-style auth, per-region routing). Plan 26
-  introduced this after service-mfa was merged into open-pryv.io
-  v2 (the in-process MFA module).
+  bearer-token-style auth, per-region routing). Built into
+  open-pryv.io v2 as the in-process MFA module (the former
+  standalone service-mfa component is now part of the unified
+  binary).
 - **What flows out**: user's phone number + MFA challenge code +
   template ID. Strictly PII.
 - **Posture**: operator must configure; default `services.mfa.mode:
   disabled` ships from `default-config.yml`. Encrypted-at-rest
-  via the PlatformDB-encrypted-secrets family (Plan 38 / Plan 54
-  pattern), so the credentials never live on disk in plaintext.
-- **Code anchor**: `components/mfa/` module; CHANGELOG-v2
-  Plan 26 entry.
+  via the PlatformDB-encrypted-secrets family (the observability
+  + bootstrap-bundle pattern), so the credentials never live on
+  disk in plaintext.
+- **Code anchor**: `components/mfa/` module.
 
 ### Observability vendor (pluggable façade — operator chooses)
 
@@ -100,8 +100,8 @@ discloses them per Art.13(1)(f) where recipients exist.
   pipelines, etc. The façade contract doesn't bind operators
   to any specific vendor.
 - **Config gate**: `observability.provider: <id>` + the
-  vendor-specific encrypted-PlatformDB credentials (Plan 38
-  pattern). Default `observability.provider: disabled`.
+  vendor-specific encrypted-PlatformDB credentials. Default
+  `observability.provider: disabled`.
 - **What flows out (NR adapter shipped today)**: aggregated
   transaction metrics + error traces. **With PII filters
   explicitly configured in the adapter.** Concrete attribute
@@ -138,8 +138,7 @@ discloses them per Art.13(1)(f) where recipients exist.
   operator review.
 - **Code anchor**: `components/business/src/observability/`
   module (façade + envBuilder + logForwarder);
-  `providers/newrelic/` (first concrete adapter); CHANGELOG-v2
-  Plan 38 entry.
+  `providers/newrelic/` (first concrete adapter).
 
 ### Upstream catalogue fetch (`service.eventTypes`)
 
@@ -233,7 +232,7 @@ request bodies.
 
 ## How to assemble the subprocessor inventory for your DPA
 
-Today (pre-Plan-60): read `override-config.yml` + per-host
+Today (pre-admin-panel): read `override-config.yml` + per-host
 overlays + identify which optional integrations are non-default:
 - `letsEncrypt.enabled: true` → LE (or whichever
   `letsEncrypt.directoryUrl` you pointed at).
@@ -245,8 +244,8 @@ overlays + identify which optional integrations are non-default:
 - `service.eventTypes: https://...` → upstream catalogue host (if
   not self-hosted).
 
-Post-Plan-60 A.9 (effective-config exposure — Q20): the
-`GET /system/admin/config/effective` endpoint surfaces all of
+Once the planned `GET /system/admin/config/effective` admin
+endpoint ships (effective-config exposure), it surfaces all of
 this in one machine-readable JSON blob per core. The operator's
 DPIA / DPA register / Art.30 records-of-processing pipeline can
 consume it directly.
@@ -273,7 +272,7 @@ consume it directly.
 - `gdpr.Art.28` detail extended with the zero-mandatory-
   subprocessor framing + per-integration enumeration + the
   LE-as-dev-facilitator distinction + the three data-flow
-  guarantees + the post-Plan-60 inventory pipeline.
+  guarantees + the future inventory pipeline.
 - `gdpr.Art.30` row stays as-is — the existing register-field
   mapping table is already strong; the subprocessor question
   is sub-Art.30(1)(f) "categories of recipients" and the
@@ -282,7 +281,8 @@ consume it directly.
   the PII filter detail; this note cross-references rather
   than duplicates.
 - No backlog filed (the future improvement — machine-readable
-  subprocessor inventory — is absorbed by Plan 60 A.9 per Q20).
+  subprocessor inventory — is absorbed by the planned
+  bootstrap-admin-panel work).
 - No `planned:` chips — Q20's chips against
   `CONFIG-EFFECTIVE-EXPOSURE` already capture the future
   matrix updates.

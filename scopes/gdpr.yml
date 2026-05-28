@@ -497,7 +497,7 @@ requirements:
          encryption + access controls (Q16 pattern;
          `context/audit-archival-via-custom-datastore.md`).
       5. **Per-engine isolation** — sensitive tier on a separate
-         PostgreSQL instance / WAL / replicas (Plan 9 plugins).
+         PostgreSQL instance / WAL / replicas (storage-engine plugins).
       6. **`customExtensions.customAuthStepFn`** — operator-side
          gate that demands the Art.9(2) basis claim at
          access-grant time before minting the access.
@@ -1223,7 +1223,7 @@ requirements:
 
       1. **Default-deny on permissions** (empty `permissions: []`).
       2. **Audit-on by default** (invariant, no opt-out).
-      3. **TLS enforced** (Plan 35 LE integration).
+      3. **TLS enforced** (optional Let's Encrypt integration).
       4. **Hosting region pinned per user** (Q12 architectural
          residency).
       5. **Stream-permission granularity** (Q22 — no "public"
@@ -1238,7 +1238,7 @@ requirements:
          credential redaction invariant, `[BIH1-6]` tests).
       10. **CMC requires explicit subject consent**
           (`consent/accept-cmc` blocking).
-      11. **PlatformDB encrypted secrets** (Plan 35 / 38
+      11. **PlatformDB encrypted secrets** (LE + observability
           patterns).
       12. **Withdrawal API exists by default** (Q19 —
           `DELETE /accesses/:id` always available).
@@ -1299,7 +1299,7 @@ requirements:
       | Config gate | Subprocessor | What flows out |
       |---|---|---|
       | `letsEncrypt.enabled: true` | LE (or any `letsEncrypt.directoryUrl` ACME CA) | hostnames only for ACME challenges; **no user data** |
-      | `services.email.smtp.*` | operator's SMTP relay | email + name + one-time tokens (templated bodies) — PII. **Pryv recommends per-core SMTP configuration** — the `services.email.smtp.*` config block is per-core (Plan 39), so an EU core routes mail through an EU SMTP relay independently of a US core's relay. Use this when residency is a hard requirement (e.g., EU subjects' password-reset emails never touching a US-jurisdiction relay) |
+      | `services.email.smtp.*` | operator's SMTP relay | email + name + one-time tokens (templated bodies) — PII. **Pryv recommends per-core SMTP configuration** — the `services.email.smtp.*` config block is per-core, so an EU core routes mail through an EU SMTP relay independently of a US core's relay. Use this when residency is a hard requirement (e.g., EU subjects' password-reset emails never touching a US-jurisdiction relay) |
       | `services.mfa.mode: enabled` + `sms.endpoints[*]` | operator's SMS provider | phone number + MFA code — PII |
       | `observability.provider: <id>` | Operator's chosen APM vendor (New Relic ships as the first adapter; the façade is pluggable — Datadog, Honeycomb, OpenTelemetry, internal Prometheus pipelines, etc. all drop in via a custom adapter under `providers/<id>/`) | aggregated metrics + error traces; PII filter is provider-specific (NR adapter ships a strict attribute-exclude list — see Layer 3 below) |
       | `service.eventTypes: https://...` | upstream catalogue host | **no personal data flows out** — fetch-only of JSON Schema fragments |
@@ -1353,14 +1353,14 @@ requirements:
       partly via Pryv's audit log + this compliance matrix
       (evidence-backed assertion structure).
 
-      **Future: machine-readable subprocessor inventory** — Plan 60
-      A.9 (`CONFIG-EFFECTIVE-EXPOSURE` per
-      `UPDATE-TRIGGERS.md`) will expose the merged effective config
-      per core as a single JSON artefact the operator's DPA
-      register + Art.30 records-of-processing pipeline can consume
-      directly. Pre-Plan-60, the operator reads `override-config.
-      yml` + per-host overlays + identifies non-default integrations
-      by hand.
+      **Future: machine-readable subprocessor inventory** — the
+      planned `GET /system/admin/config/effective` admin route
+      (`CONFIG-EFFECTIVE-EXPOSURE` per `UPDATE-TRIGGERS.md`) will
+      expose the merged effective config per core as a single JSON
+      artefact the operator's DPA register + Art.30
+      records-of-processing pipeline can consume directly. Until
+      then, the operator reads `override-config.yml` + per-host
+      overlays + identifies non-default integrations by hand.
 
   - ref: Art.30
     title: Records of processing activities
@@ -1766,10 +1766,10 @@ requirements:
         scopes / requirements / pryv_primitives / planned chips
         / context notes interlink for the auditable claim graph.
       - **DPIA / breach-scope tooling** the DPO consumes when
-        active: future Plan 60 admin-panel surfaces (Q20 → Plan
-        60 A.9 effective-config endpoint for DPIA Section (d);
-        Q17 → `BREACH-SCOPE-TOOL` backlog for the breach scoping
-        artefact).
+        active: future admin-panel surfaces (the
+        `CONFIG-EFFECTIVE-EXPOSURE` effective-config endpoint for
+        DPIA Section (d); `BREACH-SCOPE-TOOL` backlog for the
+        breach scoping artefact).
 
   - ref: Art.40
     title: Codes of conduct
@@ -1980,11 +1980,11 @@ requirements:
          vendors). See `context/subprocessor-posture-and-data-
          flow.md`. **Pryv recommends configuring per-core SMTP
          endpoints** so the relay can match the core's region /
-         country when residency is a hard requirement — Plan 39's
+         country when residency is a hard requirement — the
          `services.email.smtp.*` config is per-core, so an EU
          core routes mail through an EU SMTP relay independently
          of a US core's relay. Same pattern applies to SMS
-         endpoints (Plan 26).
+         endpoints.
 
       For the §2 mechanism field convention:
       `mechanism: "art.46.2.c"` for SCCs, `"art.46.2.a"` for

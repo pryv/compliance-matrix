@@ -4,17 +4,17 @@
 **v0.4.0** (`@pryv/account-backup`) against GDPR Art.15 / Art.20, CCPA
 §1798.110 / §1798.115, PIPEDA Principle 4.9, and Swiss nLPD Art.25.
 Originally recorded from the gap-probing session (Q10, 2026-05-20)
-against v0.2.3; refreshed 2026-05-27 after Plan 72 Phase C shipped
-the DSAR-completeness fixes.
+against v0.2.3; refreshed 2026-05-27 after the DSAR-completeness
+fixes shipped.
 
 ## TL;DR
 
 `pryv-account-backup` v0.4.0 is the recommended tool to point a
 subject at when they file a DSAR — the bundle it produces covers
-audit log + HF series data points + webhooks (gaps closed in
-Plan 72 Phase C, shipped 2026-05-27). One known follow-up: the
-events fetch is still single-shot; for production-scale subjects a
-chunked time-range fetch would scale better. Tracked in
+audit log + HF series data points + webhooks (gaps closed
+2026-05-27). One known follow-up: the events fetch is still
+single-shot; for production-scale subjects a chunked time-range
+fetch would scale better. Tracked in
 `proposals/account-backup-dsar-completeness.md` (queued feature
 chip on `gdpr.Art.15`).
 
@@ -30,11 +30,11 @@ chip on `gdpr.Art.15`).
 | events (standard) | ✅ via `/events?fromTime=<MIN>&toTime=<MAX>` | single-shot fetch — won't scale to GB datasets; chunked-fetch queued |
 | event attachments | ✅ opt-in, via `GET /events/<id>/<attId>?readToken=...` | streamed binary |
 | accesses (current) | ✅ via `/accesses` | |
-| access version history | ❌ **gap** | Plan 66 access versioning not exported |
+| access version history | ❌ **gap** | access-version history (introduced upstream) not exported |
 | CMC counterparty metadata | ⚠️ likely partial | needs verification — counterparty `apiEndpoint` may not surface |
-| HF series data points (`series:*`) | ✅ via `GET /events/<id>/series` per series-event | shipped in v0.3.0 (Plan 72 C.2) |
-| webhooks | ✅ per-access via `/webhooks` | shipped in v0.3.0 (Plan 72 C.3); aggregated to `webhooks.json` keyed by accessId |
-| audit log | ✅ via `/audit/logs` paged | shipped in v0.3.0 (Plan 72 C.1) |
+| HF series data points (`series:*`) | ✅ via `GET /events/<id>/series` per series-event | shipped in v0.3.0 |
+| webhooks | ✅ per-access via `/webhooks` | shipped in v0.3.0; aggregated to `webhooks.json` keyed by accessId |
+| audit log | ✅ via `/audit/logs` paged | shipped in v0.3.0 |
 | per-file integrity manifest | ✅ `manifest.json` (sha256 per file) | shipped in v0.3.0; `manifest.verify(rootDir)` available for tamper-detect |
 | followed-slices | n/a | v0.3.0 dropped the v1-only `/followed-slices` fetch |
 | MFA enrolment metadata | ❌ borderline | secret correctly out of scope; "MFA enabled / method / since" status worth documenting |
@@ -47,9 +47,9 @@ write APIs. As of v0.4.0 (shipped 2026-05-27, commits `30b1661`
 
 - **HF series data**: a `series:*`-typed event is re-created as the
   empty container AND its data points are re-uploaded via
-  `POST /events/<id>/series` (Plan 72 C.4 partial).
+  `POST /events/<id>/series` (partial).
 - **Multi-attachment events**: every attachment is re-uploaded
-  (Plan 72 v0.4.0 multi-attachment restore).
+  (v0.4.0 multi-attachment restore).
 
 Implication: a subject who runs `pryv-account-backup` today and
 imports the result into a different Pryv account (the Art.20
@@ -96,8 +96,8 @@ the gap is in the tooling completeness, not the API surface.
 
 ## Related
 
-- Upstream backlog:
-  `_plans/XXX-Backlog/ACCOUNT-BACKUP-DSAR-COMPLETENESS.md`
+- Upstream backlog: internal slug
+  `ACCOUNT-BACKUP-DSAR-COMPLETENESS`
 - Proposal mirror:
   `proposals/account-backup-dsar-completeness.md`
 - Audit erasure modes intersect:

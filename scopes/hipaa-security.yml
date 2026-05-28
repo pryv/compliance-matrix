@@ -441,8 +441,8 @@ requirements:
       (CMEK / BYOK) sit at the same infrastructure layer.
 
       Longer-term direction: end-to-end encryption where the server
-      never holds plaintext — research direction in
-      `_plans/XXX-Backlog/E2E-ENCRYPTION.md` (proxy re-encryption);
+      never holds plaintext — research direction tracked under
+      internal backlog slug `E2E-ENCRYPTION` (proxy re-encryption);
       matrix-side notes + per-row impact in
       `proposals/e2e-encryption.md`.
     technical: |
@@ -547,8 +547,8 @@ requirements:
       monitoring, out-of-band SIEM forwarding).
 
       Future direction: chained / signed audit log (per-row prev_hash
-      + periodic operator-signed checkpoints). Tracked at
-      `_plans/XXX-Backlog/AUDIT-LOG-CHAINING.md` and
+      + periodic operator-signed checkpoints). Tracked under internal
+      backlog slug `AUDIT-LOG-CHAINING` and
       `proposals/audit-log-chaining.md`. When shipped, this row
       moves from `F: Evidence | Low` to `F: Evidence | Med`.
 
@@ -591,10 +591,10 @@ requirements:
       NIST AAL framing: the achievable AAL depends on which provider
       is configured. SMS-only is AAL1 under NIST SP 800-63B Rev 3.
       TOTP + push or WebAuthn-based providers reach AAL2. Reference
-      plugins for in-process TOTP + WebAuthn are tracked at
-      `_plans/XXX-Backlog/MFA-MODERN-METHODS.md` (matrix-side mirror
-      at `proposals/mfa-modern-methods.md`); see Plan 40 OAuth2
-      modernisation for the broader auth-stack roadmap.
+      plugins for in-process TOTP + WebAuthn are tracked under
+      internal backlog slug `MFA-MODERN-METHODS` (matrix-side mirror
+      at `proposals/mfa-modern-methods.md`); the broader OAuth2
+      auth-stack modernisation arc subsumes this work.
 
       MFA is opt-in per operator; once enabled, it can be required
       at login, at sensitive operations, or both. The MA test series
@@ -953,7 +953,7 @@ requirements:
 
       Full operator-side rate-limiting framing + reference-config
       backlog: `context/rate-limiting-and-dos-protection.md` +
-      `_plans/XXX-Backlog/RATE-LIMITING-RECIPES.md`.
+      internal backlog slug `RATE-LIMITING-RECIPES`.
 
   - ref: 164.308(a)(6)(i)
     title: Security incident procedures — standard

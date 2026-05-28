@@ -124,8 +124,8 @@ reference reverse-proxy configurations** as part of the deployment
 docs is on the backlog: nginx / HAProxy / Cloudflare / Traefik /
 Caddy snippets that an operator can drop in + tweak. Per-route +
 per-workload-profile (consumer-app, B2B research, hospital) +
-fail2ban jail recipes that consume Pryv's audit feed. Tracked at
-`_plans/XXX-Backlog/RATE-LIMITING-RECIPES.md`.
+fail2ban jail recipes that consume Pryv's audit feed. Tracked
+under internal backlog slug `RATE-LIMITING-RECIPES`.
 
 ## Related primitives
 
