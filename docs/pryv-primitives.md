@@ -159,8 +159,8 @@ any HTTP-callable provider. Operators can:
 
 In-process ceremonies (server-side TOTP, WebAuthn) currently
 require a `Service`-subclass implementation. Reference plugins for
-TOTP + WebAuthn are tracked at
-`_plans/XXX-Backlog/MFA-MODERN-METHODS.md` (matrix-side mirror at
+TOTP + WebAuthn are tracked under internal backlog slug
+`MFA-MODERN-METHODS` (matrix-side mirror at
 `proposals/mfa-modern-methods.md`).
 
 - **Compliance role**: authentication strength control (ISO 27001
@@ -315,7 +315,7 @@ hostings (different countries / cloud regions / on-premise locations).
   [`../context/core-affinity-architecture.md`](../context/core-affinity-architecture.md).
 - **No intermediary in the data path**: client ↔ core data flow
   is direct over TLS — no Pryv-shipped reverse-proxy, API gateway,
-  CDN, or backend hop. Each core terminates TLS itself (Plan 35's
+  CDN, or backend hop. Each core terminates TLS itself (the optional
   ACME integration runs the cert on the same Node process serving
   the API + HFS). Operators *can* place a reverse-proxy in front
   (sample nginx config in

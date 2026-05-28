@@ -129,8 +129,8 @@ Pryv doesn't *enforce* these annotations server-side — but the
 operator's client code reads them and gates writes accordingly;
 their export tooling uses them to drive a "you're exporting Art.9
 data, confirm exception applies" warning; their DPIA tooling
-(Q20 → Plan 60 A.9 endpoint, when shipped) surfaces them in the
-deployment summary.
+(the planned `GET /system/admin/config/effective` admin endpoint,
+when shipped) surfaces them in the deployment summary.
 
 The HDS data-model exemplar already does similar annotations for
 HDS-specific FHIR-R4 bindings; the same authoring pattern carries
@@ -160,7 +160,7 @@ audit-tiering variant of the same pattern.
 
 Even without writing a custom dataStore, the operator can choose
 the storage engine per stream tier via the engine-selection plumbing
-from Plan 9 (storages as plugins). For example, a sensitive subtree
+(storages-as-plugins architecture). For example, a sensitive subtree
 can be backed by a different PostgreSQL database (with `pg_dump`
 encryption, separate WAL retention, separate replicas) than
 ordinary data — same Pryv API, different physical isolation.

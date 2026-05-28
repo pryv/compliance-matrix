@@ -141,7 +141,7 @@
           },
           "backlog": {
             "type": "string",
-            "description": "Slug of the upstream macroPryv backlog file at _plans/XXX-Backlog/<slug>.md (e.g., 'AUDIT-ON-USER-DELETE'). Omit if the planned work has no macroPryv-side backlog yet."
+            "description": "Slug of the upstream backlog file (e.g., 'AUDIT-ON-USER-DELETE'). Omit if the planned work has no upstream backlog yet."
           },
           "impact": {
             "enum": ["high", "medium", "low"],

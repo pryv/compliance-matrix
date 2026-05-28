@@ -168,15 +168,15 @@ Proposal: `proposals/breach-scope-tool.md`
 
 **No matrix impact.** Pure installation ergonomics — doesn't change any tier coverage on any scope row. When shipped, INSTALL.md's worked example becomes complete; no matrix scope row changes. Partial mitigation already in dev-site (`bc67e79` on dev-site master, deployed to `pryv.github.io` `12f726f` 2026-05-27) — the customer-facing `pryv.io-setup.md` now flags all three papercuts.
 
-Filed in `_plans/XXX-Backlog/QUICKSTART-DOCKER-HTTP-EXAMPLE.md`.
+Filed under internal backlog slug `QUICKSTART-DOCKER-HTTP-EXAMPLE`.
 
 ### `MBP2-MULTICORE-SIMULATION` (DX-only — no matrix row updates)
 
-**Where the work lives**: `macroPryv/_local/scripts/` launcher + workflow doc. A `mbp2-multicore.sh` that boots two `pryvio/open-pryv.io` Docker containers + shared PG + does the full `bin/bootstrap.js` cluster-CA + mTLS + rqlite-peering + dnsLess cross-core-forwarding dance end-to-end on the local LAN test box.
+**Where the work lives**: orchestration workspace's `_local/scripts/` launcher + workflow doc. A `mbp2-multicore.sh` that boots two `pryvio/open-pryv.io` Docker containers + shared PG + does the full `bin/bootstrap.js` cluster-CA + mTLS + rqlite-peering + dnsLess cross-core-forwarding dance end-to-end on the local LAN test box.
 
-**No matrix impact.** Operational sugar for dev verification of multi-core PRs without a Dokku pre-prod cycle. When shipped, future multi-core changes (Plans 34/35/53/54 follow-ups, eventually upstream changes to bootstrap CLI / mTLS material / rqlite TLS) gain a fast local verification path; no scope row changes.
+**No matrix impact.** Operational sugar for dev verification of multi-core PRs without a Dokku pre-prod cycle. When shipped, future multi-core changes (bootstrap CLI / mTLS material / rqlite TLS follow-ups) gain a fast local verification path; no scope row changes.
 
-Filed in `_plans/XXX-Backlog/MBP2-MULTICORE-SIMULATION.md`. Pairs naturally with `PLAN54-LE-STAGING-DRILL-RUNBOOK.md` (the LE drill becomes easier once the multi-core launcher exists).
+Filed under internal backlog slug `MBP2-MULTICORE-SIMULATION`. Pairs naturally with the `LE-STAGING-DRILL-RUNBOOK` backlog (the LE drill becomes easier once the multi-core launcher exists).
 
 ### `BUILTIN-STORE-OVERRIDE` (DX-only — no matrix row updates)
 
@@ -185,15 +185,14 @@ Filed in `_plans/XXX-Backlog/MBP2-MULTICORE-SIMULATION.md`. Pairs naturally with
 `config-validation` schema addition).
 
 **No matrix impact.** This is operational sugar, not a
-compliance-shifting fix — see
-`_plans/XXX-Backlog/BUILTIN-STORE-OVERRIDE.md` for the
-explicit DX-only classification. When shipped, update
-`context/audit-archival-via-custom-datastore.md` Flavour B
-section with the `override: true` config snippet; no scope
-row changes.
+compliance-shifting fix — see the `BUILTIN-STORE-OVERRIDE`
+backlog entry for the explicit DX-only classification. When
+shipped, update `context/audit-archival-via-custom-datastore.md`
+Flavour B section with the `override: true` config snippet;
+no scope row changes.
 
-Filed during Q16; flagged as scope-drift example in
-`_claude-memory/feedback_gap_probing_scope_discipline.md`.
+Filed during Q16; flagged as a scope-drift example in internal
+gap-probing scope-discipline notes.
 
 ### `RATE-LIMITING-RECIPES` (no proposal mirror yet)
 
@@ -217,8 +216,8 @@ protection.md`). Likely affected rows when configs ship:
 implementation paths: rqlite native disk encryption (Path 1, ~1d)
 or storage-adapter envelope encryption (Path 2, ~2-3d). Operator-
 supplied `platformDB.atRestKey` (32-byte base64) — operator-sync
-identical to `letsEncrypt.atRestKey`. Surfaced by Plan 71 Q25
-(2026-05-21) — multi-region PlatformDB cross-border analysis.
+identical to `letsEncrypt.atRestKey`. Surfaced 2026-05-21 by
+multi-region PlatformDB cross-border analysis.
 
 Defence-in-depth against SSD / backup-tape / decommissioned-
 hardware forfeiture + filesystem-level read breach + foreign-
@@ -244,7 +243,7 @@ registration flow + `bin/migrate.js`. Three configurable postures:
 `minimised` (HMAC username only; email stripped from PlatformDB
 entirely, accepting loss of "find username by email" recovery
 flow). Operator opts via new `platform.piiMode` config key.
-Surfaced by Plan 71 Q25 (2026-05-21).
+Surfaced 2026-05-21 by multi-region PlatformDB cross-border analysis.
 
 **Legal framing**: hashing is pseudonymisation, NOT anonymisation
 under EDPB / WP29 Opinion 05/2014. Art.46 mechanism still
@@ -272,8 +271,7 @@ release-time SBOM publishing step. Three-phase: in-CI gates (npm
 audit + base-image digest pin + rqlite tarball checksum); pipeline
 tooling (Syft + Grype for SBOM + image scan; CycloneDX artefact
 publishing); provenance + signing (cosign + SLSA attestation).
-Surfaced by Plan 71 Q24 (2026-05-21) — supply-chain compliance
-gap-probing.
+Surfaced 2026-05-21 by supply-chain compliance gap-probing.
 
 User-recommended candidate tools (Q24): OWASP-ZAP / Snyk / Grype.
 Noting OWASP-ZAP is DAST not SCA — Phase 3 candidate as separate
@@ -303,7 +301,7 @@ history page; federate to sister repos (`dev-site`, `lib-js`,
 process maturity (~3-5 days cumulative), discoverability +
 assurance (~1 day per quarter).
 
-Surfaced by Plan 71 Q32 (2026-05-21) — Art.32(1)(d) testing /
+Surfaced 2026-05-21 by Art.32(1)(d) testing /
 effectiveness evidence gap-probing. Today's `SECURITY.md` is
 6 lines + directs reporters at the public issue tracker
 (opposite of responsible-disclosure norms).
@@ -317,23 +315,22 @@ effectiveness evidence gap-probing. Today's `SECURITY.md` is
 | hipaa-security | 164.308(a)(8) | enhancement | low | periodic-evaluation overview cites VDP + GHSA history as one evidence input |
 
 Proposal: `proposals/vulnerability-disclosure-program.md`.
-Backlog: `_plans/XXX-Backlog/VULNERABILITY-DISCLOSURE-PROGRAM.md`.
+Backlog: internal slug `VULNERABILITY-DISCLOSURE-PROGRAM`.
 
 ### `CONFIG-EFFECTIVE-EXPOSURE` (no proposal mirror yet)
 
 **Where the work lives**: `open-pryv.io` — new
 `GET /system/admin/config/effective` admin route + SPA
-"Configuration" tab. Absorbed by the macroPryv `60-bootstrap-
-admin-panel-later` plan in its Phase A.9 + Phase C.3 #13
-(planned MVP1 slice). Read-only, per-core, merged effective
+"Configuration" tab. Absorbed by the bootstrap-admin-panel
+work (planned MVP1 slice). Read-only, per-core, merged effective
 config including the YAML-only key families (no SSH-the-box
 requirement to read deployment safeguards). Secrets redacted
 per a `SECRET_KEYS` constant + JSON-schema `secret: true`
 annotations. `?digest=true` short-circuit for cross-core drift
 pings.
 
-Surfaced by Plan 71 Q20 (2026-05-21) — DPIA Section (d)
-safeguards inventory feed. Also unlocks cross-core drift
+Surfaced 2026-05-21 by DPIA Section (d) safeguards inventory
+feed gap-probing. Also unlocks cross-core drift
 detection + operator runbook + post-hoc debugging use-cases.
 
 Likely affected rows when the endpoint ships:
@@ -347,10 +344,10 @@ Likely affected rows when the endpoint ships:
 | hipaa-security | 164.308(a)(8) | feature | medium | evaluation evidence — technical baseline snapshot; coverage strengthens |
 
 No `proposals/<slug>.md` mirror filed yet — the work absorbs
-cleanly into Plan 60 A.9 + C.3 #13 spec. File one if Plan 71
-Q20 classification later wants `planned:` chips on the matrix
-rows above (in which case `_plans/XXX-Backlog/CONFIG-EFFECTIVE-
-EXPOSURE.md` becomes a one-line stub pointing at Plan 60 to
+cleanly into the bootstrap-admin-panel spec. File one if the
+DPIA-evidence framing later wants `planned:` chips on the matrix
+rows above (in which case the `CONFIG-EFFECTIVE-EXPOSURE` backlog
+becomes a one-line stub pointing at the admin-panel work to
 satisfy the validator's chip → backlog resolution requirement).
 
 ## Section B — Trigger categories (no specific backlog slug yet)
@@ -419,11 +416,11 @@ benefit from pointing at the new scope.
 ### B.7 — Major Pryv-side architectural change
 
 Touches `context/*.md` notes. Recent examples:
-- Plan 37 — multi-core data-residency model (touched
+- Multi-core data-residency model (touched
   `context/core-affinity-architecture.md`).
-- Plan 55 — `cluster_kv` + `access-state` (added to PlatformDB
-  catalogue listed in the core-affinity context note).
-- Plan 9 — storages as plugins (touched engine references in the
+- `cluster_kv` + `access-state` (added to PlatformDB catalogue
+  listed in the core-affinity context note).
+- Storages-as-plugins refactor (touched engine references in the
   audit + data-residency primitives).
 
 ## Section C — Maintenance reminders
@@ -433,9 +430,9 @@ Touches `context/*.md` notes. Recent examples:
   resolve. The validator catches most stale references at CI time;
   this pass catches semantic drift (e.g., a primitive whose meaning
   evolved).
-- **At plan close** for Plan 71: full sweep of this file against the
-  current matrix state — confirm every Section A entry is still
-  accurate + every shipped item has been removed.
+- **At each gap-probing sweep close**: full review of this file
+  against the current matrix state — confirm every Section A entry
+  is still accurate + every shipped item has been removed.
 - **At each new gap-probing Q close** (per
   [[feedback-implementer-perspective-gap-probing]]): if the Q
   produced a new backlog slug, add a Section A entry alongside the

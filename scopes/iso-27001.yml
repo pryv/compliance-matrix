@@ -280,8 +280,8 @@ requirements:
       a WORM store.
 
       Future direction: chained / signed audit log (per-row prev_hash
-      + periodic operator-signed checkpoints). Tracked at
-      `_plans/XXX-Backlog/AUDIT-LOG-CHAINING.md` and
+      + periodic operator-signed checkpoints). Tracked under internal
+      backlog slug `AUDIT-LOG-CHAINING` and
       `proposals/audit-log-chaining.md`. When shipped this row's
       coverage stays Implemented but the cited primitives will
       include `audit-chain`.
@@ -1083,7 +1083,7 @@ requirements:
       `accesses.delete` revocation); enforcement happens at the edge.
       Full rationale + operator mitigation patterns + reference-
       config backlog: `context/rate-limiting-and-dos-protection.md`
-      + `_plans/XXX-Backlog/RATE-LIMITING-RECIPES.md`.
+      + internal backlog slug `RATE-LIMITING-RECIPES`.
 
   - ref: A.8.26
     title: A.8.26 — Application security requirements
@@ -1434,8 +1434,8 @@ requirements:
       pushed alongside the moving `:2.0.0-pre` tag, rqlite version
       pinned via Dockerfile `ARG` (no checksum verification yet),
       GitHub Dependabot security alerts surface CVEs via the repo's
-      Security tab (Plan 56 close cleared 22 alerts → 0 on
-      2026-04-30). What's **not** in place: CI gate on `npm audit`,
+      Security tab (a 2026-04-30 sweep cleared 22 alerts → 0).
+      What's **not** in place: CI gate on `npm audit`,
       SCA tool integration, container image scanning (Trivy /
       Grype), base image digest pinning, SBOM emission (CycloneDX /
       SPDX), image signing (cosign / SLSA attestation), rqlite

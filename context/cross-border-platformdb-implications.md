@@ -12,9 +12,9 @@ PlatformDB is the rqlite-backed key-value store replicated
 **cluster-wide** via Raft across every cluster member. In a
 single-region cluster, replication stays inside one jurisdiction
 and the cross-border question doesn't arise. In a multi-region
-cluster (e.g., the Plan 37 pryv.me topology with `core-use1` in
-Virginia + `core-euc1` in Frankfurt), **every PlatformDB row
-lives on both cores**.
+cluster (e.g., the production pryv.me topology with `core-use1`
+in Virginia + `core-euc1` in Frankfurt), **every PlatformDB
+row lives on both cores**.
 
 Verified contents (read from `storages/interfaces/platformStorage/
 PlatformDB.ts:120-244`):
@@ -25,12 +25,12 @@ PlatformDB.ts:120-244`):
 | User unique fields (`setUserUniqueField`) | system-stream-driven uniqueness check: typically **username**, **email**, optionally phone / employee-id / SSN-equivalent per `customExtensions.systemStreams` config | **PII**, possibly sensitive |
 | User indexed fields (`setUserIndexedField`) | deployment-configured non-unique fields (country code, language, etc.) | typically PII |
 | `dns/<subdomain>` | per-user subdomain → core address mapping (subdomain == username in standard deployments) | **PII** |
-| `access-state/<key>` | transient cross-worker access-flow state during `/reg/access` (Plan 55) | PII (per-user, lifetime ~minutes) |
-| `cluster_kv/*` | MFA SessionStore, other ephemeral cross-worker state (Plan 55) | PII (lifetime ~hours) |
-| `tls-cert/<hostname>`, `tls-acme-account` | LE certs + account (Plan 35) | operator metadata only |
-| `observability/*` | encrypted observability secrets (Plan 38) | operator secrets |
-| `mail-template/<type>/<lang>/<part>` | (planned Plan 60 A.4) | operator-controlled (could leak example PII in templates) |
-| `core-<id>`, bootstrap tokens | cluster topology + join state (Plan 34) | operator metadata |
+| `access-state/<key>` | transient cross-worker access-flow state during `/reg/access` | PII (per-user, lifetime ~minutes) |
+| `cluster_kv/*` | MFA SessionStore, other ephemeral cross-worker state | PII (lifetime ~hours) |
+| `tls-cert/<hostname>`, `tls-acme-account` | LE certs + account (optional ACME integration) | operator metadata only |
+| `observability/*` | encrypted observability secrets | operator secrets |
+| `mail-template/<type>/<lang>/<part>` | (planned mail-template admin work) | operator-controlled (could leak example PII in templates) |
+| `core-<id>`, bootstrap tokens | cluster topology + join state | operator metadata |
 
 Per-user steady state: ~50-200 bytes (username + email + 1
 user-core mapping + 1 DNS record). For 100k users, ~5-20 MB
@@ -82,8 +82,7 @@ classification.
 **Value**: real defence-in-depth against passive forfeiture
 scenarios. Cheap (~1 day).
 
-**Backlog**: `_plans/XXX-Backlog/PLATFORMDB-AT-REST-ENCRYPTION.md`
-(macroPryv).
+**Backlog**: internal slug `PLATFORMDB-AT-REST-ENCRYPTION`.
 
 ### B. HMAC-pseudonymisation of PII at PlatformDB layer
 
@@ -125,8 +124,8 @@ local (no cluster-global guarantee). Lost feature: "find username
 by email" recovery. Acceptable tradeoff for many deployments
 where username-based recovery suffices.
 
-Effort: ~3-5 days. **Backlog**:
-`_plans/XXX-Backlog/PLATFORMDB-PII-HASHING.md` (macroPryv).
+Effort: ~3-5 days. **Backlog**: internal slug
+`PLATFORMDB-PII-HASHING`.
 
 ### C. Tokenisation with per-region mapping table (the structural answer)
 
@@ -210,9 +209,9 @@ justifies the investment).
   cross-border surface (vendor integrations).
 - `context/core-affinity-architecture.md` — the Tier 2 residency
   guarantee.
-- `_plans/XXX-Backlog/PLATFORMDB-AT-REST-ENCRYPTION.md` (in
-  macroPryv) — option A backlog.
-- `_plans/XXX-Backlog/PLATFORMDB-PII-HASHING.md` (in macroPryv)
-  — option B backlog.
-- `_plans/XXX-Backlog/ALIASES.md` (in macroPryv) — pairs with
-  option C tokenisation path.
+- Internal backlog slug `PLATFORMDB-AT-REST-ENCRYPTION` —
+  option A backlog.
+- Internal backlog slug `PLATFORMDB-PII-HASHING` — option B
+  backlog.
+- Internal backlog slug `ALIASES` — pairs with option C
+  tokenisation path.

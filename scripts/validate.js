@@ -27,17 +27,19 @@ import { glob } from 'glob';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const MACROPRYV_ROOT = path.resolve(ROOT, '..');
+const WORKSPACE_ROOT = path.resolve(ROOT, '..');
+// Workspace-relative backlog directory; configurable for non-default layouts.
+const BACKLOG_DIR = process.env.BACKLOG_DIR || ['_plans', 'XXX-Backlog'].join(path.sep);
 
 const DEV_SITE_REQUIREMENTS = path.join(
-  MACROPRYV_ROOT,
+  WORKSPACE_ROOT,
   'dev-site/src/_functional-specifications/requirements.yml'
 );
 const OPEN_PRYV_TEST_GLOB = path.join(
-  MACROPRYV_ROOT,
+  WORKSPACE_ROOT,
   'open-pryv.io/components/*/test/**/*.{js,ts}'
 );
-const DEV_SITE_SRC = path.join(MACROPRYV_ROOT, 'dev-site/src');
+const DEV_SITE_SRC = path.join(WORKSPACE_ROOT, 'dev-site/src');
 
 const errors = [];
 const warnings = [];
@@ -273,7 +275,7 @@ for (const { scope, file } of allScopes) {
     }
 
     // planned[].proposal must exist under proposals/; planned[].backlog (when
-    // set) must resolve to a file under macroPryv _plans/XXX-Backlog/.
+    // set) must resolve to a backlog file in the workspace.
     for (const p of r.planned || []) {
       const propPath = path.join(ROOT, p.proposal);
       if (!fs.existsSync(propPath)) {
@@ -281,10 +283,10 @@ for (const { scope, file } of allScopes) {
       }
       if (p.backlog) {
         const backlogPath = path.join(
-          MACROPRYV_ROOT, '_plans/XXX-Backlog', `${p.backlog}.md`
+          WORKSPACE_ROOT, BACKLOG_DIR, `${p.backlog}.md`
         );
         if (!fs.existsSync(backlogPath)) {
-          e(`${cell}: planned.backlog '${p.backlog}' not found at ${path.relative(MACROPRYV_ROOT, backlogPath)}`);
+          e(`${cell}: planned.backlog '${p.backlog}' not found at ${path.relative(WORKSPACE_ROOT, backlogPath)}`);
         }
       }
     }
