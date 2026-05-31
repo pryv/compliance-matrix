@@ -189,7 +189,7 @@ considerations noted under Art.17:
 - **SQLite** — per-user files; backup-restore granularity is
   per-user. Retention deletions reflect in next-cycle
   filesystem backups when the file is rewritten / removed.
-- **PostgreSQL / MongoDB** — row-level deletion. Existing
+- **PostgreSQL** — row-level deletion. Existing
   backup snapshots retain the deleted rows until backup
   rotation prunes them. Operators with strict Art.5(1)(e)
   posture either (a) rotate backups aggressively enough that

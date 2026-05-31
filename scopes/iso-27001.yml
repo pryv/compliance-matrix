@@ -206,7 +206,7 @@ requirements:
     overview: |
       Per-user erasure: `system.users.delete` removes the user's data
       from the live store. Engine-dependent backup behaviour (SQLite
-      per-user file vs PG/Mongo row deletion + backup rotation)
+      per-user file vs PG row deletion + backup rotation)
       determines whether erasure extends to backups — same notes as
       GDPR Art. 17 + HIPAA-Security §164.310(d) media-controls. Event-
       level and stream-level deletion live alongside for per-record
@@ -1136,8 +1136,8 @@ requirements:
     pryv_primitives: [audit]
     overview: |
       Pryv's CI runs the public
-      test matrix per commit (PG + Mongo modes; component-level +
-      integration tests; see Plan-56 test hardening commits).
+      test matrix per commit (PG + SQLite modes; component-level +
+      integration tests).
       Operator's own application-layer security testing (SAST, DAST,
       pen-test before release) is layered on top.
 

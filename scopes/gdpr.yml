@@ -810,14 +810,14 @@ requirements:
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
       engine you chose — SQLite per-user folders are deletable from
-      filesystem backups; PostgreSQL / MongoDB require a backup-rotation
+      filesystem backups; PostgreSQL requires a backup-rotation
       policy to complete erasure.
     detail: |
       Per-engine behaviour for the live data:
         - SQLite — each user is a separate file under the user-data
           directory. File deletion removes the user from filesystem
           backups (depending on your backup tool's per-file semantics).
-        - PostgreSQL / MongoDB — row-level erasure only. Backups are
+        - PostgreSQL — row-level erasure only. Backups are
           DB-engine-level snapshots; per-user erasure within a backup
           file requires either backup rotation (oldest pruned per
           policy) or a backup-rewriting procedure you build yourself.
@@ -1494,8 +1494,8 @@ requirements:
         - Regular testing (§1(d)): FILLED BY EXISTING PRIMITIVES +
           PARTIALLY MISSING on the vulnerability-intake side.
           **Existing evidence (citable today)**:
-            - **Multi-engine CI test matrix** — ~1816 tests on
-              PostgreSQL baseline + ~1783 on MongoDB baseline,
+            - **Multi-engine CI test matrix** — ~2351 tests on
+              PostgreSQL and SQLite (matched baseline),
               ~175 test files across `components/*/test/`; runs
               on every commit + every PR.
             - **Lint + typecheck gates** (`just lint` + `just

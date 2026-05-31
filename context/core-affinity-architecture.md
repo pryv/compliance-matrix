@@ -38,7 +38,7 @@ keyed across the cluster:
 PlatformDB does **not** carry events, streams, accesses (other
 than the short-lived state above), profiles, audit, or attachments.
 Those live in the home core's per-engine stores (SQLite per-user
-file or PG/Mongo rows keyed by `user_id`).
+file or PG rows keyed by `user_id`).
 
 ## What "core-affine" means
 

@@ -54,7 +54,7 @@ requirements:
       Same primitive as GDPR Art. 17: `system.users.delete` is the
       per-consumer erasure call. Backup-completeness of the deletion
       depends on the chosen storage engine (SQLite per-user file vs
-      PG/Mongo row deletion) — same notes as gdpr.Art.17 apply. The
+      PG row deletion) — same notes as gdpr.Art.17 apply. The
       §1798.105(d) statutory exceptions (warranty, security, legal
       compliance, etc.) are your programmatic determination; if an
       exception applies you suppress the deletion and document why.

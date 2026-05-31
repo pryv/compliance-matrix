@@ -35,27 +35,25 @@ This is **physical filesystem-level isolation.** Cross-user reads
 require either an OS-level read of another user's file (root
 required) or a Pryv-side bug that mis-resolves the user identity.
 
-### PostgreSQL / MongoDB engines — logical isolation
+### PostgreSQL engine — logical isolation
 
-Every user's data sits in **shared tables / collections** (e.g.,
-`events`, `streams`, `accesses`) with a `userId` column on every
-row. Isolation is enforced at the **application layer**: every
-query (read + write) is parameterised with `userId` either as a
-SQL `WHERE userId = ?` clause or a Mongo aggregation `$match`
-stage.
+Every user's data sits in **shared tables** (e.g., `events`,
+`streams`, `accesses`) with a `userId` column on every row.
+Isolation is enforced at the **application layer**: every query
+(read + write) is parameterised with `userId` as a SQL
+`WHERE userId = ?` clause.
 
 - No DB-level enforcement. Pryv does **not** ship PostgreSQL
-  row-level-security (RLS) policies, MongoDB per-user views, or
-  per-tenant schemas. The DB sees a single tenant; isolation
-  happens in the SQL string the application emits.
+  row-level-security (RLS) policies or per-tenant schemas. The DB
+  sees a single tenant; isolation happens in the SQL string the
+  application emits.
 - A code bug that forgets to apply the `userId` filter, or a
   permission check that fires after a multi-user read returns,
   could leak data across users.
 - Erasure is per-user row deletion (`DELETE FROM events WHERE userId
-  = ?`). Engine backups are DB-engine-level snapshots (`pg_dump`,
-  `mongodump`); per-user erasure within a backup file requires
-  either backup rotation (oldest pruned per policy) or backup
-  rewriting.
+  = ?`). Engine backups are DB-engine-level snapshots (`pg_dump`);
+  per-user erasure within a backup file requires either backup
+  rotation (oldest pruned per policy) or backup rewriting.
 
 This is **logical isolation, app-code-enforced.** Implementer trust
 in cross-user separation reduces to trust in:
@@ -74,7 +72,7 @@ Pryv supports both for legitimate operator reasons:
   audit. Trade-off: scale ceiling lower; multi-core deployments
   rely on a shared rqlite control plane for platform data even
   though events stay per-user-SQLite.
-- **PG / Mongo** suit larger deployments where multi-master DB
+- **PG** suits larger deployments where multi-master DB
   replication, point-in-time recovery, advanced query patterns,
   and DB-team operability matter more than physical-file isolation.
 
@@ -88,17 +86,17 @@ permanent.** Pryv's `bin/backup.js` dumps user data in an engine-
 neutral format (per-user backup files); `bin/backup.js --restore`
 reads that format into whichever engine the target deployment is
 configured for. An operator who starts on SQLite for the
-physical-isolation guarantee can migrate to PG / Mongo later (or
-vice versa) without losing data or rebuilding user accounts.
+physical-isolation guarantee can migrate to PG later (or vice
+versa) without losing data or rebuilding user accounts.
 
 This matters for two implementer scenarios:
 
 1. **Start strict, scale later.** Begin on SQLite during the
    regulated-onboarding phase (HDS audit, HIPAA risk assessment)
-   when physical isolation is the auditable property. Move to PG /
-   Mongo once the user count or query complexity outgrows SQLite,
-   and the audit posture has matured (e.g., operator now has RLS
-   policies + WAF + SIEM forwarding documented).
+   when physical isolation is the auditable property. Move to PG
+   once the user count or query complexity outgrows SQLite, and the
+   audit posture has matured (e.g., operator now has RLS policies +
+   WAF + SIEM forwarding documented).
 2. **Disaster recovery onto a different engine.** If the production
    engine has a structural issue, restore onto the other engine in
    an emergency. Avoids vendor / engine lock-in as a top-line risk.
@@ -107,10 +105,10 @@ The migration itself is operational (script-driven, not real-time);
 plan downtime windows. The per-user data + access lifetimes survive
 the migration; access tokens stay valid afterwards.
 
-## Operator mitigation patterns for PG / Mongo deployments
+## Operator mitigation patterns for PG deployments
 
 If the implementer's risk model demands stronger isolation on
-PG / Mongo, four independent layers can be added (none shipped by
+PG, four independent layers can be added (none shipped by
 Pryv-the-software today):
 
 1. **PostgreSQL row-level security (RLS).** The operator authors
@@ -119,10 +117,9 @@ Pryv-the-software today):
    GUC per connection. Defeats accidental missing `WHERE userId`
    on top of the existing app-layer filter. Cheap; one-DB
    deployment.
-2. **Per-schema isolation.** PG schemas (or Mongo databases-as-
-   namespaces) per tenant; same engine, separate namespaces.
-   Stronger than RLS, weaker than per-DB. Medium ops cost. Scales
-   to thousands.
+2. **Per-schema isolation.** PG schemas per tenant; same engine,
+   separate namespaces. Stronger than RLS, weaker than per-DB.
+   Medium ops cost. Scales to thousands.
 3. **Per-account DB isolation** *(low-cardinality only)*. One
    PostgreSQL database per Pryv user / tenant. DB-level isolation
    — connections are scoped to one DB, so a missing `userId`
@@ -184,7 +181,7 @@ inherit the framing without needing the cross-link in every cell.
 - `stream`, `system-streams` — the data containers whose isolation
   this note characterises.
 - `access`, `permissions` — the API-surface enforcement layer (which
-  on PG / Mongo is the only enforcement layer).
+  on PG is the only enforcement layer).
 - `audit` — per-user SQLite regardless of base-storage engine.
 - `backup-restore` — engine-specific erasure semantics tie back to
   the isolation model.

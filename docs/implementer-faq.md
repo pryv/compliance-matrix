@@ -56,18 +56,18 @@ internal backlog slug `AUDIT-LOG-CHAINING`.
 
 ### Q3 — What does "per-user storage isolation" mean per engine? Can a bug let user A's events leak to user B?
 
-**Short answer:** **logical isolation on PG/Mongo, physical on
+**Short answer:** **logical isolation on PG, physical on
 SQLite.** SQLite gives one file per user — physical filesystem-level
-separation; the wrong API call can't open the wrong file. PG and
-Mongo share tables / collections with isolation enforced by app-code
-`userId` filtering — a bug that forgets the filter leaks across
-users. **Both engines are first-class** for legitimate operator
-reasons (scale vs strict-audit posture).
+separation; the wrong API call can't open the wrong file. PG shares
+tables with isolation enforced by app-code `userId` filtering — a
+bug that forgets the filter leaks across users. **Both engines are
+first-class** for legitimate operator reasons (scale vs strict-audit
+posture).
 
 **Engine-switch is supported.** `bin/backup.js` dumps user data in
 engine-neutral format; `--restore` reads into whichever engine the
 target deployment uses. Operators can start strict-on-SQLite, scale
-to PG/Mongo later (or vice versa for emergency DR).
+to PG later (or vice versa for emergency DR).
 
 **Side question — per-account DB on PG?** Technically yes (PG
 supports many DBs per cluster), but **sharp cardinality limit**: PG
@@ -2381,7 +2381,7 @@ primitives + one layer is a genuine queued gap.**
 |---|---|
 | Pen-test / security audit report? | **None published.** No `pen-test`, `penetration`, `security audit`, `security review` text in `open-pryv.io/*.md`. No CVE / GHSA references in CHANGELOG. |
 | Vulnerability disclosure program? | **Minimal.** `SECURITY.md` exists at `open-pryv.io/SECURITY.md` but is **6 lines** total; the only directive is "report to the [support team](https://github.com/pryv/open-pryv.io/issues)" — i.e., the public issue tracker. No `security@pryv.com` mailbox, no PGP key, no GitHub Security Advisories private-report flow enabled, no bounty, no scope statement, no response-time SLA, no safe-harbor language, no security.txt at deployment hosts. |
-| Test-suite scale | **~1816 tests PG baseline / ~1783 Mongo baseline / ~175 test files**. Two-engine matrix (PG default, Mongo opt-in). Lint + typecheck + per-component unit + integration + acceptance. CI green on both engines (2026-04-30 baseline). |
+| Test-suite scale | **~2351 tests PG and SQLite baseline (matched) / ~175 test files**. Two-engine matrix (PG default, SQLite alternative). Lint + typecheck + per-component unit + integration + acceptance. CI green on both engines (2026-05-29 baseline). |
 | Deploy-validation runbook? | **Yes (partial).** 8-row scenario deploy-validation matrix exercised on every release (internal artefact); post-deploy `lib-js` conformance suite at 168/169 baseline (per-deployment runnable) — but neither is packaged as a customer-facing "verify your deployment" guide. |
 | Dependabot / supply-chain | Covered by Q24 (`SUPPLY-CHAIN-SCANNING-PIPELINE` backlog filed; 22 alerts → 0 on `open-pryv.io` master per 2026-04-30 sweep). |
 
@@ -2414,8 +2414,8 @@ primitives + one layer is a genuine queued gap.**
    discoverability + ongoing assurance).
 
 3. **Test-suite scale as effectiveness evidence — filled by
-   existing primitive.** ~1816 tests passing on PostgreSQL +
-   ~1783 on MongoDB + ~175 test files across `components/*/
+   existing primitive.** ~2351 tests passing on PostgreSQL and
+   SQLite (matched baseline) + ~175 test files across `components/*/
    test/` + CI green on every commit + lint + typecheck gates +
    the multi-engine matrix architecture — together this **is**
    §1(d) "regular testing" effectiveness evidence under any

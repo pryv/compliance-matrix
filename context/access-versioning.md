@@ -48,10 +48,6 @@ delete snapshot.apiEndpoint;                 // derived; recomputed
 that.insertOne(userOrUserId, snapshot, ...);
 ```
 
-Equivalent in MongoDB:
-`storages/engines/mongodb/src/user/Accesses.ts` (same pattern — full doc clone,
-fresh `_id`, `headId` set, integrity dropped + recomputed).
-
 **Conclusion:** every mutable + every immutable field is preserved historically.
 There is no diff-only storage and no field excluded from versioning.
 
@@ -121,7 +117,6 @@ This is the foundation for several matrix coverage upgrades:
   `serializeAccessRef`, `composeWireAccess` (composite-id wire format).
 - `storages/engines/postgresql/src/user/AccessesPG.ts` `snapshotHead()` — PG
   implementation of the history snapshot.
-- `storages/engines/mongodb/src/user/Accesses.ts` — Mongo equivalent.
 - `components/audit/src/Audit.ts` — comment "when the caller's access has been
   versioned (serial..." documents how audit captures `accessSerial`.
 

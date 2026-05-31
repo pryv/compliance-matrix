@@ -121,7 +121,7 @@ requirements:
       access scope to recipient. Retention has the same
       configurable engine-dependent erasure mechanics noted under
       GDPR Art. 17 + HIPAA-Security §164.310(d)(1): SQLite per-user
-      file deletion vs PG/Mongo row deletion + backup rotation.
+      file deletion vs PG row deletion + backup rotation.
       Automatic / scheduled retention enforcement is **operator-
       owned** (Pryv ships no TTL primitive; the operator's external
       retention job composes `events.get toTime=<cutoff>` +
