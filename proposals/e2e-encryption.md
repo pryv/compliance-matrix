@@ -96,6 +96,6 @@ flavour use cases.
 - Upstream backlog: `_plans/XXX-Backlog/E2E-ENCRYPTION.md`
 - Sibling proposal: `proposals/aliases-as-pseudonymization-primitive.md`
   (covers a different pseudonymization angle — username aliases).
-- macroPryv `_plans/XXX-Backlog/CONTENT-INDEXING.md` (referenced in
+- macroPryv `_plans/87-content-indexing-atwork/PLAN.md` (referenced in
   the E2E backlog as a paired concern; full-text search semantics
   under E2E need their own design).
