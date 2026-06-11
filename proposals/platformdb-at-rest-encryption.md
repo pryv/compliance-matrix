@@ -22,6 +22,14 @@ Two implementation paths:
 Operator-supplied key: `platformDB.atRestKey` (32-byte base64),
 operator-sync identical to `letsEncrypt.atRestKey`.
 
+- **Path 3 — PostgreSQL-native at-rest options** (new since
+  open-pryv.io gained `storages.platform.engine: postgresql` for
+  single-core dnsLess deployments): when platform data lives in
+  PostgreSQL (`platform_kv` table), pgcrypto / volume encryption /
+  managed-PG TDE apply to it like any other PG data. Covers the
+  diskless shape only; rqlite-backed multi-core platforms still
+  need Path 1 or 2.
+
 ## Compliance impact
 
 | Scope | Ref | Kind | Impact | After shipping |
