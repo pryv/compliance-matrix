@@ -111,6 +111,33 @@ bootstrap-join skew check + pre-cert-load validity check.
 
 Proposal: `proposals/clock-skew-cluster-checks.md`
 
+### `CONTENT-INDEXING` (SHIPPED 2026-06-11 — no chips were queued)
+
+**Where the work lived**: `open-pryv.io` (`1295c0b` on master, deployed)
++ `lib-js` (`pryv` 3.6.0 on npm) + `pryv-datastore` v1.1.0
+(`DataStore.supports`). `events.get` gained `content` / `clientData`
+JSON-condition parameters (strict-type semantics, both engines);
+new platform-wide `storages.contentIndexes` config key (PostgreSQL
+partial-index acceleration; queryability itself is always on);
+`features.contentQueries` capability flag in service-info; store
+capability discovery via `pryv-datastore:supports` clientData.
+Test markers: `[CQRY]` `[CQAC]` `[CQIX]` `[CQSA]` `[CQ11]` `[CQLJ]`.
+
+**Trigger pass outcome (B.1 walk)**: no tier shifts — the DSAR /
+portability / erasure row families cite `events.get` generically and
+their claims are unchanged by the new filter parameters. The one
+matrix-relevant consequence is **audit semantics**: content-query
+search values sent over HTTP GET are recorded as-is in the audit
+row's URL query (deliberate — the query is the auditable action).
+Encoded in `context/content-query-audit-semantics.md` + caveats added
+to `gdpr.Art.28` (data-flow layers) / `gdpr.Art.30` (technical) /
+`hipaa-security.164.312(b)` / `iso-27001.A.8.15` /
+`docs/pryv-primitives.md` audit entry /
+`context/privacy-by-design-and-default.md` /
+`context/subprocessor-posture-and-data-flow.md`.
+`proposals/e2e-encryption.md` upstream pointer refreshed (content
+queries are the paired search-under-encryption concern).
+
 ### `E2E-ENCRYPTION`
 
 **Where the work lives**: `open-pryv.io` (research direction — proxy

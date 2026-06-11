@@ -487,6 +487,14 @@ requirements:
       second copy of PHI — favourable under §164.502(b) minimum-
       necessary review. See `docs/pryv-primitives.md` audit entry.
 
+      One scoping nuance: `events.get` content-query conditions sent
+      over HTTP GET are part of the URL query, so the **search
+      values** your apps submit (which may reference PHI, e.g. a
+      diagnosis code) are recorded as-is — deliberately, since the
+      search criteria are the auditable action. Tier the audit log's
+      protection accordingly. See
+      `context/content-query-audit-semantics.md`.
+
   - ref: 164.312(c)(1)
     title: Integrity — standard
     text: |

@@ -96,6 +96,11 @@ flavour use cases.
 - Upstream backlog: `_plans/XXX-Backlog/E2E-ENCRYPTION.md`
 - Sibling proposal: `proposals/aliases-as-pseudonymization-primitive.md`
   (covers a different pseudonymization angle — username aliases).
-- macroPryv `_plans/87-content-indexing-atwork/PLAN.md` (referenced in
-  the E2E backlog as a paired concern; full-text search semantics
-  under E2E need their own design).
+- Content queries SHIPPED (open-pryv.io `1295c0b`, 2026-06-11 —
+  `events.get` `content`/`clientData` conditions + PG index
+  acceleration; plan archive: macroPryv
+  `_plans/_archives/87-content-indexing-done/`). Paired concern
+  stands: content-query evaluation requires server-side plaintext,
+  so search semantics under E2E need their own design — see
+  `context/content-query-audit-semantics.md` for the shipped
+  semantics any E2E design must reconcile with.

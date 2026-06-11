@@ -173,7 +173,9 @@ The audit log captures method + access reference + URL query +
 integrity hash — **never the request body**, with `auth=` query
 parameters stripped. So when audit ships to a tiered audit store
 (per the Q16 custom-datastore pattern), the destination sees
-metadata, not content.
+metadata, not content. Nuance: content-query search values sent
+over HTTP GET are part of the URL query and travel with it — see
+`content-query-audit-semantics.md`.
 
 Code anchor: `components/audit/src/Audit.ts:151-166`.
 

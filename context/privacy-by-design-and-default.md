@@ -161,8 +161,10 @@ off; every API call (`AUDITED_METHODS` set at
 Audit-by-construction (Q9) means the audit captures method +
 access ref + URL query + integrity hash; **never the request
 body**; `auth=` query params stripped. Both privacy-protective
-(no PII in the audit) AND accountability-enforcing (you can't
-hide what you did).
+(no *stored subject data* in the audit — caller-supplied search
+values on the GET path are recorded as-is, see
+`content-query-audit-semantics.md`) AND accountability-enforcing
+(you can't hide what you did).
 
 ### 3. TLS enforced by default
 

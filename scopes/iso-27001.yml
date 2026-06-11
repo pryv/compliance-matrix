@@ -291,7 +291,10 @@ requirements:
       action + source + URL query + access ref + integrity hash, but
       **never the request body**. The log itself therefore qualifies
       as well-scoped under the "logs that record activities" framing
-      without storing the data being acted on. See
+      without storing the data being acted on. Caller-supplied search
+      values (`events.get` content-query conditions on the GET path)
+      do appear in the recorded URL query — see
+      `context/content-query-audit-semantics.md`. See
       `docs/pryv-primitives.md` audit entry for the full capture
       catalogue.
 

@@ -1317,8 +1317,11 @@ requirements:
       three real layers, each tested:
 
       1. **Audit-by-construction (Q9)** — audit captures method +
-         access ref + URL query + integrity hash; **never the
-         request body**; `auth=` query-string params stripped.
+         access ref + URL query (incl. content-query search values
+         on the GET path — see
+         `context/content-query-audit-semantics.md`) + integrity
+         hash; **never the request body**; `auth=` query-string
+         params stripped.
          `components/audit/src/Audit.ts:151-166`.
       2. **Logger sanitization** — every `logger.{info,warn,error,
          debug}` call passes args through `inspectAndHide`
@@ -1413,7 +1416,11 @@ requirements:
       minimisation concerns + survives Art.17 erasure of the
       underlying events with no residual personal data attached to
       the audit rows themselves (only opaque method names + access
-      ids remain).
+      ids remain). One caveat: content-query search values submitted
+      over HTTP GET are part of the recorded URL query and survive
+      erasure of the matching events — they are the caller's request,
+      not the subject's data. See
+      `context/content-query-audit-semantics.md`.
 
   - ref: Art.32
     title: Security of processing

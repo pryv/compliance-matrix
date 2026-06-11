@@ -94,6 +94,11 @@ Records every API method invocation per user.
   Consequence: the audit log is data-minimal *by construction* — it
   proves *who did what when* without storing *what data was written*.
   This is a deliberate design property, not a configuration toggle.
+  One nuance: caller-supplied **search values** (e.g. `events.get`
+  `content` / `clientData` query conditions sent over HTTP GET) are
+  part of the URL query and are recorded as-is — the query is the
+  action being audited. See
+  [`../context/content-query-audit-semantics.md`](../context/content-query-audit-semantics.md).
 - **Read surface**: `audit.get` API method (subject to permissions).
 - **Compliance role**: end-to-end accountability chain. With access
   versioning, the audit row points at a specific contract version —
