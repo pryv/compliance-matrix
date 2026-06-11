@@ -178,6 +178,34 @@ Filed under internal backlog slug `QUICKSTART-DOCKER-HTTP-EXAMPLE`.
 
 Filed under internal backlog slug `MBP2-MULTICORE-SIMULATION`. Pairs naturally with the `LE-STAGING-DRILL-RUNBOOK` backlog (the LE drill becomes easier once the multi-core launcher exists).
 
+### `REG-ACCESS-CLIENT-AUTHURL` (DX-only — no matrix row updates)
+
+**Where the work lives**: `open-pryv.io`
+(`components/api-server/src/routes/reg/access.ts` + request schema +
+new `access:trustedAuthUrls` config key).
+
+**No matrix impact.** Per-request auth-popup URL selection, gated on an
+operator-controlled allow-list — developer ergonomics for app authors
+testing against locally-served auth UIs. The allow-list keeps the auth-UI
+trust decision server-side, so no tier shifts on any scope row. When
+shipped, no scope row changes.
+
+Filed under internal backlog slug `REG-ACCESS-CLIENT-AUTHURL`
+(implementer-requested, 2026-06-11).
+
+### `BOILER-JSON-LOG-FORMAT` (DX-only — no matrix row updates)
+
+**Where the work lives**: `open-pryv.io` (`components/boiler/src/logging.ts`
+console transport) + potentially the `@pryv/boiler` npm package.
+
+**No matrix impact.** Structured JSON console output for log aggregators —
+operational/alerting sugar. Audit evidence flows through the audit
+subsystem, not console logs, so no tier shifts on any scope row. When
+shipped, no scope row changes.
+
+Filed under internal backlog slug `BOILER-JSON-LOG-FORMAT`
+(implementer-requested, 2026-06-11).
+
 ### `BUILTIN-STORE-OVERRIDE` (DX-only — no matrix row updates)
 
 **Where the work lives**: `open-pryv.io`
