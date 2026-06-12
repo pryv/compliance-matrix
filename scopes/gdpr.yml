@@ -822,6 +822,18 @@ requirements:
           file requires either backup rotation (oldest pruned per
           policy) or a backup-rewriting procedure you build yourself.
 
+      Event attachments follow your `storages.file.engine` choice
+      (filesystem / s3 / postgresql, the latter two since open-pryv.io
+      2.0.0-rc.2). Account deletion routes attachment removal through
+      the fileStorage interface, so live copies are erased on all
+      three engines. Backup residue differs per engine: filesystem
+      attachment directories follow your file-backup tool's semantics;
+      S3 buckets may retain deleted-object versions (disable
+      versioning or add a lifecycle rule if erasure must extend
+      there); PostgreSQL-stored attachments live in the same
+      `pg_dump` artefacts as user rows, so the backup-rotation policy
+      above covers them with no extra step.
+
       Erasure here is **caller-triggered** — the subject (or operator
       on their behalf) issues the DELETE call. The **scheduled /
       automatic** erasure obligation under Art.5(1)(e) "storage
@@ -1483,7 +1495,11 @@ requirements:
           Let's Encrypt integration; mTLS between cores in a cluster.
         - Encryption at rest: CONFIGURABLE — you enable operator
           filesystem encryption (out-of-band) + AES-256-GCM for at-rest
-          operator secrets in PlatformDB.
+          operator secrets in PlatformDB. Event attachments inherit the
+          at-rest controls of your `storages.file.engine` choice:
+          filesystem encryption, S3 server-side encryption (SSE), or —
+          with attachments stored in PostgreSQL — the same DB-level
+          encryption that covers user rows.
         - Pseudonymisation: FACILITATED — system streams + custom
           event-type design; pseudonyms live in `clientData` or
           dedicated streams.
