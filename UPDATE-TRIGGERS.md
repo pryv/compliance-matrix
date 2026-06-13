@@ -46,21 +46,21 @@ sqlite3 compliance-matrix/dist/compliance.sqlite \
   "SELECT backlog, scope_id, ref, kind, impact, summary FROM planned_changes ORDER BY backlog, scope_id, ref;"
 ```
 
-### `ACCOUNT-BACKUP-DSAR-COMPLETENESS` (SHIPPED 2026-05-27 — split out one follow-up)
+### `ACCOUNT-BACKUP-DSAR-COMPLETENESS` (SHIPPED 2026-05-27 + 2026-06-13 — all chips discharged)
 
-**Where the work lived**: `pryv-account-backup` repo. Shipped in v0.4.0 (commits `1a05482` v0.3.0 + `30b1661` C.4 partial + `ea6ae6a` v0.4.0). 5 bug chips (Art.15 / 1798.110 / 164.524 / Principle.4.9 / Art.25) + 1 feature chip (Art.20 restore) discharged. The remaining feature work (events chunking) split into its own backlog slug below.
+**Where the work lived**: `pryv-account-backup` repo. Initial DSAR-completeness work shipped in v0.4.0 (commits `1a05482` v0.3.0 + `30b1661` C.4 partial + `ea6ae6a` v0.4.0) — 5 bug chips (Art.15 / 1798.110 / 164.524 / Principle.4.9 / Art.25) + 1 feature chip (Art.20 restore) discharged. The chunked-events follow-up shipped in v0.5.0 (commits `d1eaf48` + merge `e59d5b3`, 2026-06-13) — last remaining feature chip on `gdpr.Art.15` discharged. v0.5.0 also bundled `accesses-all.json` (deletions + expired) + opt-in per-access version history.
 
-Proposal: `proposals/account-backup-dsar-completeness.md` (kept; the file's Status: SHIPPED header tracks both the discharged chips and the follow-up).
+Proposal: `proposals/account-backup-dsar-completeness.md` (kept; the file's Status: SHIPPED header now references the v0.4.0 + v0.5.0 chain).
 
-### `ACCOUNT-BACKUP-CHUNKED-EVENTS-FETCH`
+### `ACCOUNT-BACKUP-CHUNKED-EVENTS-FETCH` — SHIPPED 2026-06-13
 
-**Where the work lives**: `pryv-account-backup` repo. Single-shot events fetch is fine for typical subjects; multi-GB subjects (long-running research participants, fitness-tracker subjects with years of HF data) need a chunked fetch to avoid API-gateway timeouts and memory pressure on the subject's environment.
+**Where the work lived**: `pryv-account-backup` v0.5.0 (merge SHA `e59d5b3`; feature commit `d1eaf48`). Events fetch now chunks by UTC month — one `events-YYYY-MM.json` per month in the subject's discovered event-time range. Two `limit=1` probes (ascending floor + descending ceiling) bound the window; restore concatenates legacy `events.json` + new chunked files in sorted order.
 
 | Scope | Ref | Kind | Impact | After shipping |
 |---|---|---|---|---|
-| gdpr | Art.15 | feature | low | chip removed; events chunking documented |
+| gdpr | Art.15 | feature | low | **discharged** |
 
-Proposal: `proposals/account-backup-dsar-completeness.md` (shared with the now-shipped DSAR-completeness work; the surviving feature is the chunking follow-up).
+Proposal: `proposals/account-backup-dsar-completeness.md` (shared with the v0.4.0 work; Status header updated to reflect the v0.5.0 ship).
 
 ### `ALIASES`
 

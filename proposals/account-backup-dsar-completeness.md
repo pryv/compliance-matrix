@@ -1,8 +1,16 @@
 # Proposal: pryv-account-backup DSAR completeness
 
-**Status: SHIPPED 2026-05-27** on `pryv/pryv-account-backup` master at [`ea6ae6a`](https://github.com/pryv/pryv-account-backup/commit/ea6ae6a) (Plan 72 Phase C, v0.4.0). The full DSAR-completeness fix landed in 3 commits: [`1a05482`](https://github.com/pryv/pryv-account-backup/commit/1a05482) v0.3.0 (audit log + HFS data points + webhooks + per-file integrity manifest), [`30b1661`](https://github.com/pryv/pryv-account-backup/commit/30b1661) C.4 partial (series event containers + HFS data-points round-trip on restore), [`ea6ae6a`](https://github.com/pryv/pryv-account-backup/commit/ea6ae6a) v0.4.0 (full dependency upgrade + multi-attachment restore). Discharges 5 bug chips (`gdpr.Art.15`, `ccpa.1798.110`, `hipaa-privacy.164.524`, `pipeda.Principle.4.9`, `swiss-nlpd.Art.25`) + 1 feature chip (`gdpr.Art.20` multi-attachment / HFS restore). GH#73 closed. macroPryv backlog file archived to `_plans/_archives/78-account-backup-dsar-completeness-done.md`.
+**Status: SHIPPED 2026-05-27 + 2026-06-13 — all chips discharged.**
 
-**One feature chip remains on `gdpr.Art.15`:** "Single-shot events fetch chunked by time-range for production-scale subjects" — separate concern, not shipped in Phase C. The chip stays on the matrix; a future iteration can pick it up.
+- **2026-05-27, v0.4.0:** initial DSAR-completeness fix on `pryv/pryv-account-backup` master at [`ea6ae6a`](https://github.com/pryv/pryv-account-backup/commit/ea6ae6a) (Plan 72 Phase C). Three commits: [`1a05482`](https://github.com/pryv/pryv-account-backup/commit/1a05482) v0.3.0 (audit log + HFS data points + webhooks + per-file integrity manifest), [`30b1661`](https://github.com/pryv/pryv-account-backup/commit/30b1661) C.4 partial (series event containers + HFS data-points round-trip on restore), [`ea6ae6a`](https://github.com/pryv/pryv-account-backup/commit/ea6ae6a) v0.4.0 (full dependency upgrade + multi-attachment restore). Discharged 5 bug chips (`gdpr.Art.15`, `ccpa.1798.110`, `hipaa-privacy.164.524`, `pipeda.Principle.4.9`, `swiss-nlpd.Art.25`) + 1 feature chip (`gdpr.Art.20` multi-attachment / HFS restore).
+- **2026-06-13, v0.5.0:** chunked-events follow-up + completeness rounding (Plan 93). Feature commit [`d1eaf48`](https://github.com/pryv/pryv-account-backup/commit/d1eaf48), merge [`e59d5b3`](https://github.com/pryv/pryv-account-backup/commit/e59d5b3), [PR #14](https://github.com/pryv/pryv-account-backup/pull/14), tag [`v0.5.0`](https://github.com/pryv/pryv-account-backup/releases/tag/v0.5.0). Discharged the last feature chip on `gdpr.Art.15` (chunked time-range events fetch — `events-YYYY-MM.json` per UTC month). Also bundled `accesses-all.json` (revoked + expired access tokens for the full disclosure-history view) and opt-in `accesses-history/<accessId>.json` per access (via `?includeHistory=true`). Note: `pryv-account-backup` is not on the npm registry — distribution is git-clone-based per the README.
+
+macroPryv backlog files archived: `_plans/_archives/78-account-backup-dsar-completeness-done.md` (v0.4.0 scope) and `_plans/_archives/93-account-backup-chunked-events-done.md` (v0.5.0 scope). GH#73 closed in 2026-05.
+
+**Coverage gaps remaining after v0.5.0 (informational only, no chips):**
+
+- Jurisdiction-per-host inference for CMC counterparty `host` is implementer-side (no host-to-country registry in the API).
+- Operator security note: `profile_private.json` carries `profile.mfa = { content, recoveryCodes }` verbatim — the backup file is therefore as sensitive as a password-reset link. By-design; the subject IS entitled to their full MFA state. Documented in v0.5.0 CHANGELOG.
 
 ---
 
