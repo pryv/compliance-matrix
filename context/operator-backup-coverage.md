@@ -6,7 +6,7 @@
 
 ## TL;DR
 
-Pryv ships **two** backup tools with non-overlapping audiences. They are complementary, not redundant. An auditor evaluating Art.15 / Art.20 / §1798.110 / Principle 4.9 / nLPD Art.25 coverage should know both exist and which one satisfies the article in question.
+Pryv has shipped **three** backup tools with non-overlapping audiences. Two are current (operator + subject CLI); the third (a self-serve Web UI on top of the subject CLI) was operated historically and is currently dormant. An auditor evaluating Art.15 / Art.20 / §1798.110 / Principle 4.9 / nLPD Art.25 coverage should know all three exist and which one satisfies the article in question.
 
 | | Operator backup (`open-pryv.io/bin/backup.js`) | Subject backup (`@pryv/account-backup`) |
 |---|---|---|
@@ -17,6 +17,30 @@ Pryv ships **two** backup tools with non-overlapping audiences. They are complem
 | Scope per user | streams, accesses, profile, webhooks, events, attachments, accountData, audit, HFS series | account, streams, accesses (+ revoked/expired), profile, audit-logs, events (chunked by month), per-app profile, HFS series per-event, per-access webhooks, integrity manifest |
 | Restore semantics | full re-import via engine-level write paths (PG `INSERT`, SQLite `INSERT`) | re-create via standard public API (`events.create`, `streams.create`, `addPointsToHFEvent`); audit / webhooks / accesses deliberately NOT replayed (system-generated or token-bearing) |
 | Compliance role | disaster recovery, migration, regulator-mandated record retention | GDPR Art.15 (access) / Art.20 (portability) / CCPA §1798.110 / PIPEDA Principle 4.9 / Swiss nLPD Art.25 |
+
+## Third tier — operator-hosted subject Web UI (`pryv/example-service-bluebutton`, currently dormant)
+
+`pryv/example-service-bluebutton` is a public, unarchived example service that wraps `@pryv/account-backup` behind a Web UI. Subjects log in via a Web form, the server runs the CLI on their behalf, and the bundle is downloaded as a ZIP. Last substantive release v1.2.0 on 2022-10-11; last commit 2024-12-17 (single-character fix). The public Pryv-operated instance at `https://bluebutton.pryv.me/` is currently dormant (DNS does not resolve as of 2026-06-13).
+
+| | `pryv/example-service-bluebutton` (Web UI tier) |
+|---|---|
+| Audience | end user (the subject) — same as the CLI tier, but no Node / CLI knowledge required |
+| Surface | operator-hosted Express service; routes `login`, `status`, `infos`, `delete` (post-download cleanup) |
+| Auth | subject's Pryv credentials submitted via the Web form (operator's TLS) |
+| Distribution | Docker image (was on JFrog/Bintray, sunset 2021 — operators wanting this tier today should rebuild from source) |
+| Compliance role | same as the CLI tier — GDPR Art.15 / Art.20 / §1798.110 — with significantly lower subject-side friction (no clone / install / CLI run) |
+
+**Why it matters for the symmetry audit:**
+
+- This is the **most ergonomic** path for an actual DSAR — a subject who can't be expected to install Node or run a CLI can still self-serve.
+- It is **operator-hosted**, so it moves the "who runs the export" responsibility back to the operator while keeping the output bundle subject-portable (the operator never sees the bundle's contents — it streams to the subject's browser and is deleted server-side after download).
+- The 2022 release was built on top of `pryv-account-backup` 1.0.x (pre-DSAR-completeness). An operator who re-deploys bluebutton today against `@pryv/account-backup` v0.5.0 inherits all the chunked-events / accesses-all / per-access-history / audit-logs / HFS / webhooks / integrity-manifest improvements for free — the Web UI is a thin shell, the completeness lives in the underlying tool.
+
+**Operational guidance for implementers:**
+
+- If you need a self-serve DSAR for a non-technical subject population, the bluebutton repo is a production-ready scaffold — point a `service-info` URL at it and redeploy.
+- Confirm the underlying `pryv-account-backup` version is **≥ 0.5.0** so the full DSAR-completeness layer applies; the historical bluebutton 1.0.x release pinned 0.2.x.
+- The operator security note about `profile.mfa.recoveryCodes` applies a fortiori — the operator is now in the path of every download, so the post-delete cleanup route in bluebutton becomes load-bearing.
 
 ## Per-resource symmetry (v2 deployments; subject backup at v0.5.0)
 
