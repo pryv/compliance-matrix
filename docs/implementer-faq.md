@@ -2338,6 +2338,9 @@ deliberate reasons:
   rationale + audit-trace details + cross-engine considerations
   + account-level retention via audit-log oracle + caveats +
   see-also.
+- `soc2.P4.2` (Privacy — Retention) added 2026-06-15 with the same
+  operator-owned framing + a `detail:` block citing
+  `context/data-retention-operator-owned.md`.
 - **No backlog** filed — voluntarily missing by design.
 - **No `planned:` chips** added — same reason.
 - **No `proposals/` mirror** — same reason.
