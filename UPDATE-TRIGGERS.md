@@ -46,11 +46,13 @@ sqlite3 compliance-matrix/dist/compliance.sqlite \
   "SELECT backlog, scope_id, ref, kind, impact, summary FROM planned_changes ORDER BY backlog, scope_id, ref;"
 ```
 
-### `ACCOUNT-BACKUP-DSAR-COMPLETENESS` (SHIPPED 2026-05-27 + 2026-06-13 — all chips discharged)
+### `ACCOUNT-BACKUP-DSAR-COMPLETENESS` (SHIPPED 2026-05-27 + 2026-06-13 + 2026-06-15 — all chips discharged)
 
-**Where the work lived**: `pryv-account-backup` repo. Initial DSAR-completeness work shipped in v0.4.0 (commits `1a05482` v0.3.0 + `30b1661` C.4 partial + `ea6ae6a` v0.4.0) — 5 bug chips (Art.15 / 1798.110 / 164.524 / Principle.4.9 / Art.25) + 1 feature chip (Art.20 restore) discharged. The chunked-events follow-up shipped in v0.5.0 (commits `d1eaf48` + merge `e59d5b3`, 2026-06-13) — last remaining feature chip on `gdpr.Art.15` discharged. v0.5.0 also bundled `accesses-all.json` (deletions + expired) + opt-in per-access version history.
+**Where the work lived**: `pryv-account-backup` repo + new `pryv-account-backup-webapp` repo. Initial DSAR-completeness work shipped in v0.4.0 (commits `1a05482` v0.3.0 + `30b1661` C.4 partial + `ea6ae6a` v0.4.0) — 5 bug chips (Art.15 / 1798.110 / 164.524 / Principle.4.9 / Art.25) + 1 feature chip (Art.20 restore) discharged. The chunked-events follow-up shipped in v0.5.0 (commits `d1eaf48` + merge `e59d5b3`, 2026-06-13) — last remaining feature chip on `gdpr.Art.15` discharged. v0.5.0 also bundled `accesses-all.json` (deletions + expired) + opt-in per-access version history. The library + browser-isomorphic rewrite + audit-as-events forward-compatibility shipped in v0.6.0 (foundation `6cfc7fc` / merge `3e10cb1` / PR #15; isomorphism `e957ce2` / PR #16; AGENTS.md `df785b0` / PR #17; webapp `e57aeec9` + `81dccc4`; dev-site PR #184), 2026-06-15.
 
-Proposal: `proposals/account-backup-dsar-completeness.md` (kept; the file's Status: SHIPPED header now references the v0.4.0 + v0.5.0 chain).
+Proposal: `proposals/account-backup-dsar-completeness.md` (kept; the file's Status: SHIPPED header now references the v0.4.0 + v0.5.0 + v0.6.0 chain).
+
+**Why v0.6.0 matters even though no chips were chipped:** the dedicated `/audit/logs` route is being removed from open-pryv.io. v0.5.0 and earlier call it directly and will silently produce empty `audit_logs.json` files once the removal lands. v0.6.0 fetches audit via the standard events API on `:_audit:*` streams — forward-compatible AND supports `modifiedSince`. **Sub-repos that produce DSAR bundles should pin their subject-side backup tooling to v0.6.0+ before the upstream route removal.**
 
 ### `ACCOUNT-BACKUP-CHUNKED-EVENTS-FETCH` — SHIPPED 2026-06-13
 
