@@ -56,7 +56,7 @@ its install graph (operator-side build only).
 - ref: Art.15
   coverage: implemented
   pryv_primitives: [access, stream, event, audit]
-  tests: [AA01, EGSQ, U9HQ]
+  tests: [AA01, EGSQ, UZEV]
   sample_apps: [get-a-copy-of-my-data]
   notes: |
     The sample app demonstrates the full subject-side flow including the

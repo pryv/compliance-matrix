@@ -205,7 +205,7 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, clientData, stream, audit]
     functional_specs: [EVENT.BASE, STREAM.BASE]
-    tests: [GLHP, U9HQ]
+    tests: [GLHP, UZEV]
     overview: |
       Several Art.5 principles are technically enforced for you by Pryv
       rather than left to policy: purpose limitation (per-stream
@@ -704,7 +704,7 @@ requirements:
     draft: true
     pryv_primitives: [access, stream, event, audit, account-backup-tool]
     functional_specs: [EVENT.BASE, STREAM.BASE]
-    tests: [AA01, EGSQ, U9HQ]
+    tests: [AA01, EGSQ, UZEV]
     planned:
       - kind: feature
         summary: "Single-shot events fetch chunked by time-range for production-scale subjects"
@@ -1388,7 +1388,7 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, audit, CMC, data-residency]
     docs: [customer-resources/audit-setup.md, guides/audit-logs.md]
-    tests: [U9HQ, QXCH, AA01]
+    tests: [UZEV, TJ8S, AA01]
     planned:
       - kind: feature
         summary: "Chained / signed audit log makes the Article 30 register tamper-evident"
@@ -1524,9 +1524,9 @@ requirements:
             - **Lint + typecheck gates** (`just lint` + `just
               typecheck`) — neostandard with `{ semi: true }`,
               `noUnused*` strict.
-            - **Deploy-validation matrix** (Plan-28-era internal
-              artefact) — 8-row scenario matrix exercised on
-              every release.
+            - **Deploy-validation matrix** (an internal
+              release-validation artefact) — 8-row scenario matrix
+              exercised on every release.
             - **Conformance suite** (`lib-js` 168/169 baseline
               against deployed core) — runnable per-deployment
               for operator-side verification (sample-app
