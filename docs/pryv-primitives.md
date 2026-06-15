@@ -224,28 +224,55 @@ from a backup file.
 
 ### `account-backup-tool`
 
-`pryv-account-backup` (npm `@pryv/account-backup`) is the
-subject-driven export tool. End-user / implementer runs
-`npm start`, supplies service-info URL + username + password,
-and gets a `./backup/<apiEndpoint>/` folder.
+`pryv-account-backup` (`@pryv/account-backup`) is the subject-driven
+export tool. **Distribution is git-clone-based — NOT on the npm
+registry**: clone the tagged release, `npm install`, `npm start`,
+supply service-info URL + username + password, and get a
+`./backup/<apiEndpoint>/` folder. As of v0.6.0 it is also a
+programmatic, browser-isomorphic library (`require('@pryv/account-backup').Backup`
+over pluggable `StorageWriter` + `StateStore` adapters), and a sample
+browser webapp (`pryv-account-backup-webapp`) ships on the same core
+modules.
 
-- **Captures today**: account info, public + private profiles, app
-  profiles, streams tree, accesses list, events (single-shot
-  `?fromTime=<MIN>&toTime=<MAX>`), attachments (opt-in).
-- **Does NOT capture today**: audit log (`/audit/logs`), HF series
-  data points (`GET /events/<id>/series`), webhooks; access version
-  history not directly exported; still calls the v1-only
-  `/followed-slices` (404 in v2). See
+- **Two flavours**:
+  - **CLI (complete)** — covers every read-side resource: account
+    info, public + private profiles, app profiles, streams tree,
+    accesses (current snapshot + `accesses-all` revoked/expired +
+    opt-in per-access version history), events (monthly-chunked initial
+    + incremental via `events.get?modifiedSince=T`), audit log, HF
+    series data points, webhooks, attachments, plus a per-file sha256
+    integrity manifest.
+  - **Webapp (read-side text only)** — omits attachments / HF series /
+    webhooks / sha256 manifest (those fetchers stay CLI-only). Route
+    non-technical subjects here; route subjects needing the omitted
+    resources to the CLI.
+- **Audit-as-events (v0.6.0+)**: audit is fetched via the standard
+  events API on the `:_audit:*` store streams
+  (`events.get?streams=[':_audit:accesses',':_audit:actions']`), not
+  the dedicated `audit.getLogs` route — which was **removed** from
+  open-pryv.io on 2026-06-15. **v0.6.0 is the minimum required tool
+  version** against current deployments; v0.5.0 and earlier produce
+  empty/404 audit sections.
+- **DSAR completeness shipped** (v0.4.0 2026-05-27 → v0.5.0 2026-06-13
+  → v0.6.0 2026-06-15). The earlier gaps (single-shot events, no audit
+  / HF / webhooks, no access history, v1-only `/followed-slices`) are
+  all closed; `proposals/account-backup-dsar-completeness.md` is
+  `Status: SHIPPED`, all chips discharged. See
   [`../context/account-backup-coverage.md`](../context/account-backup-coverage.md)
-  for the full coverage matrix.
+  for the per-data-type matrix.
 - **Compliance role**: GDPR Art.15 (right of access) + Art.20 (data
   portability) substrate. Subject-runnable — no operator dependency
   for routine DSARs (the subject has their own credentials).
-- **Restore path** is explicitly "experimental" — `npm start restore`
-  re-imports events but loses HF series data + multi-attachment
-  events on the way through.
-- **Backlog**: `ACCOUNT-BACKUP-DSAR-COMPLETENESS` (matrix
-  proposal: `proposals/account-backup-dsar-completeness.md`).
+- **Operator security note**: `profile_private.json` carries
+  `profile.mfa = { content, recoveryCodes }` verbatim — treat any
+  backup as a password-reset-equivalent secret. By design (the subject
+  is entitled to their full MFA state).
+- **Restore path** stays experimental + CLI-only — audit / webhooks /
+  accesses are deliberately not replayed; HF series + multi-attachment
+  round-trip is the known-lossy edge.
+- **Informational gaps (no chips)**: jurisdiction-per-host inference
+  for CMC counterparties is implementer-side (no host-to-country
+  registry in the API).
 
 ### `encryption-at-rest-secrets`
 

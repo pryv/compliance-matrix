@@ -21,7 +21,7 @@ organizational side.
 | Type | Scopes |
 |------|--------|
 | Regulations | GDPR, HIPAA-Security, HIPAA-Privacy, HIPAA-Breach, Swiss nLPD, CCPA, DiGA, MDR |
-| Standards | ISO/IEC 27001, ISO/IEC 27701, ISO 13485 *(curated)* |
+| Standards | ISO/IEC 27001, ISO/IEC 27701, ISO 13485 *(curated)*, SOC 2 (AICPA Trust Services Criteria) |
 | Hosting certification | HDS |
 
 See [scopes/](./scopes/) for the matrix data and [references/](./references/)

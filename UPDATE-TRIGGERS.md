@@ -429,6 +429,11 @@ Common touchpoints when API surface changes:
 - `gdpr.Art.18` — restriction (mostly `accesses.update`).
 - `hipaa-security.164.312(a)(1)` — access control.
 - `hipaa-security.164.312(b)`, `iso-27001.A.8.15` — audit.
+- **SOC 2** parallels the families above: `soc2.P5.1` + `soc2.P6.7`
+  (subject access / accounting of disclosures), `soc2.P5.2`
+  (rectification), `soc2.CC6.5` + `soc2.P4.3` + `soc2.C1.2` (erasure /
+  disposal), `soc2.CC6.1` + `soc2.CC6.3` (logical access control),
+  `soc2.P6.2` (record of disclosures — audit).
 
 ### B.2 — New event-type formats (`data-types` repo)
 
@@ -437,6 +442,8 @@ affect:
 - `gdpr.Art.20` (portability via canonical schemas).
 - `iso-13485` (excluded_items: device classes).
 - `hipaa-privacy.164.514` (de-identification — new format flags).
+- `soc2.PI1.1`, `soc2.PI1.2`, `soc2.P7.1` (processing-integrity /
+  data-quality rows cite the `data-types` validation pipeline).
 
 ### B.3 — New storage engine (`storages/engines/<new>/`)
 
@@ -448,6 +455,8 @@ Affects:
 - `hipaa-security.164.312(a)(1)` (technical safeguards — engine ACL
   enforcement).
 - `iso-27001.A.8.10` (information deletion semantics per engine).
+- `soc2.CC6.5`, `soc2.C1.2`, `soc2.P4.3` (engine-dependent disposal /
+  destruction rows).
 - The audit primitive doc (`audit` entry in `docs/pryv-primitives.md`).
 - `context/per-engine-isolation.md`.
 
