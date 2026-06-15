@@ -52,7 +52,7 @@ sqlite3 compliance-matrix/dist/compliance.sqlite \
 
 Proposal: `proposals/account-backup-dsar-completeness.md` (kept; the file's Status: SHIPPED header now references the v0.4.0 + v0.5.0 + v0.6.0 chain).
 
-**Why v0.6.0 matters even though no chips were chipped:** the dedicated `/audit/logs` route is being removed from open-pryv.io. v0.5.0 and earlier call it directly and will silently produce empty `audit_logs.json` files once the removal lands. v0.6.0 fetches audit via the standard events API on `:_audit:*` streams — forward-compatible AND supports `modifiedSince`. **Sub-repos that produce DSAR bundles should pin their subject-side backup tooling to v0.6.0+ before the upstream route removal.**
+**Why v0.6.0 matters even though no chips were chipped:** the dedicated `/audit/logs` route was **removed** from open-pryv.io on 2026-06-15 (commit `19d1c11f` on master). v0.5.0 and earlier call it directly and now produce empty `audit_logs.json` files (or 404 errors) against any deployment running that build. v0.6.0 fetches audit via the standard events API on `:_audit:*` streams — supports `modifiedSince` AND continues to work post-removal. **Sub-repos that produce DSAR bundles MUST pin their subject-side backup tooling to v0.6.0+; v0.5.0 and earlier are now production-broken for the audit-log section of the bundle.**
 
 ### `ACCOUNT-BACKUP-CHUNKED-EVENTS-FETCH` — SHIPPED 2026-06-13
 

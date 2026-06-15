@@ -40,12 +40,16 @@ The operator-side companion is `bin/backup.js` shipped in `open-pryv.io`
 (operator backup, subject CLI, subject webapp, archived bluebutton
 historical tier).
 
-**Forward-compatibility:** v0.6.0 fetches audit via the standard events
-API on the `:_audit:*` store streams — forward-compatible with the
-upcoming removal of the dedicated `/audit/logs` route from open-pryv.io.
-v0.5.0 and earlier call `/audit/logs` directly and will silently
-produce empty `audit_logs.json` files once the removal lands. **Upgrade
-subject-side tooling to v0.6.0 before the upstream route removal.**
+**Production-broken in v0.5.0 and earlier:** the dedicated `/audit/logs`
+route was **removed** from open-pryv.io on 2026-06-15 (commit
+`19d1c11f` on master). v0.5.0 and earlier call this route directly and
+now produce empty `audit_logs.json` files (or 404 errors) against any
+deployment running that build. **v0.6.0 is the minimum required
+subject-side backup tool version for current open-pryv.io deployments.**
+v0.6.0 fetches audit via the standard events API on the `:_audit:*`
+store streams (audit is a regular `@pryv/datastore` mounted there on
+every Pryv core), which continues to work post-removal AND supports
+`modifiedSince` for incremental fetches.
 
 ## Per-data-type coverage (v2 deployments + pryv-account-backup v0.6.0)
 
@@ -64,7 +68,7 @@ subject-side tooling to v0.6.0 before the upstream route removal.**
 | CMC counterparty metadata | ✅ confirmed in `accesses.json` | `clientData.cmc.counterparty.{username,host}` + `clientData.cmc.apiEndpoint` ride through `composeWireAccess` on every shared access; jurisdiction-per-host is implementer-side (no host-to-country registry in the API) |
 | HF series data points (`series:*`) | ✅ CLI: via `GET /events/<id>/series` per series-event (shipped in v0.3.0; **regression fixed in v0.6.0** — see Fixed section below). ❌ webapp omits | |
 | webhooks | ✅ CLI: per-access via `/webhooks` (aggregated to `webhooks.json` keyed by accessId). ❌ webapp omits | |
-| audit log | ✅ **v0.6.0+: via `events.get?streams=[':_audit:accesses',':_audit:actions']&modifiedSince=T`** (the dedicated `/audit/logs` route is being removed from open-pryv.io). Output filename `audit_logs.json` unchanged | forward-compatible with the upstream route removal; supports `modifiedSince` for incremental delta |
+| audit log | ✅ **v0.6.0+: via `events.get?streams=[':_audit:accesses',':_audit:actions']&modifiedSince=T`**. The dedicated `/audit/logs` route was removed from open-pryv.io on 2026-06-15 (commit `19d1c11f`); v0.5.0 and earlier are now production-broken for the audit-log section. Output filename `audit_logs.json` unchanged | supports `modifiedSince` for incremental delta |
 | per-file integrity manifest | ✅ CLI only: `manifest.json` (sha256 per file). ❌ webapp omits | `manifest.verify(rootDir)` available for tamper-detect on the CLI side |
 | followed-slices | n/a | v0.3.0 dropped the v1-only `/followed-slices` fetch |
 | MFA enrolment metadata | ✅ **already covered** (re-verified during 0.5.0 audit) | `profile.mfa = { content, recoveryCodes }` lives in the user's private profile and `profile.get` returns the full profile verbatim, so `profile_private.json` carries MFA state today — including the 10 SMS-bypass recovery codes. **Operator security note:** treat the backup file as a secret on par with a password-reset link; consider rotating recovery codes after the disclosure. |
