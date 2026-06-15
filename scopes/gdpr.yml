@@ -705,12 +705,6 @@ requirements:
     pryv_primitives: [access, stream, event, audit, account-backup-tool]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [AA01, EGSQ, UZEV]
-    planned:
-      - kind: feature
-        summary: "Single-shot events fetch chunked by time-range for production-scale subjects"
-        proposal: proposals/account-backup-dsar-completeness.md
-        backlog: ACCOUNT-BACKUP-CHUNKED-EVENTS-FETCH
-        impact: low
     overview: |
       Your subject, holding a personal token, reads everything via the
       standard Pryv API — events, streams, accesses (with full history),
