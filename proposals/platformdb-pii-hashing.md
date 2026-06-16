@@ -1,7 +1,10 @@
 # PlatformDB PII hashing / minimisation
 
-**Proposal mirror of**: `_plans/XXX-Backlog/PLATFORMDB-PII-HASHING.md` (macroPryv).
-**Filed during**: Plan 71 Q25 — cross-border PlatformDB analysis.
+**Status: shipped** on `pryv/open-pryv.io` master (commits `2c11478d` → `1417b01a`).
+Posture 1 (hashed, both columns) is fully implemented. Posture 2 (minimised — strip email) is deferred unless a residency-hardliner operator asks for it; the configuration enum currently accepts `cleartext | hashed`.
+
+**Filed during**: Plan 71 Q25 — cross-border PlatformDB analysis (2026-05-21).
+**Shipped during**: Plan 99 (closed 2026-06-16).
 
 ## Goal
 
@@ -71,9 +74,10 @@ cross-border replication unchanged by hashing under Recital 26.
 
 ## Cross-references
 
-- macroPryv backlog: `_plans/XXX-Backlog/PLATFORMDB-PII-HASHING.md`
+- macroPryv plan (closed): `_plans/_archives/99-backup-audit-and-platformdb-pii-hash-done/`
   for the full design (operations table, pepper rotation,
-  migration plan).
+  migration plan) absorbed at plan open from the original
+  `XXX-Backlog/PLATFORMDB-PII-HASHING.md` backlog file.
 - `compliance-matrix/UPDATE-TRIGGERS.md` Section A entry
   `PLATFORMDB-PII-HASHING`.
 - `compliance-matrix/context/cross-border-platformdb-implications.md`

@@ -1467,12 +1467,6 @@ requirements:
         backlog: PLATFORMDB-AT-REST-ENCRYPTION
         tracking_url: https://github.com/pryv/open-pryv.io/issues/79
         impact: medium
-      - kind: feature
-        summary: "PlatformDB HMAC-pseudonymisation gives §1(a) pseudonymisation evidence at the PlatformDB layer; reduces cross-border PII exposure in multi-region clusters"
-        proposal: proposals/platformdb-pii-hashing.md
-        backlog: PLATFORMDB-PII-HASHING
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/80
-        impact: medium
       - kind: enhancement
         summary: "Published vulnerability disclosure program (security mailbox + PGP + GHSA + scope + SLA + safe harbor) strengthens §1(d) testing/effectiveness evidence; modernises today's bare SECURITY.md"
         proposal: proposals/vulnerability-disclosure-program.md
@@ -1913,9 +1907,10 @@ requirements:
       continuous cross-border transfer of personal data — an
       Art.46 mechanism (SCCs / BCRs / etc.) is legally required
       even though Tier-2 stays put. Mitigation options (filed as
-      backlog): at-rest encryption of PlatformDB
+      backlog or shipped): at-rest encryption of PlatformDB
       (`PLATFORMDB-AT-REST-ENCRYPTION`), HMAC-pseudonymisation
-      of PII at the PlatformDB layer (`PLATFORMDB-PII-HASHING`),
+      of PII at the PlatformDB layer (`PLATFORMDB-PII-HASHING`
+      — shipped, opt-in via `platform.piiMode: hashed`),
       tokenisation with per-region mapping table (option C —
       brainstorm-tier, not yet backlogged).
 
@@ -1994,7 +1989,8 @@ requirements:
          mechanism (SCCs, BCRs, etc.) WITH at-rest encryption
          (`PLATFORMDB-AT-REST-ENCRYPTION` backlog) AND
          PII pseudonymisation at the PlatformDB layer
-         (`PLATFORMDB-PII-HASHING` backlog).
+         (`PLATFORMDB-PII-HASHING` — shipped, opt-in via
+         `platform.piiMode: hashed`).
 
       3. **Subprocessor outbound** (SMTP / SMS / observability
          vendors). See `context/subprocessor-posture-and-data-

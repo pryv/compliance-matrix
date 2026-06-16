@@ -293,16 +293,22 @@ memory dumps or application-level breaches; pairs with
 
 Proposal: `proposals/platformdb-at-rest-encryption.md`.
 
-### `PLATFORMDB-PII-HASHING`
+### `PLATFORMDB-PII-HASHING` — **shipped**
+
+**Status (2026-06-16)**: shipped on `pryv/open-pryv.io` master
+(commits `2c11478d` → `1417b01a`). Posture 1 (`hashed`, both
+columns) is fully implemented; Posture 2 (`minimised`, strip email)
+is deferred and not in the operator-facing enum yet. Chip removed
+from `gdpr.Art.32` in `scopes/gdpr.yml`. Proposal mirror at
+`proposals/platformdb-pii-hashing.md` carries the same Status
+header.
 
 **Where the work lives**: `open-pryv.io` — `components/platform/`
 + `storages/engines/rqlite/` + system-streams config +
-registration flow + `bin/migrate.js`. Three configurable postures:
-`cleartext` (today, default), `hashed` (HMAC username + email),
-`minimised` (HMAC username only; email stripped from PlatformDB
-entirely, accepting loss of "find username by email" recovery
-flow). Operator opts via new `platform.piiMode` config key.
-Surfaced 2026-05-21 by multi-region PlatformDB cross-border analysis.
+registration flow + new `bin/platform-pii-migrate.js` +
+`bin/platform-pii-rotate.js`. Operator opts via
+`platform.piiMode: cleartext | hashed`. Surfaced 2026-05-21 by
+multi-region PlatformDB cross-border analysis.
 
 **Legal framing**: hashing is pseudonymisation, NOT anonymisation
 under EDPB / WP29 Opinion 05/2014. Art.46 mechanism still
