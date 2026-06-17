@@ -1,10 +1,10 @@
 # PlatformDB PII hashing / minimisation
 
-**Status: shipped** on `pryv/open-pryv.io` master (commits `2c11478d` → `1417b01a`).
-Posture 1 (hashed, both columns) is fully implemented. Posture 2 (minimised — strip email) is deferred unless a residency-hardliner operator asks for it; the configuration enum currently accepts `cleartext | hashed`.
+**Status: shipped + default** on `pryv/open-pryv.io` master (commits `2c11478d` → `1417b01a`, then `332fc7f4`).
+Posture 1 (hashed, both columns) is fully implemented. **Since `2.0.0-rc.3` (Plan 99 Phase C), `platform.piiMode: hashed` is the DEFAULT** — `cleartext` is a legacy opt-out. The cluster-wide algorithm is `platform.piiAlgorithm` (HMAC-SHA-256 today; a future scheme is a coordinated re-derive migration, not a per-token version tag). Email→username recovery in hashed mode resolves the cleartext username on the user's home core (any node 307-redirects to it; the home node reverse-resolves the HMAC token from its own in-region, non-replicated user index). Posture 2 (minimised — strip email) is deferred unless a residency-hardliner operator asks for it; the configuration enum accepts `cleartext | hashed`.
 
 **Filed during**: Plan 71 Q25 — cross-border PlatformDB analysis (2026-05-21).
-**Shipped during**: Plan 99 (closed 2026-06-16).
+**Shipped during**: Plan 99 — Phase B opt-in (2026-06-16), Phase C hashed-default + recovery (2026-06-17), deployed to all 3 cores (dev-pryv2 + pryv.me use1/euc1).
 
 ## Goal
 
