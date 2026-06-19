@@ -6,16 +6,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout compliance-matrix
@@ -68,18 +66,27 @@ jobs:
         working-directory: workspace/compliance-matrix/wab
         run: npm run build
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: workspace/compliance-matrix/wab/dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      # GitHub Pages serves this repo from the `gh-pages` branch (legacy
+      # build type), so publish by pushing the built SPA to that branch —
+      # the same model as wab/scripts/upload.sh, history preserved.
+      - name: Publish to gh-pages
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+        working-directory: workspace/compliance-matrix
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          tmp="$(mktemp -d)"
+          git clone --branch gh-pages --depth 1 "$REPO" "$tmp"
+          find "$tmp" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          cp -R wab/dist/. "$tmp"/
+          cd "$tmp"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No changes to publish.'
+          else
+            git commit -m "publish: ${GITHUB_SHA}"
+            git push origin gh-pages
+          fi
