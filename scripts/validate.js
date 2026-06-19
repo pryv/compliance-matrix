@@ -30,6 +30,11 @@ const ROOT = path.resolve(__dirname, '..');
 const WORKSPACE_ROOT = path.resolve(ROOT, '..');
 // Workspace-relative backlog directory; configurable for non-default layouts.
 const BACKLOG_DIR = process.env.BACKLOG_DIR || ['_plans', 'XXX-Backlog'].join(path.sep);
+// Backlog files live in the parent workspace, not in this repository.
+// Standalone / CI checkouts don't have that directory, so the per-slug
+// backlog-existence check is skipped (warn, not fail) when it's absent. Full
+// validation still runs when the workspace backlog directory is present.
+const BACKLOG_DIR_PRESENT = fs.existsSync(path.join(WORKSPACE_ROOT, BACKLOG_DIR));
 
 const DEV_SITE_REQUIREMENTS = path.join(
   WORKSPACE_ROOT,
@@ -46,6 +51,10 @@ const warnings = [];
 
 const e = (msg) => errors.push(msg);
 const w = (msg) => warnings.push(msg);
+
+if (!BACKLOG_DIR_PRESENT) {
+  w(`backlog dir '${BACKLOG_DIR}' absent (standalone/CI checkout) — planned.backlog existence checks skipped`);
+}
 
 // ---------- 1. Load schemas ----------
 
@@ -281,7 +290,7 @@ for (const { scope, file } of allScopes) {
       if (!fs.existsSync(propPath)) {
         e(`${cell}: planned.proposal '${p.proposal}' not found (expected under compliance-matrix/)`);
       }
-      if (p.backlog) {
+      if (p.backlog && BACKLOG_DIR_PRESENT) {
         const backlogPath = path.join(
           WORKSPACE_ROOT, BACKLOG_DIR, `${p.backlog}.md`
         );
