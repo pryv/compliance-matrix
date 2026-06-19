@@ -203,7 +203,9 @@ requirements:
       confidentiality (security); accountability.
     coverage: implemented
     pryv_effort_saved: high
-    draft: true
+    draft: false
+    reviewed_by: Pryv compliance
+    reviewed_at: "2026-06-19"
     pryv_primitives: [access, permissions, clientData, stream, audit]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     tests: [GLHP, UZEV]
@@ -398,7 +400,9 @@ requirements:
       withdrawable.
     coverage: implemented
     pryv_effort_saved: high
-    draft: true
+    draft: false
+    reviewed_by: Pryv compliance
+    reviewed_at: "2026-06-19"
     pryv_primitives: [access, permissions, clientData, CMC, event]
     docs: [guides/consent.md]
     tests: [AA01, ACCP, USAD]
@@ -757,7 +761,9 @@ requirements:
       Right to have inaccurate personal data rectified without undue delay.
     coverage: implemented
     pryv_effort_saved: high
-    draft: true
+    draft: false
+    reviewed_by: Pryv compliance
+    reviewed_at: "2026-06-19"
     pryv_primitives: [event, audit]
     functional_specs: [EVENT.BASE]
     tests: [PTU1]
@@ -1387,7 +1393,9 @@ requirements:
       recipients, transfers, retention, security).
     coverage: implemented
     pryv_effort_saved: high
-    draft: true
+    draft: false
+    reviewed_by: Pryv compliance
+    reviewed_at: "2026-06-19"
     pryv_primitives: [access, clientData, audit, CMC, data-residency]
     docs: [customer-resources/audit-setup.md, guides/audit-logs.md]
     tests: [UZEV, TJ8S, AA01]
