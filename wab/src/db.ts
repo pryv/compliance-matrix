@@ -23,7 +23,7 @@ export interface Scope {
   id: string;
   title: string;
   short: string | null;
-  type: 'regulation' | 'standard' | 'hosting-cert';
+  type: 'regulation' | 'standard' | 'hosting-cert' | 'discipline';
   jurisdiction: string;
   version: string;
   version_date: string;

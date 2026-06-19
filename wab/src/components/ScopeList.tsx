@@ -5,7 +5,8 @@ import { listScopes, plannedCountsByScope, type Scope } from '../db';
 const TYPE_GROUPS: Array<{ key: Scope['type']; label: string }> = [
   { key: 'regulation', label: 'Regulations' },
   { key: 'standard', label: 'Standards' },
-  { key: 'hosting-cert', label: 'Hosting certifications' }
+  { key: 'hosting-cert', label: 'Hosting certifications' },
+  { key: 'discipline', label: 'Disciplines' }
 ];
 
 export function ScopeList () {
