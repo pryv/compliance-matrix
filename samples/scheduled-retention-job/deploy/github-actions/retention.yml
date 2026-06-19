@@ -1,0 +1,21 @@
+name: pryv-retention
+
+on:
+  schedule:
+    - cron: "30 3 * * *"   # daily 03:30 UTC
+  workflow_dispatch:
+
+jobs:
+  retention:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm ci
+        working-directory: samples/scheduled-retention-job
+      - run: node src/retention.js --rules retention.yml --apply
+        working-directory: samples/scheduled-retention-job
+        env:
+          PRYV_API_ENDPOINT: ${{ secrets.PRYV_API_ENDPOINT }}

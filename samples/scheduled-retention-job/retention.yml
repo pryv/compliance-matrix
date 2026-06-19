@@ -1,0 +1,28 @@
+# Example retention rules. Each rule deletes events older than max_age in the
+# named streams. Edit to your retention policy; run with --apply to enforce.
+#
+# max_age units: d (days), w (weeks), m (~30 days), y (~365 days).
+# action: trash       -> move to trashed only (reversible window)
+#         delete      -> trash THEN hard-delete (two-stage; irreversible)
+#
+# Endpoint + credentials come from env (PRYV_API_ENDPOINT). Account-level
+# rules (delete_account) require an admin-key flow — see the script header.
+
+rules:
+  - id: raw-sensor-data
+    description: Raw high-frequency sensor events kept 90 days
+    streams: [sensors]
+    max_age: 90d
+    action: delete
+
+  - id: marketing-events
+    description: Marketing-purpose events kept 2 years
+    streams: [marketing]
+    max_age: 2y
+    action: delete
+
+  - id: drafts-cleanup
+    description: Draft events trashed after 30 days (reversible)
+    streams: [drafts]
+    max_age: 30d
+    action: trash

@@ -196,6 +196,7 @@ requirements:
 
   - ref: Art.5
     title: Principles relating to processing of personal data
+    sample_apps: [scheduled-retention-job]
     text: |
       Lawfulness, fairness, transparency; purpose limitation; data
       minimisation; accuracy; storage limitation; integrity and
@@ -390,6 +391,7 @@ requirements:
 
   - ref: Art.7
     title: Conditions for consent
+    sample_apps: [who-has-access-to-my-data, cross-account-share]
     text: |
       Where processing is based on consent, controller must be able to
       demonstrate consent. Request must be in intelligible form,
@@ -695,6 +697,7 @@ requirements:
 
   - ref: Art.15
     title: Right of access by the data subject
+    sample_apps: [who-has-access-to-my-data]
     text: |
       Right to obtain confirmation, access, copy of personal data +
       supplementary information (purposes, recipients, retention, rights,
@@ -793,6 +796,7 @@ requirements:
 
   - ref: Art.17
     title: Right to erasure ("right to be forgotten")
+    sample_apps: [scheduled-retention-job]
     text: |
       Right to obtain erasure without undue delay where one of six
       conditions applies (no longer necessary, withdrawn consent, no
@@ -916,6 +920,7 @@ requirements:
 
   - ref: Art.20
     title: Right to data portability
+    sample_apps: [cross-account-share]
     text: |
       Right to receive personal data concerning subject in structured,
       commonly used, machine-readable format; right to transmit to
