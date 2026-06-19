@@ -1501,10 +1501,17 @@ requirements:
         - Data residency: CONFIGURABLE — multi-hosting puts data where
           your subjects (or your policy) require, bounding exposure
           surface.
-        - Ability to ensure ongoing CIA (§1(b)): FACILITATED — multi-core
-          HA via rqlite cluster, health-checks, audit log.
+        - Ability to ensure ongoing availability + resilience (§1(b)):
+          FACILITATED — a multi-core rqlite cluster in which joining
+          cores register as non-voters by default, so adding or losing a
+          core can never cost the cluster its quorum or take an existing
+          core's control plane offline. Leader-failover HA is an explicit
+          operator topology choice (run ≥3 voters; two voters are
+          rejected as a fragile 2-of-2 quorum); health-checks + audit log
+          round out the ongoing-CIA evidence.
         - Restoration (§1(c)): IMPLEMENTED — `bin/backup.js --restore`
-          per-user.
+          per-user; single-node `peers.json` recovery restores cluster
+          availability after a quorum loss.
         - Regular testing (§1(d)): FILLED BY EXISTING PRIMITIVES +
           PARTIALLY MISSING on the vulnerability-intake side.
           **Existing evidence (citable today)**:
