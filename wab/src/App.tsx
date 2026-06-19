@@ -10,6 +10,7 @@ import { ModeDetail } from './components/ModeDetail';
 import { GlobalCoverage } from './components/GlobalCoverage';
 import { ContextNoteList } from './components/ContextNoteList';
 import { ContextNoteDetail } from './components/ContextNoteDetail';
+import { Generate } from './components/Generate';
 
 const NAV_TABS = [
   { to: '/', label: 'Regulations', end: true },
@@ -17,7 +18,8 @@ const NAV_TABS = [
   { to: '/coverage', label: 'Coverage', end: false },
   { to: '/modes', label: 'Modes', end: false },
   { to: '/backlogs', label: 'Roadmap', end: false },
-  { to: '/context-notes', label: 'Context', end: false }
+  { to: '/context-notes', label: 'Context', end: false },
+  { to: '/generate', label: 'Generate', end: false }
 ];
 
 export default function App () {
@@ -39,8 +41,7 @@ export default function App () {
                     isActive
                       ? 'bg-slate-100 text-slate-900 font-medium'
                       : 'text-slate-500 hover:text-slate-700'
-                  }`
-                }
+                  }`}
               >
                 {t.label}
               </NavLink>
@@ -92,6 +93,7 @@ export default function App () {
           <Route path='/coverage' element={<GlobalCoverage />} />
           <Route path='/context-notes' element={<ContextNoteList />} />
           <Route path='/context-note/:id' element={<ContextNoteDetail />} />
+          <Route path='/generate' element={<Generate />} />
         </Routes>
       </main>
 
