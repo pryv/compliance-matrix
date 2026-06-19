@@ -1,0 +1,32 @@
+# Example implementer questionnaire.
+# Copy this file, fill in your answers, and run:
+#   node scripts/generate-template.js --answers my-answers.yml --out ./my-compliance-pack
+# Optionally pass your open-pryv.io config to auto-derive storage/mfa/audit/topology:
+#   node scripts/generate-template.js --answers my-answers.yml --config /path/to/config.yml
+
+organization: Acme Health GmbH
+deployment-name: Acme Personal Data Vault
+jurisdiction: EU / Germany
+controller-or-processor: controller
+
+# These four are auto-derived from --config when supplied; values here are the fallback.
+storage-engine: PostgreSQL
+multi-core: false
+mfa-enabled: true
+audit-enabled: true
+
+dpo-contact: dpo@acme.example
+security-contact: security@acme.example
+quality-owner: Head of Engineering
+
+retention-policy: Health events retained 10 years; access logs 1 year
+backup-schedule: Daily encrypted backups, retained 35 days
+breach-notify-deadline: 72 hours
+access-review-cadence: quarterly
+restore-test-cadence: every 6 months
+
+# Which regulations / standards apply (must match scopes/<id>.yml):
+scopes:
+  - gdpr
+  - hipaa-security
+  - iso-27001

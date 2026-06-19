@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pryv/compliance-matrix/schemas/questionnaire.schema.json",
+  "title": "Implementer Questionnaire",
+  "description": "Answers an implementer supplies to the template generator. Keys are kebab-case to match the {{placeholders}} in qms/implementer-template/.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["organization", "deployment-name", "scopes"],
+  "properties": {
+    "organization": {
+      "type": "string",
+      "description": "Legal entity name."
+    },
+    "deployment-name": {
+      "type": "string",
+      "description": "Name of the Pryv deployment / service."
+    },
+    "jurisdiction": {
+      "type": "string",
+      "description": "Applicable legal jurisdiction(s), e.g. 'EU / Switzerland'."
+    },
+    "controller-or-processor": {
+      "enum": ["controller", "processor", "joint-controller"],
+      "description": "Your GDPR role for the personal data held."
+    },
+    "storage-engine": {
+      "enum": ["PostgreSQL", "SQLite"],
+      "description": "Configured baseStorage engine. Auto-derived from open-pryv.io config when --config is supplied."
+    },
+    "multi-core": {
+      "type": "boolean",
+      "description": "True for a multi-core (clustered) topology."
+    },
+    "mfa-enabled": {
+      "type": "boolean",
+      "description": "Whether MFA is enabled."
+    },
+    "audit-enabled": {
+      "type": "boolean",
+      "description": "Whether audit logging is enabled."
+    },
+    "dpo-contact": { "type": "string", "description": "Data protection officer / privacy contact." },
+    "security-contact": { "type": "string", "description": "Security incident reporting contact." },
+    "quality-owner": { "type": "string", "description": "Owner of the quality / management system." },
+    "retention-policy": { "type": "string", "description": "Summary of your data-retention rules." },
+    "backup-schedule": { "type": "string", "description": "Backup cadence and retention." },
+    "breach-notify-deadline": { "type": "string", "description": "Statutory breach-notification deadline, e.g. '72 hours'." },
+    "access-review-cadence": { "type": "string", "description": "How often access rights are reviewed, e.g. 'quarterly'." },
+    "restore-test-cadence": { "type": "string", "description": "How often restores are tested, e.g. 'every 6 months'." },
+    "scopes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "description": "Scope id (matches scopes/<id>.yml), e.g. 'gdpr'." },
+      "uniqueItems": true,
+      "description": "Which regulations / standards apply to this deployment."
+    }
+  }
+}

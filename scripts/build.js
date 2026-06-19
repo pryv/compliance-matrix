@@ -146,22 +146,22 @@ const insReq = db.prepare(`INSERT INTO requirements
   (scope_id, ref, title, text, text_url, coverage, pryv_effort_saved, facilitation_mode, overview, detail, technical, draft, reviewed_by, reviewed_at, applies_to_versions)
   VALUES (@scope_id, @ref, @title, @text, @text_url, @coverage, @pryv_effort_saved, @facilitation_mode, @overview, @detail, @technical, @draft, @reviewed_by, @reviewed_at, @applies_to_versions)`);
 
-const insSpec    = db.prepare('INSERT INTO spec_links    (scope_id, ref, reqid) VALUES (?, ?, ?)');
-const insTest    = db.prepare('INSERT INTO test_links    (scope_id, ref, test_code) VALUES (?, ?, ?)');
-const insDoc     = db.prepare('INSERT INTO doc_links     (scope_id, ref, path) VALUES (?, ?, ?)');
-const insQms     = db.prepare('INSERT INTO qms_links     (scope_id, ref, path) VALUES (?, ?, ?)');
-const insCfg     = db.prepare('INSERT INTO config_links  (scope_id, ref, config_key) VALUES (?, ?, ?)');
+const insSpec = db.prepare('INSERT INTO spec_links    (scope_id, ref, reqid) VALUES (?, ?, ?)');
+const insTest = db.prepare('INSERT INTO test_links    (scope_id, ref, test_code) VALUES (?, ?, ?)');
+const insDoc = db.prepare('INSERT INTO doc_links     (scope_id, ref, path) VALUES (?, ?, ?)');
+const insQms = db.prepare('INSERT INTO qms_links     (scope_id, ref, path) VALUES (?, ?, ?)');
+const insCfg = db.prepare('INSERT INTO config_links  (scope_id, ref, config_key) VALUES (?, ?, ?)');
 const insDerives = db.prepare('INSERT INTO derives_links (scope_id, ref, target_ref) VALUES (?, ?, ?)');
-const insPrim    = db.prepare('INSERT INTO primitive_links (scope_id, ref, primitive) VALUES (?, ?, ?)');
-const insSample  = db.prepare('INSERT INTO sample_links (scope_id, ref, sample) VALUES (?, ?, ?)');
-const insExcl    = db.prepare('INSERT INTO excluded_items (scope_id, ref, reason) VALUES (?, ?, ?)');
+const insPrim = db.prepare('INSERT INTO primitive_links (scope_id, ref, primitive) VALUES (?, ?, ?)');
+const insSample = db.prepare('INSERT INTO sample_links (scope_id, ref, sample) VALUES (?, ?, ?)');
+const insExcl = db.prepare('INSERT INTO excluded_items (scope_id, ref, reason) VALUES (?, ?, ?)');
 const insPlanned = db.prepare(`INSERT INTO planned_changes
   (scope_id, ref, seq, kind, summary, proposal, backlog, impact, tracking_url, eta_release)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 const insPrimRow = db.prepare('INSERT INTO pryv_primitives (id, summary) VALUES (?, ?)');
 const insCtxNote = db.prepare('INSERT INTO context_notes (id, title, summary) VALUES (?, ?, ?)');
 const insCtxLink = db.prepare('INSERT INTO context_links (scope_id, ref, context_id) VALUES (?, ?, ?)');
-const insMeta    = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?)');
+const insMeta = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?)');
 
 /**
  * Parse docs/pryv-primitives.md → [{id, summary}]. Convention per file:
