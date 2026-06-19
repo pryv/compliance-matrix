@@ -1,0 +1,12 @@
+[Unit]
+Description=Pryv data-retention enforcement
+After=network-online.target
+
+[Service]
+Type=oneshot
+# Store the endpoint (incl. cross-user personal token) in an environment file
+# with mode 600, owned by the service user.
+EnvironmentFile=/etc/pryv-retention/env
+WorkingDirectory=/opt/pryv-retention
+ExecStart=/usr/bin/node src/retention.js --rules retention.yml --apply
+User=pryv-retention

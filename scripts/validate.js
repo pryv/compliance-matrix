@@ -13,13 +13,13 @@
  *   6. Evidence-completeness: coverage=implemented|configurable requires tests[].
  *   7. Curated scopes have at least one excluded_items entry.
  *   8. Layered_on refs resolve to existing scope ids.
+ *   9. Every QMS doc's matrix_evidence_for[] resolves to a real matrix row.
  *
  * Exit 0 on success, 1 on any failure.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
 import yaml from 'js-yaml';
 import Ajv from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
@@ -72,7 +72,7 @@ const validateScope = ajv.compile(scopeSchema);
 
 // ---------- 2. Load dev-site reqids ----------
 
-let knownReqids = new Set();
+const knownReqids = new Set();
 if (fs.existsSync(DEV_SITE_REQUIREMENTS)) {
   const root = yaml.load(fs.readFileSync(DEV_SITE_REQUIREMENTS, 'utf8'));
   // Walk sections[].requirements[] (and nested sections); reqid = '<SECTION>.<REQ>'
@@ -99,7 +99,7 @@ if (fs.existsSync(DEV_SITE_REQUIREMENTS)) {
 
 // ---------- 3. Load test codes from open-pryv.io ----------
 
-let knownTestCodes = new Set();
+const knownTestCodes = new Set();
 try {
   const testFiles = await glob(OPEN_PRYV_TEST_GLOB);
   if (testFiles.length === 0) {
@@ -129,7 +129,7 @@ if (fs.existsSync(PRIMITIVES_DOC)) {
   while ((m = re.exec(txt)) !== null) knownPrimitives.add(m[1]);
   console.log(`[OK]   pryv primitives loaded: ${knownPrimitives.size}`);
 } else {
-  w(`docs/pryv-primitives.md not found — pryv_primitives xref skipped`);
+  w('docs/pryv-primitives.md not found — pryv_primitives xref skipped');
 }
 
 // ---------- 4. Load scope yamls ----------
@@ -139,6 +139,7 @@ console.log(`[INFO] scopes/ files found: ${scopeFiles.length}`);
 
 const allScopeIds = new Set();
 const allScopes = [];
+const allCells = new Set(); // 'scope.id.ref' — populated in section 5
 
 for (const f of scopeFiles) {
   let scope;
@@ -184,6 +185,7 @@ for (const { scope, file } of allScopes) {
       e(`${cell}: duplicate ref within scope`);
     }
     seenRefs.add(r.ref);
+    allCells.add(cell);
 
     // Evidence completeness
     if (['implemented', 'configurable'].includes(r.coverage)) {
@@ -301,6 +303,39 @@ for (const { scope, file } of allScopes) {
     }
   }
 }
+
+// ---------- 5b. QMS cross-link checks ----------
+// Every QMS document's frontmatter matrix_evidence_for[] must resolve to a
+// real matrix row (the reciprocal of a requirement's qms_docs[] citation).
+// satisfies[] is free-form (paywalled standards — not validated against a
+// clause catalogue).
+
+const parseFrontmatter = (txt) => {
+  const m = /^---\n([\s\S]*?)\n---/.exec(txt);
+  if (!m) return null;
+  try {
+    return yaml.load(m[1]);
+  } catch {
+    return null;
+  }
+};
+
+const qmsFiles = await glob(path.join(ROOT, 'qms/**/*.md'));
+let qmsDocCount = 0;
+let qmsDraftCount = 0;
+for (const f of qmsFiles) {
+  const rel = path.relative(ROOT, f);
+  const fm = parseFrontmatter(fs.readFileSync(f, 'utf8'));
+  if (!fm) continue; // READMEs without frontmatter are fine
+  qmsDocCount++;
+  if (fm.draft !== false) qmsDraftCount++;
+  for (const ref of fm.matrix_evidence_for || []) {
+    if (!allCells.has(ref)) {
+      e(`${rel}: matrix_evidence_for '${ref}' does not resolve to any matrix row`);
+    }
+  }
+}
+console.log(`[OK]   qms docs scanned: ${qmsDocCount} (${qmsDraftCount} draft)`);
 
 // ---------- 6. Report ----------
 

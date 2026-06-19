@@ -66,22 +66,24 @@ export function ContextNoteDetail () {
         {note.summary}
       </p>
 
-      {citingScopes.length > 0 ? (
-        <>
-          <ScopeFocusPicker
-            scopes={citingScopes}
-            scopeCounts={note.scope_counts}
-            selected={selectedScopes}
-            onToggle={toggleScope}
-            onClear={() => setSelectedScopes([])}
-          />
-          <RequirementGroupedTable rows={rows} scopes={scopes} />
-        </>
-      ) : (
-        <div className='mt-6 text-slate-500'>
-          This note is not yet cited from any requirement prose.
-        </div>
-      )}
+      {citingScopes.length > 0
+        ? (
+          <>
+            <ScopeFocusPicker
+              scopes={citingScopes}
+              scopeCounts={note.scope_counts}
+              selected={selectedScopes}
+              onToggle={toggleScope}
+              onClear={() => setSelectedScopes([])}
+            />
+            <RequirementGroupedTable rows={rows} scopes={scopes} />
+          </>
+          )
+        : (
+          <div className='mt-6 text-slate-500'>
+            This note is not yet cited from any requirement prose.
+          </div>
+          )}
     </div>
   );
 }

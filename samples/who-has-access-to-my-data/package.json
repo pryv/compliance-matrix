@@ -1,0 +1,27 @@
+{
+  "name": "sample-who-has-access-to-my-data",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Subject-facing list + revoke of Pryv accesses (GDPR Art.7(3)/15/30 demonstrator)",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "pryv": "^3.6.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react-swc": "^3.5.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.1",
+    "vite-plugin-backloop.dev": "^1.0.4"
+  }
+}

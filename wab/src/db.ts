@@ -1,4 +1,7 @@
-import initSqlJs, { type Database, type SqlJsStatic } from 'sql.js';
+import initSqlJs, { type Database, type SqlJsStatic, type BindParams } from 'sql.js';
+
+/** A raw row as returned by sql.js getAsObject(). */
+type SqlRow = Record<string, unknown>;
 
 export type Coverage = 'implemented' | 'configurable' | 'facilitated' | 'documented' | 'out-of-scope';
 export type EffortSaved = 'high' | 'medium' | 'low';
@@ -74,9 +77,9 @@ export function loadDb (): Promise<Database> {
   return dbPromise;
 }
 
-function rows<T> (db: Database, sql: string, params: unknown[] = []): T[] {
+function rows<T = SqlRow> (db: Database, sql: string, params: unknown[] = []): T[] {
   const stmt = db.prepare(sql);
-  stmt.bind(params as any);
+  stmt.bind(params as BindParams);
   const out: T[] = [];
   while (stmt.step()) out.push(stmt.getAsObject() as unknown as T);
   stmt.free();
@@ -85,12 +88,12 @@ function rows<T> (db: Database, sql: string, params: unknown[] = []): T[] {
 
 export async function listScopes (): Promise<Scope[]> {
   const db = await loadDb();
-  const raw = rows<any>(db, 'SELECT * FROM scopes ORDER BY type, id');
+  const raw = rows(db, 'SELECT * FROM scopes ORDER BY type, id');
   return raw.map((r) => ({
     ...r,
     curated: !!r.curated,
-    layered_on: JSON.parse(r.layered_on_json || '[]')
-  }));
+    layered_on: JSON.parse((r.layered_on_json as string) || '[]')
+  })) as unknown as Scope[];
 }
 
 export async function getScope (id: string): Promise<Scope | null> {
@@ -100,28 +103,32 @@ export async function getScope (id: string): Promise<Scope | null> {
 
 export async function listRequirements (scopeId: string): Promise<Requirement[]> {
   const db = await loadDb();
-  const raw = rows<any>(
+  const raw = rows(
     db,
     'SELECT * FROM requirements WHERE scope_id = ?',
     [scopeId]
   );
-  const planned = rows<any>(
+  const planned = rows(
     db,
     'SELECT ref, kind, summary, proposal, backlog, impact, tracking_url, eta_release FROM planned_changes WHERE scope_id = ? ORDER BY ref, seq',
     [scopeId]
-  );
+  ) as unknown as Array<PlannedChange & { ref: string }>;
   const plannedByRef = new Map<string, PlannedChange[]>();
   for (const p of planned) {
     const arr = plannedByRef.get(p.ref) || [];
     arr.push({
-      kind: p.kind, summary: p.summary, proposal: p.proposal,
-      backlog: p.backlog, impact: p.impact,
-      tracking_url: p.tracking_url, eta_release: p.eta_release
+      kind: p.kind,
+      summary: p.summary,
+      proposal: p.proposal,
+      backlog: p.backlog,
+      impact: p.impact,
+      tracking_url: p.tracking_url,
+      eta_release: p.eta_release
     });
     plannedByRef.set(p.ref, arr);
   }
-  return raw
-    .map((r) => ({ ...r, draft: !!r.draft, planned: plannedByRef.get(r.ref) || [] }))
+  return (raw
+    .map((r) => ({ ...r, draft: !!r.draft, planned: plannedByRef.get(r.ref as string) || [] })) as unknown as Requirement[])
     .sort((a, b) => a.ref.localeCompare(b.ref, undefined, { numeric: true, sensitivity: 'base' }));
 }
 
@@ -245,9 +252,8 @@ export async function listPrimitiveCoverage (
     params.push(...scopeIds);
   }
   sql += ' ORDER BY r.scope_id, r.ref';
-  const raw = rows<any>(db, sql, params);
-  return raw
-    .map((r) => ({ ...r, draft: !!r.draft }))
+  const raw = rows(db, sql, params);
+  return (raw.map((r) => ({ ...r, draft: !!r.draft })) as unknown as PrimitiveCoverageRow[])
     .sort((a, b) => {
       if (a.scope_id !== b.scope_id) return a.scope_id.localeCompare(b.scope_id);
       return a.ref.localeCompare(b.ref, undefined, { numeric: true, sensitivity: 'base' });
@@ -278,15 +284,24 @@ const IMPACT_ORDER: Record<PlannedImpact, number> = { high: 3, medium: 2, low: 1
 
 export async function listBacklogs (): Promise<BacklogSummary[]> {
   const db = await loadDb();
-  const raw = rows<any>(
+  const raw = rows<{
+    slug: string;
+    kind: PlannedKind;
+    impact: PlannedImpact | null;
+    tracking_url: string | null;
+    scope_id: string;
+    ref: string;
+  }>(
     db,
     `SELECT backlog AS slug, kind, impact, tracking_url, scope_id, ref
      FROM planned_changes
      WHERE backlog IS NOT NULL`
   );
   const m = new Map<string, BacklogSummary>();
+  const reqsBySlug = new Map<string, Set<string>>();
+  const scopesBySlug = new Map<string, Set<string>>();
   for (const r of raw) {
-    const slug = r.slug as string;
+    const slug = r.slug;
     let entry = m.get(slug);
     if (!entry) {
       entry = {
@@ -298,27 +313,25 @@ export async function listBacklogs (): Promise<BacklogSummary[]> {
         scope_count: 0,
         tracking_url: null
       };
-      (entry as any)._reqs = new Set<string>();
-      (entry as any)._scopes = new Set<string>();
       m.set(slug, entry);
+      reqsBySlug.set(slug, new Set());
+      scopesBySlug.set(slug, new Set());
     }
     entry.chip_count++;
-    entry.kinds[r.kind as PlannedKind] = (entry.kinds[r.kind as PlannedKind] ?? 0) + 1;
+    entry.kinds[r.kind] = (entry.kinds[r.kind] ?? 0) + 1;
     if (r.impact && (entry.max_impact == null ||
-        IMPACT_ORDER[r.impact as PlannedImpact] > IMPACT_ORDER[entry.max_impact])) {
-      entry.max_impact = r.impact as PlannedImpact;
+        IMPACT_ORDER[r.impact] > IMPACT_ORDER[entry.max_impact])) {
+      entry.max_impact = r.impact;
     }
     if (r.tracking_url && !entry.tracking_url) entry.tracking_url = r.tracking_url;
-    (entry as any)._reqs.add(`${r.scope_id}::${r.ref}`);
-    (entry as any)._scopes.add(r.scope_id);
+    reqsBySlug.get(slug)!.add(`${r.scope_id}::${r.ref}`);
+    scopesBySlug.get(slug)!.add(r.scope_id);
   }
-  return Array.from(m.values()).map((e) => {
-    const reqs = (e as any)._reqs as Set<string>;
-    const scopes = (e as any)._scopes as Set<string>;
-    delete (e as any)._reqs;
-    delete (e as any)._scopes;
-    return { ...e, requirement_count: reqs.size, scope_count: scopes.size };
-  }).sort((a, b) => b.requirement_count - a.requirement_count);
+  return Array.from(m.values()).map((e) => ({
+    ...e,
+    requirement_count: reqsBySlug.get(e.slug)!.size,
+    scope_count: scopesBySlug.get(e.slug)!.size
+  })).sort((a, b) => b.requirement_count - a.requirement_count);
 }
 
 export interface BacklogRow {
@@ -337,7 +350,7 @@ export interface BacklogRow {
 
 export async function listBacklogCoverage (slug: string): Promise<BacklogRow[]> {
   const db = await loadDb();
-  const raw = rows<any>(
+  const raw = rows(
     db,
     `SELECT r.scope_id, COALESCE(s.short, s.title) AS scope_short,
             r.ref, r.title, r.coverage, r.facilitation_mode,
@@ -350,7 +363,7 @@ export async function listBacklogCoverage (slug: string): Promise<BacklogRow[]> 
      ORDER BY r.scope_id, r.ref`,
     [slug]
   );
-  return raw.map((r) => ({ ...r, draft: !!r.draft }));
+  return raw.map((r) => ({ ...r, draft: !!r.draft })) as unknown as BacklogRow[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -397,15 +410,15 @@ export async function listModeCoverage (
     params.push(...scopeIds);
   }
   sql += ' ORDER BY r.scope_id, r.ref';
-  const raw = rows<any>(db, sql, params);
-  return raw.map((r) => ({ ...r, draft: !!r.draft }));
+  const raw = rows(db, sql, params);
+  return raw.map((r) => ({ ...r, draft: !!r.draft })) as unknown as PrimitiveCoverageRow[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────
 // Global coverage view (across all scopes)
 // ─────────────────────────────────────────────────────────────────────────
 
-export interface GlobalRow extends PrimitiveCoverageRow {}
+export type GlobalRow = PrimitiveCoverageRow;
 
 export async function listGlobalCoverage (
   coverage: Coverage | null = null,
@@ -427,8 +440,8 @@ export async function listGlobalCoverage (
     params.push(...scopeIds);
   }
   sql += ' ORDER BY r.scope_id, r.ref';
-  const raw = rows<any>(db, sql, params);
-  return raw.map((r) => ({ ...r, draft: !!r.draft }));
+  const raw = rows(db, sql, params);
+  return raw.map((r) => ({ ...r, draft: !!r.draft })) as unknown as PrimitiveCoverageRow[];
 }
 
 export async function globalCoverageHistogram (): Promise<Record<Coverage, number>> {
@@ -510,8 +523,8 @@ export async function listContextNoteCoverage (
     params.push(...scopeIds);
   }
   sql += ' ORDER BY r.scope_id, r.ref';
-  const raw = rows<any>(db, sql, params);
-  return raw.map((r) => ({ ...r, draft: !!r.draft }));
+  const raw = rows(db, sql, params);
+  return raw.map((r) => ({ ...r, draft: !!r.draft })) as unknown as PrimitiveCoverageRow[];
 }
 
 export async function requirementLinks (scopeId: string, ref: string): Promise<RequirementLinks> {
@@ -520,11 +533,11 @@ export async function requirementLinks (scopeId: string, ref: string): Promise<R
     rows<{ v: string }>(db, `SELECT ${col} v FROM ${table} WHERE scope_id = ? AND ref = ?`, [scopeId, ref])
       .map((r) => r.v);
   return {
-    tests:   fetch1('test_links', 'test_code'),
-    docs:    fetch1('doc_links', 'path'),
-    qms:     fetch1('qms_links', 'path'),
+    tests: fetch1('test_links', 'test_code'),
+    docs: fetch1('doc_links', 'path'),
+    qms: fetch1('qms_links', 'path'),
     configs: fetch1('config_links', 'config_key'),
-    specs:   fetch1('spec_links', 'reqid'),
+    specs: fetch1('spec_links', 'reqid'),
     derives: fetch1('derives_links', 'target_ref')
   };
 }

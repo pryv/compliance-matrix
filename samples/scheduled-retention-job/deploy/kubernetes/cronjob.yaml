@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pryv-retention
+spec:
+  schedule: "30 3 * * *"   # daily 03:30
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: retention
+              image: node:24-alpine
+              workingDir: /app
+              command: ["node", "src/retention.js", "--rules", "retention.yml", "--apply"]
+              env:
+                - name: PRYV_API_ENDPOINT
+                  valueFrom:
+                    secretKeyRef:
+                      name: pryv-retention
+                      key: api-endpoint
+              volumeMounts:
+                - name: app
+                  mountPath: /app
+          volumes:
+            # Mount the built sample (src/ + retention.yml + node_modules) here,
+            # or bake it into your own image.
+            - name: app
+              configMap:
+                name: pryv-retention-app

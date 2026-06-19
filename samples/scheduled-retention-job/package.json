@@ -1,0 +1,15 @@
+{
+  "name": "sample-scheduled-retention-job",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Operator-owned data-retention enforcement against Pryv (GDPR Art.5(1)(e)/17 demonstrator)",
+  "bin": { "pryv-retention": "src/retention.js" },
+  "scripts": {
+    "start": "node src/retention.js --rules retention.yml"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "pryv": "^3.6.0"
+  }
+}

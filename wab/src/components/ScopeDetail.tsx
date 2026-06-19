@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, Fragment, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   getScope,
@@ -31,7 +31,7 @@ export function ScopeDetail () {
   const { id } = useParams<{ id: string }>();
   const [scope, setScope] = useState<Scope | null>(null);
   const [reqs, setReqs] = useState<Requirement[]>([]);
-  const [histogram, setHistogram] = useState<Record<Coverage, number>>({} as any);
+  const [histogram, setHistogram] = useState<Record<Coverage, number>>({} as Record<Coverage, number>);
   const [error, setError] = useState<string | null>(null);
   const [openRef, setOpenRef] = useState<string | null>(null);
   const [links, setLinks] = useState<RequirementLinks | null>(null);
@@ -139,99 +139,99 @@ export function ScopeDetail () {
                 return true;
               })
               .map((r) => (
-              <>
-                <tr
-                  key={`${r.ref}-row`}
-                  className='border-t border-slate-200 hover:bg-slate-50 cursor-pointer'
-                  onClick={() => setOpenRef(openRef === r.ref ? null : r.ref)}
-                >
-                  <td className='p-2 font-mono text-xs'>{r.ref}</td>
-                  <td className='p-2'>
-                    <div className='flex flex-wrap items-center gap-2'>
-                      <span>{r.title}</span>
-                      {r.draft && <DraftBadge />}
-                      {r.planned.map((p, i) => (
-                        <PlannedBadge key={`${r.ref}-pl-${i}`} change={p} />
-                      ))}
-                    </div>
-                  </td>
-                  <td className='p-2'>
-                    <RequirementBadge
-                      coverage={r.coverage}
-                      mode={r.facilitation_mode}
-                      effort={r.pryv_effort_saved}
-                    />
-                  </td>
-                </tr>
-                {openRef === r.ref && (
-                  <tr key={`${r.ref}-det`} className='bg-slate-50'>
-                    <td colSpan={3} className='p-4 text-sm space-y-4'>
-                      {r.planned.length > 0 && (
-                        <section>
-                          <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
-                            Planned changes
-                          </div>
-                          <ul className='space-y-1'>
-                            {r.planned.map((p, i) => (
-                              <li key={`pl-${i}`} className='flex items-start gap-2'>
-                                <PlannedBadge change={p} />
-                                <div className='text-xs'>
-                                  <div>{p.summary}</div>
-                                  <div className='text-slate-500 mt-0.5 font-mono'>
-                                    {p.proposal}
-                                    {p.backlog && <> · backlog: {p.backlog}</>}
-                                    {p.eta_release && <> · eta {p.eta_release}</>}
-                                  </div>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        </section>
-                      )}
-                      {r.overview && (
-                        <section>
-                          <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
-                            Overview
-                          </div>
-                          <div className='text-base leading-relaxed whitespace-pre-wrap'>{r.overview}</div>
-                        </section>
-                      )}
-                      {r.detail && (
-                        <section>
-                          <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
-                            Detail
-                          </div>
-                          <div className='whitespace-pre-wrap'>{r.detail}</div>
-                        </section>
-                      )}
-                      {r.technical && (
-                        <section>
-                          <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
-                            Technical
-                          </div>
-                          <div className='whitespace-pre-wrap font-mono text-xs text-slate-700 bg-white border border-slate-200 rounded p-2'>{r.technical}</div>
-                        </section>
-                      )}
-                      {links && (
-                        <section>
-                          <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
-                            Evidence
-                          </div>
-                          <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                            <LinkSection title='Tests' items={links.tests} urlFor={testUrl} />
-                            <LinkSection title='Docs' items={links.docs} />
-                            <LinkSection title='QMS' items={links.qms} />
-                            <LinkSection title='Config keys' items={links.configs} mono />
-                            <LinkSection title='Functional specs' items={links.specs} mono urlFor={specUrl} />
-                            <LinkSection title='Derives from' items={links.derives} mono />
-                          </div>
-                        </section>
-                      )}
+                <Fragment key={r.ref}>
+                  <tr
+                    key={`${r.ref}-row`}
+                    className='border-t border-slate-200 hover:bg-slate-50 cursor-pointer'
+                    onClick={() => setOpenRef(openRef === r.ref ? null : r.ref)}
+                  >
+                    <td className='p-2 font-mono text-xs'>{r.ref}</td>
+                    <td className='p-2'>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <span>{r.title}</span>
+                        {r.draft && <DraftBadge />}
+                        {r.planned.map((p, i) => (
+                          <PlannedBadge key={`${r.ref}-pl-${i}`} change={p} />
+                        ))}
+                      </div>
+                    </td>
+                    <td className='p-2'>
+                      <RequirementBadge
+                        coverage={r.coverage}
+                        mode={r.facilitation_mode}
+                        effort={r.pryv_effort_saved}
+                      />
                     </td>
                   </tr>
-                )}
-              </>
-            ))}
+                  {openRef === r.ref && (
+                    <tr key={`${r.ref}-det`} className='bg-slate-50'>
+                      <td colSpan={3} className='p-4 text-sm space-y-4'>
+                        {r.planned.length > 0 && (
+                          <section>
+                            <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
+                              Planned changes
+                            </div>
+                            <ul className='space-y-1'>
+                              {r.planned.map((p, i) => (
+                                <li key={`pl-${i}`} className='flex items-start gap-2'>
+                                  <PlannedBadge change={p} />
+                                  <div className='text-xs'>
+                                    <div>{p.summary}</div>
+                                    <div className='text-slate-500 mt-0.5 font-mono'>
+                                      {p.proposal}
+                                      {p.backlog && <> · backlog: {p.backlog}</>}
+                                      {p.eta_release && <> · eta {p.eta_release}</>}
+                                    </div>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+                        )}
+                        {r.overview && (
+                          <section>
+                            <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
+                              Overview
+                            </div>
+                            <div className='text-base leading-relaxed whitespace-pre-wrap'>{r.overview}</div>
+                          </section>
+                        )}
+                        {r.detail && (
+                          <section>
+                            <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
+                              Detail
+                            </div>
+                            <div className='whitespace-pre-wrap'>{r.detail}</div>
+                          </section>
+                        )}
+                        {r.technical && (
+                          <section>
+                            <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
+                              Technical
+                            </div>
+                            <div className='whitespace-pre-wrap font-mono text-xs text-slate-700 bg-white border border-slate-200 rounded p-2'>{r.technical}</div>
+                          </section>
+                        )}
+                        {links && (
+                          <section>
+                            <div className='text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'>
+                              Evidence
+                            </div>
+                            <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                              <LinkSection title='Tests' items={links.tests} urlFor={testUrl} />
+                              <LinkSection title='Docs' items={links.docs} />
+                              <LinkSection title='QMS' items={links.qms} />
+                              <LinkSection title='Config keys' items={links.configs} mono />
+                              <LinkSection title='Functional specs' items={links.specs} mono urlFor={specUrl} />
+                              <LinkSection title='Derives from' items={links.derives} mono />
+                            </div>
+                          </section>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              ))}
           </tbody>
         </table>
       )}
