@@ -26,7 +26,8 @@ export function BacklogDetail () {
   if (!slug) return null;
 
   const scopeCount = new Set(rows.map((r) => r.scope_id)).size;
-  const trackingUrl = rows.find((r) => (r as any).tracking_url)?.['tracking_url' as keyof BacklogRow] as string | undefined;
+  const trackingUrl = (rows as Array<BacklogRow & { tracking_url?: string }>)
+    .find((r) => r.tracking_url)?.tracking_url;
 
   // We don't have direct backlog metadata once we drop to rows; reuse the
   // first chip's tracking_url + collect kind breakdown from rows.

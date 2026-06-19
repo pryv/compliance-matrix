@@ -132,4 +132,4 @@ for (const file of scopeFiles) {
 }
 
 console.log('');
-console.log(`Total added: ${totalAdded} pryv_effort_saved fields.`);
+console.log(`Total added: ${totalAdded} pryv_effort_saved fields (${totalSkipped} file(s) unchanged).`);

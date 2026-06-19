@@ -114,7 +114,7 @@ for (const file of scopeFiles) {
       out.push(lines[j]);
     }
     // Replace prefix line: keep indentation, drop "**Facilitation: ...** — "
-    const prefixIndent = (lines[prefixLineIdx].match(/^(\s+)/) || [, ''])[1];
+    const prefixIndent = (lines[prefixLineIdx].match(/^(\s+)/) || ['', ''])[1];
     if (prefixRest.trim() === '') {
       // Prefix was followed by line break -- emit blank-but-indented line
       // YAML block-scalar happily accepts an empty content line; rare case.

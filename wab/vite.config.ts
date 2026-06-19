@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type UserConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
@@ -6,7 +6,7 @@ import backloop from 'vite-plugin-backloop.dev';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const config: any = {
+  const config: UserConfig = {
     // Relative base so the same build works at GH-Pages root, sub-path, or custom domain.
     base: './',
     envPrefix: ['VITE_'],
@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
   // Enable backloop.dev (HTTPS + proper hostname) by default in dev mode.
   // Use `npm run dev:raw` to bypass it (plain http://localhost).
   if (mode !== 'raw') {
-    config.plugins.push(backloop('compliance-matrix'));
+    config.plugins!.push(backloop('compliance-matrix'));
   }
   return {
     ...config,

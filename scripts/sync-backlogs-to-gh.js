@@ -49,7 +49,6 @@ const BUGS_FILE = path.join(MACROPRYV_ROOT, '_plans', 'BUGS.md');
 const SCOPES_DIR = path.join(ROOT, 'scopes');
 
 const APPLY = process.argv.includes('--apply');
-const VERBOSE = process.argv.includes('--verbose');
 
 /**
  * Known mappings — operator-curated overrides where the existing GitHub
@@ -107,17 +106,6 @@ function backlogTitleLine (filePath) {
   const body = readFileSync(filePath, 'utf8');
   const m = body.match(/^# (.+)$/m);
   return m ? m[1].trim() : path.basename(filePath, '.md');
-}
-
-function backlogShortSummary (filePath) {
-  const body = readFileSync(filePath, 'utf8');
-  // first non-empty line after "## Problem" or "## Goal" or just first paragraph
-  const sections = body.split(/^##\s+/m);
-  for (const sec of sections) {
-    const m = sec.match(/^(Problem|Goal)\s*\n+([^\n].+?)(?:\n\n|$)/s);
-    if (m) return m[2].trim().slice(0, 300);
-  }
-  return '';
 }
 
 function parseBugsFile () {
@@ -188,8 +176,7 @@ function listScopeFiles () {
 function existingTrackingUrls (scopeText) {
   // Map "BACKLOG_SLUG" → tracking_url (if already populated)
   const result = new Map();
-  const planned = scopeText.match(/^\s+planned:\s*$([\s\S]*?)(?=^\s+\w+:|^\s*-\s+ref:|^\s*$)/gm) || [];
-  // simpler: parse the whole yaml + traverse
+  // Parse the whole yaml + traverse.
   let doc;
   try { doc = yaml.load(scopeText); } catch { return result; }
   if (!doc?.requirements) return result;
@@ -227,11 +214,9 @@ function insertTrackingUrl (scopeText, slugToUrl) {
         // (entry ends at next "- " at same or lower indent, or next "planned:" sibling)
         let j = i + 1;
         let hasUrl = false;
-        const entryIndentMatch = lines[j]?.match(/^(\s*)/);
-        const baseIndent = entryIndentMatch ? entryIndentMatch[1] : indent;
         while (j < lines.length) {
           const peek = lines[j];
-          if (/^\s+-\s+/.test(peek) || /^\s*[a-z_]+:/.test(peek) && peek.match(/^(\s+)/)[1].length < indent.length) break;
+          if (/^\s+-\s+/.test(peek) || (/^\s*[a-z_]+:/.test(peek) && peek.match(/^(\s+)/)[1].length < indent.length)) break;
           if (/^\s+tracking_url:/.test(peek)) { hasUrl = true; break; }
           j++;
           if (j - i > 8) break; // safety
@@ -254,11 +239,11 @@ function createIssue (slug, titleLine, backlogPath) {
   const body = readFileSync(backlogPath, 'utf8');
   const title = `${ISSUE_TITLE_PREFIX} ${titleLine}`;
   const fullBody = [
-    `Tracked from the compliance-matrix backlog`,
+    'Tracked from the compliance-matrix backlog',
     `(backlog slug: ${slug}).`,
-    ``,
-    `---`,
-    ``,
+    '',
+    '---',
+    '',
     body
   ].join('\n');
   // Use a tempfile for body
@@ -464,10 +449,10 @@ function extractBugBody (bugId) {
   );
   const section = restAfterStart.slice(0, endIdx === Infinity ? undefined : endIdx);
   return [
-    `Tracked from the orphan-bugs registry.`,
-    ``,
-    `---`,
-    ``,
+    'Tracked from the orphan-bugs registry.',
+    '',
+    '---',
+    '',
     section.trim()
   ].join('\n');
 }

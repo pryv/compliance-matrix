@@ -4,15 +4,8 @@ import neostandard from 'neostandard';
 // config under wab/ (React + TypeScript).
 export default [
   {
-    // wab/ has its own config. The three one-off maintenance scripts below
-    // predate this linter config and carry their own pre-existing style debt;
-    // they are excluded here so the linter gates the active pipeline cleanly.
-    ignores: [
-      'dist', 'node_modules', 'wab', 'samples',
-      'scripts/backfill-pryv-effort-saved.js',
-      'scripts/migrate-facilitation-to-fields.js',
-      'scripts/sync-backlogs-to-gh.js'
-    ]
+    // wab/ has its own config; samples/ are self-contained apps with their own.
+    ignores: ['dist', 'node_modules', 'wab', 'samples']
   },
   ...neostandard({ semi: true }),
   {
