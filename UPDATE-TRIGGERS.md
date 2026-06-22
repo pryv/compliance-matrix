@@ -453,6 +453,13 @@ affect:
 - `soc2.PI1.1`, `soc2.PI1.2`, `soc2.P7.1` (processing-integrity /
   data-quality rows cite the `data-types` validation pipeline).
 
+**Refreshed 2026-06-22:** `calendar/ical-event` (new `calendar` class)
+added to `pryv/data-types`. Primary matrix impact: `gdpr.Art.20` —
+portability to the iCalendar (RFC 5545) standard via the calendar
+adapter, which is also advertised in the new `/service/info`
+`adapters` field (a thin list of adapter base URLs; each adapter
+serves its own `manifest.json`).
+
 ### B.3 — New storage engine (`storages/engines/<new>/`)
 
 Affects:

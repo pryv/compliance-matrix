@@ -966,6 +966,18 @@ requirements:
       alignment between transmitting + receiving operators when
       relying on §2 controller-to-controller transmission.
 
+      **Calendar interoperability (adapter):** beyond raw JSON, Pryv
+      data can be exposed in a ubiquitous interchange standard. The
+      calendar adapter serves selected events as an iCalendar
+      (RFC 5545) subscription feed any calendar client can read, and
+      ingests an external iCalendar feed back into Pryv as
+      `calendar/ical-event` events (well-known fields in structured
+      `content`, the verbatim VEVENT in `clientData._raw`). Adapters
+      are discoverable via the `/service/info` `adapters` field. This
+      widens portability from machine-readable JSON to a standard the
+      subject's existing tools already consume, lowering the
+      implementer's integration burden.
+
   - ref: Art.21
     title: Right to object
     text: |
