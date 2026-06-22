@@ -222,6 +222,29 @@ from a backup file.
 - **Compliance role**: data restorability (GDPR Art.32 §1(c)) +
   per-user erasure path for SQLite engine.
 
+### `backup-payload-encryption`
+
+`bin/backup.js` can encrypt its output on demand so plaintext PHI/PII
+never touches the backup destination disk — the bytes written to the
+media are ciphertext only. Opt-in; absent the flags, output is plaintext
+as before.
+
+- **Two key models**: a recipient **public key** (a random per-backup
+  data key is RSA-OAEP-wrapped to the recipient — the backup host holds
+  no secret that can decrypt its own output), or a scrypt-derived
+  **passphrase**.
+- **Construction**: per-file authenticated AES-256-GCM (per-file HKDF
+  subkey, chunked streaming), applied after gzip; a cleartext
+  `encryption.json` envelope carries crypto headers + the wrapped key
+  only — never user data. Each encrypted backup ships a zero-dependency
+  standalone decrypter so the key holder can recover it without Pryv.io.
+- **Compliance role**: backup-media at-rest encryption (GDPR Art.32
+  §1(a); HIPAA 164.312(a)(2)(iv) addressable encryption) at backup
+  creation, complementing operator-level volume encryption rather than
+  depending on it.
+- **DR caveat**: key/passphrase loss makes the backup unrecoverable —
+  key management is the operator's responsibility.
+
 ### `account-backup-tool`
 
 `pryv-account-backup` (`@pryv/account-backup`) is the subject-driven
