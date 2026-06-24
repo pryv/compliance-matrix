@@ -102,6 +102,22 @@ checkpoints. Precondition: per-core monotonic time (see
 
 Proposal: `proposals/audit-log-chaining.md`
 
+### `CONTAINER-ENCRYPTED-VOLUME` — SHIPPED 2026-06-23
+
+**Where the work lives**: new `pryv/container-encrypted-volume` repo (v0.1.0) — a
+companion layered onto the stock open-pryv.io image, NOT in open-pryv.io core.
+Modular encryption-at-rest for the full user-data surface (events / attachments /
+series / audit / platform DB): pluggable LUKS/gocryptfs backend + env/file/exec/
+clevis/aws-kms key providers, opt-in via `CEV_ENABLED`.
+
+| Scope | Ref | Kind | Impact | After shipping |
+|---|---|---|---|---|
+| hipaa-security | 164.312(a)(2)(iv) | primitive | high | added `encryption-at-rest-user-data`; effort medium→high; user-data at rest now switch-on Pryv software (was operator-implements). Coverage stays `configurable` (a step above `facilitated`). |
+| gdpr | Art.32 | primitive | medium | added `encryption-at-rest-user-data` to the composite measure; coverage unchanged (`facilitated`). |
+
+No pre-existing `planned:` chips to discharge — this is a new shipped primitive.
+Proposal: `proposals/container-encrypted-volume.md` (Status: shipped).
+
 ### `CLOCK-SKEW-CLUSTER-CHECKS`
 
 **Where the work lives**: `open-pryv.io`

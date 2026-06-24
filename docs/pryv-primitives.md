@@ -306,6 +306,25 @@ per-key purpose label.
 - **Compliance role**: protects secrets (Let's Encrypt account keys,
   observability provider licence keys, future CMC keys) at rest.
 
+### `encryption-at-rest-user-data`
+
+Modular encryption-at-rest for the full user-data surface (events,
+attachments, series, audit, platform DB), delivered by the
+`container-encrypted-volume` companion. It provisions and mounts an
+encrypted volume inside the container on boot and points the data roots
+at it, so the application stores ciphertext at rest. Two pluggable seams:
+storage **backend** (LUKS reference + gocryptfs; near-native AES-NI) and
+**key provider** (`env` / `file` / `exec` / `clevis` for TPM2·Tang·PKCS#11
+/ `aws-kms` envelope). Layered onto the stock image at build time; opt-in
+via one switch; no application code change.
+
+- **Compliance role**: a switch-on mechanism to encrypt and decrypt
+  user PHI/PII at rest (HIPAA §164.312(a)(2)(iv); GDPR Art.32(1)(a)) with
+  breach-safe-harbor-grade volume encryption (NIST SP 800-111). Key
+  custody stays with the operator (or an identity-bound KMS/TPM, so no
+  copyable key is held), which is intrinsic to the control; rotation uses
+  LUKS key-slots (no bulk re-encrypt).
+
 ### `letsEncrypt-integration`
 
 Built-in ACME client that issues + renews certificates, replicates
