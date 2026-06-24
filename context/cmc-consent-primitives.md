@@ -86,15 +86,50 @@ simpler: the user creates an access for the app via `app-web-auth3` flow;
 clientData can carry the consent text shown; permissions encode the scope.
 No `consent/*` events needed (the negotiation IS the local auth flow).
 
+## Token-class gate enforces user-presence at consent
+
+`consent/accept-cmc`, `consent/scope-update-cmc`, and `consent/revoke-cmc`
+writes that mutate access state on the user's account require a **personal
+access token** (an access minted by the standard `/auth/login` sign-in flow).
+App- and shared-access tokens are rejected by the server with `400
+invalid-operation` + `error.data.id === 'cmc-accept-requires-personal-token'`.
+
+The constraint is enforceable because personal tokens are only issued via
+the login flow: requiring one at the moment a `consent/accept-cmc` event is
+written means the user is, by construction, signed in and present. The
+previous design accepted the trigger from any access carrying stream-write
+permission, which opened a scope-escalation path where an app holding a
+narrow `:_cmc:apps:<app>:*` permission could drive the orchestration to
+mint an arbitrarily broader data-grant access on the user's account from a
+colluding requester's offer — without a consent UI ever being shown to the
+user.
+
+Apps that hold only an app- or shared-access token (e.g. a third-party
+patient app that received its access via `/auth/access`) delegate consent
+acceptance to Pryv's authorization web pages via the `/cmc-accept`
+hand-off route (`pryv.cmc.requestAccept` in lib-js): the user authenticates
+with their own credentials on Pryv's trusted surface, the trigger is
+written with the fresh personal token, and the data-grant apiEndpoint is
+returned to the calling app. The authoritative consent UI lives on
+`app-web-auth3` (the page renders the offer details client-side via the
+capability URL), so a compromised or malicious app cannot fake what the
+user is consenting to.
+
 ## Consequences for compliance claims (consent-related)
 
 - **GDPR Art.7 (Conditions for consent — demonstrability + withdrawability)**
   - Demonstrability: `accesses.get` (with `includeHistory=true`) returns the
     full version chain; the original `consent/request-cmc` event preserves
     what was asked.
+  - **User-presence at the moment of consent**: the personal-token gate on
+    `consent/accept-cmc` proves the user was signed in when the trigger was
+    written — not merely that an app authorized for stream-write performed
+    the write. This strengthens the demonstrability claim: the access pair
+    + history chain is backed by an auditable user-authentication event.
   - Withdrawability: `accesses.delete` (full revoke) or `accesses.update`
     (scope-down) — both versioned. For cross-account: `consent/revoke-cmc`
     event triggers the access revocation transactionally on both sides.
+    Revoke is also personal-token-gated for the same user-presence reason.
   - **Coverage: `implemented`** for cross-account flows; **`implemented`**
     for same-account flows.
 

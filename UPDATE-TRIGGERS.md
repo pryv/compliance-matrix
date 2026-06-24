@@ -519,6 +519,32 @@ Touches `context/*.md` notes. Recent examples:
   listed in the core-affinity context note).
 - Storages-as-plugins refactor (touched engine references in the
   audit + data-residency primitives).
+- CMC personal-token gate on `consent/accept-cmc` /
+  `consent/scope-update-cmc` / `consent/revoke-cmc` (touched
+  `context/cmc-consent-primitives.md`'s "Token-class gate enforces
+  user-presence at consent" section + the Art.7 demonstrability claim
+  in the same file).
+
+### B.8 — Token-class enforcement on consent-bearing API methods
+
+When a method's accepted token classes change (e.g. a method gated to
+personal-only, or relaxed to allow shared/app), refresh:
+- `context/cmc-consent-primitives.md` if the gate touches CMC triggers
+  (consent-bearing). The Art.7 demonstrability + Art.32 security claims
+  cite the gate.
+- GDPR Art.7 + Art.32 scope rows in `scopes/gdpr.yml`.
+- HIPAA-Security §164.312(a)(1) (access control) + §164.312(d)
+  (person/entity authentication) in `scopes/hipaa-security.yml`.
+- SOC 2 CC6.1 + CC6.2 + CC6.3 (logical access) in `scopes/soc2.yml`.
+- ISO 27001 A.5.15 (access control) / A.5.16 (identity management) in
+  `scopes/iso-27001.yml`.
+
+Most recent: 2026-06-24 — `consent/{accept,scope-update,revoke}-cmc`
+gated to personal tokens only via the `cmc-accept-requires-personal-token`
+hook; ships in open-pryv.io `7fb6e165`. Hand-off helpers
+`pryv.cmc.requestAccept` / `requestAcceptUrl` in `@pryv/cmc@3.8.0`;
+`app-web-auth3` ships the `/cmc-accept` route. Compliance-side note
+updated in `context/cmc-consent-primitives.md`.
 
 ## Section C — Maintenance reminders
 
