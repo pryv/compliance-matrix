@@ -86,34 +86,59 @@ simpler: the user creates an access for the app via `app-web-auth3` flow;
 clientData can carry the consent text shown; permissions encode the scope.
 No `consent/*` events needed (the negotiation IS the local auth flow).
 
-## Token-class gate enforces user-presence at consent
+## Gates on access-state-mutating consent triggers
 
-`consent/accept-cmc`, `consent/scope-update-cmc`, and `consent/revoke-cmc`
-writes that mutate access state on the user's account require a **personal
-access token** (an access minted by the standard `/auth/login` sign-in flow).
-App- and shared-access tokens are rejected by the server with `400
-invalid-operation` + `error.data.id === 'cmc-accept-requires-personal-token'`.
+CMC's access-state-mutating lifecycle triggers are gated server-side. Two
+distinct gate shapes — chosen per trigger by what's at stake:
 
-The constraint is enforceable because personal tokens are only issued via
-the login flow: requiring one at the moment a `consent/accept-cmc` event is
-written means the user is, by construction, signed in and present. The
-previous design accepted the trigger from any access carrying stream-write
-permission, which opened a scope-escalation path where an app holding a
-narrow `:_cmc:apps:<app>:*` permission could drive the orchestration to
-mint an arbitrarily broader data-grant access on the user's account from a
-colluding requester's offer — without a consent UI ever being shown to the
-user.
+- **`consent/accept-cmc` (mint a new data-grant access)** and
+  **`consent/scope-update-cmc` (widen an existing data-grant)** require a
+  **personal access token** (an access minted by the standard
+  `/auth/login` sign-in flow). App- and shared-access tokens are rejected
+  by the server with `400 invalid-operation` +
+  `error.data.id === 'cmc-accept-requires-personal-token'`. Personal tokens
+  are only issued via the login flow, so requiring one at the moment a
+  mint/widen trigger is written means the user is, by construction, signed
+  in and present. The previous design accepted the trigger from any access
+  carrying stream-write permission, which opened a scope-escalation path
+  where an app holding a narrow `:_cmc:apps:<app>:*` permission could
+  drive the orchestration to mint an arbitrarily broader data-grant
+  access on the user's account from a colluding requester's offer — without
+  a consent UI ever being shown to the user.
+
+- **`consent/revoke-cmc` (delete a data-grant access)** uses the standard
+  Pryv access-permission gate, NOT a token-class check. `handleRevoke`
+  runs `triggerAccess.canDeleteAccess(target)` (the same primitive
+  `accesses.delete` enforces, which honours the `selfRevoke` feature
+  permission on the target access). This means:
+  - personal tokens always pass;
+  - the relationship's data-grant access can self-revoke (default
+    `selfRevoke: allow`), so an app holding only the relationship-access
+    can terminate the relationship without bouncing through Pryv's auth
+    pages — matching the natural access-management model;
+  - app tokens that created the target can revoke it;
+  - anything else fails with
+    `error.data.id === 'cmc-revoke-forbidden'`.
+
+  Revoke is a contraction, not an escalation — the access being deleted
+  bounds the impact, so user-presence at the moment of revocation is not
+  needed for the security property to hold. Operators who set
+  `selfRevoke: forbidden` on counterparty accesses at mint time keep the
+  explicit deny path; the existing feature-permission contract carries
+  over unchanged.
 
 Apps that hold only an app- or shared-access token (e.g. a third-party
-patient app that received its access via `/auth/access`) delegate consent
-acceptance to Pryv's authorization web pages via the `/cmc-accept`
-hand-off route (`pryv.cmc.requestAccept` in lib-js): the user authenticates
-with their own credentials on Pryv's trusted surface, the trigger is
-written with the fresh personal token, and the data-grant apiEndpoint is
+patient app that received its access via `/auth/access`) delegate **accept**
++ **scope-update** to Pryv's authorization web pages via the `/cmc-accept`
+and `/cmc-scope-update` hand-off routes (`pryv.cmc.requestAccept` +
+`pryv.cmc.requestScopeUpdate` in `@pryv/cmc` ≥ 3.9): the user
+authenticates with their own credentials on Pryv's trusted surface, the
+trigger is written with the fresh personal token, and the result is
 returned to the calling app. The authoritative consent UI lives on
-`app-web-auth3` (the page renders the offer details client-side via the
-capability URL), so a compromised or malicious app cannot fake what the
-user is consenting to.
+`app-web-auth3` (the pages render the offer / scope-change details
+client-side), so a compromised or malicious app cannot fake what the user
+is consenting to. **Revoke needs no hand-off** — the access-permission
+gate accepts the relationship's own data-grant access directly.
 
 ## Consequences for compliance claims (consent-related)
 
@@ -129,7 +154,11 @@ user is consenting to.
   - Withdrawability: `accesses.delete` (full revoke) or `accesses.update`
     (scope-down) — both versioned. For cross-account: `consent/revoke-cmc`
     event triggers the access revocation transactionally on both sides.
-    Revoke is also personal-token-gated for the same user-presence reason.
+    Revoke is access-permission-gated (`AccessLogic.canDeleteAccess` —
+    honours `selfRevoke`), so the relationship's own data-grant access
+    can self-revoke without an auth-page bounce — preserving the
+    practical withdrawability guarantee while keeping the security
+    property (the access being deleted bounds the impact).
   - **Coverage: `implemented`** for cross-account flows; **`implemented`**
     for same-account flows.
 

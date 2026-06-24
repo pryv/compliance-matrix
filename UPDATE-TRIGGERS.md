@@ -519,11 +519,13 @@ Touches `context/*.md` notes. Recent examples:
   listed in the core-affinity context note).
 - Storages-as-plugins refactor (touched engine references in the
   audit + data-residency primitives).
-- CMC personal-token gate on `consent/accept-cmc` /
-  `consent/scope-update-cmc` / `consent/revoke-cmc` (touched
-  `context/cmc-consent-primitives.md`'s "Token-class gate enforces
-  user-presence at consent" section + the Art.7 demonstrability claim
-  in the same file).
+- CMC gates on access-state-mutating triggers — personal-token on
+  `consent/accept-cmc` + `consent/scope-update-cmc` (mint + widen);
+  access-permission gate (`AccessLogic.canDeleteAccess` honouring
+  `selfRevoke`) on `consent/revoke-cmc`. Touched
+  `context/cmc-consent-primitives.md`'s "Gates on access-state-mutating
+  consent triggers" section + the Art.7 demonstrability + withdrawability
+  claims in the same file.
 
 ### B.8 — Token-class enforcement on consent-bearing API methods
 
@@ -539,12 +541,26 @@ personal-only, or relaxed to allow shared/app), refresh:
 - ISO 27001 A.5.15 (access control) / A.5.16 (identity management) in
   `scopes/iso-27001.yml`.
 
-Most recent: 2026-06-24 — `consent/{accept,scope-update,revoke}-cmc`
-gated to personal tokens only via the `cmc-accept-requires-personal-token`
-hook; ships in open-pryv.io `7fb6e165`. Hand-off helpers
-`pryv.cmc.requestAccept` / `requestAcceptUrl` in `@pryv/cmc@3.8.0`;
-`app-web-auth3` ships the `/cmc-accept` route. Compliance-side note
-updated in `context/cmc-consent-primitives.md`.
+Most recent: 2026-06-24 — CMC gates refined in two waves:
+1. (`open-pryv.io 7fb6e165`) `consent/{accept,scope-update,revoke}-cmc`
+   initially gated to personal tokens only via the
+   `cmc-accept-requires-personal-token` hook; `@pryv/cmc@3.8.0` shipped
+   `requestAccept` / `requestAcceptUrl`; `app-web-auth3` shipped
+   `/cmc-accept`.
+2. (`open-pryv.io efe66b69`) Revoke un-gated from the personal-token
+   set; instead `handleRevoke` runs `triggerAccess.canDeleteAccess(target)`
+   (honours `selfRevoke` feature permission). Rejection:
+   `cmc-revoke-forbidden`. `handleSystemScopeUpdate` gained the chain
+   check (`canUpdateAccess` + `canCreateAccess`) — defense in depth on
+   top of the events.create gate. `@pryv/cmc@3.9.0` shipped
+   `requestScopeUpdate` / `requestScopeUpdateUrl`; the old
+   provider-side `requestScopeUpdate` renamed to `proposeScopeUpdate`
+   (breaking — see lib-js CHANGELOG); `app-web-auth3` shipped
+   `/cmc-scope-update`. No `requestRevoke` lib helper or `/cmc-revoke`
+   page — revoke goes through the standard access-permission gate
+   directly.
+
+Compliance-side note updated in `context/cmc-consent-primitives.md`.
 
 ## Section C — Maintenance reminders
 
