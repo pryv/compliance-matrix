@@ -1,7 +1,9 @@
 # Proposal: username aliases as a Pryv-native pseudonymization primitive
 
-**Status:** proposal (backlog feature exists upstream; matrix would benefit
-when shipped).
+**Status:** implemented upstream on `open-pryv.io` branch `feature/access-aliases`
+(`accesses.create {randomAlias:true}` → routable `r-XXXXXXXX` alias; tested on
+PostgreSQL + SQLite engines). Pending merge to `master`; the matrix rows in the
+`ALIASES` trigger are discharged once merged (final commit SHA recorded then).
 **Upstream backlog item:** macroPryv `_plans/XXX-Backlog/ALIASES.md`.
 **Filed:** 2026-05-19, while backfilling the facilitation typology and
 realising several matrix rows currently treat pseudonymization as
