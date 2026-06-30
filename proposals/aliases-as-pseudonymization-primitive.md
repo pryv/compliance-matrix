@@ -1,9 +1,12 @@
 # Proposal: username aliases as a Pryv-native pseudonymization primitive
 
-**Status:** implemented upstream on `open-pryv.io` branch `feature/access-aliases`
-(`accesses.create {randomAlias:true}` → routable `r-XXXXXXXX` alias; tested on
-PostgreSQL + SQLite engines). Pending merge to `master`; the matrix rows in the
-`ALIASES` trigger are discharged once merged (final commit SHA recorded then).
+**Status:** shipped in `open-pryv.io` `4054c67a` (`accesses.create
+{randomAlias:true}` → routable `r-XXXXXXXX` alias, returned by `access-info`;
+tested on PostgreSQL + SQLite; PG platform engine conformance-green). The
+related changeable-username feature (`account.changeUsername`) shipped in the
+same merge and reuses the alias mechanism (a superseded username is demoted to a
+routable alias). The matrix rows in the `ALIASES` trigger can now be reclassified
+(see UPDATE-TRIGGERS.md `ALIASES`).
 **Upstream backlog item:** macroPryv `_plans/XXX-Backlog/ALIASES.md`.
 **Filed:** 2026-05-19, while backfilling the facilitation typology and
 realising several matrix rows currently treat pseudonymization as

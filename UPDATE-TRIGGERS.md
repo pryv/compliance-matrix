@@ -71,10 +71,10 @@ Proposal: `proposals/account-backup-dsar-completeness.md` (shared with the v0.4.
 **Where the work lives**: `open-pryv.io` (new `auth.randomAlias`
 primitive). Aliases as Pryv-native pseudonymisation.
 
-**Status (2026-06-29)**: implemented on `open-pryv.io` branch
-`feature/access-aliases` (`accesses.create {randomAlias:true}`; tested on
-PostgreSQL + SQLite). Discharge the rows below + stamp the proposal with the
-final SHA once merged to `master`.
+**Status (2026-06-30)**: SHIPPED in `open-pryv.io` `4054c67a` (`accesses.create
+{randomAlias:true}` + `account.changeUsername`; tested on PostgreSQL + SQLite).
+Proposal stamped. The rows below are ready to reclassify per their "After
+shipping" notes (the primitive now exists in core, not just app-layer).
 
 | Scope | Ref | Kind | Impact | After shipping |
 |---|---|---|---|---|
