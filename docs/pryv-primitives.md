@@ -25,6 +25,26 @@ A grant of permission to act on a user's data.
   the lawful-basis + the purposes + retention metadata. Permissions enforce
   the scope technically.
 
+### `randomAlias`
+
+A routable, platform-unique de-identifying name substituted for the username.
+
+- **Set at**: `accesses.create` with `randomAlias: true` — mints an
+  `r-XXXXXXXX` alias (random by construction, no PHI/PII encoded) reserved
+  platform-wide. The resolved value is returned as the access's `alias`.
+- **Routable**: the alias replaces the username in the access's `apiEndpoint`
+  and resolves to the user exactly like the username (including across cores);
+  the real-username↔alias mapping stays with the platform, never exposed to
+  the aliased access.
+- **Reported by**: `access-info` returns the alias as `user.username`, so a
+  counterparty holding the access sees only the alias.
+- **Also underpins**: `account.changeUsername` — a superseded username is
+  demoted to a (non-`r-`) alias so accesses issued under it keep working.
+- **Compliance role**: Pryv-native pseudonymisation primitive (GDPR Art.4(5) /
+  Art.32(1)(a)) and the HIPAA §164.514(c) re-identification code. Released when
+  the access is deleted. See
+  [`../proposals/aliases-as-pseudonymization-primitive.md`](../proposals/aliases-as-pseudonymization-primitive.md).
+
 ### `permissions`
 
 The set of stream+level tuples carried by an access.
