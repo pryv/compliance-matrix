@@ -357,6 +357,20 @@ requirements:
       isolate privileged data (credentials, MFA state). No plaintext
       transport path ships. You define who gets which access; Pryv
       enforces it.
+    detail: |
+      **OAuth2 as a second logical-access path.** Alongside token +
+      MFA authentication, Pryv ships a standards-based OAuth2
+      authorization-code + PKCE authorization server
+      (`open-pryv.io/components/oauth2/`, open-pryv.io 2.0.0-rc.8):
+      discovery at `GET /.well-known/oauth-authorization-server`,
+      `GET /oauth2/authorize`, and `POST /oauth2/token`. PKCE is
+      mandatory (S256 only); presented redirect URIs are validated by
+      exact string match with a single loopback-port carve-out
+      (RFC 8252 / 9700) and fragment-bearing redirect URIs are rejected
+      (`open-pryv.io/components/oauth2/src/clientRegistry.ts`). Client
+      registration is curated-only — the operator promotes an account
+      to an OAuth client via `bin/oauth-client.js`; open self-service
+      registration (`POST /oauth2/register`) is deliberately disabled.
 
   - ref: CC6.2
     title: CC6.2 — User registration, credential issuance, and de-provisioning
@@ -380,6 +394,21 @@ requirements:
       account entirely. Each stage lands in the audit log. The
       authorization decision (who may register, what scope is
       appropriate) is your policy; the mechanism is shipped.
+    detail: |
+      **OAuth2 client credential issuance is curated.** For
+      delegated-app credentials, Pryv issues OAuth2 client identities
+      only through the operator CLI (`bin/oauth-client.js` — register /
+      rotate-secret / list), not through open dynamic registration: the
+      discovery document advertises no registration endpoint and
+      `POST /oauth2/register` (RFC 7591 open mode) is intentionally
+      deferred — `oauth.clientRegistration.mode: curated` is the only
+      supported value and `open` is rejected. Each client carries an
+      exact-match set of registered redirect URIs and, for confidential
+      clients, a rotatable `client_secret`. The authorization decision
+      (who becomes a client, which redirect URIs + scopes are
+      appropriate) stays your policy; the issuance + rotation mechanism
+      is shipped (`open-pryv.io/components/oauth2/`, open-pryv.io
+      2.0.0-rc.8).
 
   - ref: CC6.3
     title: CC6.3 — Role-based access, least privilege, segregation of duties
@@ -413,6 +442,17 @@ requirements:
       context/workforce-access-patterns.md. The IdP stays the source of
       truth for identity; Pryv records the access state + per-individual
       audit trail.
+
+      **OAuth2 revoke + refresh-chain teardown.** For delegated apps,
+      the durable consent behind an OAuth2 grant is a cross-account CMC
+      data-grant; revoking it (deleting the counterparty access) kills
+      the refresh chain — the next `refresh_token` exchange sees the
+      data-grant gone and fails `invalid_grant`, so no fresh access is
+      minted (`open-pryv.io/components/oauth2/src/grants/refresh_token.ts`,
+      open-pryv.io 2.0.0-rc.8). Access modification propagates the same
+      way: narrowing the granted permissions on the data-grant narrows
+      what the next rotated token can do; widening requires a fresh
+      consent, never a refresh.
 
   - ref: CC6.4
     title: CC6.4 — Physical access to facilities and protected assets

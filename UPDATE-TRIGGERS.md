@@ -567,6 +567,40 @@ Most recent: 2026-06-24 — CMC gates refined in two waves:
 
 Compliance-side note updated in `context/cmc-consent-primitives.md`.
 
+### B.9 — OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
+
+New in `open-pryv.io 2.0.0-rc.8` (squash `8abb86a4`): a standards-based
+OAuth2 authorization-code + PKCE authorization server — discovery
+(`GET /.well-known/oauth-authorization-server`), `GET /oauth2/authorize`,
+`POST /oauth2/token` (`authorization_code` / `refresh_token` /
+`client_credentials`), curated-only client registration via
+`bin/oauth-client.js`, exact-match redirect-URI validation (loopback-port
+carve-out; fragments rejected), mandatory PKCE (S256), short-TTL access
+tokens + single-use rotating refresh tokens, and a granular consent screen
+whose durable record is a cross-account CMC data-grant.
+
+Config lives under the `oauth:` block (`oauth.accessTokenTTL`,
+`oauth.refreshTokenTTL`, `oauth.refreshTokenAbsoluteTTL`,
+`oauth.clientRegistration.mode`, `oauth.requireAppAccountMfa`,
+`oauth.grantTypesSupported`, `oauth.audAllowList`).
+
+Rows refreshed on this landing (delegated-app authN/authZ + consent):
+- `hipaa-security.164.312(d)` (person/entity authentication) +
+  `164.312(a)(1)` (access control).
+- `soc2.CC6.1` / `CC6.2` / `CC6.3` (logical access, credential issuance,
+  access modification/removal).
+- `iso-27001.A.5.15` (access control) / `A.5.16` (identity management) /
+  `A.5.17` (authentication information).
+- `gdpr.Art.32` (security of processing) + `gdpr.Art.7` (conditions for
+  consent — granular consent screen as a second demonstrability path).
+- `context/cmc-consent-primitives.md` (consent-record inventory).
+
+**Not touched (deliberate):** the audit / records-of-processing family
+(`hipaa-security.164.312(b)`, `iso-27001.A.8.15`, `soc2.P6.2`,
+`gdpr.Art.30`). `components/oauth2/src/audit.ts` is a defined-but-unwired
+no-op stub — no `oauth.*` audit events are emitted yet, so no audit row
+cites them. Refresh those rows when audit emission is actually wired.
+
 ## Section C — Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check

@@ -338,6 +338,19 @@ requirements:
       breakdown + operator mitigation patterns (PG row-level
       security, per-schema, per-account-DB, per-tenant deployments).
 
+      **Scope-gated OAuth2 grants.** The delegated-app access path
+      (OAuth2 authorization-code + PKCE,
+      `open-pryv.io/components/oauth2/`, open-pryv.io 2.0.0-rc.8)
+      inherits the same permission enforcement: an authorization-code
+      grant references exactly one consent offer and mints an app
+      access whose `permissions[]` are the user's granted subset of
+      that offer — it can touch nothing outside them. Presented
+      redirect URIs are validated by exact string match (loopback-port
+      carve-out only; fragment-bearing URIs rejected —
+      `open-pryv.io/components/oauth2/src/clientRegistry.ts`), so an
+      issued authorization code cannot be diverted to an unregistered
+      callback.
+
   - ref: 164.312(a)(2)(i)
     title: Unique user identification — Required
     text: |
@@ -584,7 +597,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams]
-    config_keys: [services.mfa.mode]
+    config_keys: [services.mfa.mode, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa]
     tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07]
     planned:
       - kind: enhancement
@@ -623,6 +636,21 @@ requirements:
       at login, at sensitive operations, or both. The MA test series
       exercises activate / confirm / challenge / verify / deactivate
       / recover paths.
+
+      **A second authentication path — OAuth2.** Beyond the token +
+      MFA stack above, Pryv can authenticate delegated apps through a
+      standards-based OAuth2 authorization-code + PKCE flow
+      (`open-pryv.io/components/oauth2/`, shipped in open-pryv.io
+      2.0.0-rc.8). PKCE is mandatory (S256 only —
+      `code_challenge_methods_supported: ['S256']` in
+      `open-pryv.io/components/oauth2/src/wellKnown.ts`); access tokens
+      are short-lived (`oauth.accessTokenTTL`, default 1 h) and refresh
+      tokens rotate single-use with a sliding TTL bounded by an
+      absolute cap (`oauth.refreshTokenTTL` /
+      `oauth.refreshTokenAbsoluteTTL`). When `oauth.requireAppAccountMfa`
+      is set (default true), an app account must enrol MFA before it can
+      drive the OAuth2 write surface — so the second-factor requirement
+      extends to the delegated-app path.
 
   - ref: 164.312(e)(1)
     title: Transmission security — standard

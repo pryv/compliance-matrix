@@ -83,6 +83,17 @@ requirements:
       checked against the access's stream + level permissions. The
       operator's access-control rule definition (who gets what) is
       the policy half; technical enforcement is Pryv-side.
+    detail: |
+      **OAuth2 redirect + scope enforcement.** Pryv's delegated-app
+      authorization path (OAuth2 authorization-code + PKCE,
+      `open-pryv.io/components/oauth2/`, open-pryv.io 2.0.0-rc.8)
+      enforces access rules at two points: presented redirect URIs are
+      validated by exact string match (single loopback-port carve-out
+      per RFC 8252 / 9700; fragment-bearing URIs rejected —
+      `open-pryv.io/components/oauth2/src/clientRegistry.ts`), and the
+      minted app access carries only the user's granted subset of the
+      referenced consent offer's permissions. PKCE (S256) is mandatory
+      for every client.
 
   - ref: A.5.34
     title: A.5.34 — Privacy and protection of personal information
@@ -789,6 +800,16 @@ requirements:
       lifecycle, and Pryv records the resulting access state +
       per-individual audit trail.
 
+      **Delegated-app identity via OAuth2.** For app identities, Pryv
+      ships an OAuth2 authorization-code + PKCE flow
+      (`open-pryv.io/components/oauth2/`, open-pryv.io 2.0.0-rc.8): each
+      client is a curated identity the operator registers through
+      `bin/oauth-client.js` (create / rotate-secret / list — the full
+      credential lifecycle), authenticating with mandatory PKCE (S256
+      only) against an exact-match registered redirect-URI set. Open
+      self-registration is disabled, so every client identity is
+      operator-authorised before it exists.
+
   - ref: A.5.17
     title: A.5.17 — Authentication information
     text: |
@@ -813,6 +834,20 @@ requirements:
       etc.); MFA secrets follow the same isolation. Operator's
       secret-distribution + secret-rotation policy is the
       organizational programme; Pryv provides the secure storage tier.
+    detail: |
+      **OAuth2 token + secret handling.** Where you delegate access to
+      apps, Pryv's OAuth2 flow (`open-pryv.io/components/oauth2/`,
+      open-pryv.io 2.0.0-rc.8) manages the authentication material for
+      you: access tokens are short-lived (`oauth.accessTokenTTL`,
+      default 1 h), refresh tokens are single-use and rotate on every
+      exchange with a sliding TTL bounded by an absolute cap
+      (`oauth.refreshTokenTTL` / `oauth.refreshTokenAbsoluteTTL`), and a
+      replayed (already-rotated) refresh token fails the exchange
+      (`open-pryv.io/components/oauth2/src/grants/refresh_token.ts`).
+      Confidential clients hold a rotatable `client_secret`
+      (`bin/oauth-client.js rotate-secret`). The operator's broader
+      secret-distribution + rotation programme stays the organizational
+      half; Pryv supplies the short-TTL + rotation mechanics.
 
   - ref: A.5.18
     title: A.5.18 — Access rights

@@ -395,7 +395,7 @@ requirements:
     pryv_effort_saved: high
     draft: false
     reviewed_by: Pryv compliance
-    reviewed_at: "2026-06-19"
+    reviewed_at: "2026-07-18"
     pryv_primitives: [access, permissions, clientData, CMC, event]
     docs: [guides/consent.md]
     tests: [AA01, ACCP, USAD]
@@ -427,6 +427,21 @@ requirements:
       Granular consent (§4) — different processing purposes can be
       expressed as separate accesses with different permissions, each
       independently withdrawable.
+
+      Second consent path — OAuth2 authorization (§1, §4) — where your
+      user authorises a delegated app through Pryv's OAuth2
+      authorization-code flow (`open-pryv.io/components/oauth2/`,
+      open-pryv.io 2.0.0-rc.8), the granular consent screen presents
+      the referenced offer's per-permission set and lets the user
+      untick individual permissions to downgrade the grant before
+      accepting; the accepted subset (`grantedPermissions`, validated
+      ⊆ the signed offer) is what Pryv mints the app access from
+      (`open-pryv.io/components/oauth2/src/routes/accept.ts`). The
+      durable consent record is the same primitive as everywhere else
+      — a cross-account CMC data-grant access, versioned and revocable;
+      revoking it tears down the app's refresh chain. Demonstrability
+      rests on that data-grant + the signed offer material (the access
+      + its version history), not on a separate event log.
     technical: |
       - Snapshot semantics: `context/access-versioning.md` (full head
         clone into history row per update).
@@ -1510,6 +1525,14 @@ requirements:
           level scope at every API call (technical control, not policy).
         - Authentication strength: IMPLEMENTED — `mfa.*` API methods,
           opt-in per `services.mfa.mode`.
+        - Delegated-app authorization: IMPLEMENTED — the OAuth2
+          authorization-code + PKCE flow
+          (`open-pryv.io/components/oauth2/`, open-pryv.io 2.0.0-rc.8)
+          hardens third-party access with mandatory PKCE (S256 only),
+          exact-match redirect-URI validation (single loopback-port
+          carve-out; fragment URIs rejected), curated-only client
+          registration, and short-TTL access tokens paired with
+          single-use rotating refresh tokens.
         - Data residency: CONFIGURABLE — multi-hosting puts data where
           your subjects (or your policy) require, bounding exposure
           surface.
