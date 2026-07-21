@@ -436,6 +436,38 @@ rows above (in which case the `CONFIG-EFFECTIVE-EXPOSURE` backlog
 becomes a one-line stub pointing at the admin-panel work to
 satisfy the validator's chip → backlog resolution requirement).
 
+### `SHARED-SECRETS` (shipped — rows not yet walked)
+
+**Where the work lives**: `open-pryv.io/components/shared-secrets/` +
+`POST /:username/shared-secrets`, `/shared-secrets/retrieve`,
+`/shared-secrets/status`; client helper `pryv.SharedSecrets` in lib-js.
+Falls under **B.1 (new API methods)**.
+
+Hands a secret to a third party by one-time key instead of embedding it
+in a URL. Motivation is squarely a security-of-processing one: credential
+hand-off during auth / consent flows previously put an access token in a
+query parameter, where it persists in browser history, referrer headers
+and server access logs. The key is redeemable exactly once, expires on a
+mandatory TTL, and the server stores only its SHA-256 — so a database
+dump cannot reconstruct a live credential. The payload is scrubbed as
+soon as the secret stops being pending, including from event history.
+
+Rows to walk (not yet done — needs the research loop + `npm run validate`
+/ `npm run build` in a dedicated pass):
+
+| Scope | Ref | Suggested kind | Impact | Why |
+|---|---|---|---|---|
+| gdpr | Art.32 | feature | medium | security of processing — removes credentials from URLs/logs; one-shot + TTL + hash-only storage limit exposure of a leaked key |
+| gdpr | Art.5(1)(f) | feature | low | integrity & confidentiality narrative for credential hand-off |
+| iso-27001 | A.5.17 | feature | medium | authentication-information handling — direct match for how secrets are transmitted to third parties |
+| iso-27001 | A.8.12 | enhancement | low | data-leakage prevention — access logs stop carrying live credentials |
+| hipaa-security | 164.312(e)(1) | feature | low | transmission security for credentials passed between parties |
+| soc2 | CC6.1 | feature | low | logical-access credential transmission |
+
+No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so
+it carries no `planned:` chips. When the rows above are refreshed, cite
+the open-pryv.io commit range rather than a proposal.
+
 ## Section B — Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued
