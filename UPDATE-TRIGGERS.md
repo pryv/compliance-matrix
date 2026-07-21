@@ -607,6 +607,20 @@ and/or describe the authorization-activity coverage). New config key:
 `oauth.refreshReuseGraceSeconds` (replay grace window, default 10 s,
 0 = strict).
 
+**DPoP sender-constrained tokens landed 2026-07-21** (open-pryv.io
+`9a874599`): RFC 9449 proof-of-possession — a client proves it holds a
+key on each request, the issued token is bound to that key's thumbprint,
+so a stolen DPoP token is useless without the private key. Opt-in and
+additive (Bearer unchanged); ES256 only in v1. `hipaa-security.164.312(d)`
+(person/entity authentication) now describes it; the same authentication /
+logical-access family remains a refresh candidate as the property
+strengthens token-theft resistance — walk `soc2.CC6.1`, `iso-27001.A.5.17`,
+`gdpr.Art.32` when next touched. New config key: `oauth.dpop.clockSkewSeconds`
+(proof freshness window, default 120 s). ⚠️ Deployment note captured in the
+row + config: DPoP requires a trusted proxy that overwrites X-Forwarded-Host
+/ -Proto. Client helper (lib-js) + operator revoke-by-key-thumbprint are
+follow-ups, not yet shipped.
+
 ## Section C — Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check

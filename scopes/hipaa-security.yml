@@ -611,7 +611,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams]
-    config_keys: [services.mfa.mode, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa]
+    config_keys: [services.mfa.mode, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa, oauth.dpop.clockSkewSeconds]
     tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07]
     planned:
       - kind: enhancement
@@ -665,6 +665,19 @@ requirements:
       is set (default true), an app account must enrol MFA before it can
       drive the OAuth2 write surface — so the second-factor requirement
       extends to the delegated-app path.
+
+      **Sender-constrained tokens (DPoP).** A delegated app may opt into
+      RFC 9449 DPoP: it proves possession of a client-held key on each
+      request, and the token is bound to that key's thumbprint (issued
+      `token_type: DPoP`). A token stolen in transit or from storage is
+      then useless without the private key — it materially strengthens
+      "the entity seeking access is the one claimed" for bearer tokens.
+      Opt-in and additive (Bearer clients are unchanged). The proof's
+      freshness window is `oauth.dpop.clockSkewSeconds` (default 120 s);
+      DEPLOYMENT NOTE: DPoP binds to the client-facing request URI, so a
+      deployment accepting it must sit behind a proxy that overwrites the
+      X-Forwarded-Host / -Proto headers. Server-side landed in open-pryv.io
+      `9a874599`; client helper is a follow-up.
 
   - ref: 164.312(e)(1)
     title: Transmission security — standard
