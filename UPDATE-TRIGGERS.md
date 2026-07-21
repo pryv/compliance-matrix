@@ -595,11 +595,17 @@ Rows refreshed on this landing (delegated-app authN/authZ + consent):
   consent — granular consent screen as a second demonstrability path).
 - `context/cmc-consent-primitives.md` (consent-record inventory).
 
-**Not touched (deliberate):** the audit / records-of-processing family
-(`hipaa-security.164.312(b)`, `iso-27001.A.8.15`, `soc2.P6.2`,
-`gdpr.Art.30`). `components/oauth2/src/audit.ts` is a defined-but-unwired
-no-op stub — no `oauth.*` audit events are emitted yet, so no audit row
-cites them. Refresh those rows when audit emission is actually wired.
+**Audit family refreshed 2026-07-21** (was deliberately deferred while
+`components/oauth2/src/audit.ts` was a no-op stub): `oauth.*` audit
+emission shipped in open-pryv.io `07b6d3b6` (merge of the audit-wiring
+branch; consent lifecycle / code exchange incl. replay / token
+lifecycle, user-less events syslog-only) and refresh-token
+reuse-detection with chain revocation + `oauth.token.reuse_detected` in
+`829f7238`. Rows updated accordingly: `hipaa-security.164.312(b)`,
+`iso-27001.A.8.15`, `soc2.P6.2`, `gdpr.Art.30` (all now cite `OE07`
+and/or describe the authorization-activity coverage). New config key:
+`oauth.refreshReuseGraceSeconds` (replay grace window, default 10 s,
+0 = strict).
 
 ## Section C — Maintenance reminders
 

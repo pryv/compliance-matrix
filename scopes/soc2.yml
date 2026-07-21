@@ -1208,13 +1208,17 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream, access]
-    tests: [AT01, AT51, AT61]
+    tests: [AT01, AT51, AT61, OE07]
     derives_from: [hipaa-privacy.164.528, gdpr.Art.30]
     overview: |
       Every disclosure is a read against a shared / CMC access, and the
       per-user audit log records each access invocation with the
       accessId + accessSerial that made it — a complete, attributable
-      record of who accessed what, when. The audit-event-stream can
+      record of who accessed what, when. Since open-pryv.io `07b6d3b6`
+      the *authorization* of a disclosure is recorded too: OAuth2
+      `oauth.*` audit events capture the consent grant, the code
+      exchange and every token issuance / refresh / revocation that
+      underlie a delegated-app disclosure. The audit-event-stream can
       surface the same record into the subject's own streams. This is
       the technical disclosure register; how long you retain it is your
       policy.

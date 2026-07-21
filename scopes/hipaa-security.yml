@@ -487,7 +487,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream]
-    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65]
+    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07]
     planned:
       - kind: feature
         summary: "Chained / signed audit log strengthens tamper-resistance evidence"
@@ -522,6 +522,20 @@ requirements:
       search criteria are the auditable action. Tier the audit log's
       protection accordingly. See
       `context/content-query-audit-semantics.md`.
+
+      Since open-pryv.io `07b6d3b6`, the OAuth2 authorization server
+      records its own activity in the same audit pipeline (`oauth.*`
+      events): consent lifecycle (shown / granted / refused),
+      authorization-code exchange including replay attempts, and token
+      lifecycle (issued per grant type / refreshed / revoked /
+      reuse-detected). User-resolved events land in the subject's
+      per-user trail (`[OE07]` proves rows in `:_audit:`); the
+      pre-identification ones (consent shown / refused, code replay)
+      go to syslog. A detected refresh-token replay additionally
+      revokes the whole token chain and records both the detection
+      and the resulting revocation (open-pryv.io `829f7238`) — so the
+      §164.312(b) trail covers delegated-app authorization activity,
+      not just data access.
 
   - ref: 164.312(c)(1)
     title: Integrity — standard

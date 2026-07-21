@@ -266,7 +266,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream]
-    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65]
+    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07]
     planned:
       - kind: feature
         summary: "Chained / signed audit log adds the software-side tamper-resistance signal A.8.15 expects"
@@ -277,7 +277,12 @@ requirements:
     overview: |
       Per-user audit log captures every API method invocation; access
       reference (accessId + accessSerial) ties each row to the
-      authenticated identity. Audit storage uses SQLite directly to
+      authenticated identity. Since open-pryv.io `07b6d3b6` this
+      includes the OAuth2 authorization server's own activity
+      (`oauth.*` events: consent lifecycle, code exchange incl. replay
+      attempts, token issued / refreshed / revoked / reuse-detected) —
+      authorization decisions are logged alongside the data accesses
+      they enable. Audit storage uses SQLite directly to
       decouple log integrity from data-path engine issues. The
       "analysed" element (review cadence, alerting thresholds) is the
       operator's procedure.

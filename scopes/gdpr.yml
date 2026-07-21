@@ -1450,7 +1450,12 @@ requirements:
     technical: |
       Audit data lives in per-user SQLite
       (`open-pryv.io/components/audit/`); `audit.get` API method exposes
-      it with access-time + method + access reference. The audit row
+      it with access-time + method + access reference. Since
+      open-pryv.io `07b6d3b6`, OAuth2 authorization-server activity
+      (`oauth.*`: consent granted, code exchanged, token issued /
+      refreshed / revoked) is recorded in the same per-user trail, so
+      the register's "recipients" derivation covers how a delegated
+      app's access came to exist, not only its subsequent reads. The audit row
       content is data-minimal by construction — it carries action +
       source (transport + ip) + URL query + access ref + integrity
       hash, never the request body. So the Article 30 register
