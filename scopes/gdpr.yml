@@ -1479,7 +1479,7 @@ requirements:
     pryv_effort_saved: high
     facilitation_mode: infrastructure
     draft: true
-    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, backup-restore, MFA, data-residency]
+    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -1538,6 +1538,18 @@ requirements:
           carve-out; fragment URIs rejected), curated-only client
           registration, and short-TTL access tokens paired with
           single-use rotating refresh tokens.
+        - Credential hand-off: IMPLEMENTED — the shared-secrets
+          endpoints (`open-pryv.io/components/shared-secrets/`) hand a
+          credential to a third party by a one-time random key instead
+          of a URL-embedded token, which would persist in browser
+          history, referrer headers, and server access logs. The key is
+          redeemable exactly once, expires on a mandatory TTL, and Pryv
+          stores only its SHA-256 — a database dump cannot reconstruct
+          a live credential, and the payload is scrubbed (including
+          from event history) once the secret stops being pending. An
+          optional signature (passphrase or client-computed HMAC whose
+          verifier secret never reaches the server) adds a second
+          factor to the redemption.
         - Data residency: CONFIGURABLE — multi-hosting puts data where
           your subjects (or your policy) require, bounding exposure
           surface.

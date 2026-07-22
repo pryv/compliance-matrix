@@ -649,15 +649,20 @@ requirements:
     pryv_effort_saved: medium
     facilitation_mode: primitive
     draft: true
-    pryv_primitives: [access, permissions, audit, observability-provider]
+    pryv_primitives: [access, permissions, audit, observability-provider, shared-secrets]
     overview: |
       Pryv's primary leakage-
       prevention surface is the permission model — an access only
       reads / writes the streams its scope permits, so a misconfigured
       app can't accidentally exfiltrate out-of-scope data. The audit
-      log surfaces anomalous access patterns post-facto. Network /
-      endpoint DLP (browser-side copy-paste protection, USB blocking,
-      etc.) is the operator's endpoint-management scope.
+      log surfaces anomalous access patterns post-facto. The
+      shared-secrets primitive closes a classic leakage channel:
+      credentials handed to third parties travel as a one-time random
+      key instead of a URL-embedded token, so browser history, referrer
+      headers, and server access logs stop accumulating live
+      credentials. Network / endpoint DLP (browser-side copy-paste
+      protection, USB blocking, etc.) is the operator's
+      endpoint-management scope.
 
   - ref: A.8.22
     title: A.8.22 — Segregation of networks
@@ -825,7 +830,7 @@ requirements:
     pryv_effort_saved: medium
     facilitation_mode: infrastructure
     draft: true
-    pryv_primitives: [system-streams, MFA, encryption-at-rest-secrets]
+    pryv_primitives: [system-streams, MFA, encryption-at-rest-secrets, shared-secrets]
     planned:
       - kind: enhancement
         summary: "Reference MFA plugins broaden the authentication-information catalogue"
@@ -853,6 +858,20 @@ requirements:
       (`bin/oauth-client.js rotate-secret`). The operator's broader
       secret-distribution + rotation programme stays the organizational
       half; Pryv supplies the short-TTL + rotation mechanics.
+
+      **Transmitting authentication information to a third party.**
+      "Appropriate handling" includes how a credential travels when you
+      hand it to someone else. Pryv's shared-secrets endpoints
+      (`open-pryv.io/components/shared-secrets/`) replace the
+      URL-embedded-token pattern with a one-time random key: redeemable
+      exactly once, mandatory TTL, only the key's SHA-256 stored
+      server-side, payload scrubbed once consumed, optional
+      passphrase / HMAC signature on redemption. Your handling policy
+      ("never send credentials in links or logs") gains a shipped
+      mechanism to point at instead of a prohibition alone. A
+      `secretSharing: forbidden` feature permission — inherited by
+      child accesses — lets you exclude publicly-exposed tokens from
+      the mechanism entirely.
 
   - ref: A.5.18
     title: A.5.18 — Access rights

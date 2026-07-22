@@ -339,8 +339,8 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [access, permissions, system-streams, MFA, encryption-at-rest-secrets, letsEncrypt-integration]
-    tests: [AA01, AA02, ACCP, MA01, MA02]
+    pryv_primitives: [access, permissions, system-streams, MFA, encryption-at-rest-secrets, letsEncrypt-integration, shared-secrets]
+    tests: [AA01, AA02, ACCP, MA01, MA02, SHS02, SHS09, SHS13]
     derives_from: [iso-27001.A.5.15, iso-27001.A.8.5, hipaa-security.164.312(a)(1)]
     planned:
       - kind: enhancement
@@ -371,6 +371,20 @@ requirements:
       registration is curated-only — the operator promotes an account
       to an OAuth client via `bin/oauth-client.js`; open self-service
       registration (`POST /oauth2/register`) is deliberately disabled.
+
+      **Credential transmission to third parties.** When a credential
+      must be handed to a counterparty, the shared-secrets endpoints
+      (`open-pryv.io/components/shared-secrets/`) replace URL-embedded
+      tokens with a one-time random key: redeemable exactly once (with
+      atomic single-winner semantics under concurrent redemption),
+      mandatory TTL, only the key's SHA-256 stored server-side, payload
+      scrubbed once consumed, optional passphrase / HMAC signature on
+      redemption. Browser history, referrer headers, and access logs
+      therefore stop carrying live credentials. A
+      `secretSharing: forbidden` feature permission — inherited by
+      child accesses and not strippable via `accesses.update` — lets
+      you exclude designated access classes from minting shared
+      secrets at all.
 
   - ref: CC6.2
     title: CC6.2 — User registration, credential issuance, and de-provisioning

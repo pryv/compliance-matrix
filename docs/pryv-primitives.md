@@ -194,6 +194,50 @@ TOTP + WebAuthn are tracked under internal backlog slug
   can claim depends on the configured provider; AAL2 requires TOTP
   + push or WebAuthn (SMS-only is AAL1 under NIST SP 800-63B Rev 3).
 
+### `shared-secrets`
+
+One-time hand-off of a secret to a third party, addressed by a random
+key instead of embedding the credential in a URL
+(`open-pryv.io/components/shared-secrets/`).
+
+- **Endpoints**: `POST /:username/shared-secrets` creates an item and
+  returns the clear key **exactly once**;
+  `POST /:username/shared-secrets/retrieve` redeems it —
+  unauthenticated by design, the key IS the credential;
+  `POST /:username/shared-secrets/status` lets the creator inspect an
+  item without consuming it. Client helper: `pryv.SharedSecrets`
+  (lib-js).
+- **One-shot + mandatory TTL**: a key is redeemable exactly once
+  (concurrent retrievals atomically yield a single winner); a positive
+  TTL is required and capped by `sharedSecrets.maxTtl` (default 30
+  days) — an open-ended secret is never valid.
+- **Hash-only storage**: Pryv stores only the SHA-256 of the key, so a
+  database dump cannot reconstruct a live key. The secret payload is
+  scrubbed as soon as the item leaves the pending state (consumed,
+  expired-discarded, or signature-mismatch-discarded) — including from
+  event history; what remains is a payload-free record of the hand-off.
+- **Optional signature gate on retrieval**: `secret` (recipient must
+  present a passphrase; a mismatch discards the secret for good) or
+  `hmac-sha256` (recipient proves possession of a verifier secret that
+  never reaches the server).
+- **Per-access isolation + opt-out**: items live under the reserved
+  `:_shared-secrets:<accessId>` namespace — an access only sees its
+  own, items stay out of wildcard `events.get`, and the events API
+  refuses to create, modify, or move `shared-secret/item` events (no
+  forged redeemables). A `{ feature: "secretSharing", setting:
+  "forbidden" }` permission opts an access out; it is inherited by
+  child accesses and cannot be stripped by `accesses.update`.
+- **Config**: `sharedSecrets.enabled` / `sharedSecrets.maxTtl` /
+  `sharedSecrets.maxSizeBytes` (payload cap, default 4 KB).
+- **Compliance role**: security-of-processing control for credential
+  hand-off (GDPR Art.32; ISO 27001 A.5.17 + A.8.12; HIPAA-Security
+  164.312(e)(1); SOC 2 CC6.1). Handing a credential (e.g. an access
+  token) to a counterparty previously meant a query parameter that
+  persists in browser history, referrer headers, and server access
+  logs; the one-time key removes the live credential from those
+  surfaces and bounds the exposure of any leaked key to one redemption
+  within the TTL.
+
 ### `audit-event-stream`
 
 A separate, append-only audit channel emitted into the user's own

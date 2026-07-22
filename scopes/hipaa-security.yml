@@ -688,8 +688,8 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
-    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC]
+    pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, shared-secrets]
+    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13]
     overview: |
       All Pryv API traffic terminates on TLS 1.3 by default, with
       certificates issued + auto-renewed via the built-in ACME
@@ -712,6 +712,19 @@ requirements:
       narrows accordingly. See `context/webhooks-signal-only.md` for
       the full design rationale + operational caveats (TLS-on-
       delivery, retry semantics, poison-pill protection).
+
+      **Credential hand-off between parties.** TLS protects the pipe;
+      the shared-secrets primitive
+      (`open-pryv.io/components/shared-secrets/`) protects the
+      credential travelling over it. Handing an access credential to a
+      counterparty (e.g. inviting a care-team member) used to mean a
+      URL-embedded token that lingers in browser history, referrer
+      headers, and intermediary access logs after the TLS session ends.
+      Instead, the counterparty receives a one-time random key —
+      redeemable exactly once, mandatory expiry, hash-only server-side
+      storage, optional passphrase / HMAC gate on redemption — so an
+      intercepted or logged link never carries a live, replayable
+      credential to ePHI.
 
   - ref: 164.312(e)(2)(i)
     title: Integrity controls — Addressable

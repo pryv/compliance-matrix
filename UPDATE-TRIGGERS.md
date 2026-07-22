@@ -436,7 +436,7 @@ rows above (in which case the `CONFIG-EFFECTIVE-EXPOSURE` backlog
 becomes a one-line stub pointing at the admin-panel work to
 satisfy the validator's chip → backlog resolution requirement).
 
-### `SHARED-SECRETS` (shipped — rows not yet walked)
+### `SHARED-SECRETS` (SHIPPED — rows walked 2026-07-22)
 
 **Where the work lives**: `open-pryv.io/components/shared-secrets/` +
 `POST /:username/shared-secrets`, `/shared-secrets/retrieve`,
@@ -452,21 +452,25 @@ mandatory TTL, and the server stores only its SHA-256 — so a database
 dump cannot reconstruct a live credential. The payload is scrubbed as
 soon as the secret stops being pending, including from event history.
 
-Rows to walk (not yet done — needs the research loop + `npm run validate`
-/ `npm run build` in a dedicated pass):
+**Row walk done (2026-07-22)** — new `shared-secrets` primitive added to
+`docs/pryv-primitives.md` (B.4); rows updated:
 
-| Scope | Ref | Suggested kind | Impact | Why |
-|---|---|---|---|---|
-| gdpr | Art.32 | feature | medium | security of processing — removes credentials from URLs/logs; one-shot + TTL + hash-only storage limit exposure of a leaked key |
-| gdpr | Art.5(1)(f) | feature | low | integrity & confidentiality narrative for credential hand-off |
-| iso-27001 | A.5.17 | feature | medium | authentication-information handling — direct match for how secrets are transmitted to third parties |
-| iso-27001 | A.8.12 | enhancement | low | data-leakage prevention — access logs stop carrying live credentials |
-| hipaa-security | 164.312(e)(1) | feature | low | transmission security for credentials passed between parties |
-| soc2 | CC6.1 | feature | low | logical-access credential transmission |
+| Scope | Ref | What changed |
+|---|---|---|
+| gdpr | Art.32 | `shared-secrets` added to `pryv_primitives`; new "Credential hand-off: IMPLEMENTED" per-aspect bullet in detail (one-shot key + mandatory TTL + SHA-256-only storage + payload scrub + optional signature) |
+| iso-27001 | A.5.17 | primitive added; new detail paragraph "Transmitting authentication information to a third party" incl. the `secretSharing: forbidden` opt-out |
+| iso-27001 | A.8.12 | primitive added; overview extended — access logs / browser history / referrers stop accumulating live credentials |
+| hipaa-security | 164.312(e)(1) | primitive added; `tests:` gains `SHS02` / `SHS12` / `SHS13`; new detail paragraph "Credential hand-off between parties" (TLS protects the pipe, shared-secrets protects the credential) |
+| soc2 | CC6.1 | primitive added; `tests:` gains `SHS02` / `SHS09` / `SHS13`; new detail paragraph "Credential transmission to third parties" |
+
+`gdpr.Art.5(1)(f)` needed no separate edit: the Art.5 row's §1(f) bullet
+defers to Art.32 by design ("covered separately at Art.32"), so the
+Art.32 update carries it. No coverage-tier shifts — every walked row
+already sat at the right tier; the feature strengthens the evidence and
+primitive citations within it.
 
 No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so
-it carries no `planned:` chips. When the rows above are refreshed, cite
-the open-pryv.io commit range rather than a proposal.
+it carries no `planned:` chips.
 
 ## Section B — Trigger categories (no specific backlog slug yet)
 
