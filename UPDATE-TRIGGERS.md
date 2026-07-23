@@ -662,7 +662,24 @@ strengthens token-theft resistance — walk `soc2.CC6.1`, `iso-27001.A.5.17`,
 (proof freshness window, default 120 s). ⚠️ Deployment note captured in the
 row + config: DPoP requires a trusted proxy that overwrites X-Forwarded-Host
 / -Proto. Client helper (lib-js) + operator revoke-by-key-thumbprint are
-follow-ups, not yet shipped.
+follow-ups, not yet shipped. *(Both landed since — see the next entry.)*
+
+**DPoP client + operator revocation landed 2026-07-22/23** — the two
+follow-ups above plus client-revoke live propagation:
+- **lib-js DPoP client** shipped in `pryv` 3.10.0 (`SignedConnection`,
+  `OAuth2Client({dpop: true})`) — the client side of the
+  `hipaa-security.164.312(d)` story is no longer pending.
+- **Operator revoke-by-key** (open-pryv.io `4c0a5ade`): platform-wide
+  tombstone by RFC 7638 thumbprint; live DPoP-bound tokens rejected on all
+  cores within `oauth.dpop.keyRevokeCheckSeconds` (default 30 s); advisory
+  per-client key inventory (`list-keys`). Recorded in
+  `hipaa-security.164.312(d)`.
+- **Client revocation reaches live tokens** (open-pryv.io `7b6321aa`):
+  `revoke <clientId>` now cuts existing access tokens cluster-wide within
+  `oauth.clientRevokeCheckSeconds` (default 30 s), incl. a socket.io sweep —
+  previously issued tokens lived out their TTL. Recorded in `soc2.CC6.3`.
+  Next-touch refresh candidates for the removal/termination family:
+  `hipaa-security.164.308(a)(3)(ii)(C)`, `iso-27001.A.5.18`, `gdpr.Art.32`.
 
 ## Section C — Maintenance reminders
 

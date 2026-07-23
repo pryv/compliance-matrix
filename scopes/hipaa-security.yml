@@ -611,7 +611,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams]
-    config_keys: [services.mfa.mode, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa, oauth.dpop.clockSkewSeconds]
+    config_keys: [services.mfa.mode, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds]
     tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07]
     planned:
       - kind: enhancement
@@ -677,7 +677,18 @@ requirements:
       DEPLOYMENT NOTE: DPoP binds to the client-facing request URI, so a
       deployment accepting it must sit behind a proxy that overwrites the
       X-Forwarded-Host / -Proto headers. Server-side landed in open-pryv.io
-      `9a874599`; client helper is a follow-up.
+      `9a874599`; the client side ships in the `pryv` JS library 3.10.0
+      (`SignedConnection`, `OAuth2Client` with `dpop: true`).
+
+      **Operator key revocation.** When a bound key is compromised, you
+      revoke it platform-wide by its RFC 7638 thumbprint
+      (`bin/oauth-client.js revoke-key <jkt> --yes`): every token bound
+      to the key — including refresh rotations attempted after the
+      revoke — is rejected on all cores within
+      `oauth.dpop.keyRevokeCheckSeconds` (default 30 s), and the token
+      endpoint refuses to mint for it. An advisory per-client key
+      inventory (`list-keys`) shows what a revocation will hit before
+      you run it (open-pryv.io `4c0a5ade`).
 
   - ref: 164.312(e)(1)
     title: Transmission security — standard
