@@ -169,6 +169,13 @@ queries are the paired search-under-encryption concern).
 re-encryption; pryv/service-core#516). End-to-end encryption: server
 itself never holds plaintext.
 
+**Partial step 2026-07-23:** client-side encryption toolkit shipped to
+lib-js `feature/encryption` (`@pryv/encryption`: aes-256-gcm +
+asymmetric ecies-aes-256-gcm + encrypted attachments + legacy reader;
+formats specified in data-types), pending merge. Application-layer,
+client-managed keys — row coverage unchanged; see the proposal's
+status note.
+
 | Scope | Ref | Kind | Impact | After shipping |
 |---|---|---|---|---|
 | hipaa-security | 164.312(a)(2)(iv) | feature | medium | reframed entirely: encryption is default |

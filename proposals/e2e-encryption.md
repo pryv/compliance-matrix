@@ -6,6 +6,23 @@ updated.
 **Upstream backlog item:** macroPryv `_plans/XXX-Backlog/E2E-ENCRYPTION.md`
 (filed 2026-04-26; mirror of `pryv/service-core#516`).
 
+**Partial step SHIPPED 2026-07-23 (pending merge to master):** a
+**client-side encryption toolkit** landed on lib-js
+`feature/encryption` (`@pryv/encryption` workspace component) with the
+matching `encrypted/aes-256-gcm` and `encrypted/ecies-aes-256-gcm`
+formats specified language-neutrally in data-types
+(`feature/encrypted-formats`). For opted-in events the core stores
+only ciphertext (content AND attachments) and never holds a key —
+application-layer, client-managed keys, including asymmetric
+share-to-a-public-key (ECIES P-256). This is NOT the E2E primitive
+this proposal tracks: key distribution/recovery, re-keying for new
+recipients (proxy re-encryption) and search-under-encryption remain
+open, and the platform itself is unchanged. It upgrades the
+"application encrypting field values before writing to Pryv" option
+below from implementer-DIY to a supported, specified library path.
+Matrix row coverage deliberately NOT changed by this step (rows
+measure the platform; revisit per Action items when real E2E ships).
+
 ## Why the matrix cares about this proposal
 
 Several matrix rows around "encryption at rest" land at
