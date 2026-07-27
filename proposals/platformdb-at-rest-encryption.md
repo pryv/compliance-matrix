@@ -1,6 +1,6 @@
 # PlatformDB at-rest encryption
 
-**Proposal mirror of**: `_plans/XXX-Backlog/PLATFORMDB-AT-REST-ENCRYPTION.md` (macroPryv).
+**Proposal mirror of**: `_plans/XXX-Backlog/COMPLIANCE-PLATFORMDB-AT-REST-ENCRYPTION.md` (macroPryv).
 **Filed during**: Plan 71 Q25 — cross-border PlatformDB analysis.
 
 ## Goal
@@ -58,7 +58,7 @@ Does NOT cover:
 
 ## Cross-references
 
-- macroPryv backlog: `_plans/XXX-Backlog/PLATFORMDB-AT-REST-ENCRYPTION.md`
+- macroPryv backlog: `_plans/XXX-Backlog/COMPLIANCE-PLATFORMDB-AT-REST-ENCRYPTION.md`
 - `compliance-matrix/UPDATE-TRIGGERS.md` Section A entry
   `PLATFORMDB-AT-REST-ENCRYPTION`.
 - `compliance-matrix/context/cross-border-platformdb-implications.md`

@@ -237,7 +237,7 @@ Filed under internal backlog slug `QUICKSTART-DOCKER-HTTP-EXAMPLE`.
 
 Filed under internal backlog slug `MBP2-MULTICORE-SIMULATION`. Pairs naturally with the `LE-STAGING-DRILL-RUNBOOK` backlog (the LE drill becomes easier once the multi-core launcher exists).
 
-### `REG-ACCESS-CLIENT-AUTHURL` (DX-only — no matrix row updates)
+### `REG-ACCESS-CLIENT-AUTHURL` (DX-only — no matrix row updates; SHIPPED 2026, open-pryv.io `464ce266`)
 
 **Where the work lives**: `open-pryv.io`
 (`components/api-server/src/routes/reg/access.ts` + request schema +

@@ -3,12 +3,12 @@
 **Status:** future / research direction. The matrix records this so
 that if/when the feature ships, the affected coverage rows can be
 updated.
-**Upstream backlog item:** macroPryv `_plans/XXX-Backlog/E2E-ENCRYPTION.md`
+**Upstream backlog item:** macroPryv `_plans/XXX-Backlog/COMPLIANCE-E2E-ENCRYPTION.md`
 (filed 2026-04-26; mirror of `pryv/service-core#516`).
 
-**Partial step SHIPPED 2026-07-23 (pending merge to master):** a
-**client-side encryption toolkit** landed on lib-js
-`feature/encryption` (`@pryv/encryption` workspace component) with the
+**Partial step SHIPPED 2026-07-23 (merged to master; released in lib-js 3.10.0 + data-types formats):** a
+**client-side encryption toolkit** landed in lib-js
+(`@pryv/encryption` workspace component) with the
 matching `encrypted/aes-256-gcm` and `encrypted/ecies-aes-256-gcm`
 formats specified language-neutrally in data-types
 (`feature/encrypted-formats`). For opted-in events the core stores
@@ -41,7 +41,7 @@ the matrix; the right answer is "your hosting provider handles
 that". Documenting the choice is the matrix's job, not implementing
 it.
 
-The longer-term direction in `_plans/XXX-Backlog/E2E-ENCRYPTION.md`
+The longer-term direction in `_plans/XXX-Backlog/COMPLIANCE-E2E-ENCRYPTION.md`
 is **end-to-end encryption**, where the server itself never holds
 plaintext — research direction is proxy re-encryption (see the
 upstream backlog item for references). That is a substantively
@@ -100,7 +100,7 @@ flavour use cases.
 
 ## Action items (defer until E2E ships)
 
-1. When `_plans/XXX-Backlog/E2E-ENCRYPTION.md` advances to a concrete
+1. When `_plans/XXX-Backlog/COMPLIANCE-E2E-ENCRYPTION.md` advances to a concrete
    feature (proxy re-encryption working POC + integration into the
    API path), revisit each affected row.
 2. Add an `e2e-encryption` primitive to `docs/pryv-primitives.md`
@@ -110,7 +110,7 @@ flavour use cases.
 
 ## Related
 
-- Upstream backlog: `_plans/XXX-Backlog/E2E-ENCRYPTION.md`
+- Upstream backlog: `_plans/XXX-Backlog/COMPLIANCE-E2E-ENCRYPTION.md`
 - Sibling proposal: `proposals/aliases-as-pseudonymization-primitive.md`
   (covers a different pseudonymization angle — username aliases).
 - Content queries SHIPPED (open-pryv.io `1295c0b`, 2026-06-11 —
