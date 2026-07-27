@@ -497,16 +497,21 @@ selects which adapter is loaded.
   leaking PII to the provider.
 - **PII filtering posture**: provider-specific. The shipped NR
   adapter's protection block at
-  `providers/newrelic/newrelic.cjs:65-128` strips
+  `providers/newrelic/newrelic.cjs:65-158` strips
   `authorization` / `cookie` / `proxy-authorization` /
   `set-cookie*` / `x-*` request headers + `request.body` + SQL
   statements, and since 2026-07-27 also **request URLs**
   (`request.uri`, `http.url`), **route and query parameters**
   (`request.parameters.*`, which is where the username appears
-  as an attribute) and the **`Host` / `Referer`** headers, with
-  `url_obfuscation` covering external segment names and
-  application log forwarding shipped off;
+  as an attribute), the **`Host` / `Referer` / `User-Agent`**
+  headers, and **error message text**
+  (`strip_exception_messages`); external segment names have
+  their **whole path masked**, application log forwarding ships
+  off, and custom events and attributes are disabled;
   `allow_all_headers: false`; `record_sql: 'off'`.
+  Residual with no client-side control: **outbound host names**
+  (`peer.hostname`, `server.address`), which for webhooks is the
+  receiving application's endpoint host.
   ⚑ **Correction of record**: before 2026-07-27 this block lived
   in a file the agent does not discover, so it was inert and
   deployments ran on vendor defaults. See

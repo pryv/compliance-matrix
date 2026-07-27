@@ -1378,16 +1378,25 @@ requirements:
          provider-specific) — the shipped New Relic adapter's
          hard-coded protection block at
          `components/business/src/observability/providers/newrelic/
-         newrelic.cjs:65-128`: strips `request.headers.{authorization,
+         newrelic.cjs:65-158`: strips `request.headers.{authorization,
          cookie,proxy-authorization,set-cookie*,x-*}` + `request.
          body`, and since 2026-07-27 also request URLs
          (`request.uri`, `http.url`), route and query parameters
          (`request.parameters.*`, where the username otherwise
-         appears as an attribute) and the `Host` / `Referer`
-         headers; `url_obfuscation` covers external segment names;
+         appears as an attribute), the `Host` / `Referer` /
+         `User-Agent` headers, and error message text
+         (`strip_exception_messages`, because the platform's own
+         validation errors quote client-supplied stream ids);
+         external segment names have their whole path masked;
          application log forwarding ships off (log message bodies
          are not identifier-scrubbed anywhere in the stack);
+         custom events and attributes disabled;
          `record_sql: 'off'`; `allow_all_headers: false`.
+         Residual with no client-side control: outbound host
+         names, which for webhooks is the receiving application's
+         endpoint host. What remains is pseudonymous rather than
+         anonymous, so this telemetry is still personal data and
+         the Art.28 processor relationship applies to it in full.
          ⚑ **Correction of record:** before 2026-07-27 this block
          lived in a file the vendor agent does not discover, so it
          was inert and enabled deployments ran on vendor defaults.

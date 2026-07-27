@@ -1388,7 +1388,7 @@ exclude list.
 
    The NR adapter's hard-coded protection block at
    `components/business/src/observability/providers/newrelic/
-   newrelic.cjs:65-128`. ⚑ **Correction of record:** before
+   newrelic.cjs:65-158`. ⚑ **Correction of record:** before
    2026-07-27 this block lived in a `.ts` file, which the agent
    does not discover, so it was inert and deployments ran on
    vendor defaults (no exclusions, obfuscated SQL, log records
@@ -1399,25 +1399,41 @@ exclude list.
    ```js
    allow_all_headers: false,
    attributes: {
+     // NOTE these are the AGENT's attribute names, which camel-case
+     // multi-word headers. A `request.headers.user-agent` entry
+     // matches nothing and fails silently.
      exclude: [
        'request.headers.authorization',
        'request.headers.cookie',
-       'request.headers.proxy-authorization',
-       'request.headers.set-cookie*',
-       'request.headers.x-*',
+       'request.headers.proxyAuthorization',
+       'request.headers.setCookie*',
+       'request.headers.x*',
        'request.body',
        // identifiers, added 2026-07-27
        'request.uri',
        'request.parameters.*',
        'http.url',
        'request.headers.host',
-       'request.headers.referer'
+       'request.headers.referer',
+       'request.headers.userAgent'
      ]
    },
-   url_obfuscation: { enabled: true },
+   // whole path masked, not identifier shapes
+   url_obfuscation: { enabled: true, regex: { pattern: '^/.*', replacement: '*' } },
+   strip_exception_messages: { enabled: true },
    application_logging: { forwarding: { enabled: false } },
+   custom_insights_events: { enabled: false },
+   api: { custom_attributes_enabled: false },
    transaction_tracer: { record_sql: 'off' }
    ```
+
+   The complete set of `request.*` attributes an operator's
+   vendor actually holds under this configuration, enumerated
+   from live telemetry rather than inferred: `accept`,
+   `contentLength`, `contentType` and `request.method`.
+   Residual with no client-side control: outbound host names
+   (`peer.hostname`, `server.address`), which for webhooks means
+   the receiving application's endpoint host.
 
    Plus `high_security: false` default — operator opts into
    account-side HSM if their observability account supports

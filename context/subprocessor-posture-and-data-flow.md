@@ -123,7 +123,7 @@ discloses them per Art.13(1)(f) where recipients exist.
   transaction metrics + error traces. **With PII filters
   explicitly configured in the adapter.** Concrete protection
   block at
-  `components/business/src/observability/providers/newrelic/newrelic.cjs:65-128`
+  `components/business/src/observability/providers/newrelic/newrelic.cjs:65-158`
   (the `.cjs` extension is load-bearing: the agent discovers
   `newrelic.{js,cjs,mjs}` only, which is what the correction
   above is about):
@@ -132,20 +132,35 @@ discloses them per Art.13(1)(f) where recipients exist.
   attributes.exclude: [
     'request.headers.authorization',
     'request.headers.cookie',
-    'request.headers.proxy-authorization',
-    'request.headers.set-cookie*',
-    'request.headers.x-*',
+    'request.headers.proxyAuthorization',
+    'request.headers.setCookie*',
+    'request.headers.x*',
     'request.body',
     'request.uri',
     'request.parameters.*',
     'http.url',
     'request.headers.host',
-    'request.headers.referer'
+    'request.headers.referer',
+    'request.headers.userAgent'
   ]
-  url_obfuscation.enabled: true
+  url_obfuscation: enabled, '^/.*' replaced by '*'
+  strip_exception_messages.enabled: true
   application_logging.forwarding.enabled: false
+  custom_insights_events.enabled: false
+  api.custom_attributes_enabled: false
   transaction_tracer.record_sql: 'off'
   ```
+  Two properties deserve an auditor's attention. **The names are
+  the agent's published attribute names, not HTTP header names**:
+  the agent camel-cases multi-word headers, so an exclusion
+  written as `request.headers.user-agent` matches nothing and
+  fails silently. That mistake was made here and was caught by a
+  live attribute inventory rather than by review, which is why
+  the posture is now asserted against the agent's own attribute
+  filter. **URL obfuscation masks the WHOLE path** rather than
+  matching identifier shapes; shape-matching was tried first and
+  leaked attachment filenames, user-chosen stream ids and
+  webhook path segments.
   Reading the identifier exclusions in the order that matters to
   a reviewer: **request URLs** (`request.uri`, `http.url`) carry
   the username plus event and attachment ids on this API;
@@ -177,20 +192,43 @@ discloses them per Art.13(1)(f) where recipients exist.
   depend on it. The opt-in previously existed on paper only (the
   config resolver never returned the value); it is now settable
   via `observability newrelic set-high-security <true|false>`.
-- **Residual, stated plainly**: error *message* strings are not
-  identifier-scrubbed. Application code that puts a username or
-  record id into an error message sends that string to the
-  vendor.
-- **Evidence (2026-07-27)**: validated on a live two-core
-  deployment after the fix, with queries scoped to that
-  deployment and bounded after the restart. Identifier counts
-  measured zero (request URLs, span URLs, `Host`/`Referer`,
-  route-parameter usernames, forwarded log records, and a
-  deliberately planted probe username and query-string
-  credential) while positive controls confirmed telemetry was
-  arriving. The same entity over the preceding hours of the same
-  day showed 129 transactions carrying request URLs and 172
-  forwarded log records, which is the before-and-after contrast.
+- **Residual that no setting removes: outbound HOST names.** URL
+  obfuscation rewrites paths, never hosts, and the span
+  attributes `peer.hostname`, `peer.address` and `server.address`
+  are present. For internal traffic those are the operator's own
+  core FQDNs. **For webhooks they are the endpoint hostname the
+  receiving application registered**, correlated by timestamp to
+  the transaction that triggered the delivery. If a webhook host
+  is itself identifying, it reaches the vendor and there is no
+  client-side control for it: the operator's options are to not
+  enable observability where webhook hostnames are sensitive, or
+  to accept it. Error *message* text is no longer a residual, it
+  is redacted (`strip_exception_messages`).
+- **What remains is pseudonymous, not anonymous.** Precise
+  timestamps, route patterns, status codes and the core FQDN
+  still describe individual activity and can be re-identified by
+  anyone holding a second signal, including the operator's own
+  audit log. This telemetry is therefore still personal data and
+  the processor relationship with the APM vendor still applies in
+  full. "No identifiers are sent" is not the same claim as "this
+  is no longer personal data", and this row should not be read as
+  the latter.
+- **Evidence (2026-07-27)**: validated twice on a live two-core
+  deployment, with queries scoped to that deployment and bounded
+  after each restart. The final pass enumerated the attributes
+  actually held rather than asserting absences: the complete set
+  of `request.*` attributes is `request.headers.accept`,
+  `request.headers.contentLength`, `request.headers.contentType`
+  and `request.method`. Probe sweeps returned zero for a planted
+  `User-Agent` marker, a probe username in paths, an attachment
+  filename and a query-string credential; forwarded log records
+  zero; error messages empty while six errors were recorded with
+  their class preserved. The same entity earlier that day showed
+  129 transactions carrying request URLs and 172 forwarded log
+  records, which is the before-and-after contrast. The
+  enumeration matters: the first attempt at the `User-Agent`
+  exclusion silently did nothing, and only an inventory of what
+  the vendor held revealed it.
 - **What flows out (custom adapter)**: vendor-specific.
   **The façade does NOT enforce PII filtering across all
   providers** — every custom adapter implements filtering
