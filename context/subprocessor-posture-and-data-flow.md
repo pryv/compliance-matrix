@@ -102,11 +102,31 @@ discloses them per Art.13(1)(f) where recipients exist.
 - **Config gate**: `observability.provider: <id>` + the
   vendor-specific encrypted-PlatformDB credentials. Default
   `observability.provider: disabled`.
+- ⚑ **Correction of record (2026-07-27): this control was
+  ineffective before that date.** The configuration below was
+  placed in a file the vendor agent does not look for, so the
+  agent silently ran on its own built-in defaults: no attribute
+  exclusion at all, SQL recorded in obfuscated form rather than
+  suppressed, and application log records forwarded. Any
+  deployment that had observability enabled before 2026-07-27
+  therefore sent request URLs, the `Host` header, route
+  parameters (carrying the username) and log message bodies to
+  its vendor, regardless of what this document previously
+  claimed. Fixed by moving the configuration to a filename the
+  agent discovers, and the posture below is now verified two
+  ways: a test asserts what the agent's own configuration loader
+  resolves, and the flagship deployment was validated after the
+  fix landed (see the evidence note at the end of this entry).
+  The earlier text is corrected rather than quietly rewritten,
+  because a reviewer who relied on it was misled.
 - **What flows out (NR adapter shipped today)**: aggregated
   transaction metrics + error traces. **With PII filters
-  explicitly configured in the adapter.** Concrete attribute
-  exclude list at
-  `components/business/src/observability/providers/newrelic/newrelic.ts:39-49`:
+  explicitly configured in the adapter.** Concrete protection
+  block at
+  `components/business/src/observability/providers/newrelic/newrelic.cjs:65-128`
+  (the `.cjs` extension is load-bearing: the agent discovers
+  `newrelic.{js,cjs,mjs}` only, which is what the correction
+  above is about):
   ```
   allow_all_headers: false
   attributes.exclude: [
@@ -115,13 +135,62 @@ discloses them per Art.13(1)(f) where recipients exist.
     'request.headers.proxy-authorization',
     'request.headers.set-cookie*',
     'request.headers.x-*',
-    'request.body'
+    'request.body',
+    'request.uri',
+    'request.parameters.*',
+    'http.url',
+    'request.headers.host',
+    'request.headers.referer'
   ]
+  url_obfuscation.enabled: true
+  application_logging.forwarding.enabled: false
   transaction_tracer.record_sql: 'off'
   ```
-  Plus `high_security` toggle off-by-default (account-side
-  HSM, irreversible — operator opts in if their NR account
-  supports it).
+  Reading the identifier exclusions in the order that matters to
+  a reviewer: **request URLs** (`request.uri`, `http.url`) carry
+  the username plus event and attachment ids on this API;
+  **`request.parameters.*`** covers both route parameters, where
+  the username appears as an attribute in its own right, and
+  outbound query parameters, which is how a credential passed as
+  `?auth=` or `?readToken=` would otherwise be re-emitted on a
+  cross-core forward; **`Host`** carries the username as a
+  subdomain in DNS-ful topologies. `url_obfuscation` exists
+  because attribute exclusion cannot reach the *names* of
+  external call segments, which embed outbound paths.
+  What still flows: route-pattern transaction names (never
+  filled-in values), status codes, timings, the core FQDN, and
+  datastore and external call timing.
+- **Application logs are a separate channel, and ship OFF.** The
+  agent auto-instruments the logging library and would forward
+  log records including message text; attribute exclusion does
+  not apply to a log message, and the platform's own log
+  redaction covers credential-shaped values rather than
+  identifiers. Operators may opt in per-process via
+  `NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED=true`, and
+  own what their messages contain. Log-derived metrics, which
+  carry no message content, remain enabled.
+- **`high_security` is off by default, and now genuinely
+  optional rather than nominal.** Account-side High Security
+  Mode is irreversible without vendor support, and a
+  client/account mismatch makes the agent refuse to connect, so
+  it cannot be a shipped default. The exclusions above do not
+  depend on it. The opt-in previously existed on paper only (the
+  config resolver never returned the value); it is now settable
+  via `observability newrelic set-high-security <true|false>`.
+- **Residual, stated plainly**: error *message* strings are not
+  identifier-scrubbed. Application code that puts a username or
+  record id into an error message sends that string to the
+  vendor.
+- **Evidence (2026-07-27)**: validated on a live two-core
+  deployment after the fix, with queries scoped to that
+  deployment and bounded after the restart. Identifier counts
+  measured zero (request URLs, span URLs, `Host`/`Referer`,
+  route-parameter usernames, forwarded log records, and a
+  deliberately planted probe username and query-string
+  credential) while positive controls confirmed telemetry was
+  arriving. The same entity over the preceding hours of the same
+  day showed 129 transactions carrying request URLs and 172
+  forwarded log records, which is the before-and-after contrast.
 - **What flows out (custom adapter)**: vendor-specific.
   **The façade does NOT enforce PII filtering across all
   providers** — every custom adapter implements filtering

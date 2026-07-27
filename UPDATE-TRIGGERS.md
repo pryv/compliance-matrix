@@ -681,6 +681,51 @@ follow-ups above plus client-revoke live propagation:
   Next-touch refresh candidates for the removal/termination family:
   `hipaa-security.164.308(a)(3)(ii)(C)`, `iso-27001.A.5.18`, `gdpr.Art.32`.
 
+### B.10 Observability adapter's data-flow posture changes
+
+**Where the work lives**: `open-pryv.io`
+`components/business/src/observability/providers/<id>/`. Any change to
+what an APM adapter sends is a subprocessor data-flow change and must
+walk the rows citing the `observability-provider` primitive.
+
+⚑ **The filename is part of the control.** The vendor agent discovers
+its configuration by scanning for `newrelic.{js,cjs,mjs}` only. A
+config in any other file (a `.ts` module, for instance) is inert and
+the agent runs on its own defaults. A posture claim in this matrix is
+therefore only credible with three things: the config itself, proof
+that the agent's own loader resolves it, and wire-level proof from a
+running deployment. Asserting the first alone is what produced the
+2026-07-27 correction below.
+
+**Trigger pass outcome (2026-07-27)**: the shipped New Relic adapter
+had been inert since observability first shipped, so enabled
+deployments ran on vendor defaults (no attribute exclusion, obfuscated
+rather than suppressed SQL, application log records forwarded). Fixed
+in open-pryv.io `4fc63d87`, which also added identifier exclusions
+(request URLs, `request.parameters.*` including route parameters,
+`Host`/`Referer`), URL obfuscation for external segment names, and
+application log forwarding off by default, plus a working
+`high_security` opt-in that previously existed on paper only.
+
+Rows and docs refreshed: `context/subprocessor-posture-and-data-flow.md`
+§ "Observability vendor" (carries the dated correction of record plus
+the post-fix validation evidence), `docs/pryv-primitives.md`
+(`observability-provider` entry), `docs/implementer-faq.md` (Layer 3
+block), `gdpr.Art.28` Layer 3 detail. Citation target moved from
+`newrelic.ts:39-49` to `newrelic.cjs:65-128`.
+
+**No tier shifts.** The row sweep over every scope citing
+`observability-provider` found only primitive-list references plus
+three prose passages (`hipaa-security.164.314(a)(2)(ii)(B)`,
+`gdpr.Art.28` DPO-visibility note, `swiss-nlpd.Art.9`) that describe
+the subprocessor relationship and "default disabled" without quoting
+the filter set, so they remain accurate unchanged. `gdpr.Art.28` stays
+`facilitated`: the posture is strengthened, not newly covered.
+
+**New config key**: `observability.newrelic.highSecurity` (plus the
+PlatformDB row `newrelic-high-security`), and the per-process
+environment opt-in `NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED`.
+
 ## Section C — Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check

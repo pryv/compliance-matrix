@@ -1386,9 +1386,15 @@ exclude list.
    adapters for Datadog, Honeycomb, OpenTelemetry, an internal
    Prometheus pipeline, or any vendor the deployment requires.
 
-   The NR adapter's hard-coded attribute exclude list at
+   The NR adapter's hard-coded protection block at
    `components/business/src/observability/providers/newrelic/
-   newrelic.ts:39-49`:
+   newrelic.cjs:65-128`. ⚑ **Correction of record:** before
+   2026-07-27 this block lived in a `.ts` file, which the agent
+   does not discover, so it was inert and deployments ran on
+   vendor defaults (no exclusions, obfuscated SQL, log records
+   forwarded). See
+   `context/subprocessor-posture-and-data-flow.md` for the
+   correction and the post-fix validation evidence.
 
    ```js
    allow_all_headers: false,
@@ -1399,9 +1405,17 @@ exclude list.
        'request.headers.proxy-authorization',
        'request.headers.set-cookie*',
        'request.headers.x-*',
-       'request.body'
+       'request.body',
+       // identifiers, added 2026-07-27
+       'request.uri',
+       'request.parameters.*',
+       'http.url',
+       'request.headers.host',
+       'request.headers.referer'
      ]
    },
+   url_obfuscation: { enabled: true },
+   application_logging: { forwarding: { enabled: false } },
    transaction_tracer: { record_sql: 'off' }
    ```
 

@@ -496,11 +496,22 @@ selects which adapter is loaded.
 - **Compliance role**: monitoring (ISO 27001 A.8.16) without
   leaking PII to the provider.
 - **PII filtering posture**: provider-specific. The shipped NR
-  adapter's exclude list at
-  `providers/newrelic/newrelic.ts:39-49` strips
+  adapter's protection block at
+  `providers/newrelic/newrelic.cjs:65-128` strips
   `authorization` / `cookie` / `proxy-authorization` /
   `set-cookie*` / `x-*` request headers + `request.body` + SQL
-  statements; `allow_all_headers: false`; `record_sql: 'off'`.
+  statements, and since 2026-07-27 also **request URLs**
+  (`request.uri`, `http.url`), **route and query parameters**
+  (`request.parameters.*`, which is where the username appears
+  as an attribute) and the **`Host` / `Referer`** headers, with
+  `url_obfuscation` covering external segment names and
+  application log forwarding shipped off;
+  `allow_all_headers: false`; `record_sql: 'off'`.
+  ⚑ **Correction of record**: before 2026-07-27 this block lived
+  in a file the agent does not discover, so it was inert and
+  deployments ran on vendor defaults. See
+  `context/subprocessor-posture-and-data-flow.md` for the full
+  correction and the post-fix validation evidence.
   Custom adapters are responsible for implementing equivalent
   safeguards through their vendor's mechanism — the façade
   contract doesn't enforce filtering across all providers, so

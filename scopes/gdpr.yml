@@ -1376,11 +1376,27 @@ requirements:
          payloads only leak if a caller explicitly logs them.
       3. **Observability PII filters** (when observability opt-in,
          provider-specific) — the shipped New Relic adapter's
-         hard-coded attribute exclude list at
+         hard-coded protection block at
          `components/business/src/observability/providers/newrelic/
-         newrelic.ts:39-49`: strips `request.headers.{authorization,
+         newrelic.cjs:65-128`: strips `request.headers.{authorization,
          cookie,proxy-authorization,set-cookie*,x-*}` + `request.
-         body`; `record_sql: 'off'`; `allow_all_headers: false`.
+         body`, and since 2026-07-27 also request URLs
+         (`request.uri`, `http.url`), route and query parameters
+         (`request.parameters.*`, where the username otherwise
+         appears as an attribute) and the `Host` / `Referer`
+         headers; `url_obfuscation` covers external segment names;
+         application log forwarding ships off (log message bodies
+         are not identifier-scrubbed anywhere in the stack);
+         `record_sql: 'off'`; `allow_all_headers: false`.
+         ⚑ **Correction of record:** before 2026-07-27 this block
+         lived in a file the vendor agent does not discover, so it
+         was inert and enabled deployments ran on vendor defaults.
+         Fixed, and validated post-fix on a live two-core
+         deployment (identifier counts zero against positive
+         controls; the same entity showed 129 URL-carrying
+         transactions and 172 forwarded log records earlier the
+         same day). Full account:
+         `context/subprocessor-posture-and-data-flow.md`.
          The façade contract itself is pluggable — a custom
          adapter (Datadog, Honeycomb, OpenTelemetry, internal
          Prometheus, etc.) implements PII filtering through its
