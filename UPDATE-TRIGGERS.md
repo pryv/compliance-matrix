@@ -369,7 +369,28 @@ hard requirement; not yet backlogged.
 
 Proposal: `proposals/platformdb-pii-hashing.md`.
 
-### `SUPPLY-CHAIN-SCANNING-PIPELINE`
+### `SUPPLY-CHAIN-SCANNING-PIPELINE`: SHIPPED
+
+**Shipped**: open-pryv.io master merge `9e2ee7ff` (feature
+commits `3ecb1e9a` + `afe6832c`) delivers the pipeline:
+`scripts/audit-prod-deps` fails CI on high or critical
+advisories in the runtime (`--omit=dev`) npm tree with a
+documented allowlist (`security-audit` job); a CycloneDX SBOM of
+the source tree is emitted and Grype-scanned on every CI run,
+failing on critical (`sbom` job); on release tags the published
+image gets its own CycloneDX SBOM, a keyless cosign signature
+and a SLSA build-provenance attestation (`docker` job,
+tag-gated); the base image is digest-pinned and the rqlite
+tarball checksum-verified in the Dockerfile; nodemailer's major
+bump cleared the standing runtime advisories. Chips discharged
+from `gdpr.Art.32`, `iso-27001.A.5.21` (F:Awareness Low →
+F:Evidence Medium) and `soc2.CC7.1` (F:Evidence Low →
+F:Evidence Medium); `iso-27001.A.5.22` added as a new row;
+prose refreshed on `iso-27001.A.5.23`, `iso-27001.A.8.30`,
+`hipaa-security.164.308(a)(8)` and `soc2.CC9.2`. Honest bound
+kept in the rows: the pinned base image still carries OS-level
+CVEs; the tag-gated signing path is structurally verified and
+first exercised by the next release tag.
 
 **Where the work lives**: `open-pryv.io`, CI workflow
 (`.github/workflows/ci.yml`) + `Dockerfile` + (optionally) a
@@ -392,6 +413,14 @@ software-supply-chain scope.
 | iso-27001 | A.5.23 | feature | low | strengthens cloud-services exit narrative, operator hands SBOM + signed-image proof to the next CSP for migration |
 | iso-27001 | A.8.30 | enhancement | low | when operator's "supplier" is Pryv, the SBOM + signed image + CHANGELOG combine into the supplier-monitoring artefact set |
 | iso-27001 | A.5.22 | feature | medium | row may need to be ADDED, A.5.22 "Monitoring of supplier services" doesn't currently have matrix coverage; the supply-chain pipeline gives it concrete content |
+
+Applied deltas vs. the table above: `soc2.CC7.1` also carried a
+chip (added with the SOC 2 scope after this table was written)
+and shifted F:Evidence Low → F:Evidence Medium; the
+`tests: [CIYAML]` citation was not added (no such test code
+exists; the CI workflow is cited in prose instead); A.5.22 was
+added as a new row; 164.308(a)(8), A.5.23 and A.8.30 received
+prose refinements without tier changes.
 
 Proposal: `proposals/supply-chain-scanning-pipeline.md`.
 

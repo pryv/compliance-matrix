@@ -1626,6 +1626,22 @@ is real and defensible; the 2026-04-30 sweep is evidence that
 dependabot triage works in practice. The full pipeline is the
 regulator-defensible upgrade.
 
+**Addendum (2026-07-28), shipped.** The pipeline landed in
+open-pryv.io (master merge `9e2ee7ff`): a CI runtime-dependency
+audit gate (`scripts/audit-prod-deps`, fails on high or
+critical, with a documented allowlist), CycloneDX SBOM emission
+(source tree on every CI run; image per release) with Grype
+scanning of the source SBOM (fails on critical), a digest-pinned
+base image + rqlite tarball checksum verification, and, on
+release tags, keyless cosign signing + SLSA build-provenance
+attestation. `iso-27001.A.5.21` shifted F:Awareness Low →
+F:Evidence Medium as promised (chip discharged); `soc2.CC7.1`
+likewise moved to F:Evidence Medium, and `iso-27001.A.5.22`
+gained its row. The tables above are kept as the record of the
+pre-shipping state. Honest bound: the pinned `node:24-bookworm`
+base image still carries OS-level CVEs; a slimmer-base migration
+is tracked as a separate follow-up.
+
 **Commit:** *(this commit)*.
 
 ### Q25: GDPR Art.46 cross-border transfers: operationalisation in a Pryv deployment
