@@ -1522,11 +1522,6 @@ requirements:
         proposal: proposals/supply-chain-scanning-pipeline.md
         tracking_url: https://github.com/pryv/open-pryv.io/issues/81
         impact: low
-      - kind: feature
-        summary: "PlatformDB at-rest encryption strengthens §1(a) encryption evidence at the cluster-replicated identification + routing layer"
-        proposal: proposals/platformdb-at-rest-encryption.md
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/79
-        impact: medium
     overview: |
       Multi-aspect article —
       Pryv implements several aspects for you (access control,
@@ -1538,13 +1533,22 @@ requirements:
       Per-aspect:
         - Encryption in transit: IMPLEMENTED — TLS 1.3 via built-in
           Let's Encrypt integration; mTLS between cores in a cluster.
-        - Encryption at rest: CONFIGURABLE — you enable operator
-          filesystem encryption (out-of-band) + AES-256-GCM for at-rest
-          operator secrets in PlatformDB. Event attachments inherit the
-          at-rest controls of your `storages.file.engine` choice:
-          filesystem encryption, S3 server-side encryption (SSE), or —
-          with attachments stored in PostgreSQL — the same DB-level
-          encryption that covers user rows.
+        - Encryption at rest: CONFIGURABLE — the
+          `container-encrypted-volume` companion (opt-in `CEV_ENABLED`)
+          provisions an encrypted volume covering the full user-data
+          surface (events, attachments, series, audit, and PlatformDB)
+          with a pluggable LUKS/gocryptfs backend and
+          env/file/exec/clevis/aws-kms key provider; operator secrets in
+          PlatformDB are additionally AES-256-GCM encrypted at the
+          application layer. CEV protects data on the storage medium
+          (stolen / decommissioned disks, off-host backups, snapshots);
+          it does not defend a running container, and a core running
+          rqlite outside a CEV container — or an external PostgreSQL —
+          falls back to operator-side full-disk encryption. Event
+          attachments inherit the at-rest controls of your
+          `storages.file.engine` choice: filesystem encryption, S3
+          server-side encryption (SSE), or — with attachments stored in
+          PostgreSQL — the same DB-level encryption that covers user rows.
         - Pseudonymisation: FACILITATED — system streams + custom
           event-type design; pseudonyms live in `clientData` or
           dedicated streams.

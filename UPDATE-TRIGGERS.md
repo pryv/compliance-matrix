@@ -296,30 +296,31 @@ protection.md`). Likely affected rows when configs ship:
 | iso-27001 | A.8.21 | enhancement | cite the recipes |
 | hipaa-security | 164.308(a)(5)(ii)(C) | enhancement | cite the recipes |
 
-### `PLATFORMDB-AT-REST-ENCRYPTION`
+### `PLATFORMDB-AT-REST-ENCRYPTION` — **superseded by container-encrypted-volume**
 
-**Where the work lives**: `open-pryv.io` — `storages/engines/rqlite/`
-+ `storages/interfaces/platformStorage/` + INSTALL.md. Two
-implementation paths: rqlite native disk encryption (Path 1, ~1d)
-or storage-adapter envelope encryption (Path 2, ~2-3d). Operator-
-supplied `platformDB.atRestKey` (32-byte base64) — operator-sync
-identical to `letsEncrypt.atRestKey`. Surfaced 2026-05-21 by
-multi-region PlatformDB cross-border analysis.
+**Status (2026-07-28): superseded, no code of its own.** This item
+was surfaced 2026-05-21 (multi-region PlatformDB cross-border
+analysis), BEFORE `container-encrypted-volume` (CEV) existed
+(shipped v0.1.0 on 2026-06-23). CEV delivers encryption-at-rest for
+the full user-data surface — events, attachments, series, audit,
+**and PlatformDB** — for a containerised deployment, covering
+exactly this item's threat model (SSD / backup-tape /
+decommissioned-hardware forfeiture, filesystem-level read breach,
+foreign-jurisdiction subpoena of the storage layer). The proposed
+rqlite-native / envelope-encryption paths would be redundant work.
+Chip discharged on `gdpr.Art.32`; row prose cites CEV covering
+PlatformDB. GitHub issue #79 closed 2026-07-28.
 
-Defence-in-depth against SSD / backup-tape / decommissioned-
-hardware forfeiture + filesystem-level read breach + foreign-
-jurisdiction subpoena of the storage layer. Does NOT cover runtime
-memory dumps or application-level breaches; pairs with
-`PLATFORMDB-PII-HASHING` for the replication-stream side.
+**Residuals not covered by CEV** (out of scope, deliberately):
+CEV is opt-in (`CEV_ENABLED`, coverage `configurable`) and covers
+data inside the container — a core running rqlite outside a CEV
+container falls back to operator FDE. It is storage-medium-only
+(no defense of a running container or the rqlite **replication
+stream**); that residual is the app-level exposure tracked by
+`PLATFORMDB-PII-HASHING` (already shipped for the PII columns).
 
-| Scope | Ref | Kind | Impact | After shipping |
-|---|---|---|---|---|
-| gdpr | Art.32 | feature | medium | concrete encryption-at-rest evidence at PlatformDB layer; chip removed |
-| gdpr | Art.46 | enhancement | low | reduces residual passive-forfeiture risk even with SCCs in place; detail prose tightens |
-| iso-27001 | A.5.33 | feature | medium | record protection — concrete cryptographic control on PlatformDB |
-| iso-27001 | A.8.24 | feature | medium | use-of-cryptography clause gains the PlatformDB instance |
-
-Proposal: `proposals/platformdb-at-rest-encryption.md`.
+Proposal: `proposals/platformdb-at-rest-encryption.md` (marked
+superseded). CEV proposal: `proposals/container-encrypted-volume.md`.
 
 ### `PLATFORMDB-PII-HASHING` — **shipped**
 
