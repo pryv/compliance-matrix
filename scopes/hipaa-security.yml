@@ -59,8 +59,8 @@ requirements:
     overview: |
       Every API call is captured by Pryv's per-user audit log; the
       `audit.get` method exposes it for periodic review. Observability
-      (New Relic adapter) gives system-level activity reports for the
-      infrastructure side. The "regular review" cadence is your written
+      (opt-in telemetry emitter) gives system-level activity reports for
+      the infrastructure side. The "regular review" cadence is your written
       procedure.
     detail: |
       Audit records carry timestamp, user, access reference (accessId +

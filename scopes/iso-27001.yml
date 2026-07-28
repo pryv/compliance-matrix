@@ -339,10 +339,11 @@ requirements:
     draft: true
     pryv_primitives: [observability-provider, audit]
     overview: |
-      The pluggable observability
-      provider (New Relic adapter shipped) gives system-level
-      monitoring; audit logs give application-level activity.
-      Operator chooses provider + thresholds + escalation paths.
+      The opt-in observability
+      emitter (per-method metrics + error reports over OTLP) gives
+      system-level monitoring; audit logs give application-level
+      activity. Operator chooses backend + thresholds + escalation
+      paths.
       Anomaly-detection logic on the audit stream itself is a
       potential extension.
 

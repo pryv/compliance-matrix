@@ -681,50 +681,82 @@ follow-ups above plus client-revoke live propagation:
   Next-touch refresh candidates for the removal/termination family:
   `hipaa-security.164.308(a)(3)(ii)(C)`, `iso-27001.A.5.18`, `gdpr.Art.32`.
 
-### B.10 Observability adapter's data-flow posture changes
+### B.10 Observability emitted-surface changes
 
 **Where the work lives**: `open-pryv.io`
-`components/business/src/observability/providers/<id>/`. Any change to
-what an APM adapter sends is a subprocessor data-flow change and must
-walk the rows citing the `observability-provider` primitive.
+`components/business/src/observability/`, and specifically
+`schema.ts`. Any change to what may be emitted is a subprocessor
+data-flow change and must walk the rows citing the
+`observability-provider` primitive.
 
-⚑ **The filename is part of the control.** The vendor agent discovers
-its configuration by scanning for `newrelic.{js,cjs,mjs}` only. A
-config in any other file (a `.ts` module, for instance) is inert and
-the agent runs on its own defaults. A posture claim in this matrix is
-therefore only credible with three things: the config itself, proof
-that the agent's own loader resolves it, and wire-level proof from a
-running deployment. Asserting the first alone is what produced the
-2026-07-27 correction below.
+⚑ **The allow-list IS the control.** Telemetry is constructed from the
+compile-time vocabulary in `schema.ts`; a field absent from it has no
+code path to any backend. So the review question is narrow and
+answerable: does this change add a metric name, an attribute key, an
+enum value, or a new vocabulary entry? If yes, it needs the three-layer
+proof (constants pinned by tests, the emitter's validation decisions
+asserted for accepted *and* refused inputs, and wire-level enumeration
+from a running deployment). If no, the posture is unchanged. Never
+accept a posture claim proved only against our own exported object:
+that is what produced the 2026-07-27 correction.
 
-**Trigger pass outcome (2026-07-27)**: the shipped New Relic adapter
-had been inert since observability first shipped, so enabled
-deployments ran on vendor defaults (no attribute exclusion, obfuscated
-rather than suppressed SQL, application log records forwarded). Fixed
-in open-pryv.io `4fc63d87`, which also added identifier exclusions
-(request URLs, `request.parameters.*` including route parameters,
-`Host`/`Referer`), URL obfuscation for external segment names, and
-application log forwarding off by default, plus a working
-`high_security` opt-in that previously existed on paper only.
+**Trigger pass outcome (2026-07-28)**: the vendor agent was removed and
+the integration rebuilt as an allow-list emitter over OTLP/HTTP
+(open-pryv.io `cf4cac7`). This supersedes the 2026-07-27 pass below
+rather than extending it: enumerating what must not escape a collector
+that sees everything is a control whose strength depends on that
+collector's defaults, so the collector is gone. Emitted surface is now
+per-method call counts, durations and error counts (labelled with a
+registered method id, a status class and an `ErrorIds` code), service
+and instance identity, and sanitized stack traces for server-side
+faults; error messages, URLs, headers, parameters, bodies, usernames
+and log records have no schema key. The outbound-host residual
+(`peer.hostname` / `server.address`) is gone with the agent.
 
-Rows and docs refreshed: `context/subprocessor-posture-and-data-flow.md`
-§ "Observability vendor" (carries the dated correction of record plus
-the post-fix validation evidence), `docs/pryv-primitives.md`
-(`observability-provider` entry), `docs/implementer-faq.md` (Layer 3
-block), `gdpr.Art.28` Layer 3 detail. Citation target moved from
-`newrelic.ts:39-49` to `newrelic.cjs:65-128`.
+**Anonymity controls added the same day (operator ruling: privacy
+outranks observability).** Error reports are aggregated by fault and
+stamped at the reporting interval rather than the instant of failure,
+and the instance id is the machine hostname, never derived from
+`core.url` / `dns.domain` (user-facing hosts are `<username>.<domain>`
+in DNS-ful deployments, so a URL-derived value was one config change
+from putting a username on every datapoint). Reports carry a hard-coded
+message chosen by error code. Verified by `[OBSP]`, which sweeps the
+serialized payload for ten identifier strings pushed through the real
+entry point, and `[OBSL]`, which proves the schema refuses an unsafe
+stack even if the sanitizer produced one. **The claim to cite is
+"anonymous by construction, with a residual correlation risk at very
+low traffic volumes"** — never an unqualified guarantee.
 
-**No tier shifts.** The row sweep over every scope citing
-`observability-provider` found only primitive-list references plus
-three prose passages (`hipaa-security.164.314(a)(2)(ii)(B)`,
-`gdpr.Art.28` DPO-visibility note, `swiss-nlpd.Art.9`) that describe
-the subprocessor relationship and "default disabled" without quoting
-the filter set, so they remain accurate unchanged. `gdpr.Art.28` stays
-`facilitated`: the posture is strengthened, not newly covered.
+Rows and docs refreshed:
+`context/subprocessor-posture-and-data-flow.md` § "Observability
+backend" (retains the dated correction of record) and its § 3 data-flow
+guarantee, `docs/pryv-primitives.md` (`observability-provider` entry),
+`docs/implementer-faq.md` (Layer 3 block, the subprocessor-category
+bullet and the integrations table), `gdpr.Art.28` Layer 3 detail and
+its integrations table, plus vendor-naming in
+`context/rate-limiting-and-dos-protection.md`, `iso-27001.A.8.16`,
+`mdr` PMS and `hipaa-security.164.308(a)(1)(ii)(D)`.
 
-**New config key**: `observability.newrelic.highSecurity` (plus the
-PlatformDB row `newrelic-high-security`), and the per-process
-environment opt-in `NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED`.
+**No tier shifts.** `gdpr.Art.28` stays `facilitated`: the posture is
+strengthened, not newly covered. The prose passages that describe only
+the subprocessor relationship and "default disabled"
+(`hipaa-security.164.314(a)(2)(ii)(B)`, the `gdpr.Art.28` DPO-visibility
+note, `swiss-nlpd.Art.9`) remain accurate unchanged.
+
+**Config keys**: `observability.otlp.endpoint` plus the PlatformDB rows
+`otlp-endpoint` and `otlp-headers` (encrypted at rest). The agent-era
+keys (`observability.newrelic.*`, `newrelic-license-key`,
+`newrelic-high-security`, and the `NEW_RELIC_*` environment opt-ins)
+are removed.
+
+**Superseded pass (2026-07-27), kept for the audit trail**: the shipped
+New Relic adapter had been inert since observability first shipped, so
+enabled deployments ran on vendor defaults (no attribute exclusion,
+obfuscated rather than suppressed SQL, application log records
+forwarded). Fixed in open-pryv.io `4fc63d87` with identifier exclusions,
+whole-path URL obfuscation, log forwarding off and a working
+`high_security` opt-in. That fix was deployed and wire-validated before
+the rebuild replaced it.
 
 ## Section C — Maintenance reminders
 

@@ -481,51 +481,53 @@ mTLS-protected Raft. PlatformDB pre-registration + DNS auto-publish.
 
 ### `observability-provider`
 
-**Provider-agnostic façade**. The primitive is the façade contract
-at `components/business/src/observability/index.ts` — a clean
-`{init, isActive, setTransactionName, recordError,
-recordCustomEvent, startBackgroundTransaction}` interface that any
-provider plugs into without business-layer code edits. **New Relic
-ships as the first concrete adapter** at
-`components/business/src/observability/providers/newrelic/` —
-operators free to write or contribute adapters for Datadog,
-Honeycomb, OpenTelemetry, an internal Prometheus pipeline, or any
-APM the deployment requires. `PRYV_OBSERVABILITY_PROVIDER` env
-selects which adapter is loaded.
+**Allow-list telemetry emitter**. The primitive is a single
+choke point at `components/business/src/observability/` that
+constructs every datapoint from a compile-time allow-list
+(`schema.ts`) and ships it over OTLP/HTTP. No vendor or
+OpenTelemetry SDK runs in the process and nothing is
+auto-instrumented, so the emitted surface is a property of our
+source rather than of an external agent's defaults. Any
+OTLP-ingesting backend can be the destination, including an
+OpenTelemetry Collector the operator hosts themselves; the
+posture is identical whichever is chosen, because the curation
+happens before egress.
 
 - **Compliance role**: monitoring (ISO 27001 A.8.16) without
-  leaking PII to the provider.
-- **PII filtering posture**: provider-specific. The shipped NR
-  adapter's protection block at
-  `providers/newrelic/newrelic.cjs:65-158` strips
-  `authorization` / `cookie` / `proxy-authorization` /
-  `set-cookie*` / `x-*` request headers + `request.body` + SQL
-  statements, and since 2026-07-27 also **request URLs**
-  (`request.uri`, `http.url`), **route and query parameters**
-  (`request.parameters.*`, which is where the username appears
-  as an attribute), the **`Host` / `Referer` / `User-Agent`**
-  headers, and **error message text**
-  (`strip_exception_messages`); external segment names have
-  their **whole path masked**, application log forwarding ships
-  off, and custom events and attributes are disabled;
-  `allow_all_headers: false`; `record_sql: 'off'`.
-  Residual with no client-side control: **outbound host names**
-  (`peer.hostname`, `server.address`), which for webhooks is the
-  receiving application's endpoint host.
-  ⚑ **Correction of record**: before 2026-07-27 this block lived
-  in a file the agent does not discover, so it was inert and
+  leaking PII to the backend.
+- **Emitted surface (complete)**: per-API-method call counts,
+  duration histograms and error counts, labelled only with
+  `method.id` (from the platform's own API method registry),
+  `status.class` and `error.code` (from the published error id
+  list); service name, service version, **machine hostname** and
+  worker index as resource identity; and, for server-side faults
+  only, the error class, a hard-coded message chosen by error
+  code, and a stack rebuilt from repository-relative frames. Plus
+  `telemetry.dropped`, which counts datapoints the emitter
+  refused, by reason.
+- **Anonymity controls**: error reports are aggregated by fault
+  and stamped at the reporting interval, not the instant of
+  failure; the instance id is the machine hostname and is never
+  derived from the service URL or DNS domain (user-facing hosts
+  are `<username>.<domain>` in DNS-based deployments). Claim:
+  anonymous by construction, with a residual correlation risk at
+  very low traffic volumes.
+- **Excluded by construction**: request URLs, query and route
+  parameters, bodies, headers, usernames, record identifiers,
+  log records and error **message** text — none has a key in the
+  schema, so no code path can emit them. Validation runs on every
+  datapoint before buffering; anything outside the vocabulary is
+  dropped and counted rather than sent.
+  ⚑ **Correction of record**: before 2026-07-27 this primitive was
+  an in-process vendor agent whose scrubbing config lived in a
+  file the agent does not discover, so it was inert and
   deployments ran on vendor defaults. See
   `context/subprocessor-posture-and-data-flow.md` for the full
-  correction and the post-fix validation evidence.
-  Custom adapters are responsible for implementing equivalent
-  safeguards through their vendor's mechanism — the façade
-  contract doesn't enforce filtering across all providers, so
-  every custom adapter must be reviewed for its own PII
-  exposure surface.
-- **No-op when disabled**: the façade is a cheap pass-through
-  when no provider is attached (`activeProvider === null`), so
-  business-layer callers can invoke it unconditionally with
-  zero overhead.
+  correction, and for why the agent was removed rather than
+  reconfigured.
+- **No-op when disabled**: every entry point returns immediately
+  when no emitter is attached, so callers can invoke them
+  unconditionally with zero overhead.
 
 ### `CMC`
 

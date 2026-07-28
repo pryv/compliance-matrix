@@ -1331,14 +1331,12 @@ exclude list.
      catalogue fetch (`service.eventTypes` URL — fetch-only of
      JSON Schema fragments; no personal data crosses the
      boundary).
-   - **Filtered PII**: observability vendor (operator's choice
-     — the façade is pluggable; New Relic ships as the first
-     adapter). With the NR adapter, aggregated metrics + error
-     traces flow with a hard-coded attribute-exclude list in
-     front. Custom adapters (Datadog, Honeycomb, OpenTelemetry,
-     internal Prometheus pipelines, etc.) implement PII
-     filtering through their vendor's mechanism; the operator
-     owns the equivalence check.
+   - **Allow-listed telemetry**: observability backend
+     (operator's choice — any OTLP-ingesting service, or a
+     collector they host themselves). Per-method metrics and
+     sanitized error stack traces, built from a fixed
+     allow-list before egress rather than filtered after
+     collection, so the posture does not vary by backend.
 
 3. **Are there platform guarantees about what flows where?** —
    Yes, three layers, each verified in code + tests:
@@ -1375,75 +1373,81 @@ exclude list.
    operator's log-aggregator destination + their broader
    PII-in-logs policy fill the rest of the picture.
 
-   **Layer 3 — Observability PII filter** (when observability
-   opt-in, provider-specific): the **observability primitive
-   is a pluggable façade** at
-   `components/business/src/observability/index.ts` — any APM
-   vendor's adapter plugs in via the
-   `{init, setTransactionName, recordError, recordCustomEvent,
-   startBackgroundTransaction}` contract. **New Relic ships as
-   the first concrete adapter**; operators free to write
-   adapters for Datadog, Honeycomb, OpenTelemetry, an internal
-   Prometheus pipeline, or any vendor the deployment requires.
+   **Layer 3 — Observability allow-list** (when observability is
+   opted into): telemetry is **constructed by the platform, not
+   collected by an agent**. No vendor or OpenTelemetry SDK runs
+   in the process and nothing is auto-instrumented; a single
+   emitter builds every datapoint from a compile-time
+   allow-list at
+   `components/business/src/observability/schema.ts` and ships
+   it over OTLP/HTTP. The destination is therefore a URL plus an
+   auth header — any OTLP-ingesting backend, including an
+   OpenTelemetry Collector the operator hosts themselves, in
+   which case no third-party processor is involved at all.
 
-   The NR adapter's hard-coded protection block at
-   `components/business/src/observability/providers/newrelic/
-   newrelic.cjs:65-158`. ⚑ **Correction of record:** before
-   2026-07-27 this block lived in a `.ts` file, which the agent
-   does not discover, so it was inert and deployments ran on
-   vendor defaults (no exclusions, obfuscated SQL, log records
-   forwarded). See
-   `context/subprocessor-posture-and-data-flow.md` for the
-   correction and the post-fix validation evidence.
+   ⚑ **Correction of record:** before 2026-07-27 this layer was
+   an in-process vendor agent whose scrubbing config lived in a
+   `.ts` file the agent does not discover, so it was inert and
+   deployments ran on vendor defaults (no exclusions, obfuscated
+   SQL, log records forwarded). That was fixed, and then the
+   agent was removed: a control that works by enumerating what
+   must not escape from a collector that sees everything is only
+   as good as that collector's defaults. See
+   `context/subprocessor-posture-and-data-flow.md`.
 
-   ```js
-   allow_all_headers: false,
-   attributes: {
-     // NOTE these are the AGENT's attribute names, which camel-case
-     // multi-word headers. A `request.headers.user-agent` entry
-     // matches nothing and fails silently.
-     exclude: [
-       'request.headers.authorization',
-       'request.headers.cookie',
-       'request.headers.proxyAuthorization',
-       'request.headers.setCookie*',
-       'request.headers.x*',
-       'request.body',
-       // identifiers, added 2026-07-27
-       'request.uri',
-       'request.parameters.*',
-       'http.url',
-       'request.headers.host',
-       'request.headers.referer',
-       'request.headers.userAgent'
-     ]
-   },
-   // whole path masked, not identifier shapes
-   url_obfuscation: { enabled: true, regex: { pattern: '^/.*', replacement: '*' } },
-   strip_exception_messages: { enabled: true },
-   application_logging: { forwarding: { enabled: false } },
-   custom_insights_events: { enabled: false },
-   api: { custom_attributes_enabled: false },
-   transaction_tracer: { record_sql: 'off' }
+   The emitted vocabulary, in full:
+
+   ```
+   metrics   api.method.calls      {method.id, status.class}
+             api.method.duration   {method.id, status.class}
+             api.method.errors     {method.id, error.code}
+             telemetry.dropped     {reason}
+   resource  service.name, service.version,
+             service.instance.id (core FQDN), service.worker
+   errors    error.code, error.class, method.id,
+             error.stack (frames only, repository-relative)
    ```
 
-   The complete set of `request.*` attributes an operator's
-   vendor actually holds under this configuration, enumerated
-   from live telemetry rather than inferred: `accept`,
-   `contentLength`, `contentType` and `request.method`.
-   Residual with no client-side control: outbound host names
-   (`peer.hostname`, `server.address`), which for webhooks means
-   the receiving application's endpoint host.
+   `method.id` values come from the platform's own API method
+   registry and are re-checked against it at emit time;
+   `status.class` is one of `2xx`/`3xx`/`4xx`/`5xx`;
+   `error.code` is a value from the published error id list, or
+   `unknown`. Error **messages are never emitted** — on this
+   platform they routinely interpolate file paths and
+   client-supplied values, so the code travels and the message
+   stays in the operator's own logs. Request URLs, query and
+   route parameters, bodies, headers, usernames and record
+   identifiers have no key in the schema, so no code path can
+   emit them; a datapoint outside the vocabulary is dropped and
+   counted under `telemetry.dropped` rather than sent.
 
-   Plus `high_security: false` default — operator opts into
-   account-side HSM if their observability account supports
-   it. For the NR adapter, the exclude list is platform-defined
-   in the adapter source; the operator can tighten further but
-   not loosen the credential-strip guarantees without modifying
-   adapter source. For custom adapters, **the operator owns the
-   PII-filter equivalence** — every custom adapter must be
-   reviewed for its own PII-exposure surface; the façade
-   contract doesn't enforce filtering across all providers.
+   The outbound host names that the agent era could not
+   suppress (`peer.hostname`, `server.address` — for webhooks,
+   the receiving application's endpoint host) are gone with it:
+   nothing observes outbound calls.
+
+   Two further controls exist to make the result **anonymous**
+   rather than merely identifier-free. Error reports are
+   **aggregated by fault and stamped at the reporting interval**,
+   never at the instant of failure, because a precise timestamp
+   singles out one action to anyone holding a second timestamped
+   signal (your own audit log). And the instance identifier is
+   the **machine hostname**, never derived from the service URL
+   or DNS domain, since user-facing hosts are
+   `<username>.<domain>` in DNS-based deployments. The accepted
+   cost is that sub-interval ordering and exact error times are
+   not available from telemetry.
+
+   **Residual**: on a very low-traffic instance, "one error in
+   this interval" may still correlate to the only active user —
+   a property of traffic volume, not of the schema, reduced by
+   widening the interval. Read the claim as *anonymous by
+   construction, with a residual correlation risk at very low
+   traffic volumes*.
+
+   An operator can tighten this further by pointing the endpoint
+   at their own collector, but cannot widen it without modifying
+   and rebuilding the platform.
 
 **Subprocessor inventory at deployment level** — five opt-in
 integrations, each off by default:
@@ -1453,7 +1457,7 @@ integrations, each off by default:
 | `letsEncrypt.enabled: true` | LE — or any ACME directory you point `directoryUrl` at | Hostnames for ACME challenges only — no user data. Operator's call whether LE matches their compliance posture; alternative CAs drop in without code changes |
 | `services.email.smtp.*` | Operator's SMTP relay | Email + name + one-time tokens; body templates operator-owned via admin panel |
 | `services.mfa.mode: enabled` + `sms.endpoints[*]` | Operator's SMS provider | Phone number + MFA code |
-| `observability.provider: <id>` | Operator's chosen APM vendor — pluggable façade; New Relic ships as the first adapter; Datadog / Honeycomb / OpenTelemetry / internal Prometheus / etc. drop in as custom `providers/<id>/` adapters | Aggregated metrics + error traces; Layer 3 PII filter is adapter-specific (NR adapter ships a strict exclude list) |
+| `observability.enabled: true` + an OTLP endpoint | Whichever backend that endpoint belongs to — any OTLP-ingesting service; **none at all** if it points at a collector the operator hosts | Per-method metrics + sanitized error stack traces, built from a fixed allow-list before egress (Layer 3); identical whatever the backend |
 | `service.eventTypes: <URL>` (default points at upstream `pryv/data-types`) | Catalogue host | **Fetch-only of schemas INTO the core; no personal data flows out** — pinning to self-hosted URL severs the dependency entirely |
 
 **Where Pryv-the-software is NOT the Art.28 answer-source**:

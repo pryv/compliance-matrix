@@ -1341,7 +1341,7 @@ requirements:
       | `letsEncrypt.enabled: true` | LE (or any `letsEncrypt.directoryUrl` ACME CA) | hostnames only for ACME challenges; **no user data** |
       | `services.email.smtp.*` | operator's SMTP relay | email + name + one-time tokens (templated bodies) — PII. **Pryv recommends per-core SMTP configuration** — the `services.email.smtp.*` config block is per-core, so an EU core routes mail through an EU SMTP relay independently of a US core's relay. Use this when residency is a hard requirement (e.g., EU subjects' password-reset emails never touching a US-jurisdiction relay) |
       | `services.mfa.mode: enabled` + `sms.endpoints[*]` | operator's SMS provider | phone number + MFA code — PII |
-      | `observability.provider: <id>` | Operator's chosen APM vendor (New Relic ships as the first adapter; the façade is pluggable — Datadog, Honeycomb, OpenTelemetry, internal Prometheus pipelines, etc. all drop in via a custom adapter under `providers/<id>/`) | aggregated metrics + error traces; PII filter is provider-specific (NR adapter ships a strict attribute-exclude list — see Layer 3 below) |
+      | `observability.enabled: true` + an OTLP endpoint | Whichever backend that endpoint belongs to — any OTLP-ingesting service, or none at all if it points at a collector the operator hosts | per-method metrics + sanitized error stack traces, built from a fixed allow-list before egress (see Layer 3 below) |
       | `service.eventTypes: https://...` | upstream catalogue host | **no personal data flows out** — fetch-only of JSON Schema fragments |
 
       **Let's Encrypt posture (operator clarification)**: ships as a
@@ -1374,44 +1374,49 @@ requirements:
          + `system-seq.test.js:533`. Honest scope: redacts
          credentials, not PII broadly — emails / usernames / event
          payloads only leak if a caller explicitly logs them.
-      3. **Observability PII filters** (when observability opt-in,
-         provider-specific) — the shipped New Relic adapter's
-         hard-coded protection block at
-         `components/business/src/observability/providers/newrelic/
-         newrelic.cjs:65-158`: strips `request.headers.{authorization,
-         cookie,proxy-authorization,set-cookie*,x-*}` + `request.
-         body`, and since 2026-07-27 also request URLs
-         (`request.uri`, `http.url`), route and query parameters
-         (`request.parameters.*`, where the username otherwise
-         appears as an attribute), the `Host` / `Referer` /
-         `User-Agent` headers, and error message text
-         (`strip_exception_messages`, because the platform's own
-         validation errors quote client-supplied stream ids);
-         external segment names have their whole path masked;
-         application log forwarding ships off (log message bodies
-         are not identifier-scrubbed anywhere in the stack);
-         custom events and attributes disabled;
-         `record_sql: 'off'`; `allow_all_headers: false`.
-         Residual with no client-side control: outbound host
-         names, which for webhooks is the receiving application's
-         endpoint host. What remains is pseudonymous rather than
-         anonymous, so this telemetry is still personal data and
-         the Art.28 processor relationship applies to it in full.
-         ⚑ **Correction of record:** before 2026-07-27 this block
-         lived in a file the vendor agent does not discover, so it
-         was inert and enabled deployments ran on vendor defaults.
-         Fixed, and validated post-fix on a live two-core
-         deployment (identifier counts zero against positive
-         controls; the same entity showed 129 URL-carrying
-         transactions and 172 forwarded log records earlier the
-         same day). Full account:
+      3. **Observability allow-list** (when observability is opted
+         into) — telemetry is constructed by the platform from a
+         compile-time allow-list at
+         `components/business/src/observability/schema.ts` and
+         shipped over OTLP/HTTP. No vendor or OpenTelemetry SDK
+         runs in the process and nothing is auto-instrumented, so
+         the emitted surface is fixed in source rather than
+         filtered out of an agent's collection. Emitted:
+         per-API-method call counts, duration histograms and error
+         counts, labelled only with a method id from the platform's
+         own API registry, a status class and an error code from
+         the published error id list; service name and version,
+         core FQDN and worker index; and, for server-side faults,
+         the error class plus a stack trace with frames rewritten
+         repository-relative. Request URLs, query and route
+         parameters, bodies, headers, usernames, record identifiers,
+         log records and error **message** text have no key in the
+         schema and therefore no code path to the backend;
+         datapoints outside the vocabulary are dropped and counted.
+         Error reports are aggregated by fault and stamped at the
+         reporting interval rather than the instant of failure, and
+         the instance id is the machine hostname and never derived
+         from the service URL, so the two correlation handles that
+         would otherwise re-identify activity are removed. The
+         destination is a URL plus an auth header, so an operator
+         pointing it at a collector they host themselves has no
+         third-party processor here at all. Claim to rely on:
+         **anonymous by construction, with a residual correlation
+         risk at very low traffic volumes** (where one error in an
+         interval may be the only active user's). Where that
+         residual applies, treat the telemetry as personal data and
+         keep Art.28 in scope for an external destination.
+         ⚑ **Correction of record:** before 2026-07-27 this layer
+         was an in-process vendor agent whose scrubbing config lived
+         in a file the agent does not discover, so it was inert and
+         enabled deployments ran on vendor defaults (request URLs,
+         `Host`, route parameters carrying the username, forwarded
+         log records). That was fixed on 2026-07-27 and the agent
+         was then removed entirely, because a control that works by
+         enumerating what must not escape a collector that sees
+         everything is only as strong as that collector's defaults.
+         Full account:
          `context/subprocessor-posture-and-data-flow.md`.
-         The façade contract itself is pluggable — a custom
-         adapter (Datadog, Honeycomb, OpenTelemetry, internal
-         Prometheus, etc.) implements PII filtering through its
-         vendor's mechanism. **Operators writing custom adapters
-         own the PII-filter equivalence** — review every custom
-         adapter for its own PII-exposure surface.
 
       **§3(g) deletion / return of personal data at the end of
       provision** — `bin/backup.js` + `system.users.delete` cover
