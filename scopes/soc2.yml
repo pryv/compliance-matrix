@@ -1307,17 +1307,12 @@ requirements:
       affected data subjects, regulators, and others to meet the
       entity's objectives related to privacy.
     coverage: facilitated
-    pryv_effort_saved: medium
+    pryv_effort_saved: high
     facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, access]
     derives_from: [gdpr.Art.33, gdpr.Art.34, hipaa-breach.164.404]
     planned:
-      - kind: feature
-        summary: "Breach-scope tool (accessId → userId reverse-index + audit recordCount + affectedStreamIds) turns the audit trail into a who-was-affected answer for breach notices"
-        proposal: proposals/breach-scope-tool.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467808&issue=pryv%7Copen-pryv.io%7C76
-        impact: high
       - kind: feature
         summary: "Chained audit log raises forensic confidence in the breach-scope determination"
         proposal: proposals/audit-log-chaining.md
@@ -1326,11 +1321,12 @@ requirements:
         impact: low
     overview: |
       Pryv contributes the scoping evidence a breach notice needs, the
-      audit log ties a compromised access to the users + data it
-      touched. Today that reverse-index is manual; the breach-scope tool
-      proposal automates "which subjects were affected, how many records,
-      which streams". Drafting and sending the notifications within the
-      regulatory deadline is your process.
+      audit log ties a compromised access to the user + data it
+      touched. The shipped `bin/breach-scope.js` (accessId → user
+      reverse-index + audit `recordCount` + `scopedStreamIds` query
+      scope) automates "who was affected, how many records, which
+      streams in scope" in one command. Drafting and sending the
+      notifications within the regulatory deadline is your process.
 
   - ref: P6.7
     title: P6.7, Accounting of disclosures to data subjects

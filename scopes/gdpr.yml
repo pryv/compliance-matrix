@@ -1644,32 +1644,49 @@ requirements:
       Controller shall notify supervisory authority within 72 hours of
       becoming aware of a breach (unless unlikely to result in risk).
     coverage: facilitated
-    pryv_effort_saved: medium
+    pryv_effort_saved: high
     facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, encryption-at-rest-secrets]
     docs: [customer-resources/audit-setup.md]
-    planned:
-      - kind: feature
-        summary: "bin/breach-scope.js, emits §33(1)(b-d) scoping report from audit + access-version data for a compromised accessId"
-        proposal: proposals/breach-scope-tool.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467808&issue=pryv%7Copen-pryv.io%7C76
-        impact: medium
     overview: |
-      Pryv's audit log helps you
-      determine the scope of a breach (which data, which users, by
-      which access). Encryption-at-rest may scope the "unsecured
+      Pryv ships a breach-scoping toolchain: `bin/breach-scope.js`
+      turns a compromised accessId + time window into an Art.33
+      §1(b)-(d) input artefact (subject, methods invoked, streams in
+      scope, record counts, integrity hashes) in one command on the
+      subject's home core. Encryption-at-rest may scope the "unsecured
       personal data" definition relevant to the notification decision.
-      The 72-hour process itself is yours to run.
+      The risk assessment and the 72-hour process itself are yours to
+      run.
     detail: |
-      Breach detection + scoping is software-assisted:
-        - `audit.get` over the suspected time window → list of access
-          tokens that touched the data + which streams were read.
+      Breach scoping is single-command (shipped in open-pryv.io
+      `0b2874e0`):
+        - `GET /system/accesses/:accessId` admin lookup (PlatformDB
+          reverse-index) resolves a compromised accessId to its user +
+          home core in O(1), revoked accesses included. Existing
+          deployments index pre-existing accesses once per core with
+          `bin/backfill-access-index.js`.
+        - Read audit rows carry `content.recordCount` and
+          `content.scopedStreamIds` (plus `scopedStreamCount` and
+          `recordCountIncomplete`). `scopedStreamIds` is the query's
+          resolved SCOPE: an upper bound on what the access could have
+          exposed, not the streams of the events actually returned.
+          State that nuance in the notification.
+        - `bin/breach-scope.js --access <id> --since <iso8601>
+          [--until <iso8601>]` walks the audit window on the subject's
+          home core and renders the scoping report (JSON or Markdown):
+          methods histogram, streams in scope, read/mutated/destroyed
+          record counts, time window, integrity hashes.
         - access version chain → consent state at the moment of access
           (was processing within authorised scope?).
         - encryption-at-rest → if the leaked artefact is encrypted
           operator backup, the data may qualify as "secured" and
           notification may not be required per Art.33 §1.
+      Honest bounds: the report classifies by stream + method and
+      quantifies by record count; it does not derive event-type data
+      categories (event bodies never enter the audit log); HF/series
+      reads and audit-filter-excluded methods are not visible; the
+      reverse-index is advisory (home-core storage is authoritative).
       Detection-of-breach itself depends on monitoring + log review you
       run around the audit data.
 
@@ -1686,8 +1703,8 @@ requirements:
     docs: [customer-resources/audit-setup.md]
     overview: |
       Two-surface split. **Identification** is filled by the audit
-      log + the Q17 BREACH-SCOPE-TOOL backlog (per-subject roster
-      derivable from the breached access's read/write history);
+      log + the shipped `bin/breach-scope.js` scoping tool (per-subject
+      roster derivable from the breached access's read/write history);
       **delivery** is voluntarily missing + operator-owned (Pryv's
       mail surface is transactional per-recipient, not bulk-send;
       operators compose with their existing CRM / SMS / push
@@ -1702,18 +1719,20 @@ requirements:
     detail: |
       **Identification surface**: derive the affected-subject
       list from `audit.get` filtered by (`breachedAccessId`,
-      time window). Q17 BREACH-SCOPE-TOOL packages this into
-      `bin/breach-scope.js` + adds the §164.404(c) content
-      elements (`recordCount` + `affectedStreamIds[]`) via
-      audit-row schema extensions. Once that ships,
-      identification is single-command + audit-defensible.
+      time window). The shipped `bin/breach-scope.js`
+      (open-pryv.io `0b2874e0`) packages this into one command
+      + adds the §164.404(c) content elements (`recordCount` +
+      the `scopedStreamIds` resolved query scope, an upper
+      bound on exposure rather than the streams actually
+      returned) via audit-row extensions. Identification is
+      single-command + audit-defensible.
 
       **Delivery surface**: operator-owned by design. Pryv's
       transactional mail (`mail.send` / `email-templates`) is
       designed for welcome / password-reset / MFA-code emails,
       not bulk breach broadcasts. Operators compose:
-        - Identification → `affected.json` roster from
-          BREACH-SCOPE-TOOL.
+        - Identification → the `bin/breach-scope.js` report
+          (JSON output).
         - Operator's CRM / mail provider (SendGrid / Mailgun /
           AWS SES / Mandrill) renders Art.34 §2 content
           elements per recipient + sends with retries +
@@ -1887,10 +1906,10 @@ requirements:
         scopes / requirements / pryv_primitives / planned chips
         / context notes interlink for the auditable claim graph.
       - **DPIA / breach-scope tooling** the DPO consumes when
-        active: future admin-panel surfaces (the
-        `CONFIG-EFFECTIVE-EXPOSURE` effective-config endpoint for
-        DPIA Section (d); `BREACH-SCOPE-TOOL` backlog for the
-        breach scoping artefact).
+        active: `bin/breach-scope.js` for the breach scoping
+        artefact (shipped), and the future
+        `CONFIG-EFFECTIVE-EXPOSURE` effective-config endpoint
+        for DPIA Section (d).
 
   - ref: Art.40
     title: Codes of conduct

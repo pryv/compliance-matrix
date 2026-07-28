@@ -89,7 +89,7 @@ requirements:
     overview: |
       The notification process splits into **identification**
       (Pryv-shipped, audit-log-driven per-subject roster, packaged
-      by Q17 BREACH-SCOPE-TOOL once shipped) and **delivery**
+      into the one-command `bin/breach-scope.js` report) and **delivery**
       (voluntarily missing + operator-owned, Pryv's transactional
       mail surface isn't bulk-send; operators compose with their
       existing CRM / mail / SMS pipeline). The per-recipient
@@ -101,10 +101,14 @@ requirements:
     detail: |
       Per-subject impact query: filter audit rows by (breachedAccessId,
       timeWindow) → distinct user ids. That's your §164.404
-      notification list, with evidence. Q17 BREACH-SCOPE-TOOL
-      packages this into `bin/breach-scope.js` + adds §164.404(c)(1)
-      (`recordCount` per audit row) + the "types of PHI" element
-      (`affectedStreamIds[]`) via audit-row schema extensions.
+      notification list, with evidence. The shipped
+      `bin/breach-scope.js` (open-pryv.io `0b2874e0`) packages this
+      into one command + adds §164.404(c)(1) (`recordCount` per read
+      audit row) + the `scopedStreamIds` resolved query scope. Note:
+      `scopedStreamIds` is an upper bound on exposure (the streams
+      the query could reach), not the streams of the events actually
+      returned, and the report does not derive PHI data categories
+      from it; mapping streams to "types of PHI" stays editorial.
 
       §404(c) content elements (description of breach, types of PHI,
       steps individual should take, what entity is doing, contact
@@ -195,16 +199,13 @@ requirements:
         backlog: AUDIT-LOG-CHAINING
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467766&issue=pryv%7Copen-pryv.io%7C74
         impact: medium
-      - kind: feature
-        summary: "bin/breach-scope.js bundles the §164.414 demonstration artefact (audit-walk + integrity hashes for the affected window)"
-        proposal: proposals/breach-scope-tool.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467808&issue=pryv%7Copen-pryv.io%7C76
-        impact: medium
     overview: |
       "Burden of proof" is met
       with evidence; Pryv's audit + access-version chain is the
       technical evidence layer ("we know exactly what was accessed by
-      which credential at what time"). The organizational
+      which credential at what time"), and the shipped
+      `bin/breach-scope.js` bundles the audit walk + integrity hashes
+      for the affected window into one artefact. The organizational
       documentation (incident response records, notification records,
       decisions to not notify with rationale) sits on top of that
       data.
@@ -216,25 +217,20 @@ requirements:
       unreasonable delay and in no case later than 60 calendar days
       after discovery of a breach.
     coverage: facilitated
-    pryv_effort_saved: low
+    pryv_effort_saved: medium
     facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, observability-provider]
     derives_from: [hipaa-breach.164.404]
-    planned:
-      - kind: feature
-        summary: "bin/breach-scope.js compresses the scoping step so the 60-day clock is dominated by editorial work, not data-gathering"
-        proposal: proposals/breach-scope-tool.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467808&issue=pryv%7Copen-pryv.io%7C76
-        impact: medium
     overview: |
       The 60-day clock is procedural,
-      the covered entity owns the incident-response cadence. Pryv-
-      side data accelerates the "discovery" + "scoping" steps that
-      dominate the timeline: audit log + access-version chain answer
-      "what was accessed, by whom, when" in seconds. The discipline
-      of acting on that data within the 60-day window is the
-      operator's process.
+      the covered entity owns the incident-response cadence. The
+      shipped `bin/breach-scope.js` compresses the "discovery" +
+      "scoping" steps that dominate the timeline: one command on the
+      subject's home core answers "what was accessed, by whom, when,
+      how many records", so the clock is dominated by editorial work,
+      not data-gathering. The discipline of acting on that data
+      within the 60-day window is the operator's process.
 
   - ref: 164.404(c)
     title: Implementation specification, content of notification
@@ -243,21 +239,24 @@ requirements:
       what happened (date of breach + date of discovery), description
       of PHI involved, steps individuals should take, what the entity
       is doing, and contact procedures.
-    coverage: out-of-scope
+    coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: evidence
     draft: true
+    pryv_primitives: [audit, access]
     derives_from: [hipaa-breach.164.404]
-    planned:
-      - kind: feature
-        summary: "bin/breach-scope.js produces the §404(c) PHI-involved description machine-derivably from audit + access-version data"
-        proposal: proposals/breach-scope-tool.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467808&issue=pryv%7Copen-pryv.io%7C76
-        impact: medium
     overview: |
       Content of the notification is the covered entity's editorial
-      artefact. Pryv has no opinion on the wording. The PHI-involved
-      description is derivable from the audit-log scoping done under
-      Art. 402 risk assessment (see hipaa-breach.164.402 row), but
-      composing the prose remains operator-side.
+      artefact; Pryv has no opinion on the wording. The shipped
+      `bin/breach-scope.js` report machine-derives inputs to two of
+      the five §404(c) content elements: the what-happened
+      description (time window, methods invoked, record counts) and
+      raw material for the PHI-involved description (streams in the
+      compromised access's query scope). The stream list is an upper
+      bound on exposure, mapping streams to "types of PHI" is
+      editorial, and the remaining elements (steps individuals
+      should take, what the entity is doing, contact procedures)
+      stay operator-side.
 
   - ref: 164.404(d)
     title: Implementation specification, methods of individual notification

@@ -207,23 +207,29 @@ AAL-tier mapping docs.
 
 Proposal: `proposals/mfa-modern-methods.md`
 
-### `BREACH-SCOPE-TOOL`
+### `BREACH-SCOPE-TOOL` (SHIPPED 2026-07-28, open-pryv.io `0b2874e0`)
 
-**Where the work lives**: `open-pryv.io`. Three phases,
-PlatformDB reverse-index + `GET /system/accesses/<accessId>`,
-audit row extensions (`recordCount` + `affectedStreamIds`),
-`bin/breach-scope.js` CLI.
+**Where the work lived**: `open-pryv.io`. Shipped as the
+PlatformDB reverse-index + `GET /system/accesses/:accessId`,
+audit row extensions (`recordCount` + `scopedStreamIds`; the
+field proposed as `affectedStreamIds` shipped under the
+scope-not-yield name), the `bin/breach-scope.js` CLI, and
+`bin/backfill-access-index.js` for pre-existing deployments.
 
-| Scope | Ref | Kind | Impact | After shipping |
-|---|---|---|---|---|
-| gdpr | Art.33 | feature | medium | tier could shift F:Evidence Med → F:Evidence High |
-| swiss-nlpd | Art.24 | feature | medium | inherits gdpr.Art.33 |
-| pipeda | s.10.1 | feature | medium | RROSH evidence chain tightens |
-| hipaa-breach | 164.404(b) | feature | medium | tier shifts F:Awareness Low → F:Evidence Medium |
-| hipaa-breach | 164.404(c) | feature | medium | tier shifts Out-of-scope → F:Evidence Medium |
-| hipaa-breach | 164.414 | feature | medium | combines with AUDIT-LOG-CHAINING for non-repudiation |
+**Discharged**: all `planned:` chips removed; rows updated as
+applied below.
 
-Proposal: `proposals/breach-scope-tool.md`
+| Scope | Ref | Outcome (applied) |
+|---|---|---|
+| gdpr | Art.33 | F:Evidence Medium → F:Evidence High |
+| swiss-nlpd | Art.24 | F:Evidence Medium → F:Evidence High (inherits gdpr.Art.33) |
+| pipeda | s.10.1 | F:Evidence Medium → F:Evidence High |
+| hipaa-breach | 164.404(b) | F:Evidence Low → F:Evidence Medium |
+| hipaa-breach | 164.404(c) | Out-of-scope → F:Evidence Low (report feeds 2 of 5 content elements; no PHI-category derivation) |
+| hipaa-breach | 164.414 | unchanged (the Medium → High move stays with AUDIT-LOG-CHAINING) |
+| soc2 | P6.6 | F:Evidence Medium → F:Evidence High (this row's chip predated its listing here) |
+
+Proposal: `proposals/breach-scope-tool.md` (Status: shipped)
 
 ### `QUICKSTART-DOCKER-HTTP-EXAMPLE` (DX-only: no matrix row updates)
 

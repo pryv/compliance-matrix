@@ -199,21 +199,16 @@ requirements:
       subject only when necessary for their protection or upon FDPIC
       request.
     coverage: facilitated
-    pryv_effort_saved: medium
+    pryv_effort_saved: high
     facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, encryption-at-rest-secrets, access]
     derives_from: [gdpr.Art.33]
-    planned:
-      - kind: feature
-        summary: "bin/breach-scope.js inherits from gdpr.Art.33 same scoping artefact serves the FDPIC 'as soon as possible' regime"
-        proposal: proposals/breach-scope-tool.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467808&issue=pryv%7Copen-pryv.io%7C76
-        impact: medium
     overview: |
       Same Pryv contribution as
-      GDPR Art. 33: audit data + access-version chain let you scope
-      the breach (which subjects, which streams, by which access).
+      GDPR Art. 33: the shipped `bin/breach-scope.js` toolchain +
+      audit data + access-version chain let you scope the breach
+      (which subject, which streams in scope, by which access).
       The Swiss-specific point: revFADP Art. 24 says "as soon as
       possible" rather than GDPR's 72-hour hard cap, but the FDPIC
       2025-02-06 guideline still expects "immediately" for high-risk

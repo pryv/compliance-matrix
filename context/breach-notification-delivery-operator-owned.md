@@ -21,7 +21,7 @@ tracking) → leave an audit trace, all "without undue delay".
 layer.** The platform splits cleanly into two surfaces, only one
 of which has a Pryv contribution:
 
-### Surface 1: Identification (Pryv-shipped, with queued completeness work)
+### Surface 1: Identification (Pryv-shipped)
 
 The affected-subject list is **derivable today** from the audit
 log alone:
@@ -34,23 +34,28 @@ WHERE accessId = <breachedAccessId>
   AND time BETWEEN <windowStart> AND <windowEnd>
 ```
 
-The Q17 `BREACH-SCOPE-TOOL` backlog (GH
-[`#76`](https://github.com/pryv/open-pryv.io/issues/76))
-packages this into `bin/breach-scope.js` + adds the three
-completeness gaps surfaced in Q17:
+The shipped breach-scope toolchain (GH
+[`#76`](https://github.com/pryv/open-pryv.io/issues/76),
+open-pryv.io `0b2874e0`) packages this into
+`bin/breach-scope.js` and closes the three completeness gaps
+surfaced in Q17:
 
-- **Hard gap (Phase 1)**: global `accessId → userId` lookup via
-  PlatformDB reverse-index + `GET /system/accesses/<accessId>`.
-- **Medium gap (Phase 2)**: `recordCount` field on audit rows
-  for reads (`open-pryv.io/components/audit/`-side change),
-  satisfies §164.404(c)(1) "approximate number of records
-  affected" element.
-- **Medium gap (Phase 3)**: `affectedStreamIds[]` field on
-  audit rows, satisfies the "types of unsecured PHI" element.
+- Global `accessId → userId` lookup via the PlatformDB
+  reverse-index + `GET /system/accesses/:accessId` (existing
+  deployments index pre-existing accesses once per core with
+  `bin/backfill-access-index.js`).
+- `recordCount` field on read audit rows, satisfies
+  §164.404(c)(1) "approximate number of records affected".
+- `scopedStreamIds` field on read audit rows: the query's
+  resolved SCOPE, an upper bound on exposure (not the streams
+  of the events actually returned). It feeds the "types of
+  unsecured PHI" element as raw material; mapping streams to
+  PHI categories stays editorial (event bodies never enter
+  the audit log).
 
-Once Phases 1-3 ship, identification produces an
-audit-defensible **per-subject + per-stream + per-record-count**
-roster ready for the delivery surface.
+Identification produces an audit-defensible **per-subject +
+per-stream-scope + per-record-count** report ready for the
+delivery surface.
 
 ### Surface 2: Delivery (voluntarily missing, operator-owned)
 
@@ -95,18 +100,19 @@ bulk**:
 
 ## The operator pattern (recommended)
 
-Composes the identification primitive (Q17 BREACH-SCOPE-TOOL
-once shipped) with the operator's existing comms stack:
+Composes the shipped identification primitive
+(`bin/breach-scope.js`, run on the subject's home core) with
+the operator's existing comms stack:
 
 ```
 # 1. Run identification.
 $ bin/breach-scope.js \
-    --access-id <breachedAccessId> \
-    --window-start <ISO8601> \
-    --window-end <ISO8601> \
+    --access <breachedAccessId> \
+    --since <ISO8601> \
+    --until <ISO8601> \
     --output affected.json
-# Produces: per-subject roster with userId + recordCount +
-# affectedStreamIds + audit-row hashes.
+# Produces: the scoping report with subject identity + methods
+# histogram + record counts + scopedStreamIds + audit-row hashes.
 
 # 2. Operator's CRM / mail pipeline ingests affected.json,
 #    joins against subscriber-contact records (email + lang +
@@ -205,8 +211,8 @@ subject-notification":
 
 1. **Cite the identification primitive**: Pryv's audit log
    gives per-subject scope of the breached access's reads /
-   writes; the Q17 BREACH-SCOPE-TOOL once shipped packages
-   this into a single-command artefact with the §164.404(c)
+   writes; the shipped `bin/breach-scope.js` packages this
+   into a single-command artefact feeding the §164.404(c)
    content elements.
 2. **Cite your delivery pipeline**: your CRM / mail / SMS
    provider, its rate-limiting, its retry policy, its send-
@@ -229,7 +235,8 @@ parentStreamId=compliance/incidents/<Y>`.
 ## See also
 
 - `proposals/breach-scope-tool.md`: Q17 identification
-  primitive (the surface this delivery pattern composes with).
+  primitive, now shipped (the surface this delivery pattern
+  composes with).
 - `context/data-retention-operator-owned.md`: same
   "voluntarily missing + operator-owned" pattern from Q31
   retention; conceptual parallel.

@@ -978,6 +978,18 @@ doesn't shift.
   AUDIT-LOG-CHAINING chip) gets the breach-scope-tool chip
   added.
 
+**Update (shipped):** the three phases shipped in open-pryv.io
+`0b2874e0` and the chips above have been discharged (rows
+updated per `proposals/breach-scope-tool.md`). One naming
+change against this Q's gap table: the audit-row field landed
+as `content.scopedStreamIds`, not `affectedStreamIds`; it
+records the query's resolved scope, an upper bound on
+exposure, not the streams of the events actually returned.
+The report classifies by stream + method; event-type category
+derivation was not shipped (event bodies never enter the
+audit log). Existing deployments run
+`bin/backfill-access-index.js` once per core.
+
 **Commit:** *(this commit)*.
 
 ### Q18: CMC counterparties and GDPR Art.26 joint controllers: when User A's operator shares a stream with User B's operator via CMC, what's the controller relationship?
@@ -2652,6 +2664,16 @@ Q31 retention. Distinct from Q22 "voluntarily missing +
 highly facilitated" because breach-comm delivery is
 genuinely operator-territory even for vertically-integrated
 operators; they already have the comms stack.
+
+**Update (shipped):** the identification side shipped in
+open-pryv.io `0b2874e0`. The one-command roster is
+`bin/breach-scope.js --access <id> --since <iso8601>
+[--until <iso8601>] --output affected.json` (the flag names
+sketched above predate the shipped CLI), and the audit-row
+field landed as `scopedStreamIds` (query scope, upper bound
+on exposure), not `affectedStreamIds`. The delivery side
+remains voluntarily missing + operator-owned as classified
+above.
 
 **Commit:** *(this commit)*.
 

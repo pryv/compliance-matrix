@@ -243,7 +243,7 @@ requirements:
       Shall also notify affected individuals + maintain records of
       every breach for at least 24 months.
     coverage: facilitated
-    pryv_effort_saved: medium
+    pryv_effort_saved: high
     facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit, encryption-at-rest-secrets, access, event]
@@ -255,16 +255,13 @@ requirements:
         backlog: AUDIT-LOG-CHAINING
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467766&issue=pryv%7Copen-pryv.io%7C74
         impact: low
-      - kind: feature
-        summary: "bin/breach-scope.js produces the RROSH-input artefact in a single CLI call (records affected, methods invoked, streams touched)"
-        proposal: proposals/breach-scope-tool.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467808&issue=pryv%7Copen-pryv.io%7C76
-        impact: medium
     overview: |
       Same primitive set as the
       parallel breach-notification regimes (GDPR Art. 33-34,
-      HIPAA-Breach §164.402-404, Swiss nLPD Art.24): audit log scopes
-      the breach (per-subject + per-stream + per-access); operator-side
+      HIPAA-Breach §164.402-404, Swiss nLPD Art.24): the shipped
+      `bin/breach-scope.js` + audit log produce the RROSH-input
+      artefact (records affected, methods invoked, streams in scope)
+      in one command per compromised access; operator-side
       at-rest encryption may bear on the RROSH determination
       (HHS-equivalent safe-harbor reasoning, though RROSH is a
       different test). The 24-month record-retention obligation rides
@@ -279,8 +276,9 @@ requirements:
 
       **Notification delivery** (s.10.1 "notify affected individuals"),
       voluntarily missing + operator-owned at the platform layer.
-      Pryv ships the identification primitive (audit log + Q17
-      BREACH-SCOPE-TOOL); operator composes delivery via their
+      Pryv ships the identification primitive (audit log + the
+      shipped `bin/breach-scope.js`); operator composes delivery
+      via their
       existing CRM / mail / SMS pipeline. Per-recipient send-
       receipts captured back as
       `compliance/breach-notification/sent-cmc` events satisfy
