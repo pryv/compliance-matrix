@@ -673,17 +673,17 @@ requirements:
         backlog: AUDIT-LOG-CHAINING
         tracking_url: https://github.com/pryv/open-pryv.io/issues/74
         impact: low
-      - kind: enhancement
-        summary: "Published vulnerability-disclosure program supplies the external intake channel for substrate-vulnerability reports feeding the incident plan"
-        proposal: proposals/vulnerability-disclosure-program.md
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/84
-        impact: low
     overview: |
       Pryv contributes the technical halves of incident response:
       detection + scoping (audit + observability) and containment
       (accesses.delete revokes a compromised credential immediately).
-      The incident-response program itself — roles, escalation,
-      communications, lessons-learned — is yours to define and rehearse.
+      The external intake channel for substrate-vulnerability reports
+      is published in `SECURITY.md` (coordinated disclosure policy:
+      private GHSA flow + `security-dev@` mailbox + SLA + scope +
+      safe harbor; private vulnerability reporting enabled on the
+      published repositories). The incident-response program itself —
+      roles, escalation, communications, lessons-learned — is yours
+      to define and rehearse.
 
   - ref: CC7.5
     title: CC7.5 — Recovery from identified security incidents

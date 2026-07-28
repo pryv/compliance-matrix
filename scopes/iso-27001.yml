@@ -759,25 +759,18 @@ requirements:
     facilitation_mode: evidence
     draft: true
     pryv_primitives: [observability-provider, audit]
-    planned:
-      - kind: enhancement
-        summary: "Published vulnerability disclosure program + GHSA advisory history becomes the substrate-vulnerability threat-intelligence feed for operators"
-        proposal: proposals/vulnerability-disclosure-program.md
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/84
-        impact: medium
     overview: |
       Pryv-side contribution to
       threat intelligence: dependabot alerts on master (Q24
       supply-chain backlog ships the broader CI gate + SBOM +
       Trivy/Grype pipeline), CHANGELOG announcements of relevant
       security fixes, observability data on anomalous request
-      patterns. Vulnerability-disclosure intake — today's
-      SECURITY.md directs reporters at the public issue tracker
-      (opposite of responsible-disclosure norms — backlog
-      `VULNERABILITY-DISCLOSURE-PROGRAM` ships the modern shape:
-      private GHSA flow + `security@` mailbox + PGP + scope +
-      SLA + safe harbor + published advisory history). Once
-      shipped, that VDP + GHSA log becomes the substrate-
+      patterns. Vulnerability-disclosure intake: `SECURITY.md`
+      publishes a coordinated disclosure policy (private GitHub
+      Security Advisories flow + `security-dev@` mailbox + scope +
+      SLA + safe harbor + GHSA/CVE issuance), and private
+      vulnerability reporting is enabled on the published
+      repositories. That VDP + GHSA log is the substrate-
       vulnerability threat-intelligence feed downstream
       operators subscribe to. The operator's own threat-intel
       programme (threat-feed subscriptions, correlation logic)
@@ -1524,20 +1517,15 @@ requirements:
         backlog: AUDIT-LOG-CHAINING
         tracking_url: https://github.com/pryv/open-pryv.io/issues/74
         impact: medium
-      - kind: enhancement
-        summary: "Published vulnerability disclosure program supplies the externally-facing intake channel for substrate-vulnerability reports into the incident-management plan"
-        proposal: proposals/vulnerability-disclosure-program.md
-        tracking_url: https://github.com/pryv/open-pryv.io/issues/84
-        impact: low
     overview: |
       Pryv contributes detection
       + scoping data (audit + observability) + containment primitive
       (accesses.delete) + substrate-vulnerability intake channel
-      (backlog `VULNERABILITY-DISCLOSURE-PROGRAM` modernises
-      today's bare SECURITY.md into a GHSA-based private flow
-      with SLA + scope + safe harbor). The incident-management
-      plan itself (roles, escalation, communications, lessons-
-      learned) is operator-side.
+      (`SECURITY.md` publishes a coordinated disclosure policy: a
+      GHSA-based private flow with SLA + scope + safe harbor, and
+      private vulnerability reporting is enabled on the published
+      repositories). The incident-management plan itself (roles,
+      escalation, communications, lessons-learned) is operator-side.
 
   - ref: A.5.25
     title: A.5.25 — Assessment and decision on information security events
