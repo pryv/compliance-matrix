@@ -67,9 +67,14 @@ const KNOWN_MAPPINGS = {
 // ──────────────────────────────────────────────────────────────────
 
 function listBacklogFiles () {
+  // Backlog files carry a `COMPLIANCE-` filename prefix in the workspace;
+  // the matrix-side slug is the bare stem after the prefix.
   return readdirSync(BACKLOG_DIR)
     .filter(f => f.endsWith('.md'))
-    .map(f => ({ slug: f.replace(/\.md$/, ''), path: path.join(BACKLOG_DIR, f) }));
+    .map(f => ({
+      slug: f.replace(/\.md$/, '').replace(/^COMPLIANCE-/, ''),
+      path: path.join(BACKLOG_DIR, f)
+    }));
 }
 
 /**

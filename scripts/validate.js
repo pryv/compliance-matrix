@@ -293,11 +293,14 @@ for (const { scope, file } of allScopes) {
         e(`${cell}: planned.proposal '${p.proposal}' not found (expected under compliance-matrix/)`);
       }
       if (p.backlog && BACKLOG_DIR_PRESENT) {
-        const backlogPath = path.join(
-          WORKSPACE_ROOT, BACKLOG_DIR, `${p.backlog}.md`
-        );
-        if (!fs.existsSync(backlogPath)) {
-          e(`${cell}: planned.backlog '${p.backlog}' not found at ${path.relative(WORKSPACE_ROOT, backlogPath)}`);
+        // Workspace backlog files carry a `COMPLIANCE-` filename prefix; the
+        // matrix-side slug is the bare stem (e.g. slug `E2E-ENCRYPTION` →
+        // file `COMPLIANCE-E2E-ENCRYPTION.md`). Accept the unprefixed
+        // filename too for backward compatibility.
+        const candidates = [`COMPLIANCE-${p.backlog}.md`, `${p.backlog}.md`]
+          .map((f) => path.join(WORKSPACE_ROOT, BACKLOG_DIR, f));
+        if (!candidates.some((c) => fs.existsSync(c))) {
+          e(`${cell}: planned.backlog '${p.backlog}' not found at ${path.relative(WORKSPACE_ROOT, candidates[0])}`);
         }
       }
     }
