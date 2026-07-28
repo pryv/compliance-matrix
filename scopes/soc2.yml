@@ -603,7 +603,6 @@ requirements:
       - kind: feature
         summary: "Supply-chain scanning pipeline (CI npm audit gate + SBOM + image scan + signing) gives CC7.1 a software-side vulnerability-detection feed; shifts F:Evidence Low → F:Evidence Medium"
         proposal: proposals/supply-chain-scanning-pipeline.md
-        backlog: SUPPLY-CHAIN-SCANNING-PIPELINE
         tracking_url: https://github.com/pryv/open-pryv.io/issues/81
         impact: medium
     overview: |
@@ -677,7 +676,6 @@ requirements:
       - kind: enhancement
         summary: "Published vulnerability-disclosure program supplies the external intake channel for substrate-vulnerability reports feeding the incident plan"
         proposal: proposals/vulnerability-disclosure-program.md
-        backlog: VULNERABILITY-DISCLOSURE-PROGRAM
         tracking_url: https://github.com/pryv/open-pryv.io/issues/84
         impact: low
     overview: |
@@ -1314,7 +1312,6 @@ requirements:
       - kind: feature
         summary: "Breach-scope tool (accessId → userId reverse-index + audit recordCount + affectedStreamIds) turns the audit trail into a who-was-affected answer for breach notices"
         proposal: proposals/breach-scope-tool.md
-        backlog: BREACH-SCOPE-TOOL
         tracking_url: https://github.com/pryv/open-pryv.io/issues/76
         impact: high
       - kind: feature

@@ -1071,7 +1071,6 @@ requirements:
       - kind: enhancement
         summary: "Published vulnerability disclosure program becomes the externally-facing intake channel for substrate-vulnerability reports — strengthens the security-incident-procedure intake layer"
         proposal: proposals/vulnerability-disclosure-program.md
-        backlog: VULNERABILITY-DISCLOSURE-PROGRAM
         tracking_url: https://github.com/pryv/open-pryv.io/issues/84
         impact: low
     overview: |
@@ -1140,7 +1139,6 @@ requirements:
       - kind: enhancement
         summary: "Published vulnerability disclosure program + GHSA advisory history becomes one of the evidence inputs to the periodic evaluation (alongside audit log + test matrix + supply-chain pipeline)"
         proposal: proposals/vulnerability-disclosure-program.md
-        backlog: VULNERABILITY-DISCLOSURE-PROGRAM
         tracking_url: https://github.com/pryv/open-pryv.io/issues/84
         impact: low
     overview: |

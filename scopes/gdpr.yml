@@ -1520,19 +1520,16 @@ requirements:
       - kind: feature
         summary: "Three-phase supply-chain scanning pipeline strengthens the §1(b)/(c) ongoing-CIA + integrity axis with concrete SCA + SBOM + signed-image evidence"
         proposal: proposals/supply-chain-scanning-pipeline.md
-        backlog: SUPPLY-CHAIN-SCANNING-PIPELINE
         tracking_url: https://github.com/pryv/open-pryv.io/issues/81
         impact: low
       - kind: feature
         summary: "PlatformDB at-rest encryption strengthens §1(a) encryption evidence at the cluster-replicated identification + routing layer"
         proposal: proposals/platformdb-at-rest-encryption.md
-        backlog: PLATFORMDB-AT-REST-ENCRYPTION
         tracking_url: https://github.com/pryv/open-pryv.io/issues/79
         impact: medium
       - kind: enhancement
         summary: "Published vulnerability disclosure program (security mailbox + PGP + GHSA + scope + SLA + safe harbor) strengthens §1(d) testing/effectiveness evidence; modernises today's bare SECURITY.md"
         proposal: proposals/vulnerability-disclosure-program.md
-        backlog: VULNERABILITY-DISCLOSURE-PROGRAM
         tracking_url: https://github.com/pryv/open-pryv.io/issues/84
         impact: medium
     overview: |
@@ -1640,7 +1637,6 @@ requirements:
       - kind: feature
         summary: "bin/breach-scope.js — emits §33(1)(b-d) scoping report from audit + access-version data for a compromised accessId"
         proposal: proposals/breach-scope-tool.md
-        backlog: BREACH-SCOPE-TOOL
         tracking_url: https://github.com/pryv/open-pryv.io/issues/76
         impact: medium
     overview: |
