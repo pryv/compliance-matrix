@@ -1580,12 +1580,19 @@ requirements:
           of a URL-embedded token, which would persist in browser
           history, referrer headers, and server access logs. The key is
           redeemable exactly once, expires on a mandatory TTL, and Pryv
-          stores only its SHA-256 — a database dump cannot reconstruct
-          a live credential, and the payload is scrubbed (including
-          from event history) once the secret stops being pending. An
-          optional signature (passphrase or client-computed HMAC whose
-          verifier secret never reaches the server) adds a second
-          factor to the redemption.
+          stores only the SHA-256 of its random half, so a database
+          dump cannot reconstruct a live credential. The payload is
+          scrubbed (including from event history) when the secret
+          leaves the pending state: on redemption, on a signature
+          mismatch, and on the first retrieval attempt after the TTL
+          has passed. Expiry is enforced when someone reaches for the
+          secret rather than by a background sweeper, so an expired
+          secret nobody touches again keeps its stored payload until
+          something reaches it or you delete it; schedule that
+          deletion yourself if your retention policy needs a deadline.
+          An optional signature (passphrase or client-computed HMAC
+          whose verifier secret never reaches the server) adds a
+          second factor to the redemption.
         - Data residency: CONFIGURABLE — multi-hosting puts data where
           your subjects (or your policy) require, bounding exposure
           surface.

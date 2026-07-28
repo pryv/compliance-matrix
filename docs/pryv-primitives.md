@@ -211,11 +211,18 @@ key instead of embedding the credential in a URL
   (concurrent retrievals atomically yield a single winner); a positive
   TTL is required and capped by `sharedSecrets.maxTtl` (default 30
   days) — an open-ended secret is never valid.
-- **Hash-only storage**: Pryv stores only the SHA-256 of the key, so a
-  database dump cannot reconstruct a live key. The secret payload is
-  scrubbed as soon as the item leaves the pending state (consumed,
-  expired-discarded, or signature-mismatch-discarded) — including from
-  event history; what remains is a payload-free record of the hand-off.
+- **Hash-only storage**: Pryv stores only the SHA-256 of the key's
+  random half, so a database dump cannot reconstruct a live key. The
+  secret payload is scrubbed the moment the item leaves the pending
+  state: on redemption, on a signature mismatch, and on the first
+  retrieval attempt made after the TTL has passed. Scrubbing covers
+  event history too, so what remains is a payload-free record of the
+  hand-off. Note what expiry does and does not do for you: it is
+  enforced when someone reaches for the item, not by a background
+  sweeper, so an expired secret that nobody touches again keeps its
+  stored payload until something reaches it or you remove it with
+  `events.delete`. If your retention policy needs expired payloads
+  gone by a deadline, schedule that deletion yourself.
 - **Optional signature gate on retrieval**: `secret` (recipient must
   present a passphrase; a mismatch discards the secret for good) or
   `hmac-sha256` (recipient proves possession of a verifier secret that

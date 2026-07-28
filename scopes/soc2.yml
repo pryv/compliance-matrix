@@ -377,9 +377,13 @@ requirements:
       (`open-pryv.io/components/shared-secrets/`) replace URL-embedded
       tokens with a one-time random key: redeemable exactly once (with
       atomic single-winner semantics under concurrent redemption),
-      mandatory TTL, only the key's SHA-256 stored server-side, payload
-      scrubbed once consumed, optional passphrase / HMAC signature on
-      redemption. Browser history, referrer headers, and access logs
+      mandatory TTL, only the SHA-256 of the key's random half stored
+      server-side, payload scrubbed when the item leaves the pending
+      state (on redemption, on a signature mismatch, and on the first
+      retrieval attempt after the TTL; expiry is enforced on access,
+      not by a background sweeper, so an untouched expired secret keeps
+      its payload until something reaches it or you delete it),
+      optional passphrase / HMAC signature on redemption. Browser history, referrer headers, and access logs
       therefore stop carrying live credentials. A
       `secretSharing: forbidden` feature permission — inherited by
       child accesses and not strippable via `accesses.update` — lets

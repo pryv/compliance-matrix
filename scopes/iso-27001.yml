@@ -863,9 +863,13 @@ requirements:
       hand it to someone else. Pryv's shared-secrets endpoints
       (`open-pryv.io/components/shared-secrets/`) replace the
       URL-embedded-token pattern with a one-time random key: redeemable
-      exactly once, mandatory TTL, only the key's SHA-256 stored
-      server-side, payload scrubbed once consumed, optional
-      passphrase / HMAC signature on redemption. Your handling policy
+      exactly once, mandatory TTL, only the SHA-256 of the key's random
+      half stored server-side, payload scrubbed when the item leaves
+      the pending state (on redemption, on a signature mismatch, and on
+      the first retrieval attempt after the TTL; expiry is enforced on
+      access, not by a background sweeper, so an untouched expired
+      secret keeps its payload until something reaches it or you delete
+      it), optional passphrase / HMAC signature on redemption. Your handling policy
       ("never send credentials in links or logs") gains a shipped
       mechanism to point at instead of a prohibition alone. A
       `secretSharing: forbidden` feature permission — inherited by

@@ -731,11 +731,15 @@ requirements:
       counterparty (e.g. inviting a care-team member) used to mean a
       URL-embedded token that lingers in browser history, referrer
       headers, and intermediary access logs after the TLS session ends.
-      Instead, the counterparty receives a one-time random key —
+      Instead, the counterparty receives a one-time random key:
       redeemable exactly once, mandatory expiry, hash-only server-side
-      storage, optional passphrase / HMAC gate on redemption — so an
-      intercepted or logged link never carries a live, replayable
-      credential to ePHI.
+      storage (the SHA-256 of the key's random half), optional
+      passphrase / HMAC gate on redemption. An intercepted or logged
+      link therefore never carries a live, replayable credential to
+      ePHI. Expiry is enforced when someone reaches for the secret
+      rather than by a background sweeper, so plan your own deletion
+      pass if ePHI retention rules require expired payloads to be gone
+      by a fixed deadline.
 
   - ref: 164.312(e)(2)(i)
     title: Integrity controls — Addressable

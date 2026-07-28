@@ -191,7 +191,7 @@ requirements:
       rows below name the specific A.5/A.8 controls.
     detail: |
       The detailed control-by-control mapping will land in the
-      `iso-27001` scope (Phase D continuation). HDS audit pack
+      `iso-27001` scope. HDS audit pack
       references the ISO 27001 certificate(s) the hoster holds; the
       Pryv-side contribution is the same set of primitive evidence
       either way.
