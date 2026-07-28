@@ -58,7 +58,7 @@ export default function App () {
         </div>
         <div className='bg-amber-50 border-t border-amber-200 text-xs text-amber-900'>
           <div className='max-w-6xl mx-auto px-6 py-1.5'>
-            <span className='font-medium'>Work in progress</span> — calibrated against the pre-V2 release of{' '}
+            <span className='font-medium'>Work in progress</span>, calibrated against the pre-V2 release of{' '}
             <a
               className='underline hover:no-underline'
               href='https://github.com/pryv/open-pryv.io'

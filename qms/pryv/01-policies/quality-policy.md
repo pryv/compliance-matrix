@@ -19,8 +19,8 @@ reviewed_at: null
 ## Purpose
 
 This policy states the commitment of the open-pryv.io project to
-delivering software that is fit for its purpose — a trustworthy
-substrate for personal-data applications — and to maintaining a quality
+delivering software that is fit for its purpose, a trustworthy
+substrate for personal-data applications, and to maintaining a quality
 management system that is effective and continually improved.
 
 ## Scope
@@ -36,7 +36,7 @@ for open-pryv.io and the libraries and tools distributed alongside it.
 
 2. **Evidence over assertion.** No capability is claimed without
    verifiable evidence. Coverage claims in the compliance matrix are
-   backed by test codes, documentation, or tracked planned work — never
+   backed by test codes, documentation, or tracked planned work, never
    by unverified assertion. This is enforced in CI.
 
 3. **Quality is built in, not inspected in.** Defects are prevented by
@@ -62,7 +62,7 @@ The project tracks, at minimum:
 - mean time from defect identification to resolution for high-severity
   defects,
 - number of compliance-matrix coverage claims lacking evidence (target:
-  zero — CI-enforced).
+  zero, CI-enforced).
 
 ## Responsibilities
 

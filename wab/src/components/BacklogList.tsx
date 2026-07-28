@@ -51,10 +51,10 @@ export function BacklogList () {
   return (
     <div className='p-6 max-w-5xl mx-auto'>
       <section className='mb-6'>
-        <h2 className='text-lg font-semibold text-slate-700 mb-1'>Roadmap — planned changes</h2>
+        <h2 className='text-lg font-semibold text-slate-700 mb-1'>Roadmap, planned changes</h2>
         <p className='text-sm text-slate-500'>
           Backlog items queued to land in <code className='font-mono text-xs'>open-pryv.io</code>. Each
-          card shows the matrix rows that would shift when the work ships — a forward look at how the
+          card shows the matrix rows that would shift when the work ships, a forward look at how the
           coverage picture evolves.
         </p>
       </section>

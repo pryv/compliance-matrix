@@ -41,12 +41,12 @@ Common placeholders used across the documents:
 
 ## Contents
 
-- `01-policies/` — quality, information-security, privacy, acceptable-use.
-- `02-procedures/` — incident response, access management, data-subject
+- `01-policies/`: quality, information-security, privacy, acceptable-use.
+- `02-procedures/`: incident response, access management, data-subject
   rights, backup & recovery, change & patch management.
-- `03-record-templates/` — the forms that produce your operational
+- `03-record-templates/`: the forms that produce your operational
   evidence.
-- `04-training/` — staff awareness program.
+- `04-training/`: staff awareness program.
 
 > These templates are a starting point, not legal advice. Your applicable
 > law and your auditor determine what is sufficient.

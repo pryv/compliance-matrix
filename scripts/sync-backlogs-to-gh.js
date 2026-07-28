@@ -16,7 +16,7 @@
  * Operator gates:
  *   - Default mode is dry-run. Pass `--apply` to actually create issues
  *     and edit YAML.
- *   - DX-only backlogs (marked in their header) are skipped — they do
+ *   - DX-only backlogs (marked in their header) are skipped; they do
  *     not warrant a GitHub issue per the compliance-matrix discipline.
  *
  * Usage:
@@ -51,7 +51,7 @@ const SCOPES_DIR = path.join(ROOT, 'scopes');
 const APPLY = process.argv.includes('--apply');
 
 /**
- * Known mappings — operator-curated overrides where the existing GitHub
+ * Known mappings, operator-curated overrides where the existing GitHub
  * issue title doesn't substring-match the backlog slug but the operator
  * has confirmed the semantic equivalence. Extend as needed.
  *
@@ -78,7 +78,7 @@ function listBacklogFiles () {
 }
 
 /**
- * Compute the matrix-relevant subset of backlog slugs — only those
+ * Compute the matrix-relevant subset of backlog slugs, only those
  * referenced from compliance-matrix as either a `planned: backlog:`
  * chip in `scopes/*.yml` OR a `proposals/<slug>.md` mirror file.
  *
@@ -122,7 +122,7 @@ function parseBugsFile () {
   if (openIdx < 0) return [];
   const openBody = body.slice(openIdx, fixedIdx > 0 ? fixedIdx : undefined);
   const entries = [];
-  const entryRegex = /^### (B-\d{4}-\d{2}-\d{2}-\d+)\s*—\s*(.+?)$/gm;
+  const entryRegex = /^### (B-\d{4}-\d{2}-\d{2}-\d+)\s*, \s*(.+?)$/gm;
   let m;
   while ((m = entryRegex.exec(openBody)) !== null) {
     entries.push({ id: m[1], title: m[2].trim() });
@@ -169,7 +169,7 @@ function matchSlugInTitle (slug, title) {
 }
 
 // ──────────────────────────────────────────────────────────────────
-// YAML editing — surgical regex insert of tracking_url
+// YAML editing, surgical regex insert of tracking_url
 // ──────────────────────────────────────────────────────────────────
 
 function listScopeFiles () {
@@ -309,7 +309,7 @@ async function main () {
   console.log(`Target project: ${ORG} #${PROJECT_NUMBER}`);
   console.log('');
 
-  // Phase 1 — discover matrix-relevant backlog slugs (chip references)
+  // Phase 1, discover matrix-relevant backlog slugs (chip references)
   const allBacklogs = listBacklogFiles();
   const matrixSlugs = matrixRelevantSlugs();
   console.log(`Matrix-relevant backlog slugs (referenced by chips): ${matrixSlugs.size}`);
@@ -332,7 +332,7 @@ async function main () {
   }
   const inScope = relevant.filter(b => !isDxOnlyBacklog(b.path));
 
-  // Phase 2 — discover existing tracking_url values across all scopes
+  // Phase 2, discover existing tracking_url values across all scopes
   const knownTracking = new Map();   // SLUG → url
   const scopeFiles = listScopeFiles();
   for (const sf of scopeFiles) {
@@ -347,12 +347,12 @@ async function main () {
   }
   console.log('');
 
-  // Phase 3 — discover existing GitHub issues
+  // Phase 3, discover existing GitHub issues
   console.log('Fetching existing GitHub issues...');
   const existingIssues = listExistingComplianceIssues();
   console.log(`Found ${existingIssues.length} existing issues with [compliance-matrix] label or [V2] title.`);
 
-  // Phase 4 — for each backlog, decide action
+  // Phase 4, for each backlog, decide action
   const plan = [];   // {slug, action: 'map'|'create'|'skip', issueNumber?, issueUrl?, reason?}
   for (const b of inScope) {
     if (knownTracking.has(b.slug)) {
@@ -367,7 +367,7 @@ async function main () {
         plan.push({ slug: b.slug, action: 'map', issueNumber, issueUrl: match.url, title: match.title, source: 'KNOWN_MAPPINGS' });
         continue;
       }
-      // Override points at an issue we couldn't find — surface as warning
+      // Override points at an issue we couldn't find, surface as warning
       plan.push({ slug: b.slug, action: 'create', titleLine: backlogTitleLine(b.path), path: b.path, warning: `KNOWN_MAPPINGS references #${issueNumber} but it wasn't found via gh issue list` });
       continue;
     }
@@ -380,7 +380,7 @@ async function main () {
     plan.push({ slug: b.slug, action: 'create', titleLine: backlogTitleLine(b.path), path: b.path });
   }
 
-  // Phase 5 — also discover BUGS.md orphan bugs
+  // Phase 5, also discover BUGS.md orphan bugs
   const orphanBugs = parseBugsFile();
   console.log(`Found ${orphanBugs.length} orphan bug(s) in the orphan-bugs registry "Open" section.`);
   for (const bug of orphanBugs) {
@@ -389,11 +389,11 @@ async function main () {
     if (match) {
       plan.push({ slug: bug.id, action: 'map', issueNumber: match.number, issueUrl: match.url, isBug: true });
     } else {
-      plan.push({ slug: bug.id, action: 'create-bug', titleLine: `${bug.id} — ${bug.title}`, isBug: true });
+      plan.push({ slug: bug.id, action: 'create-bug', titleLine: `${bug.id}, ${bug.title}`, isBug: true });
     }
   }
 
-  // Phase 6 — print plan
+  // Phase 6, print plan
   console.log('');
   console.log('## Plan');
   console.log('');
@@ -425,7 +425,7 @@ async function main () {
     return;
   }
 
-  // Phase 7 — apply
+  // Phase 7, apply
   console.log('');
   console.log('## APPLYING...');
   console.log('');
@@ -444,7 +444,7 @@ async function main () {
       newMappings.set(p.slug, url);
     } else if (p.action === 'create-bug') {
       console.log(`[bug]    ${p.slug}: ${p.titleLine}`);
-      // For BUGS.md entries we don't have a backlog file body — use the BUGS.md entry section
+      // For BUGS.md entries we don't have a backlog file body, use the BUGS.md entry section
       const bugBody = scrubInternalRefs(extractBugBody(p.slug), `${BUGS_FILE} entry ${p.slug}`);
       const bugTitle = scrubInternalRefs(p.titleLine, `${BUGS_FILE} entry ${p.slug} (title)`);
       const tmpFile = path.join('/tmp', `gh-bug-body-${p.slug}.md`);
@@ -461,7 +461,7 @@ async function main () {
     }
   }
 
-  // Phase 8 — update scopes/*.yml with new tracking_url values
+  // Phase 8, update scopes/*.yml with new tracking_url values
   console.log('');
   console.log('## Updating scopes/*.yml...');
   for (const sf of scopeFiles) {
@@ -480,7 +480,7 @@ async function main () {
 function extractBugBody (bugId) {
   const body = readFileSync(BUGS_FILE, 'utf8');
   const startIdx = body.indexOf(`### ${bugId}`);
-  if (startIdx < 0) return `Bug ${bugId} — see the orphan-bugs registry`;
+  if (startIdx < 0) return `Bug ${bugId}, see the orphan-bugs registry`;
   const restAfterStart = body.slice(startIdx);
   const nextEntry = restAfterStart.search(/^### B-/m);
   const nextSection = restAfterStart.search(/^## /m);

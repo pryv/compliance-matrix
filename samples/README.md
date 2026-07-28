@@ -4,7 +4,7 @@ Small standalone web applications that demonstrate a compliance-relevant
 flow end-to-end. Cited from scope YAML rows via `sample_apps:`.
 
 Sample apps fill the gap where automated tests + functional specs can't
-carry the user-experience evidence — auditors and compliance reviewers
+carry the user-experience evidence, auditors and compliance reviewers
 want to *see* the flow working, not read the API contract.
 
 ## When to write a sample
@@ -20,24 +20,24 @@ facing flow that:
 
 ## Built
 
-- [`who-has-access-to-my-data/`](./who-has-access-to-my-data/) — list + revoke
+- [`who-has-access-to-my-data/`](./who-has-access-to-my-data/): list + revoke
   accesses (GDPR Art.7(3)/15/30). React + Vite + Tailwind.
-- [`scheduled-retention-job/`](./scheduled-retention-job/) — operator-owned
+- [`scheduled-retention-job/`](./scheduled-retention-job/): operator-owned
   retention enforcement (GDPR Art.5(1)(e)/17). Node script + systemd/k8s/
   github-actions wrappers.
-- [`cross-account-share/`](./cross-account-share/) — CMC controller-to-
+- [`cross-account-share/`](./cross-account-share/): CMC controller-to-
   controller sharing (GDPR Art.6/7/20/30). Two-pane React app.
 
 ## Examples to build (proposals)
 
-- `get-a-copy-of-my-data/` — GDPR Art.15 + Art.20: data subject downloads a
-  copy of their data. **Deferred** — covered by the shipped
+- `get-a-copy-of-my-data/`: GDPR Art.15 + Art.20: data subject downloads a
+  copy of their data. **Deferred**, covered by the shipped
   `pryv-account-backup-webapp`.
-- `consent-presented-and-versioned/` — GDPR Art.7 + Art.12: app presents
+- `consent-presented-and-versioned/`: GDPR Art.7 + Art.12: app presents
   consent text, user grants, app shows the access with the consent text in
   clientData and the access version number. **Deferred.**
-- `deployment-verification-runbook/` — GDPR Art.32(1)(d): operator-run
-  verify-my-deployment package. **Deferred** — overlaps the internal
+- `deployment-verification-runbook/`: GDPR Art.32(1)(d): operator-run
+  verify-my-deployment package. **Deferred**, overlaps the internal
   deploy-validation matrix.
 
 ## Layout
@@ -51,7 +51,7 @@ samples/
     public/
 ```
 
-Each sample is self-contained — its own `package.json`, `vite.config.ts`,
+Each sample is self-contained, its own `package.json`, `vite.config.ts`,
 deps. The compliance-matrix root `package.json` does NOT include them in
 its install graph (operator-side build only).
 

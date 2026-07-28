@@ -28,7 +28,7 @@ const MODE_DETAIL: Record<FacilitationMode, { label: string; description: string
   },
   awareness: {
     label: 'Awareness',
-    description: 'Framing row — Pryv contributes minimally; the matrix is the surface.'
+    description: 'Framing row, Pryv contributes minimally; the matrix is the surface.'
   }
 };
 

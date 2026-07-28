@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Data-Subject Request Record (template)"
+title: "{{organization}}, Data-Subject Request Record (template)"
 id: impl-rec-dsar
 draft: true
 owner: "{{dpo-contact}}"
@@ -15,7 +15,7 @@ record_for: impl-proc-dsar
 | Received | date |
 | Statutory deadline | date |
 | Requester | |
-| Identity verified? | yes / no — how |
+| Identity verified? | yes / no, how |
 | Right(s) exercised | access / rectification / erasure / portability / restriction |
 
 ## Fulfilment

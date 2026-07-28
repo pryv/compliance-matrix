@@ -67,7 +67,7 @@ jobs:
         run: npm run build
 
       # GitHub Pages serves this repo from the `gh-pages` branch (legacy
-      # build type), so publish by pushing the built SPA to that branch —
+      # build type), so publish by pushing the built SPA to that branch,
       # the same model as wab/scripts/upload.sh, history preserved.
       - name: Publish to gh-pages
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'

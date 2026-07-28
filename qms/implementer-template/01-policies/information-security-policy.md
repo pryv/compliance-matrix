@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Information Security Policy"
+title: "{{organization}}, Information Security Policy"
 id: impl-pol-infosec
 draft: true
 owner: "{{security-contact}}"
@@ -12,7 +12,7 @@ reviewed_by: null
 reviewed_at: null
 ---
 
-# {{organization}} — Information Security Policy
+# {{organization}}: Information Security Policy
 
 ## Purpose
 

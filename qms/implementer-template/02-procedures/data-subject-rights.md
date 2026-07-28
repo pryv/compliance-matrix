@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Data-Subject Rights Procedure"
+title: "{{organization}}, Data-Subject Rights Procedure"
 id: impl-proc-dsar
 draft: true
 owner: "{{dpo-contact}}"
@@ -14,7 +14,7 @@ reviewed_by: null
 reviewed_at: null
 ---
 
-# {{organization}} — Data-Subject Rights Procedure
+# {{organization}}: Data-Subject Rights Procedure
 
 ## Purpose
 
@@ -28,15 +28,15 @@ rectification, erasure, portability and restriction in
    (or authorized representative).
 2. **Log.** Record the request with a deadline.
 3. **Fulfil** using Pryv's primitives:
-   - **Access / portability** — export the subject's account data (events,
+   - **Access / portability**: export the subject's account data (events,
      streams, attachments, accesses, profile). The account-backup tool or
      a `lib-js`-based export produces the copy; confirm coverage of audit,
      high-frequency series and webhooks per the matrix gap report.
-   - **Rectification** — update the relevant events/streams.
-   - **Erasure** — delete the subject's data and, where applicable, the
+   - **Rectification**: update the relevant events/streams.
+   - **Erasure**: delete the subject's data and, where applicable, the
      account; confirm cascade behaviour and audit-retention mode per your
      configuration.
-   - **Restriction** — limit processing via access/permission changes.
+   - **Restriction**: limit processing via access/permission changes.
 4. **Respond** within the deadline and record the outcome.
 5. **Edge cases.** Legal-hold, overlapping requests, and third-party data
    are escalated to {{dpo-contact}}.

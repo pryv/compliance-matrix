@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * copy-sqlite.js — copy the built compliance.sqlite into wab/public/
+ * copy-sqlite.js, copy the built compliance.sqlite into wab/public/
  * so Vite serves it as a static asset.
  *
  * Runs as predev + prebuild hooks. If the SQLite isn't built yet, runs the

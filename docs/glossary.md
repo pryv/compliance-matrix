@@ -2,7 +2,7 @@
 
 | Term | Meaning |
 |------|---------|
-| **Implementer** | The audience this matrix is written for — someone building a solution on Pryv who needs to know what the platform does for them and what they still need to do. |
+| **Implementer** | The audience this matrix is written for, someone building a solution on Pryv who needs to know what the platform does for them and what they still need to do. |
 | **Pryv** | The deployed running platform (what the implementer's deployment is). Used in all matrix prose. |
 | **open-pryv.io** | The upstream software project / source code / version. Used only for code-path and version references. |
 | **Scope** | A regulation (e.g., GDPR), standard (e.g., ISO 27001) or certification (e.g., HDS). |
@@ -14,6 +14,6 @@
 | **`draft`** | A coverage claim authored but not yet reviewed. Marked with `draft: true` per row. |
 | **Curated scope** | A scope where the matrix authors only requirements with non-`out-of-scope` coverage. Excluded clauses listed in the scope YAML's `excluded_items:` for audit-traceability. |
 | **Layered scope** | A scope that references other scopes as its foundation (e.g., DiGA layered on MDR layered on GDPR). |
-| **QMS** | Quality Management System — the organizational framework required by ISO 13485 / 27001 / MDR. See [`../qms/`](../qms/). |
+| **QMS** | Quality Management System, the organizational framework required by ISO 13485 / 27001 / MDR. See [`../qms/`](../qms/). |
 | **Matrix** | The dataset that connects scope requirements → coverage status → functional specs → tests → docs → QMS files → sample apps. |
-| **WAB** | Web App — the React UI in [`../wab/`](../wab/) for browsing the matrix. |
+| **WAB** | Web App, the React UI in [`../wab/`](../wab/) for browsing the matrix. |

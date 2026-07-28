@@ -63,7 +63,7 @@ control without a full design record.
 
 When a change adds, removes or alters a capability that a matrix row
 cites, the matrix row (and any `planned:` chip) is updated as part of the
-change — the matrix update is an exit criterion of the design, not a
+change, the matrix update is an exit criterion of the design, not a
 follow-up.
 
 ## Records

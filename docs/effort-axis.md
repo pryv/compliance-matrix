@@ -6,7 +6,7 @@ records **how much of the obligation Pryv carries**, on a `high`
 
 Without further definition, that phrasing is ambiguous: effort to do
 *what*? This document pins down the scope of "effort" the matrix
-counts — and, just as importantly, what it does **not**.
+counts, and, just as importantly, what it does **not**.
 
 ## What's counted
 
@@ -14,12 +14,12 @@ counts — and, just as importantly, what it does **not**.
 the implementer would otherwise spend building or running the
 technical side of the obligation if Pryv weren't there:
 
-- **Engineering** — code to write, integrations to build, primitives
+- **Engineering**: code to write, integrations to build, primitives
   to design, schemas to author, APIs to define + test.
-- **Operational** — deployment, configuration, monitoring, incident
+- **Operational**: deployment, configuration, monitoring, incident
   response wiring, backup pipelines, key management, certificate
   rotation, log retention, scaling.
-- **Technical demonstrability** — producing audit-trail artefacts,
+- **Technical demonstrability**: producing audit-trail artefacts,
   evidence chains, version-history records, structured queries that
   an auditor or DSAR-fulfilment workflow consumes.
 
@@ -77,7 +77,7 @@ strategy.**
 
 ## Reading `high` / `medium` / `low` correctly
 
-### `high` — Pryv carries most of the engineering+operational work
+### `high`: Pryv carries most of the engineering+operational work
 
 The technical control is **shipped** or **enabled with a single
 config**; the implementer's work is mostly enabling it and adding
@@ -89,17 +89,17 @@ evidence to compliance binders.
   TLS, mTLS, HA, at-rest secret encryption, backup-restore, audit.
   Engineering work the implementer would otherwise do = months.
   *Does not mean* Pryv saves you from running an ISO 27001 ISMS
-  programme — that's process work, separate axis.
+  programme, that's process work, separate axis.
 - `gdpr.Art.15` (right of access) → `high`. The standard read API
   returns everything; you wrap it in a portal. Engineering work
   saved = building the read+export pipeline.
 - `hipaa-security.164.312(d)` (authentication) → `high`. MFA via
   `mfa.*` API methods, system-streams for credential isolation.
 
-### `medium` — Roughly shared engineering+operational work
+### `medium`: Roughly shared engineering+operational work
 
 Pryv ships the primitives but the implementer still composes
-substantive technical work — multi-step config, app-side glue, UI
+substantive technical work, multi-step config, app-side glue, UI
 wrapping, layout design.
 
 **Examples:**
@@ -114,7 +114,7 @@ wrapping, layout design.
   → `medium`. Multi-core HA primitive exists; the
   emergency-runbook + tested-recovery cadence is yours.
 
-### `low` — Pryv contributes a small technical substrate
+### `low`: Pryv contributes a small technical substrate
 
 The bulk of the engineering+operational work falls on the
 implementer; Pryv's contribution is incidental (a small piece of
@@ -136,14 +136,14 @@ the artefact the implementer creates).
 ## Why this scoping matters
 
 An implementer reading "High" on `gdpr.Art.32` might overestimate
-what Pryv has done for their overall GDPR posture — and skip
+what Pryv has done for their overall GDPR posture, and skip
 running the ISMS programme that GDPR actually expects on top of
 the technical controls.
 
 Explicitly excluding policy / editorial / process / strategic effort
 from the axis keeps the matrix honest: it tells the implementer
 **what Pryv does technically**, and lets the QMS / policy docs
-(separate workstream — see `qms/`) cover the rest.
+(separate workstream, see `qms/`) cover the rest.
 
 The badges in the WAB are about engineering + operational savings.
 Compliance is broader than that; the matrix's role is to be precise
@@ -151,7 +151,7 @@ about the slice it covers.
 
 ## Related
 
-- [[facilitation-typology.md]] — `facilitation_mode` axis (what
+- [[facilitation-typology.md]], `facilitation_mode` axis (what
   kind of help Pryv provides on facilitated rows).
-- [[../qms/]] — the policy / process / programmatic side of
+- [[../qms/]], the policy / process / programmatic side of
   compliance the operator runs on top of the technical substrate.

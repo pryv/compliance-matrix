@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * generate-template.js — implementer compliance-documentation generator.
+ * generate-template.js: implementer compliance-documentation generator.
  *
  * Given a short questionnaire (answers) and, optionally, an open-pryv.io
  * configuration file, produces a per-scope documentation skeleton plus a
@@ -13,19 +13,19 @@
  *
  * Inputs:
  *   - answers   : questionnaire answers (schemas/questionnaire.schema.json).
- *   - config    : (optional) open-pryv.io config — auto-derives
+ *   - config    : (optional) open-pryv.io config, auto-derives
  *                 storage-engine / mfa-enabled / audit-enabled / multi-core.
  *   - the matrix: read directly from scopes/*.yml (the source of truth the
  *                 build compiles to dist/compliance.sqlite).
  *
  * Output (under --out, default ./compliance-pack):
- *   index.md            — table of contents + answers summary.
- *   <scope-id>.md       — per-scope: cover, coverage summary, applicable
+ *   index.md            table of contents + answers summary.
+ *   <scope-id>.md       per-scope: cover, coverage summary, applicable
  *                         requirements table, evidence pointers, and the
  *                         implementer's own to-do list.
- *   gap-report.md       — every documented / out-of-scope row across the
+ *   gap-report.md       every documented / out-of-scope row across the
  *                         selected scopes (the operator's responsibility).
- *   qms/                — the implementer QMS template with {{placeholders}}
+ *   qms/                the implementer QMS template with {{placeholders}}
  *                         resolved from the answers.
  *
  * Exit 0 on success, 1 on validation / IO failure.
@@ -55,7 +55,7 @@ function parseArgs (argv) {
   return out;
 }
 
-const HELP = `generate-template.js — implementer compliance-documentation generator
+const HELP = `generate-template.js: implementer compliance-documentation generator
 
   node scripts/generate-template.js --answers <answers.yml> [--config <config.yml>] [--out <dir>]
 
@@ -139,7 +139,7 @@ function renderScopeDoc (scope, vars, generatedAt) {
   const rows = scope.requirements || [];
   const hist = coverageHistogram(rows);
   const L = [];
-  L.push(`# ${vars.organization} — ${scope.title}`);
+  L.push(`# ${vars.organization}, ${scope.title}`);
   L.push('');
   L.push(`> Generated ${generatedAt} for **${vars['deployment-name']}** (${vars.jurisdiction || 'jurisdiction not stated'}).`);
   L.push('> This is a working skeleton. Every row marked as your responsibility');
@@ -178,7 +178,7 @@ function renderScopeDoc (scope, vars, generatedAt) {
   } else {
     for (const r of todo) {
       const ov = (r.overview || '').trim().replace(/\s+/g, ' ');
-      L.push(`- [ ] **${r.ref} — ${r.title}** (${r.coverage}) ${ov ? `— ${ov}` : ''}`);
+      L.push(`- [ ] **${r.ref}, ${r.title}** (${r.coverage})${ov ? `, ${ov}` : ''}`);
     }
   }
   L.push('');
@@ -240,9 +240,9 @@ async function main () {
   }
 
   // Gap report (documented + out-of-scope across all selected scopes).
-  const gap = ['# Gap report — operator responsibilities', '',
+  const gap = ['# Gap report, operator responsibilities', '',
     `Generated ${generatedAt} for ${vars.organization} / ${vars['deployment-name']}.`,
-    'Rows below are not carried by software alone — they need your process or decision.', '',
+    'Rows below are not carried by software alone; they need your process or decision.', '',
     '| Scope | Ref | Title | Coverage |', '|---|---|---|---|'];
   for (const scope of selected) {
     for (const r of (scope.requirements || [])) {
@@ -267,7 +267,7 @@ async function main () {
 
   // Index.
   const idx = ['# Compliance pack', '',
-    `For **${vars.organization}** — ${vars['deployment-name']}`,
+    `For **${vars.organization}**, ${vars['deployment-name']}`,
     `Generated ${generatedAt}.`, '',
     '## Your answers', '', '| Field | Value |', '|---|---|'];
   for (const k of ['organization', 'deployment-name', 'jurisdiction', 'controller-or-processor',

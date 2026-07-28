@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Privacy / Data Protection Policy"
+title: "{{organization}}, Privacy / Data Protection Policy"
 id: impl-pol-privacy
 draft: true
 owner: "{{dpo-contact}}"
@@ -12,7 +12,7 @@ reviewed_by: null
 reviewed_at: null
 ---
 
-# {{organization}} — Privacy / Data Protection Policy
+# {{organization}}: Privacy / Data Protection Policy
 
 ## Purpose
 

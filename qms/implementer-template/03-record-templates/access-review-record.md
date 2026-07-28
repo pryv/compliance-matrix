@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Access Review Record (template)"
+title: "{{organization}}, Access Review Record (template)"
 id: impl-rec-access-review
 draft: true
 owner: "{{security-contact}}"

@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Change Record (template)"
+title: "{{organization}}, Change Record (template)"
 id: impl-rec-change
 draft: true
 owner: "{{security-contact}}"

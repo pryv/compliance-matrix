@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Change and Patch Management Procedure"
+title: "{{organization}}, Change and Patch Management Procedure"
 id: impl-proc-change
 draft: true
 owner: "{{security-contact}}"
@@ -12,12 +12,12 @@ reviewed_by: null
 reviewed_at: null
 ---
 
-# {{organization}} — Change and Patch Management Procedure
+# {{organization}}: Change and Patch Management Procedure
 
 ## Purpose
 
-To control changes to {{deployment-name}} — including upgrades of Pryv
-(open-pryv.io), configuration changes, and security patches — so they are
+To control changes to {{deployment-name}}, including upgrades of Pryv
+(open-pryv.io), configuration changes, and security patches, so they are
 tested before reaching production.
 
 ## Procedure

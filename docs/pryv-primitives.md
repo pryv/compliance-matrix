@@ -1,4 +1,4 @@
-# Pryv primitives — compliance-relevant building blocks
+# Pryv primitives: compliance-relevant building blocks
 
 The matrix's coverage claims rely on these primitives. Each is cited from
 requirement rows via `pryv_primitives: [<id>, ...]` in the scope YAML.
@@ -29,7 +29,7 @@ A grant of permission to act on a user's data.
 
 A routable, platform-unique de-identifying name substituted for the username.
 
-- **Set at**: `accesses.create` with `randomAlias: true` — mints an
+- **Set at**: `accesses.create` with `randomAlias: true`, mints an
   `r-XXXXXXXX` alias (random by construction, no PHI/PII encoded) reserved
   platform-wide. The resolved value is returned as the access's `alias`.
 - **Routable**: the alias replaces the username in the access's `apiEndpoint`
@@ -38,7 +38,7 @@ A routable, platform-unique de-identifying name substituted for the username.
   the aliased access.
 - **Reported by**: `access-info` returns the alias as `user.username`, so a
   counterparty holding the access sees only the alias.
-- **Also underpins**: `account.changeUsername` — a superseded username is
+- **Also underpins**: `account.changeUsername`, a superseded username is
   demoted to a (non-`r-`) alias so accesses issued under it keep working.
 - **Compliance role**: Pryv-native pseudonymisation primitive (GDPR Art.4(5) /
   Art.32(1)(a)) and the HIPAA §164.514(c) re-identification code. Released when
@@ -51,10 +51,10 @@ The set of stream+level tuples carried by an access.
 
 - **Levels**: `none`, `create-only`, `read`, `contribute`, `manage`.
 - **Granularity**: per `streamId` (incl. wildcards like `*`).
-- **Enforcement**: blocked at the API surface — every read/write request
+- **Enforcement**: blocked at the API surface; every read/write request
   is checked against the access's permissions for the relevant streams.
 - **Compliance role**: technical purpose-limitation control. The
-  consent-granted scope is the scope the API enforces — not a policy /
+  consent-granted scope is the scope the API enforces, not a policy /
   documentation control.
 
 ### `clientData`
@@ -66,7 +66,7 @@ events.
 - **Versioned**: on accesses, included in every version snapshot (see
   `access`). On events, included in event version history.
 - **Compliance role**: the carrier for legally-binding metadata that the
-  underlying primitive doesn't have a native field for — consent text,
+  underlying primitive doesn't have a native field for, consent text,
   purposes, lawful basis, recipients, retention period, originating
   `consent/request-cmc` event id, etc.
 
@@ -93,7 +93,7 @@ The atomic data record.
 - **Versioned**: `events.update` snapshots prior state into event history
   (similar to access versioning).
 - **Immutability when needed**: write the event once; never update.
-  History-only events are append-only — useful for audit / consent /
+  History-only events are append-only, useful for audit / consent /
   attestation.
 - **Compliance role**: where the data subject's actual data lives;
   also the carrier for `consent/*` state-transition events
@@ -111,23 +111,23 @@ Records every API method invocation per user.
 - **Does NOT capture**: the request body. Event content, attachments,
   user-profile fields submitted in POST/PUT bodies never enter the
   audit row. The `auth=` query parameter is explicitly stripped.
-  Consequence: the audit log is data-minimal *by construction* — it
+  Consequence: the audit log is data-minimal *by construction*, it
   proves *who did what when* without storing *what data was written*.
   This is a deliberate design property, not a configuration toggle.
   One nuance: caller-supplied **search values** (e.g. `events.get`
   `content` / `clientData` query conditions sent over HTTP GET) are
-  part of the URL query and are recorded as-is — the query is the
+  part of the URL query and are recorded as-is, the query is the
   action being audited. See
   [`../context/content-query-audit-semantics.md`](../context/content-query-audit-semantics.md).
 - **Read surface**: `audit.get` API method (subject to permissions).
 - **Compliance role**: end-to-end accountability chain. With access
-  versioning, the audit row points at a specific contract version —
+  versioning, the audit row points at a specific contract version,
   the consent state at the moment of the call is recoverable. The
   no-content guarantee means the audit log itself raises no
   data-minimisation (GDPR Art.5(1)(c)) or audit-PII-residue concerns
   when the original event is erased.
 - **Time semantics**: audit row `time` is `timestamp.now()` on the
-  serving core (machine wall-clock). Pryv is core-affine — each
+  serving core (machine wall-clock). Pryv is core-affine, each
   user's audit lives on their home core only (see
   [`../context/core-affinity-architecture.md`](../context/core-affinity-architecture.md)),
   so per-core monotonic time suffices; cross-core ordering is not
@@ -139,7 +139,7 @@ Records every API method invocation per user.
   `meta.serverTime` (Unix timestamp seconds;
   `components/api-server/src/methods/helpers/setCommonMeta.ts:49`)
   + webhook payloads include the same. Clients use this to detect
-  their own clock skew vs the server — the existing client-side
+  their own clock skew vs the server, the existing client-side
   primitive that pairs with the planned server-side skew checks.
 
 ### `system-streams`
@@ -161,14 +161,14 @@ Multi-factor authentication via the `mfa.*` API methods
 `mfa.deactivate`, `mfa.recover`). Opt-in per `services.mfa.mode`
 operator config.
 
-**Pluggable** — `components/business/src/mfa/Service.ts` defines an
+**Pluggable**: `components/business/src/mfa/Service.ts` defines an
 abstract `Service` base class with `challenge()` and `verify()`
 methods. Two subclasses ship today, both targeting HTTP-callable
 external providers:
 
-- `ChallengeVerifyService` — two-step external provider (separate
+- `ChallengeVerifyService`: two-step external provider (separate
   challenge + verify endpoints).
-- `SingleService` — one-step external provider (single endpoint
+- `SingleService`: one-step external provider (single endpoint
   does both).
 
 The shipped subclasses are configured with SMS provider templates
@@ -179,7 +179,7 @@ any HTTP-callable provider. Operators can:
 - **Config-only:** point `services.mfa` URLs at any HTTP MFA
   provider matching the challenge/verify or single-step shape
   (Twilio Authy, Auth0 MFA API, Duo Web webhook, etc.).
-- **Code-level:** extend `Service` to implement any provider —
+- **Code-level:** extend `Service` to implement any provider,
   internal or external.
 
 In-process ceremonies (server-side TOTP, WebAuthn) currently
@@ -202,7 +202,7 @@ key instead of embedding the credential in a URL
 
 - **Endpoints**: `POST /:username/shared-secrets` creates an item and
   returns the clear key **exactly once**;
-  `POST /:username/shared-secrets/retrieve` redeems it —
+  `POST /:username/shared-secrets/retrieve` redeems it,
   unauthenticated by design, the key IS the credential;
   `POST /:username/shared-secrets/status` lets the creator inspect an
   item without consuming it. Client helper: `pryv.SharedSecrets`
@@ -210,7 +210,7 @@ key instead of embedding the credential in a URL
 - **One-shot + mandatory TTL**: a key is redeemable exactly once
   (concurrent retrievals atomically yield a single winner); a positive
   TTL is required and capped by `sharedSecrets.maxTtl` (default 30
-  days) — an open-ended secret is never valid.
+  days), an open-ended secret is never valid.
 - **Hash-only storage**: Pryv stores only the SHA-256 of the key's
   random half, so a database dump cannot reconstruct a live key. The
   secret payload is scrubbed the moment the item leaves the pending
@@ -228,7 +228,7 @@ key instead of embedding the credential in a URL
   `hmac-sha256` (recipient proves possession of a verifier secret that
   never reaches the server).
 - **Per-access isolation + opt-out**: items live under the reserved
-  `:_shared-secrets:<accessId>` namespace — an access only sees its
+  `:_shared-secrets:<accessId>` namespace, an access only sees its
   own, items stay out of wildcard `events.get`, and the events API
   refuses to create, modify, or move `shared-secret/item` events (no
   forged redeemables). A `{ feature: "secretSharing", setting:
@@ -296,30 +296,30 @@ from a backup file.
 ### `backup-payload-encryption`
 
 `bin/backup.js` can encrypt its output on demand so plaintext PHI/PII
-never touches the backup destination disk — the bytes written to the
+never touches the backup destination disk, the bytes written to the
 media are ciphertext only. Opt-in; absent the flags, output is plaintext
 as before.
 
 - **Two key models**: a recipient **public key** (a random per-backup
-  data key is RSA-OAEP-wrapped to the recipient — the backup host holds
+  data key is RSA-OAEP-wrapped to the recipient, the backup host holds
   no secret that can decrypt its own output), or a scrypt-derived
   **passphrase**.
 - **Construction**: per-file authenticated AES-256-GCM (per-file HKDF
   subkey, chunked streaming), applied after gzip; a cleartext
   `encryption.json` envelope carries crypto headers + the wrapped key
-  only — never user data. Each encrypted backup ships a zero-dependency
+  only, never user data. Each encrypted backup ships a zero-dependency
   standalone decrypter so the key holder can recover it without Pryv.io.
 - **Compliance role**: backup-media at-rest encryption (GDPR Art.32
   §1(a); HIPAA 164.312(a)(2)(iv) addressable encryption) at backup
   creation, complementing operator-level volume encryption rather than
   depending on it.
-- **DR caveat**: key/passphrase loss makes the backup unrecoverable —
+- **DR caveat**: key/passphrase loss makes the backup unrecoverable,
   key management is the operator's responsibility.
 
 ### `account-backup-tool`
 
 `pryv-account-backup` (`@pryv/account-backup`) is the subject-driven
-export tool. **Distribution is git-clone-based — NOT on the npm
+export tool. **Distribution is git-clone-based, NOT on the npm
 registry**: clone the tagged release, `npm install`, `npm start`,
 supply service-info URL + username + password, and get a
 `./backup/<apiEndpoint>/` folder. As of v0.6.0 it is also a
@@ -329,21 +329,21 @@ browser webapp (`pryv-account-backup-webapp`) ships on the same core
 modules.
 
 - **Two flavours**:
-  - **CLI (complete)** — covers every read-side resource: account
+  - **CLI (complete)**: covers every read-side resource: account
     info, public + private profiles, app profiles, streams tree,
     accesses (current snapshot + `accesses-all` revoked/expired +
     opt-in per-access version history), events (monthly-chunked initial
     + incremental via `events.get?modifiedSince=T`), audit log, HF
     series data points, webhooks, attachments, plus a per-file sha256
     integrity manifest.
-  - **Webapp (read-side text only)** — omits attachments / HF series /
+  - **Webapp (read-side text only)**: omits attachments / HF series /
     webhooks / sha256 manifest (those fetchers stay CLI-only). Route
     non-technical subjects here; route subjects needing the omitted
     resources to the CLI.
 - **Audit-as-events (v0.6.0+)**: audit is fetched via the standard
   events API on the `:_audit:*` store streams
   (`events.get?streams=[':_audit:accesses',':_audit:actions']`), not
-  the dedicated `audit.getLogs` route — which was **removed** from
+  the dedicated `audit.getLogs` route, which was **removed** from
   open-pryv.io on 2026-06-15. **v0.6.0 is the minimum required tool
   version** against current deployments; v0.5.0 and earlier produce
   empty/404 audit sections.
@@ -355,13 +355,13 @@ modules.
   [`../context/account-backup-coverage.md`](../context/account-backup-coverage.md)
   for the per-data-type matrix.
 - **Compliance role**: GDPR Art.15 (right of access) + Art.20 (data
-  portability) substrate. Subject-runnable — no operator dependency
+  portability) substrate. Subject-runnable, no operator dependency
   for routine DSARs (the subject has their own credentials).
 - **Operator security note**: `profile_private.json` carries
-  `profile.mfa = { content, recoveryCodes }` verbatim — treat any
+  `profile.mfa = { content, recoveryCodes }` verbatim, treat any
   backup as a password-reset-equivalent secret. By design (the subject
   is entitled to their full MFA state).
-- **Restore path** stays experimental + CLI-only — audit / webhooks /
+- **Restore path** stays experimental + CLI-only, audit / webhooks /
   accesses are deliberately not replayed; HF series + multi-attachment
   round-trip is the known-lossy edge.
 - **Informational gaps (no chips)**: jurisdiction-per-host inference
@@ -421,32 +421,32 @@ hostings (different countries / cloud regions / on-premise locations).
   `hosting` field so the implementer can show "your data is in <region>"
   in the app.
 - **Two policies the implementer chooses between**:
-  1. **End-user choice** — implementer's registration UI presents the
+  1. **End-user choice**: implementer's registration UI presents the
      available hostings; user picks. Useful for consumer apps where
      subjects assert their own residency preference (e.g., "store my
      data in Switzerland").
-  2. **Operator / regulatory routing** — implementer's app auto-routes
+  2. **Operator / regulatory routing**: implementer's app auto-routes
      to a hosting based on contract / jurisdiction / regulatory rules
      (e.g., EU subjects → EU hosting; French health data → HDS-certified
      French hosting). End-user doesn't see the choice.
 - **Compliance role**:
-  - **GDPR Art.3 / Ch.V** — data-residency choice satisfies "where is the
+  - **GDPR Art.3 / Ch.V**: data-residency choice satisfies "where is the
     data" both as territorial-scope determination and as transfer control
     (no Art.44-50 international transfer if user data never leaves the
     chosen hosting).
-  - **HDS (France)** — French health data routed to an HDS-certified
+  - **HDS (France)**: French health data routed to an HDS-certified
     hosting + French jurisdiction.
-  - **Swiss nLPD** — Swiss data routed to a CH hosting + CH jurisdiction.
-  - **HIPAA-Security** (when applicable) — US data routed to a HIPAA-aware
+  - **Swiss nLPD**: Swiss data routed to a CH hosting + CH jurisdiction.
+  - **HIPAA-Security** (when applicable), US data routed to a HIPAA-aware
     hosting.
-- **Single platform, multiple hostings**: this is the key — it's one
+- **Single platform, multiple hostings**: this is the key, it's one
   logical Pryv platform (one `auth.hostings` namespace, one user
   registration surface) backed by multiple physically-distributed cores.
   The implementer doesn't run separate deployments per jurisdiction.
-- **Guarantee level — core-level**: the residency guarantee is
+- **Guarantee level, core-level**: the residency guarantee is
   enforced by the architecture itself, not by per-event tags or
   admission checks. **Cores share no event/stream/audit data with
-  each other** — the only horizontal data is PlatformDB, which
+  each other**, the only horizontal data is PlatformDB, which
   carries a strictly limited set: `user-core/<username>` lookups,
   `emailIndex/<email-hash>` uniqueness, DNS records, TLS materials,
   `access-state/*`, `cluster_kv/*`. No event content, no streams,
@@ -459,7 +459,7 @@ hostings (different countries / cloud regions / on-premise locations).
   detail in
   [`../context/core-affinity-architecture.md`](../context/core-affinity-architecture.md).
 - **No intermediary in the data path**: client ↔ core data flow
-  is direct over TLS — no Pryv-shipped reverse-proxy, API gateway,
+  is direct over TLS, no Pryv-shipped reverse-proxy, API gateway,
   CDN, or backend hop. Each core terminates TLS itself (the optional
   ACME integration runs the cert on the same Node process serving
   the API + HFS). Operators *can* place a reverse-proxy in front
@@ -472,8 +472,8 @@ hostings (different countries / cloud regions / on-premise locations).
 - **CMC-counterparty consideration**: when an EU user shares a
   stream with a US user via the Cross-Modular Capability primitive,
   the US user's client connects to the **EU user's `apiEndpoint`**
-  (the EU core). The EU data does *not* replicate to the US core
-  — it's fetched on-demand by the US client. From the EU
+  (the EU core). The EU data does *not* replicate to the US core,
+  it's fetched on-demand by the US client. From the EU
   subject's regulator (GDPR Art.44), this fetch *is* an
   international transfer, but the data-at-rest residency is
   preserved (no copy in the US).
@@ -521,7 +521,7 @@ happens before egress.
   very low traffic volumes.
 - **Excluded by construction**: request URLs, query and route
   parameters, bodies, headers, usernames, record identifiers,
-  log records and error **message** text — none has a key in the
+  log records and error **message** text, none has a key in the
   schema, so no code path can emit them. Validation runs on every
   datapoint before buffering; anything outside the vocabulary is
   dropped and counted rather than sent.
@@ -564,7 +564,7 @@ Includes `consent/*`, `notification/*-cmc`, `message/chat-cmc`.
   errors are reshaped to the legacy `z-schema` wire-shape for
   back-compat; consumers don't need to care).
 - **What the validator enforces**: everything expressible in JSON
-  Schema draft-04 — `type`, `required`, `enum`, `pattern`,
+  Schema draft-04, `type`, `required`, `enum`, `pattern`,
   `properties`, `additionalProperties`, `minimum` / `maximum` /
   `exclusiveMinimum` / `exclusiveMaximum`, `minLength` /
   `maxLength`, format strings. Primitive-type coercion (e.g.,
@@ -576,13 +576,13 @@ Includes `consent/*`, `notification/*-cmc`, `message/chat-cmc`.
   types.default.json` (~4750 lines mirroring upstream
   `pryv/data-types`) is the baked-in fallback; the server starts
   with this catalogue even if no `service.eventTypes` config is
-  set. **Bounds usage is sparse in defaults** — only `mood/rating`
+  set. **Bounds usage is sparse in defaults**, only `mood/rating`
   (0..1) and `note/*` (4 MB `maxLength`) declare numerical or
   length limits. Physical-measurement types (`mass/kg`,
   `temperature/c`, `pressure/mmhg`, `frequency/bpm`, …) ship as
   `"type": "number"` with no bounds, so the operator opts into
   strictness by extending via the custom-catalogue model.
-- **Extension model — no fork required.** Implementers needing
+- **Extension model, no fork required.** Implementers needing
   custom event types (e.g., niche health measurements not in the
   upstream catalogue, FHIR-R4 bindings, regulated-deployment-
   specific schemas) maintain a **sibling data-model repo**,
@@ -591,12 +591,12 @@ Includes `consent/*`, `notification/*-cmc`, `message/chat-cmc`.
   startup, validates against the JSON Schema meta-schema, and
   `deepMerge`s on top of the baked-in defaults
   (`components/business/src/types.ts:143-186`
-  `TypeRepository.tryUpdate`). **Custom types are first-class** —
+  `TypeRepository.tryUpdate`). **Custom types are first-class**,
   same ajv-draft-04 validation pipeline, same canonical
   serialisation in `events.get`, same portability in
   `events.json` exports. The **HDS data-model exemplar** declares
   28 `minimum` / 23 `maximum` / 7 `pattern` constraints across
-  its health-data types — the working reference for how to
+  its health-data types, the working reference for how to
   tighten structural-accuracy guarantees beyond the defaults.
   Full extension-pattern detail + HDS exemplar in
   [`../context/custom-event-type-catalogues.md`](../context/custom-event-type-catalogues.md);

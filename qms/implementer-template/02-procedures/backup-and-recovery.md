@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Backup and Recovery Procedure"
+title: "{{organization}}, Backup and Recovery Procedure"
 id: impl-proc-backup
 draft: true
 owner: "{{security-contact}}"
@@ -13,7 +13,7 @@ reviewed_by: null
 reviewed_at: null
 ---
 
-# {{organization}} — Backup and Recovery Procedure
+# {{organization}}: Backup and Recovery Procedure
 
 ## Purpose
 
@@ -27,7 +27,7 @@ To protect the availability and integrity of the data held in
    metadata.
 2. **Protect.** Backups are encrypted and access-controlled; retention
    follows {{retention-policy}}, balanced against the right to erasure
-   (older backups may retain data pending rotation — documented as a
+   (older backups may retain data pending rotation, documented as a
    known limitation).
 3. **Verify.** Backup completion is monitored; failures alert
    {{security-contact}}.

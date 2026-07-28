@@ -35,7 +35,7 @@ operator using the implementer template.
 1. **Context.** Establish what is being assessed (a feature, a release, an
    architectural area) and the assets and data flows involved.
 
-2. **Risk identification.** Identify threats and vulnerabilities —
+2. **Risk identification.** Identify threats and vulnerabilities,
    considering confidentiality, integrity, availability, and privacy harm
    to data subjects.
 

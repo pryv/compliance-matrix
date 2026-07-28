@@ -83,7 +83,7 @@ export function renderScopeDoc (
   const org = String(vars.organization || 'Your organization');
   const dep = String(vars['deployment-name'] || 'your deployment');
   const L: string[] = [];
-  L.push(`# ${org} — ${scope.title}`, '');
+  L.push(`# ${org}, ${scope.title}`, '');
   L.push(`> Generated ${generatedAt} for **${dep}** (${vars.jurisdiction || 'jurisdiction not stated'}).`);
   L.push('> This is a working skeleton. Every row marked as your responsibility');
   L.push('> needs your own evidence before an audit. Not legal advice.', '');
@@ -110,7 +110,7 @@ export function renderScopeDoc (
   } else {
     for (const r of todo) {
       const ov = (r.overview || '').trim().replace(/\s+/g, ' ');
-      L.push(`- [ ] **${r.ref} — ${r.title}** (${r.coverage})${ov ? ` — ${ov}` : ''}`);
+      L.push(`- [ ] **${r.ref}, ${r.title}** (${r.coverage})${ov ? `, ${ov}` : ''}`);
     }
   }
   L.push('');
@@ -123,9 +123,9 @@ export function renderGapReport (
   vars: Answers,
   generatedAt: string
 ): string {
-  const L: string[] = ['# Gap report — operator responsibilities', '',
+  const L: string[] = ['# Gap report, operator responsibilities', '',
     `Generated ${generatedAt} for ${vars.organization} / ${vars['deployment-name']}.`,
-    'Rows below are not carried by software alone — they need your process or decision.', '',
+    'Rows below are not carried by software alone; they need your process or decision.', '',
     '| Scope | Ref | Title | Coverage |', '|---|---|---|---|'];
   for (const scope of scopes) {
     for (const r of (reqsByScope[scope.id] || [])) {
@@ -139,7 +139,7 @@ export function renderGapReport (
 
 export function renderIndex (scopes: Scope[], vars: Answers, generatedAt: string): string {
   const L: string[] = ['# Compliance pack', '',
-    `For **${vars.organization}** — ${vars['deployment-name']}`, `Generated ${generatedAt}.`, '',
+    `For **${vars.organization}**, ${vars['deployment-name']}`, `Generated ${generatedAt}.`, '',
     '## Your answers', '', '| Field | Value |', '|---|---|'];
   for (const k of ['organization', 'deployment-name', 'jurisdiction', 'controller-or-processor',
     'storage-engine', 'multi-core', 'mfa-enabled', 'audit-enabled']) {

@@ -20,7 +20,7 @@ reviewed_at: null
 ## Purpose
 
 To state the project's commitment to protecting the confidentiality,
-integrity and availability of information — both the information the
+integrity and availability of information, both the information the
 project handles in developing open-pryv.io and, by design, the personal
 data that deployments of Pryv hold on behalf of their users.
 

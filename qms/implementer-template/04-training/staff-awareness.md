@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Staff Awareness Program"
+title: "{{organization}}, Staff Awareness Program"
 id: impl-proc-training
 draft: true
 owner: "{{quality-owner}}"
@@ -12,7 +12,7 @@ reviewed_by: null
 reviewed_at: null
 ---
 
-# {{organization}} — Staff Awareness Program
+# {{organization}}: Staff Awareness Program
 
 ## Purpose
 
@@ -37,7 +37,7 @@ practice.
 
 ## Records
 
-Training records (`../03-record-templates/` — reuse the Pryv-project
+Training records (`../03-record-templates/`, reuse the Pryv-project
 training-record shape, or your HR system).
 
 ## Responsibilities

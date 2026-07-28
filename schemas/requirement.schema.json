@@ -150,7 +150,7 @@
           "tracking_url": {
             "type": "string",
             "format": "uri",
-            "description": "Optional external tracker (GitHub issue, project board) — supplements the in-tree backlog file."
+            "description": "Optional external tracker (GitHub issue, project board), supplements the in-tree backlog file."
           },
           "eta_release": {
             "type": "string",

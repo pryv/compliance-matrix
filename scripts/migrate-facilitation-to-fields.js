@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * migrate-facilitation-to-fields.js — one-shot migration that promotes
- * the prose-prefix `**Facilitation: <mode> (<level>)** — ` convention
+ * migrate-facilitation-to-fields.js, one-shot migration that promotes
+ * the prose-prefix `**Facilitation: <mode> (<level>)**, ` convention
  * into structured YAML fields `facilitation_mode:` + `facilitation_level:`.
  *
  * Behaviour:
@@ -10,7 +10,7 @@
  *       overview begins with the prose prefix.
  *     - Insert `facilitation_mode: <mode>` + `facilitation_level: <level>`
  *       lines immediately after the `coverage: facilitated` line.
- *     - Strip the `**Facilitation: ...** — ` prefix from the overview
+ *     - Strip the `**Facilitation: ...**, ` prefix from the overview
  *       first line (the rest of the overview prose stays intact).
  *
  * Run from repo root:  node scripts/migrate-facilitation-to-fields.js
@@ -66,19 +66,19 @@ for (const file of scopeFiles) {
     // Find the overview prefix in the next ~30 lines.
     // The overview block we expect:
     //   <indent>overview: |
-    //   <indent>  **Facilitation: <mode> (<level>)** — <rest>
+    //   <indent>  **Facilitation: <mode> (<level>)**, <rest>
     let overviewLineIdx = -1;
     let prefixLineIdx = -1;
     let mode = null;
     let level = null;
-    let prefixRest = ''; // text after "** — " on the same line
+    let prefixRest = ''; // text after "**, " on the same line
     for (let j = i + 1; j < Math.min(i + 40, lines.length); j++) {
       const ovMatch = lines[j].match(/^(\s+)overview:\s*\|\s*$/);
       if (ovMatch && ovMatch[1] === indent) {
         overviewLineIdx = j;
         // The prefix line is overview content -- typically j+1
         const pfx = lines[j + 1] ?? '';
-        const facMatch = pfx.match(/^(\s+)\*\*Facilitation:\s+(\w+)\s+\((\w+)\)\*\*\s+—\s*(.*)$/);
+        const facMatch = pfx.match(/^(\s+)\*\*Facilitation:\s+(\w+)\s+\((\w+)\)\*\*\s+, \s*(.*)$/);
         if (facMatch) {
           prefixLineIdx = j + 1;
           mode = facMatch[2];
@@ -92,7 +92,7 @@ for (const file of scopeFiles) {
     }
 
     if (mode === null) {
-      // facilitated row with no prefix — leave it alone (rare;
+      // facilitated row with no prefix, leave it alone (rare;
       // most likely a row authored before the convention or after
       // a manual override).
       scopeSkipped += 1;
@@ -113,7 +113,7 @@ for (const file of scopeFiles) {
     for (let j = i + 1; j <= overviewLineIdx; j++) {
       out.push(lines[j]);
     }
-    // Replace prefix line: keep indentation, drop "**Facilitation: ...** — "
+    // Replace prefix line: keep indentation, drop "**Facilitation: ...**, "
     const prefixIndent = (lines[prefixLineIdx].match(/^(\s+)/) || ['', ''])[1];
     if (prefixRest.trim() === '') {
       // Prefix was followed by line break -- emit blank-but-indented line
@@ -121,7 +121,7 @@ for (const file of scopeFiles) {
       out.push(`${prefixIndent}`);
     } else {
       // Capitalize first letter of remaining text if it starts lowercase
-      // (the prefix typically ended with ' — ' followed by a lowercase
+      // (the prefix typically ended with ', ' followed by a lowercase
       // sentence continuation; standalone first sentence reads better
       // when capitalized).
       const first = prefixRest.charAt(0);

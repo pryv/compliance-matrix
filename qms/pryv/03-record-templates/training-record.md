@@ -19,5 +19,5 @@ record_for: pol-quality
 | Required by | policy / procedure id |
 | Delivered by | |
 | Date | |
-| Competence verified? | yes / no — how |
+| Competence verified? | yes / no, how |
 | Next refresh due | |

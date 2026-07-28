@@ -66,7 +66,7 @@ export function BacklogDetail () {
 
       <p className='mt-3 text-sm text-slate-500 max-w-3xl'>
         Each row below would have its chip discharged when this backlog ships. Coverage tier may
-        also shift per the proposal — see the per-row chip tooltip + the proposal mirror in
+        also shift per the proposal, see the per-row chip tooltip + the proposal mirror in
         <code className='font-mono text-xs ml-1'>compliance-matrix/proposals/</code>.
       </p>
 

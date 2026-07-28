@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Restore Test Record (template)"
+title: "{{organization}}, Restore Test Record (template)"
 id: impl-rec-restore-test
 draft: true
 owner: "{{security-contact}}"
@@ -17,7 +17,7 @@ record_for: impl-proc-backup
 | Environment | staging / isolated |
 | Result | pass / fail |
 | Recovery time observed | |
-| Data integrity verified? | yes / no — how |
+| Data integrity verified? | yes / no, how |
 
 ## Issues found & follow-up
 - Next restore test due:

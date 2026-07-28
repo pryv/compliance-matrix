@@ -22,7 +22,7 @@ const COVERAGE_LABELS_SHORT: Record<Coverage, string> = {
 };
 
 /**
- * Global coverage view — cuts across every scope. Default question:
+ * Global coverage view, cuts across every scope. Default question:
  * "across all regulations + standards, what does Pryv implement
  * (or facilitate, or leave out-of-scope, …)?"
  *
@@ -65,11 +65,11 @@ export function GlobalCoverage () {
 
   return (
     <div className='p-6 max-w-6xl mx-auto'>
-      <h1 className='text-2xl font-bold'>Coverage — across all scopes</h1>
+      <h1 className='text-2xl font-bold'>Coverage, across all scopes</h1>
       <p className='text-sm text-slate-500 mt-1 max-w-3xl'>
         Cross-cut of every requirement in the matrix. Click a tier to filter to that tier
         globally; narrow further via the scope picker. Tile counts are matrix-row counts
-        (not progress percentages — see the tile reframe note in the per-scope view).
+        (not progress percentages, see the tile reframe note in the per-scope view).
       </p>
 
       <div className='mt-5'>

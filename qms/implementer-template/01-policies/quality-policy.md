@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Quality Policy"
+title: "{{organization}}, Quality Policy"
 id: impl-pol-quality
 draft: true
 owner: "{{quality-owner}}"
@@ -12,7 +12,7 @@ reviewed_by: null
 reviewed_at: null
 ---
 
-# {{organization}} — Quality Policy
+# {{organization}}: Quality Policy
 
 ## Purpose
 

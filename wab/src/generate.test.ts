@@ -85,14 +85,14 @@ describe('coverageHistogram', () => {
 describe('renderScopeDoc', () => {
   const doc = renderScopeDoc(scope, reqs, linksByRef, { organization: 'Acme', 'deployment-name': 'Vault' }, '2026-06-18');
   it('has a cover heading and evidence pointers', () => {
-    expect(doc).toContain('# Acme — General Data Protection Regulation');
+    expect(doc).toContain('# Acme, General Data Protection Regulation');
     expect(doc).toContain('`[GLHP]`');
     expect(doc).toContain('qms: qms/pryv/02-procedures/document-control.md');
   });
   it('lists only operator-work rows in the to-do list', () => {
     const todo = doc.split('## Your to-do list')[1];
     expect(todo).toContain('Art.30');
-    expect(todo).not.toContain('Art.5 —'); // implemented is carried by Pryv
+    expect(todo).not.toContain('Art.5,'); // implemented is carried by Pryv
   });
 });
 

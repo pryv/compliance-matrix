@@ -2,7 +2,7 @@
 
 Every row in the matrix carries a coverage tier (`implemented` /
 `configurable` / `facilitated` / `documented` / `out-of-scope`).
-That single tag isn't enough — within each tier, rows vary in
+That single tag isn't enough, within each tier, rows vary in
 how much of the obligation Pryv carries and (for `facilitated`)
 in what kind of help Pryv provides.
 
@@ -21,7 +21,7 @@ Two structured fields decompose this:
 Reads as: "Pryv saves the implementer X effort."
 
 **Important:** the "effort" axis is scoped specifically to
-**engineering + operational** work — building, wiring, running the
+**engineering + operational** work, building, wiring, running the
 technical side of the obligation. It does **not** count legal /
 editorial / process / strategic compliance effort, which stays on
 the implementer regardless of Pryv. See
@@ -33,7 +33,7 @@ the implementer regardless of Pryv. See
 | `medium` | Roughly shared engineering+operational effort. |
 | `low` | Pryv contributes a small technical substrate; bulk on implementer. |
 
-Per-coverage default expectations (not enforced — author's judgement):
+Per-coverage default expectations (not enforced, author's judgement):
 
 | Coverage | Typical effort_saved | Notes |
 |---|---|---|
@@ -57,7 +57,7 @@ classify the data.
 
 **Use when** the obligation's compliance check is satisfied by the
 access / permission / stream design choices the implementer makes
-once — not by an ongoing process.
+once, not by an ongoing process.
 
 **Examples:** `gdpr.Art.29` (workforce processes only on instructions
 because permissions scope it), `gdpr.Art.9` (special-category
@@ -68,7 +68,7 @@ isolation on dedicated stream subtrees), `iso-27001.A.5.3`
 
 Pryv generates structured data (audit log, access version chain,
 event version history) that the implementer **uses as proof** for a
-regulatory artefact they produce — a Art.30 register, a breach
+regulatory artefact they produce, a Art.30 register, a breach
 report, a §164.528 accounting of disclosures, an ISMS internal-audit
 deliverable.
 
@@ -81,7 +81,7 @@ is the data the artefact cites.
 
 ### `storage`
 
-Pryv durably stores artefacts the **implementer creates** — notice
+Pryv durably stores artefacts the **implementer creates**, notice
 text, consent records, policies-as-events, BAA references,
 classification metadata. Pryv does not generate the content; it
 makes the content recoverable per-subject and per-time.
@@ -96,7 +96,7 @@ authorization.
 
 ### `infrastructure`
 
-Pryv runs the **technical layer** the obligation depends on — TLS,
+Pryv runs the **technical layer** the obligation depends on, TLS,
 mTLS, encryption-at-rest, multi-core HA, data-residency,
 backup-restore. The obligation is satisfied because the technical
 layer exists, not because the implementer composed anything.
@@ -123,16 +123,16 @@ implementer in nearly identical form.
 
 ## Decision flow
 
-1. **Coverage** — pick from the five-tier taxonomy first (the
+1. **Coverage**: pick from the five-tier taxonomy first (the
    existing rule, unchanged).
 
-2. **`pryv_effort_saved`** — ask:
+2. **`pryv_effort_saved`**: ask:
    - If you removed the implementer's part entirely, would Pryv
      satisfy the obligation alone? → `high`
    - Implementer does roughly half? → `medium`
    - Implementer does most, Pryv just makes it traceable? → `low`
 
-3. **`facilitation_mode`** (only when coverage = `facilitated`) — ask
+3. **`facilitation_mode`** (only when coverage = `facilitated`), ask
    the questions in order:
    - Does Pryv's permission / access primitive enforce it? →
      `primitive`
@@ -156,27 +156,27 @@ keep them separate because:
   row can be `high` or `low` effort; a `documented` row can be
   `medium` if the doc is comprehensive). One uniform field for that
   axis is cleaner than per-tier variants.
-- The mode is specific to `facilitated` — it answers "what kind of
-  help" — which doesn't transfer well to other tiers.
+- The mode is specific to `facilitated`, it answers "what kind of
+  help", which doesn't transfer well to other tiers.
 
 ## CSS / WAB rendering
 
 The WAB renders three badges per row:
 
-1. **Coverage badge** (`cov-*` CSS classes; existing) — the five-tier
+1. **Coverage badge** (`cov-*` CSS classes; existing), the five-tier
    tag.
 2. **Facilitation-mode badge** (`fac-*` CSS classes; only on
-   facilitated rows) — outlined pill, distinct hue per mode.
+   facilitated rows), outlined pill, distinct hue per mode.
 3. **Effort badge** (`effort-*` CSS classes; on all non-out-of-scope
-   rows) — teal scale: high filled, medium lighter, low outlined.
+   rows), teal scale: high filled, medium lighter, low outlined.
 
 See `wab/src/components/CoverageBadge.tsx` + `wab/src/index.css`.
 
 ## History
 
-- 2026-05-19 — typology introduced (prose-prefix convention, Path A
+- 2026-05-19, typology introduced (prose-prefix convention, Path A
   in the original proposal).
-- 2026-05-19 — promoted to schema fields (Path B); `facilitation_level`
+- 2026-05-19, promoted to schema fields (Path B); `facilitation_level`
   generalized into `pryv_effort_saved` to apply across all coverage
   tiers; `facilitation_mode` kept as facilitated-only. 197 facilitated
   rows migrated from the prose prefix; 86 non-facilitated rows

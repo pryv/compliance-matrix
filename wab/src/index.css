@@ -55,7 +55,7 @@ body {
   font-weight: 700;
 }
 
-/* Planned-change chips — flag rows whose claim depends on a queued bug fix or
+/* Planned-change chips, flag rows whose claim depends on a queued bug fix or
    backlog feature. Hue = kind (bug = red, feature = indigo, enhancement = slate).
    Impact tunes intensity at-a-glance. */
 .planned-bug          { background-color: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }

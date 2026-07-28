@@ -19,11 +19,11 @@ npm run generate -- --answers my-answers.yml --config /path/to/config.yml --out 
 
 ## Inputs
 
-- **`--answers`** — questionnaire answers, validated against
+- **`--answers`**: questionnaire answers, validated against
   [`schemas/questionnaire.schema.json`](../schemas/questionnaire.schema.json).
   Keys are kebab-case so they map 1:1 onto the `{{placeholders}}` in the QMS
   template.
-- **`--config`** *(optional)* — your `open-pryv.io` config. The generator
+- **`--config`** *(optional)*, your `open-pryv.io` config. The generator
   derives `storage-engine`, `mfa-enabled`, `audit-enabled` and `multi-core`
   from it (config wins over the answers fallback). Derivation is best-effort
   across the common key paths; anything it can't find falls back to the
@@ -57,6 +57,6 @@ qms/              the implementer QMS template with placeholders resolved
 
 The QMS template uses two constructs the generator understands:
 
-- `{{placeholder}}` — replaced by the matching answer.
-- `{{#if flag}}…{{/if}}` — kept only when `flag` is truthy (e.g.
+- `{{placeholder}}`: replaced by the matching answer.
+- `{{#if flag}}…{{/if}}`: kept only when `flag` is truthy (e.g.
   `{{#if mfa-enabled}}MFA is required.{{/if}}`).

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * retention.js — enforce data-retention rules against a Pryv deployment.
+ * retention.js, enforce data-retention rules against a Pryv deployment.
  *
  * Operator-owned recipe: Pryv ships the primitives (events.get?toTime=cutoff,
  * two-stage events.delete), the scheduler + rules live here.
@@ -11,7 +11,7 @@
  * Credentials via env:
  *   PRYV_API_ENDPOINT  e.g. https://<token>@<username>.pryv.me
  *
- * Account-level deletion (auth.delete) is intentionally NOT performed here —
+ * Account-level deletion (auth.delete) is intentionally NOT performed here,
  * wire it to your admin-key flow only after a reviewed inactivity oracle.
  */
 import fs from 'node:fs';

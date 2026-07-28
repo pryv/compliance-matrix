@@ -269,14 +269,14 @@ export interface BacklogSummary {
   slug: string;
   /** Distinct chip count across the matrix. */
   chip_count: number;
-  /** kind breakdown — { bug, feature, enhancement }. */
+  /** kind breakdown, { bug, feature, enhancement }. */
   kinds: Record<PlannedKind, number>;
   /** Highest impact among the chips (high > medium > low > null). */
   max_impact: PlannedImpact | null;
   /** Distinct (scope_id, ref) requirement pairs affected. */
   requirement_count: number;
   scope_count: number;
-  /** Any chip's tracking_url — typically the same GH issue for all chips. */
+  /** Any chip's tracking_url, typically the same GH issue for all chips. */
   tracking_url: string | null;
 }
 

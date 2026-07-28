@@ -241,7 +241,7 @@ export function ScopeDetail () {
 
 /**
  * Coverage breakdown as equal-width count tiles per tier. Each tile
- * is a clickable filter button. No proportional bar — that visual
+ * is a clickable filter button. No proportional bar, that visual
  * implies "Pryv covers X% of total project work", which misleads:
  * matrix rows aren't equal-weight units of compliance effort, and
  * the operator-side scope on each row (especially out-of-scope rows)

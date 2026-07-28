@@ -61,11 +61,11 @@ defects count.
 
 ## Severity guidance
 
-- **High** — data loss/corruption, security vulnerability, or release
+- **High**: data loss/corruption, security vulnerability, or release
   blocker. Triaged immediately.
-- **Medium** — incorrect behaviour with a workaround, or
+- **Medium**: incorrect behaviour with a workaround, or
   compliance-relevant gap.
-- **Low** — cosmetic, test-only flake, or documentation defect.
+- **Low**: cosmetic, test-only flake, or documentation defect.
 
 ## Records
 

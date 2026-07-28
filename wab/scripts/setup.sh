@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# setup.sh — prepare wab/dist/ as a git checkout of the
+# setup.sh: prepare wab/dist/ as a git checkout of the
 # `pryv/compliance-matrix` `gh-pages` branch so subsequent `npm run build`
 # writes the SPA assets directly into a deployable working tree.
 #

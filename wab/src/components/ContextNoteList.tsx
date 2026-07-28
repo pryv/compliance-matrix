@@ -13,7 +13,7 @@ function cardSummary (raw: string): string {
 }
 
 /**
- * Index of context notes — the design-rationale companion to the
+ * Index of context notes, the design-rationale companion to the
  * matrix prose. Each note documents a recurring Pryv pattern
  * ("voluntarily missing + operator-owned", "two-surface split",
  * "clientData convention family", …) and is cited from one or

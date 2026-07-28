@@ -6,7 +6,7 @@
 #         delete      -> trash THEN hard-delete (two-stage; irreversible)
 #
 # Endpoint + credentials come from env (PRYV_API_ENDPOINT). Account-level
-# rules (delete_account) require an admin-key flow — see the script header.
+# rules (delete_account) require an admin-key flow, see the script header.
 
 rules:
   - id: raw-sensor-data

@@ -60,11 +60,11 @@ reviewed_at: null
 - **`satisfies`** lists the standard clauses the document addresses.
   Free-form clause identifiers (`iso-27001.A.5.1`, `iso-13485.4.2.3`,
   `mdr.Annex-II`). Used for human traceability, not validated against a
-  clause catalogue (the standards are paywalled — we do not redistribute
+  clause catalogue (the standards are paywalled; we do not redistribute
   their clause lists).
 - **`matrix_evidence_for`** lists matrix `scope.ref` rows. **Validated**:
   every entry must resolve to a real requirement row in `scopes/*.yml`.
-  This is the reciprocal of a requirement's `qms_docs:` field — a matrix
+  This is the reciprocal of a requirement's `qms_docs:` field, a matrix
   row with `coverage: documented` can cite a QMS document by relative
   path (`qms/pryv/01-policies/information-security-policy.md`), and the
   CI cross-check (`scripts/validate.js`) verifies both directions.

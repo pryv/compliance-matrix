@@ -119,7 +119,7 @@ export function ScopeFocusPicker ({
           Focus on scope(s)
         </span>
         <span className='text-xs text-slate-400'>
-          · pick up to {maxScopes} — empty = all
+          · pick up to {maxScopes}, empty = all
         </span>
         {selected.length > 0 && (
           <button
@@ -149,7 +149,7 @@ export function ScopeFocusPicker ({
                     ? 'bg-white text-slate-300 border-slate-200 cursor-not-allowed'
                     : 'bg-white text-slate-600 border-slate-300 hover:border-slate-500'
               }`}
-              title={atCap ? `Max ${maxScopes} scopes — deselect one first` : s.title}
+              title={atCap ? `Max ${maxScopes} scopes, deselect one first` : s.title}
             >
               {s.short ?? s.title}
               <span className='ml-1 opacity-75 tabular-nums'>{count}</span>

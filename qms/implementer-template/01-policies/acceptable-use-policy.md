@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Acceptable Use Policy"
+title: "{{organization}}, Acceptable Use Policy"
 id: impl-pol-acceptable-use
 draft: true
 owner: "{{security-contact}}"
@@ -11,7 +11,7 @@ reviewed_by: null
 reviewed_at: null
 ---
 
-# {{organization}} — Acceptable Use Policy
+# {{organization}}: Acceptable Use Policy
 
 ## Purpose
 

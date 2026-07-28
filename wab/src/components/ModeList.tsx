@@ -21,13 +21,13 @@ const MODE_DETAIL: Record<FacilitationMode, { label: string; description: string
   },
   awareness: {
     label: 'Awareness',
-    description: 'Framing row — Pryv contributes minimally; the matrix is the surface.'
+    description: 'Framing row, Pryv contributes minimally; the matrix is the surface.'
   }
 };
 
 /**
  * Browse rows by how Pryv contributes. The five facilitation modes
- * are the second axis of the matrix (besides coverage tier) — they
+ * are the second axis of the matrix (besides coverage tier), they
  * answer "is this a real technical control or just an evidence
  * trail?"
  */
@@ -48,7 +48,7 @@ export function ModeList () {
         <h2 className='text-lg font-semibold text-slate-700 mb-1'>Facilitation modes</h2>
         <p className='text-sm text-slate-500'>
           When Pryv "facilitates" rather than "implements", the mode says <em>how</em>. Five
-          modes total — pre-empts the "is it just docs?" question by surfacing where Pryv is
+          modes total, pre-empts the "is it just docs?" question by surfacing where Pryv is
           a technical control, where it's evidence emission, where it's storage, where it's
           infrastructure, where it's framing-only.
         </p>

@@ -31,11 +31,11 @@ for the canonical regulation sources.
 
 ```
 schemas/        JSON Schema for scope + requirement records
-scopes/         The matrix data — one YAML per scope
+scopes/         The matrix data, one YAML per scope
 references/     Canonical regulation references (URLs, version pins, license notes)
 scripts/        build.js (YAML → SQLite), validate.js (CI checks)
-wab/            The Web App — React 19 + Vite 5 + Tailwind 4 + TypeScript
-qms/            QMS docs — Pryv's own + implementer template
+wab/            The Web App, React 19 + Vite 5 + Tailwind 4 + TypeScript
+qms/            QMS docs, Pryv's own + implementer template
 docs/           How to add a scope, glossary, contribution guide
 dist/           Build output (gitignored): compliance.sqlite + wab build
 ```
@@ -44,16 +44,16 @@ dist/           Build output (gitignored): compliance.sqlite + wab build
 
 Every `(scope, requirement)` cell carries one of:
 
-- `implemented` — control shipped out of the box; works with no config
-- `configurable` — available when you set specific config keys (cited per row)
-- `facilitated` — Pryv reduces your work; you still do part
-- `documented` — guidance only; you implement yourself following the doc
-- `out-of-scope` — no software contribution AND no implementer obligation from
-  this row (rare — most articles imply something for you even when Pryv
+- `implemented`: control shipped out of the box; works with no config
+- `configurable`: available when you set specific config keys (cited per row)
+- `facilitated`: Pryv reduces your work; you still do part
+- `documented`: guidance only; you implement yourself following the doc
+- `out-of-scope`: no software contribution AND no implementer obligation from
+  this row (rare, most articles imply something for you even when Pryv
   itself doesn't touch them)
 
 **Tests are the proof.** Every `implemented`/`configurable` row cites a test
-code from the open-pryv.io test suite — CI checks every cited code resolves.
+code from the open-pryv.io test suite, CI checks every cited code resolves.
 
 ## Working with this repo
 
@@ -66,7 +66,7 @@ cd wab && npm install && npm run dev   # WAB locally (via backloop.dev)
 
 ## Status
 
-**Early — schema + foundation in place, GDPR first draft published.** All
+**Early, schema + foundation in place, GDPR first draft published.** All
 coverage rows are marked `draft: true` until reviewed. See `scopes/*.yml`
 for current state and the GitHub Actions `validate` workflow for what CI
 checks per change.
@@ -75,15 +75,15 @@ checks per change.
 
 Two distinct things:
 
-- **Pryv** — the deployed running platform; what your subjects' apps talk to.
+- **Pryv**: the deployed running platform; what your subjects' apps talk to.
   Used in all matrix prose ("Pryv stores events").
-- **open-pryv.io** — the upstream software project / source code / version.
+- **open-pryv.io**: the upstream software project / source code / version.
   Used only for code-path or version references ("open-pryv.io 2.0.0-pre.3",
   "open-pryv.io/components/cmc/").
 
 ## License
 
-[BSD-3-Clause](./LICENSE) — same as open-pryv.io.
+[BSD-3-Clause](./LICENSE): same as open-pryv.io.
 
 Regulation reference materials are NOT covered by this license; they remain
 the property of their respective authors (EU institutions, US federal

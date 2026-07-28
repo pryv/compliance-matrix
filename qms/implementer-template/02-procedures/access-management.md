@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Access Management Procedure"
+title: "{{organization}}, Access Management Procedure"
 id: impl-proc-access
 draft: true
 owner: "{{security-contact}}"
@@ -13,7 +13,7 @@ reviewed_by: null
 reviewed_at: null
 ---
 
-# {{organization}} — Access Management Procedure
+# {{organization}}: Access Management Procedure
 
 ## Purpose
 

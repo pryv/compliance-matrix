@@ -52,7 +52,7 @@ export function PrimitiveList () {
         <h2 className='text-lg font-semibold text-slate-700 mb-1'>Pryv primitives</h2>
         <p className='text-sm text-slate-500'>
           The compliance-relevant building blocks the platform ships. Each card shows how many
-          regulator rows across the matrix cite that primitive — a measure of how much
+          regulator rows across the matrix cite that primitive, a measure of how much
           compliance work the piece is doing.
         </p>
       </section>

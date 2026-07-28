@@ -96,7 +96,7 @@ export function App () {
       <header className='border-b border-slate-200 bg-white'>
         <div className='max-w-5xl mx-auto px-6 py-4'>
           <h1 className='text-lg font-semibold'>Cross-account share (CMC)</h1>
-          <p className='text-sm text-slate-500'>Controller-to-controller transmission by subject consent — not joint controllership (Art.20(2), not Art.26).</p>
+          <p className='text-sm text-slate-500'>Controller-to-controller transmission by subject consent, not joint controllership (Art.20(2), not Art.26).</p>
         </div>
       </header>
       <main className='max-w-5xl mx-auto px-6 py-6'>
@@ -106,7 +106,7 @@ export function App () {
         </div>
         <div className='flex flex-col md:flex-row gap-4'>
           <Pane
-            title='User A — requester (controller)'
+            title='User A, requester (controller)'
             pane={a}
             action={
               <button
@@ -116,7 +116,7 @@ export function App () {
             }
           />
           <Pane
-            title='User B — recipient (controller)'
+            title='User B, recipient (controller)'
             pane={b}
             action={
               <div className='flex flex-wrap gap-2'>
@@ -127,7 +127,7 @@ export function App () {
           />
         </div>
         <p className='mt-4 text-xs text-slate-500'>
-          Each side keeps its own consent record and can revoke independently — local deletion is
+          Each side keeps its own consent record and can revoke independently, local deletion is
           authoritative, peer delivery best-effort. Verify the exact CMC handshake against your
           deployment's <code>components/cmc/</code> (see README).
         </p>

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * copy-qms-template.js — bundle qms/implementer-template/**.md into
+ * copy-qms-template.js, bundle qms/implementer-template/**.md into
  * wab/public/qms-template.json ({ "<relative-path>": "<content>" }) so the
  * in-browser generator can ship the filled QMS without a backend.
  *

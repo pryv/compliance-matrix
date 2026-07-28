@@ -53,7 +53,7 @@ const MODE_LABELS_FULL: Record<FacilitationMode, string> = {
  *   Configurable           ●●○
  *   Facilitates · Storage  ●●○
  *   Documents              ●○○
- *   Out of scope               (no meter — definitional)
+ *   Out of scope               (no meter, definitional)
  *
  * Verb in slate-700, mode suffix in slate-500 (muted). Filled dots in
  * teal-600 (single accent), hollow in slate-300. Tooltip carries the
@@ -72,7 +72,7 @@ export function RequirementBadge ({
   const modeSuffix = (coverage === 'facilitated' && mode) ? MODE_LABELS[mode] : null;
 
   const titleParts: string[] = [COVERAGE_LABELS[coverage]];
-  if (mode) titleParts.push(`${MODE_LABELS[mode]} — ${MODE_LABELS_FULL[mode]}`);
+  if (mode) titleParts.push(`${MODE_LABELS[mode]}, ${MODE_LABELS_FULL[mode]}`);
   if (effort) titleParts.push(EFFORT_LABELS_FULL[effort]);
   const title = titleParts.join(' · ');
 

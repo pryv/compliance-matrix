@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * build.js — compile scopes/*.yml into dist/compliance.sqlite.
+ * build.js, compile scopes/*.yml into dist/compliance.sqlite.
  *
  * Tables (read-only artifact consumed by the WAB + tooling):
  *   scopes          (id, title, short, type, jurisdiction, version, version_date,
@@ -174,7 +174,7 @@ const insMeta = db.prepare('INSERT INTO meta (key, value) VALUES (?, ?)');
  *
  * The single non-empty paragraph immediately after the heading is the
  * summary (used for the primitives index card). Detail bullets are
- * not stored — the WAB links to the rendered docs page for the deep dive.
+ * not stored, the WAB links to the rendered docs page for the deep dive.
  */
 function parsePrimitives (md) {
   const out = [];

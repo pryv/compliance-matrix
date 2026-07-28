@@ -1,6 +1,6 @@
 # Compliance-matrix update triggers
 
-When work on Pryv-the-software ships — bug fix, feature, refactor — it
+When work on Pryv-the-software ships, bug fix, feature, refactor, it
 may change what the matrix should claim. This file is the **reverse
 index** of the matrix's `planned:` chips + a list of broader trigger
 categories. Engineers + agents check this file **after merging** a PR
@@ -25,12 +25,12 @@ on any Pryv repo and update the matrix accordingly.
    PR. Keep them in lockstep so the matrix's `Implemented | High`
    claims always match shipped open-pryv.io master.
 
-This file is **not** auto-generated yet — entries are added by hand
+This file is **not** auto-generated yet, entries are added by hand
 when filing a backlog item. A future small dev could generate the
 "planned backlog → rows" section directly from
 `dist/compliance.sqlite`'s `planned_changes` table.
 
-## Section A — Backlog items with `planned:` chips in the matrix
+## Section A: Backlog items with `planned:` chips in the matrix
 
 When the listed backlog ships on **open-pryv.io** (or whichever
 sub-repo holds the work), update the listed matrix rows + remove the
@@ -39,26 +39,26 @@ corresponding `planned:` entries. The full proposal mirror under
 shape ("After shipping" column in each proposal's table).
 
 The mapping below mirrors `dist/compliance.sqlite`
-`planned_changes` table — regenerate with:
+`planned_changes` table, regenerate with:
 
 ```
 sqlite3 compliance-matrix/dist/compliance.sqlite \
   "SELECT backlog, scope_id, ref, kind, impact, summary FROM planned_changes ORDER BY backlog, scope_id, ref;"
 ```
 
-### `ACCOUNT-BACKUP-DSAR-COMPLETENESS` (SHIPPED 2026-05-27 + 2026-06-13 + 2026-06-15 + 2026-06-15 — all chips discharged)
+### `ACCOUNT-BACKUP-DSAR-COMPLETENESS` (SHIPPED 2026-05-27 + 2026-06-13 + 2026-06-15 + 2026-06-15: all chips discharged)
 
-**Where the work lived**: `pryv-account-backup` repo + new `pryv-account-backup-webapp` repo. Initial DSAR-completeness work shipped in v0.4.0 (commits `1a05482` v0.3.0 + `30b1661` C.4 partial + `ea6ae6a` v0.4.0) — 5 bug chips (Art.15 / 1798.110 / 164.524 / Principle.4.9 / Art.25) + 1 feature chip (Art.20 restore) discharged. The chunked-events follow-up shipped in v0.5.0 (commits `d1eaf48` + merge `e59d5b3`, 2026-06-13) — last remaining feature chip on `gdpr.Art.15` discharged. v0.5.0 also bundled `accesses-all.json` (deletions + expired) + opt-in per-access version history. The library + browser-isomorphic rewrite + audit-as-events forward-compatibility shipped in v0.6.0 (foundation `6cfc7fc` / merge `3e10cb1` / PR #15; isomorphism `e957ce2` / PR #16; AGENTS.md `df785b0` / PR #17; webapp `e57aeec9` + `81dccc4`; dev-site PR #184), 2026-06-15. The attachments / HFS / webhooks browser-isomorphic refresh + portable `sync-state.json` shipped in v0.7.0 (CLI library) + webapp v0.2.0, 2026-06-15 — closes the v0.6.0 webapp coverage gap; both flavors now cover every read-side resource. No new chips chipped — this is coverage symmetry on top of v0.6.0's already-discharged work.
+**Where the work lived**: `pryv-account-backup` repo + new `pryv-account-backup-webapp` repo. Initial DSAR-completeness work shipped in v0.4.0 (commits `1a05482` v0.3.0 + `30b1661` C.4 partial + `ea6ae6a` v0.4.0), 5 bug chips (Art.15 / 1798.110 / 164.524 / Principle.4.9 / Art.25) + 1 feature chip (Art.20 restore) discharged. The chunked-events follow-up shipped in v0.5.0 (commits `d1eaf48` + merge `e59d5b3`, 2026-06-13), last remaining feature chip on `gdpr.Art.15` discharged. v0.5.0 also bundled `accesses-all.json` (deletions + expired) + opt-in per-access version history. The library + browser-isomorphic rewrite + audit-as-events forward-compatibility shipped in v0.6.0 (foundation `6cfc7fc` / merge `3e10cb1` / PR #15; isomorphism `e957ce2` / PR #16; AGENTS.md `df785b0` / PR #17; webapp `e57aeec9` + `81dccc4`; dev-site PR #184), 2026-06-15. The attachments / HFS / webhooks browser-isomorphic refresh + portable `sync-state.json` shipped in v0.7.0 (CLI library) + webapp v0.2.0, 2026-06-15, closes the v0.6.0 webapp coverage gap; both flavors now cover every read-side resource. No new chips chipped, this is coverage symmetry on top of v0.6.0's already-discharged work.
 
 Proposal: `proposals/account-backup-dsar-completeness.md` (kept; the file's Status: SHIPPED header now references the v0.4.0 + v0.5.0 + v0.6.0 + v0.7.0 chain).
 
-**Why v0.6.0 matters even though no chips were chipped:** the dedicated `/audit/logs` route was **removed** from open-pryv.io on 2026-06-15 (commit `19d1c11f` on master). v0.5.0 and earlier call it directly and now produce empty `audit_logs.json` files (or 404 errors) against any deployment running that build. v0.6.0 fetches audit via the standard events API on `:_audit:*` streams — supports `modifiedSince` AND continues to work post-removal. **Sub-repos that produce DSAR bundles MUST pin their subject-side backup tooling to v0.6.0+; v0.5.0 and earlier are now production-broken for the audit-log section of the bundle.**
+**Why v0.6.0 matters even though no chips were chipped:** the dedicated `/audit/logs` route was **removed** from open-pryv.io on 2026-06-15 (commit `19d1c11f` on master). v0.5.0 and earlier call it directly and now produce empty `audit_logs.json` files (or 404 errors) against any deployment running that build. v0.6.0 fetches audit via the standard events API on `:_audit:*` streams, supports `modifiedSince` AND continues to work post-removal. **Sub-repos that produce DSAR bundles MUST pin their subject-side backup tooling to v0.6.0+; v0.5.0 and earlier are now production-broken for the audit-log section of the bundle.**
 
-**Why v0.7.0 matters:** the webapp tier (`pryv-account-backup-webapp` v0.2.0) is now coverage-symmetric with the CLI on every read-side resource (attachments / HFS series / webhooks / accesses-history). The only CLI-only artefact is `manifest.json` (per-file sha256, auditor-facing). The portable `sync-state.json` also lands inside the final ZIP — subject keeps it alongside the backup and re-uploads on the next visit for cross-browser / cross-device incremental.
+**Why v0.7.0 matters:** the webapp tier (`pryv-account-backup-webapp` v0.2.0) is now coverage-symmetric with the CLI on every read-side resource (attachments / HFS series / webhooks / accesses-history). The only CLI-only artefact is `manifest.json` (per-file sha256, auditor-facing). The portable `sync-state.json` also lands inside the final ZIP, subject keeps it alongside the backup and re-uploads on the next visit for cross-browser / cross-device incremental.
 
-### `ACCOUNT-BACKUP-CHUNKED-EVENTS-FETCH` — SHIPPED 2026-06-13
+### `ACCOUNT-BACKUP-CHUNKED-EVENTS-FETCH`: SHIPPED 2026-06-13
 
-**Where the work lived**: `pryv-account-backup` v0.5.0 (merge SHA `e59d5b3`; feature commit `d1eaf48`). Events fetch now chunks by UTC month — one `events-YYYY-MM.json` per month in the subject's discovered event-time range. Two `limit=1` probes (ascending floor + descending ceiling) bound the window; restore concatenates legacy `events.json` + new chunked files in sorted order.
+**Where the work lived**: `pryv-account-backup` v0.5.0 (merge SHA `e59d5b3`; feature commit `d1eaf48`). Events fetch now chunks by UTC month, one `events-YYYY-MM.json` per month in the subject's discovered event-time range. Two `limit=1` probes (ascending floor + descending ceiling) bound the window; restore concatenates legacy `events.json` + new chunked files in sorted order.
 
 | Scope | Ref | Kind | Impact | After shipping |
 |---|---|---|---|---|
@@ -75,7 +75,7 @@ primitive). Aliases as Pryv-native pseudonymisation.
 {randomAlias:true}` + `account.changeUsername`; tested on PostgreSQL + SQLite,
 `[AL01]`-`[AL05]` in `components/api-server/test/accesses-alias.test.js`).
 
-**Rows walked — entry discharged (verified 2026-07-28).** All six rows cite the
+**Rows walked, entry discharged (verified 2026-07-28).** All six rows cite the
 shipped primitive; `randomAlias` is in the primitive catalogue (`docs/pryv-primitives.md`)
 and carried in each row's `pryv_primitives`. No `planned:` chips were ever queued for
 this slug, so none needed discharging.
@@ -111,9 +111,9 @@ checkpoints. Precondition: per-core monotonic time (see
 
 Proposal: `proposals/audit-log-chaining.md`
 
-### `CONTAINER-ENCRYPTED-VOLUME` — SHIPPED 2026-06-23
+### `CONTAINER-ENCRYPTED-VOLUME`: SHIPPED 2026-06-23
 
-**Where the work lives**: new `pryv/container-encrypted-volume` repo (v0.1.0) — a
+**Where the work lives**: new `pryv/container-encrypted-volume` repo (v0.1.0), a
 companion layered onto the stock open-pryv.io image, NOT in open-pryv.io core.
 Modular encryption-at-rest for the full user-data surface (events / attachments /
 series / audit / platform DB): pluggable LUKS/gocryptfs backend + env/file/exec/
@@ -124,7 +124,7 @@ clevis/aws-kms key providers, opt-in via `CEV_ENABLED`.
 | hipaa-security | 164.312(a)(2)(iv) | primitive | high | added `encryption-at-rest-user-data`; effort medium→high; user-data at rest now switch-on Pryv software (was operator-implements). Coverage stays `configurable` (a step above `facilitated`). |
 | gdpr | Art.32 | primitive | medium | added `encryption-at-rest-user-data` to the composite measure; coverage unchanged (`facilitated`). |
 
-No pre-existing `planned:` chips to discharge — this is a new shipped primitive.
+No pre-existing `planned:` chips to discharge: this is a new shipped primitive.
 Proposal: `proposals/container-encrypted-volume.md` (Status: shipped).
 
 ### `CLOCK-SKEW-CLUSTER-CHECKS`
@@ -140,7 +140,7 @@ bootstrap-join skew check + pre-cert-load validity check.
 
 Proposal: `proposals/clock-skew-cluster-checks.md`
 
-### `CONTENT-INDEXING` (SHIPPED 2026-06-11 — no chips were queued)
+### `CONTENT-INDEXING` (SHIPPED 2026-06-11: no chips were queued)
 
 **Where the work lived**: `open-pryv.io` (`1295c0b` on master, deployed)
 + `lib-js` (`pryv` 3.6.0 on npm) + `pryv-datastore` v1.1.0
@@ -152,12 +152,12 @@ partial-index acceleration; queryability itself is always on);
 capability discovery via `pryv-datastore:supports` clientData.
 Test markers: `[CQRY]` `[CQAC]` `[CQIX]` `[CQSA]` `[CQ11]` `[CQLJ]`.
 
-**Trigger pass outcome (B.1 walk)**: no tier shifts — the DSAR /
+**Trigger pass outcome (B.1 walk)**: no tier shifts, the DSAR /
 portability / erasure row families cite `events.get` generically and
 their claims are unchanged by the new filter parameters. The one
 matrix-relevant consequence is **audit semantics**: content-query
 search values sent over HTTP GET are recorded as-is in the audit
-row's URL query (deliberate — the query is the auditable action).
+row's URL query (deliberate, the query is the auditable action).
 Encoded in `context/content-query-audit-semantics.md` + caveats added
 to `gdpr.Art.28` (data-flow layers) / `gdpr.Art.30` (technical) /
 `hipaa-security.164.312(b)` / `iso-27001.A.8.15` /
@@ -169,7 +169,7 @@ queries are the paired search-under-encryption concern).
 
 ### `E2E-ENCRYPTION`
 
-**Where the work lives**: `open-pryv.io` (research direction — proxy
+**Where the work lives**: `open-pryv.io` (research direction, proxy
 re-encryption; pryv/service-core#516). End-to-end encryption: server
 itself never holds plaintext.
 
@@ -177,7 +177,7 @@ itself never holds plaintext.
 lib-js `feature/encryption` (`@pryv/encryption`: aes-256-gcm +
 asymmetric ecies-aes-256-gcm + encrypted attachments + legacy reader;
 formats specified in data-types), pending merge. Application-layer,
-client-managed keys — row coverage unchanged; see the proposal's
+client-managed keys, row coverage unchanged; see the proposal's
 status note.
 
 | Scope | Ref | Kind | Impact | After shipping |
@@ -209,7 +209,7 @@ Proposal: `proposals/mfa-modern-methods.md`
 
 ### `BREACH-SCOPE-TOOL`
 
-**Where the work lives**: `open-pryv.io`. Three phases —
+**Where the work lives**: `open-pryv.io`. Three phases,
 PlatformDB reverse-index + `GET /system/accesses/<accessId>`,
 audit row extensions (`recordCount` + `affectedStreamIds`),
 `bin/breach-scope.js` CLI.
@@ -225,15 +225,15 @@ audit row extensions (`recordCount` + `affectedStreamIds`),
 
 Proposal: `proposals/breach-scope-tool.md`
 
-### `QUICKSTART-DOCKER-HTTP-EXAMPLE` (DX-only — no matrix row updates)
+### `QUICKSTART-DOCKER-HTTP-EXAMPLE` (DX-only: no matrix row updates)
 
 **Where the work lives**: `open-pryv.io/INSTALL.md` + `dev-site/src/customer-resources/pryv.io-setup.md` documentation. Three reader-experience papercuts surfaced during a walk-through of the dnsLess + HTTP + Docker quickstart on a fresh box (mbp2, 2026-05-27): (1) env-var placeholders in `production-config.yml` aren't expanded; (2) the Docker image bundles rqlite + SQLite but not PostgreSQL; (3) the "Minimal production config" example omits several required `storages.engines.*` path keys.
 
-**No matrix impact.** Pure installation ergonomics — doesn't change any tier coverage on any scope row. When shipped, INSTALL.md's worked example becomes complete; no matrix scope row changes. Partial mitigation already in dev-site (`bc67e79` on dev-site master, deployed to `pryv.github.io` `12f726f` 2026-05-27) — the customer-facing `pryv.io-setup.md` now flags all three papercuts.
+**No matrix impact.** Pure installation ergonomics, doesn't change any tier coverage on any scope row. When shipped, INSTALL.md's worked example becomes complete; no matrix scope row changes. Partial mitigation already in dev-site (`bc67e79` on dev-site master, deployed to `pryv.github.io` `12f726f` 2026-05-27), the customer-facing `pryv.io-setup.md` now flags all three papercuts.
 
 Filed under internal backlog slug `QUICKSTART-DOCKER-HTTP-EXAMPLE`.
 
-### `MBP2-MULTICORE-SIMULATION` (DX-only — no matrix row updates)
+### `MBP2-MULTICORE-SIMULATION` (DX-only: no matrix row updates)
 
 **Where the work lives**: orchestration workspace's `_local/scripts/` launcher + workflow doc. A `mbp2-multicore.sh` that boots two `pryvio/open-pryv.io` Docker containers + shared PG + does the full `bin/bootstrap.js` cluster-CA + mTLS + rqlite-peering + dnsLess cross-core-forwarding dance end-to-end on the local LAN test box.
 
@@ -241,14 +241,14 @@ Filed under internal backlog slug `QUICKSTART-DOCKER-HTTP-EXAMPLE`.
 
 Filed under internal backlog slug `MBP2-MULTICORE-SIMULATION`. Pairs naturally with the `LE-STAGING-DRILL-RUNBOOK` backlog (the LE drill becomes easier once the multi-core launcher exists).
 
-### `REG-ACCESS-CLIENT-AUTHURL` (DX-only — no matrix row updates; SHIPPED 2026, open-pryv.io `464ce266`)
+### `REG-ACCESS-CLIENT-AUTHURL` (DX-only: no matrix row updates; SHIPPED 2026, open-pryv.io `464ce266`)
 
 **Where the work lives**: `open-pryv.io`
 (`components/api-server/src/routes/reg/access.ts` + request schema +
 new `access:trustedAuthUrls` config key).
 
 **No matrix impact.** Per-request auth-popup URL selection, gated on an
-operator-controlled allow-list — developer ergonomics for app authors
+operator-controlled allow-list, developer ergonomics for app authors
 testing against locally-served auth UIs. The allow-list keeps the auth-UI
 trust decision server-side, so no tier shifts on any scope row. When
 shipped, no scope row changes.
@@ -256,12 +256,12 @@ shipped, no scope row changes.
 Filed under internal backlog slug `REG-ACCESS-CLIENT-AUTHURL`
 (implementer-requested, 2026-06-11).
 
-### `BOILER-JSON-LOG-FORMAT` (DX-only — no matrix row updates)
+### `BOILER-JSON-LOG-FORMAT` (DX-only: no matrix row updates)
 
 **Where the work lives**: `open-pryv.io` (`components/boiler/src/logging.ts`
 console transport) + potentially the `@pryv/boiler` npm package.
 
-**No matrix impact.** Structured JSON console output for log aggregators —
+**No matrix impact.** Structured JSON console output for log aggregators,
 operational/alerting sugar. Audit evidence flows through the audit
 subsystem, not console logs, so no tier shifts on any scope row. When
 shipped, no scope row changes.
@@ -269,14 +269,14 @@ shipped, no scope row changes.
 Filed under internal backlog slug `BOILER-JSON-LOG-FORMAT`
 (implementer-requested, 2026-06-11).
 
-### `BUILTIN-STORE-OVERRIDE` (DX-only — no matrix row updates)
+### `BUILTIN-STORE-OVERRIDE` (DX-only: no matrix row updates)
 
 **Where the work lives**: `open-pryv.io`
 (`components/mall/src/index.ts` register-order change +
 `config-validation` schema addition).
 
 **No matrix impact.** This is operational sugar, not a
-compliance-shifting fix — see the `BUILTIN-STORE-OVERRIDE`
+compliance-shifting fix, see the `BUILTIN-STORE-OVERRIDE`
 backlog entry for the explicit DX-only classification. When
 shipped, update `context/audit-archival-via-custom-datastore.md`
 Flavour B section with the `override: true` config snippet;
@@ -288,7 +288,7 @@ gap-probing scope-discipline notes.
 ### `RATE-LIMITING-RECIPES`
 
 **Where the work lives**: `dev-deploy` or new docs repo
-(reference nginx / HAProxy / Cloudflare configs). Q6 outcome —
+(reference nginx / HAProxy / Cloudflare configs). Q6 outcome,
 voluntarily missing at Pryv layer; ship reference configs.
 
 **Tracking card**: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705775&issue=pryv%7Copen-pryv.io%7C117
@@ -302,14 +302,14 @@ Proposal: `proposals/rate-limiting-recipes.md` (filed 2026-07-28,
 alongside `context/rate-limiting-and-dos-protection.md`). Chips live on
 both rows above.
 
-### `PLATFORMDB-AT-REST-ENCRYPTION` — **superseded by container-encrypted-volume**
+### `PLATFORMDB-AT-REST-ENCRYPTION`: **superseded by container-encrypted-volume**
 
 **Status (2026-07-28): superseded, no code of its own.** This item
 was surfaced 2026-05-21 (multi-region PlatformDB cross-border
 analysis), BEFORE `container-encrypted-volume` (CEV) existed
 (shipped v0.1.0 on 2026-06-23). CEV delivers encryption-at-rest for
-the full user-data surface — events, attachments, series, audit,
-**and PlatformDB** — for a containerised deployment, covering
+the full user-data surface, events, attachments, series, audit,
+**and PlatformDB**: for a containerised deployment, covering
 exactly this item's threat model (SSD / backup-tape /
 decommissioned-hardware forfeiture, filesystem-level read breach,
 foreign-jurisdiction subpoena of the storage layer). The proposed
@@ -319,7 +319,7 @@ PlatformDB. GitHub issue #79 closed 2026-07-28.
 
 **Residuals not covered by CEV** (out of scope, deliberately):
 CEV is opt-in (`CEV_ENABLED`, coverage `configurable`) and covers
-data inside the container — a core running rqlite outside a CEV
+data inside the container, a core running rqlite outside a CEV
 container falls back to operator FDE. It is storage-medium-only
 (no defense of a running container or the rqlite **replication
 stream**); that residual is the app-level exposure tracked by
@@ -328,7 +328,7 @@ stream**); that residual is the app-level exposure tracked by
 Proposal: `proposals/platformdb-at-rest-encryption.md` (marked
 superseded). CEV proposal: `proposals/container-encrypted-volume.md`.
 
-### `PLATFORMDB-PII-HASHING` — **shipped**
+### `PLATFORMDB-PII-HASHING`: **shipped**
 
 **Status (2026-06-16)**: shipped on `pryv/open-pryv.io` master
 (commits `2c11478d` → `1417b01a`). Posture 1 (`hashed`, both
@@ -338,7 +338,7 @@ from `gdpr.Art.32` in `scopes/gdpr.yml`. Proposal mirror at
 `proposals/platformdb-pii-hashing.md` carries the same Status
 header.
 
-**Where the work lives**: `open-pryv.io` — `components/platform/`
+**Where the work lives**: `open-pryv.io`, `components/platform/`
 + `storages/engines/rqlite/` + system-streams config +
 registration flow + new `bin/platform-pii-migrate.js` +
 `bin/platform-pii-rotate.js`. Operator opts via
@@ -365,7 +365,7 @@ Proposal: `proposals/platformdb-pii-hashing.md`.
 
 ### `SUPPLY-CHAIN-SCANNING-PIPELINE`
 
-**Where the work lives**: `open-pryv.io` — CI workflow
+**Where the work lives**: `open-pryv.io`, CI workflow
 (`.github/workflows/ci.yml`) + `Dockerfile` + (optionally) a
 release-time SBOM publishing step. Three-phase: in-CI gates (npm
 audit + base-image digest pin + rqlite tarball checksum); pipeline
@@ -374,7 +374,7 @@ publishing); provenance + signing (cosign + SLSA attestation).
 Surfaced 2026-05-21 by supply-chain compliance gap-probing.
 
 User-recommended candidate tools (Q24): OWASP-ZAP / Snyk / Grype.
-Noting OWASP-ZAP is DAST not SCA — Phase 3 candidate as separate
+Noting OWASP-ZAP is DAST not SCA, Phase 3 candidate as separate
 web-app security testing if Pryv wants to extend beyond the
 software-supply-chain scope.
 
@@ -383,13 +383,13 @@ software-supply-chain scope.
 | iso-27001 | A.5.21 | feature | medium | drop overstated "published dependency-audit pipeline" prose; add `tests: [CIYAML]` citation; coverage F:Awareness Low → F:Evidence Medium |
 | gdpr | Art.32 | feature | low | detail block gains "supply-chain hygiene" sub-bullet under §1(b)/(c) ongoing CIA |
 | hipaa-security | 164.308(a)(8) | feature | low | periodic technical evaluation gains a concrete artefact (SBOM + latest scan output) |
-| iso-27001 | A.5.23 | feature | low | strengthens cloud-services exit narrative — operator hands SBOM + signed-image proof to the next CSP for migration |
+| iso-27001 | A.5.23 | feature | low | strengthens cloud-services exit narrative, operator hands SBOM + signed-image proof to the next CSP for migration |
 | iso-27001 | A.8.30 | enhancement | low | when operator's "supplier" is Pryv, the SBOM + signed image + CHANGELOG combine into the supplier-monitoring artefact set |
-| iso-27001 | A.5.22 | feature | medium | row may need to be ADDED — A.5.22 "Monitoring of supplier services" doesn't currently have matrix coverage; the supply-chain pipeline gives it concrete content |
+| iso-27001 | A.5.22 | feature | medium | row may need to be ADDED, A.5.22 "Monitoring of supplier services" doesn't currently have matrix coverage; the supply-chain pipeline gives it concrete content |
 
 Proposal: `proposals/supply-chain-scanning-pipeline.md`.
 
-### `VULNERABILITY-DISCLOSURE-PROGRAM` — SHIPPED
+### `VULNERABILITY-DISCLOSURE-PROGRAM`: SHIPPED
 
 **Shipped**: a coordinated disclosure policy now ships in
 `SECURITY.md` on `open-pryv.io` (private GitHub Security
@@ -423,7 +423,7 @@ Proposal: `proposals/vulnerability-disclosure-program.md`.
 
 ### `CONFIG-EFFECTIVE-EXPOSURE`
 
-**Where the work lives**: `open-pryv.io` — new
+**Where the work lives**: `open-pryv.io`, new
 `GET /system/admin/config/effective` admin route + SPA
 "Configuration" tab. Absorbed by the bootstrap-admin-panel
 work (planned MVP1 slice). Read-only, per-core, merged effective
@@ -446,7 +446,7 @@ Affected rows when the endpoint ships:
 | gdpr | Art.30 | feature | medium | ✅ | cite endpoint as evidence-emitter for the §1(g) "description of technical security measures" |
 | gdpr | Art.32 | feature | low | ✅ | strengthen evidence narrative around operator-visible safeguards |
 | gdpr | Art.35 | feature | medium | ✅ | DPIA safeguards inventory cites the endpoint output; coverage tier could shift F:Awareness Low → F:Evidence Med |
-| iso-27001 | A.8.9 | feature | medium | ✅ | direct match — configuration management evidence; row could move F:Storage / F:Primitive → Configurable |
+| iso-27001 | A.8.9 | feature | medium | ✅ | direct match, configuration management evidence; row could move F:Storage / F:Primitive → Configurable |
 | hipaa-security | 164.308(a)(8) | feature | medium | ✅ | evaluation gains a technical baseline snapshot instead of a per-cycle reconstruction |
 
 Proposal: `proposals/config-effective-exposure.md` (filed 2026-07-28).
@@ -463,7 +463,7 @@ that file. A `grep '^  - ref: 164.308'` will not find it and can lead to the
 false conclusion that the row is missing. Several HIPAA refs in the 164.310+
 range are quoted the same way.
 
-### `SHARED-SECRETS` (SHIPPED — rows walked 2026-07-22)
+### `SHARED-SECRETS` (SHIPPED: rows walked 2026-07-22)
 
 **Where the work lives**: `open-pryv.io/components/shared-secrets/` +
 `POST /:username/shared-secrets`, `/shared-secrets/retrieve`,
@@ -475,37 +475,37 @@ in a URL. Motivation is squarely a security-of-processing one: credential
 hand-off during auth / consent flows previously put an access token in a
 query parameter, where it persists in browser history, referrer headers
 and server access logs. The key is redeemable exactly once, expires on a
-mandatory TTL, and the server stores only its SHA-256 — so a database
+mandatory TTL, and the server stores only its SHA-256, so a database
 dump cannot reconstruct a live credential. The payload is scrubbed as
 soon as the secret stops being pending, including from event history.
 
-**Row walk done (2026-07-22)** — new `shared-secrets` primitive added to
+**Row walk done (2026-07-22)**: new `shared-secrets` primitive added to
 `docs/pryv-primitives.md` (B.4); rows updated:
 
 | Scope | Ref | What changed |
 |---|---|---|
 | gdpr | Art.32 | `shared-secrets` added to `pryv_primitives`; new "Credential hand-off: IMPLEMENTED" per-aspect bullet in detail (one-shot key + mandatory TTL + SHA-256-only storage + payload scrub + optional signature) |
 | iso-27001 | A.5.17 | primitive added; new detail paragraph "Transmitting authentication information to a third party" incl. the `secretSharing: forbidden` opt-out |
-| iso-27001 | A.8.12 | primitive added; overview extended — access logs / browser history / referrers stop accumulating live credentials |
+| iso-27001 | A.8.12 | primitive added; overview extended, access logs / browser history / referrers stop accumulating live credentials |
 | hipaa-security | 164.312(e)(1) | primitive added; `tests:` gains `SHS02` / `SHS12` / `SHS13`; new detail paragraph "Credential hand-off between parties" (TLS protects the pipe, shared-secrets protects the credential) |
 | soc2 | CC6.1 | primitive added; `tests:` gains `SHS02` / `SHS09` / `SHS13`; new detail paragraph "Credential transmission to third parties" |
 
 `gdpr.Art.5(1)(f)` needed no separate edit: the Art.5 row's §1(f) bullet
 defers to Art.32 by design ("covered separately at Art.32"), so the
-Art.32 update carries it. No coverage-tier shifts — every walked row
+Art.32 update carries it. No coverage-tier shifts, every walked row
 already sat at the right tier; the feature strengthens the evidence and
 primitive citations within it.
 
 No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so
 it carries no `planned:` chips.
 
-## Section B — Trigger categories (no specific backlog slug yet)
+## Section B: Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued
 `planned:` chip. Add an entry under Section A if your specific PR
 falls into one of these and there isn't already a slug for it.
 
-### B.1 — New / renamed open-pryv.io API methods
+### B.1: New / renamed open-pryv.io API methods
 
 Affects rows that cite the method name in `tests:` / `config_keys:` /
 `detail`. Check the row's tier (`coverage: implemented` typically
@@ -513,45 +513,45 @@ needs a `tests:` entry pointing at a new `[CODE]`).
 
 Common touchpoints when API surface changes:
 - `gdpr.Art.15`, `gdpr.Art.20`, `ccpa.1798.110`, `pipeda.Principle.4.9`,
-  `swiss-nlpd.Art.25`, `hipaa-privacy.164.524` — DSAR / portability /
+  `swiss-nlpd.Art.25`, `hipaa-privacy.164.524`, DSAR / portability /
   individual-access row family.
-- `gdpr.Art.16`, `ccpa.1798.106`, `pipeda.Principle.4.6` — rectification.
+- `gdpr.Art.16`, `ccpa.1798.106`, `pipeda.Principle.4.6`, rectification.
 - `gdpr.Art.17`, `ccpa.1798.105`, `pipeda.Principle.4.5`,
-  `swiss-nlpd.Art.32` — erasure.
-- `gdpr.Art.18` — restriction (mostly `accesses.update`).
-- `hipaa-security.164.312(a)(1)` — access control.
-- `hipaa-security.164.312(b)`, `iso-27001.A.8.15` — audit.
+  `swiss-nlpd.Art.32`: erasure.
+- `gdpr.Art.18`: restriction (mostly `accesses.update`).
+- `hipaa-security.164.312(a)(1)`: access control.
+- `hipaa-security.164.312(b)`, `iso-27001.A.8.15`, audit.
 - **SOC 2** parallels the families above: `soc2.P5.1` + `soc2.P6.7`
   (subject access / accounting of disclosures), `soc2.P5.2`
   (rectification), `soc2.CC6.5` + `soc2.P4.3` + `soc2.C1.2` (erasure /
   disposal), `soc2.CC6.1` + `soc2.CC6.3` (logical access control),
-  `soc2.P6.2` (record of disclosures — audit).
+  `soc2.P6.2` (record of disclosures, audit).
 
-### B.2 — New event-type formats (`data-types` repo)
+### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
 affect:
 - `gdpr.Art.20` (portability via canonical schemas).
 - `iso-13485` (excluded_items: device classes).
-- `hipaa-privacy.164.514` (de-identification — new format flags).
+- `hipaa-privacy.164.514` (de-identification, new format flags).
 - `soc2.PI1.1`, `soc2.PI1.2`, `soc2.P7.1` (processing-integrity /
   data-quality rows cite the `data-types` validation pipeline).
 
 **Refreshed 2026-06-22:** `calendar/ical-event` (new `calendar` class)
-added to `pryv/data-types`. Primary matrix impact: `gdpr.Art.20` —
+added to `pryv/data-types`. Primary matrix impact: `gdpr.Art.20`,
 portability to the iCalendar (RFC 5545) standard via the calendar
 adapter, which is also advertised in the new `/service/info`
 `adapters` field (a thin list of adapter base URLs; each adapter
 serves its own `manifest.json`).
 
-### B.3 — New storage engine (`storages/engines/<new>/`)
+### B.3: New storage engine (`storages/engines/<new>/`)
 
 Affects:
 - `gdpr.Art.17` (engine-dependent erasure semantics; per-user
   granularity).
 - `gdpr.Art.32` (data-at-rest semantics).
-- `gdpr.Art.5(1)(c)` (data minimisation — engine isolation behaviour).
-- `hipaa-security.164.312(a)(1)` (technical safeguards — engine ACL
+- `gdpr.Art.5(1)(c)` (data minimisation, engine isolation behaviour).
+- `hipaa-security.164.312(a)(1)` (technical safeguards, engine ACL
   enforcement).
 - `iso-27001.A.8.10` (information deletion semantics per engine).
 - `soc2.CC6.5`, `soc2.C1.2`, `soc2.P4.3` (engine-dependent disposal /
@@ -559,26 +559,26 @@ Affects:
 - The audit primitive doc (`audit` entry in `docs/pryv-primitives.md`).
 - `context/per-engine-isolation.md`.
 
-### B.4 — New `pryv_primitive` (added to `docs/pryv-primitives.md`)
+### B.4: New `pryv_primitive` (added to `docs/pryv-primitives.md`)
 
 Reverse-check: which rows should cite the new primitive in their
 `pryv_primitives: [...]` array? Greppable from
 `docs/pryv-primitives.md`.
 
-### B.5 — Open-pryv.io major version bump (2.x → 3.x)
+### B.5: Open-pryv.io major version bump (2.x → 3.x)
 
 Mass-touch: `applies_to_versions` field on every row that's expected
 to change behaviour. Today the default is `*` (every row applies to
 every version). When the v3 line opens, many rows will need
 `applies_to_versions: ">=2.0.0 <3.0.0"` or equivalent.
 
-### B.6 — New scope (`scopes/<new>.yml`)
+### B.6: New scope (`scopes/<new>.yml`)
 
 Update `MEMORY.md` workspace overview + scope-list documentation;
 check `derives_from` cross-references on existing scopes that might
 benefit from pointing at the new scope.
 
-### B.7 — Major Pryv-side architectural change
+### B.7: Major Pryv-side architectural change
 
 Touches `context/*.md` notes. Recent examples:
 - Multi-core data-residency model (touched
@@ -587,7 +587,7 @@ Touches `context/*.md` notes. Recent examples:
   listed in the core-affinity context note).
 - Storages-as-plugins refactor (touched engine references in the
   audit + data-residency primitives).
-- CMC gates on access-state-mutating triggers — personal-token on
+- CMC gates on access-state-mutating triggers, personal-token on
   `consent/accept-cmc` + `consent/scope-update-cmc` (mint + widen);
   access-permission gate (`AccessLogic.canDeleteAccess` honouring
   `selfRevoke`) on `consent/revoke-cmc`. Touched
@@ -595,7 +595,7 @@ Touches `context/*.md` notes. Recent examples:
   consent triggers" section + the Art.7 demonstrability + withdrawability
   claims in the same file.
 
-### B.8 — Token-class enforcement on consent-bearing API methods
+### B.8: Token-class enforcement on consent-bearing API methods
 
 When a method's accepted token classes change (e.g. a method gated to
 personal-only, or relaxed to allow shared/app), refresh:
@@ -609,7 +609,7 @@ personal-only, or relaxed to allow shared/app), refresh:
 - ISO 27001 A.5.15 (access control) / A.5.16 (identity management) in
   `scopes/iso-27001.yml`.
 
-Most recent: 2026-06-24 — CMC gates refined in two waves:
+Most recent: 2026-06-24, CMC gates refined in two waves:
 1. (`open-pryv.io 7fb6e165`) `consent/{accept,scope-update,revoke}-cmc`
    initially gated to personal tokens only via the
    `cmc-accept-requires-personal-token` hook; `@pryv/cmc@3.8.0` shipped
@@ -619,21 +619,21 @@ Most recent: 2026-06-24 — CMC gates refined in two waves:
    set; instead `handleRevoke` runs `triggerAccess.canDeleteAccess(target)`
    (honours `selfRevoke` feature permission). Rejection:
    `cmc-revoke-forbidden`. `handleSystemScopeUpdate` gained the chain
-   check (`canUpdateAccess` + `canCreateAccess`) — defense in depth on
+   check (`canUpdateAccess` + `canCreateAccess`), defense in depth on
    top of the events.create gate. `@pryv/cmc@3.9.0` shipped
    `requestScopeUpdate` / `requestScopeUpdateUrl`; the old
    provider-side `requestScopeUpdate` renamed to `proposeScopeUpdate`
-   (breaking — see lib-js CHANGELOG); `app-web-auth3` shipped
+   (breaking, see lib-js CHANGELOG); `app-web-auth3` shipped
    `/cmc-scope-update`. No `requestRevoke` lib helper or `/cmc-revoke`
-   page — revoke goes through the standard access-permission gate
+   page, revoke goes through the standard access-permission gate
    directly.
 
 Compliance-side note updated in `context/cmc-consent-primitives.md`.
 
-### B.9 — OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
+### B.9: OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
 
 New in `open-pryv.io 2.0.0-rc.8` (squash `8abb86a4`): a standards-based
-OAuth2 authorization-code + PKCE authorization server — discovery
+OAuth2 authorization-code + PKCE authorization server, discovery
 (`GET /.well-known/oauth-authorization-server`), `GET /oauth2/authorize`,
 `POST /oauth2/token` (`authorization_code` / `refresh_token` /
 `client_credentials`), curated-only client registration via
@@ -655,7 +655,7 @@ Rows refreshed on this landing (delegated-app authN/authZ + consent):
 - `iso-27001.A.5.15` (access control) / `A.5.16` (identity management) /
   `A.5.17` (authentication information).
 - `gdpr.Art.32` (security of processing) + `gdpr.Art.7` (conditions for
-  consent — granular consent screen as a second demonstrability path).
+  consent, granular consent screen as a second demonstrability path).
 - `context/cmc-consent-primitives.md` (consent-record inventory).
 
 **Audit family refreshed 2026-07-21** (was deliberately deferred while
@@ -671,23 +671,23 @@ and/or describe the authorization-activity coverage). New config key:
 0 = strict).
 
 **DPoP sender-constrained tokens landed 2026-07-21** (open-pryv.io
-`9a874599`): RFC 9449 proof-of-possession — a client proves it holds a
+`9a874599`): RFC 9449 proof-of-possession, a client proves it holds a
 key on each request, the issued token is bound to that key's thumbprint,
 so a stolen DPoP token is useless without the private key. Opt-in and
 additive (Bearer unchanged); ES256 only in v1. `hipaa-security.164.312(d)`
 (person/entity authentication) now describes it; the same authentication /
 logical-access family remains a refresh candidate as the property
-strengthens token-theft resistance — walk `soc2.CC6.1`, `iso-27001.A.5.17`,
+strengthens token-theft resistance, walk `soc2.CC6.1`, `iso-27001.A.5.17`,
 `gdpr.Art.32` when next touched. New config key: `oauth.dpop.clockSkewSeconds`
 (proof freshness window, default 120 s). ⚠️ Deployment note captured in the
 row + config: DPoP requires a trusted proxy that overwrites X-Forwarded-Host
 / -Proto. Client helper (lib-js) + operator revoke-by-key-thumbprint are
-follow-ups, not yet shipped. *(Both landed since — see the next entry.)*
+follow-ups, not yet shipped. *(Both landed since, see the next entry.)*
 
-**DPoP client + operator revocation landed 2026-07-22/23** — the two
+**DPoP client + operator revocation landed 2026-07-22/23**: the two
 follow-ups above plus client-revoke live propagation:
 - **lib-js DPoP client** shipped in `pryv` 3.10.0 (`SignedConnection`,
-  `OAuth2Client({dpop: true})`) — the client side of the
+  `OAuth2Client({dpop: true})`), the client side of the
   `hipaa-security.164.312(d)` story is no longer pending.
 - **Operator revoke-by-key** (open-pryv.io `4c0a5ade`): platform-wide
   tombstone by RFC 7638 thumbprint; live DPoP-bound tokens rejected on all
@@ -696,7 +696,7 @@ follow-ups above plus client-revoke live propagation:
   `hipaa-security.164.312(d)`.
 - **Client revocation reaches live tokens** (open-pryv.io `7b6321aa`):
   `revoke <clientId>` now cuts existing access tokens cluster-wide within
-  `oauth.clientRevokeCheckSeconds` (default 30 s), incl. a socket.io sweep —
+  `oauth.clientRevokeCheckSeconds` (default 30 s), incl. a socket.io sweep,
   previously issued tokens lived out their TTL. Recorded in `soc2.CC6.3`.
   Next-touch refresh candidates for the removal/termination family:
   `hipaa-security.164.308(a)(3)(ii)(C)`, `iso-27001.A.5.18`, `gdpr.Art.32`.
@@ -745,7 +745,7 @@ serialized payload for ten identifier strings pushed through the real
 entry point, and `[OBSL]`, which proves the schema refuses an unsafe
 stack even if the sanitizer produced one. **The claim to cite is
 "anonymous by construction, with a residual correlation risk at very
-low traffic volumes"** — never an unqualified guarantee.
+low traffic volumes"**, never an unqualified guarantee.
 
 Rows and docs refreshed:
 `context/subprocessor-posture-and-data-flow.md` § "Observability
@@ -778,7 +778,7 @@ whole-path URL obfuscation, log forwarding off and a working
 `high_security` opt-in. That fix was deployed and wire-validated before
 the rebuild replaced it.
 
-## Section C — Maintenance reminders
+## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check
   that `pryv_primitives` + `tests:` + `config_keys:` references still
@@ -786,7 +786,7 @@ the rebuild replaced it.
   this pass catches semantic drift (e.g., a primitive whose meaning
   evolved).
 - **At each gap-probing sweep close**: full review of this file
-  against the current matrix state — confirm every Section A entry
+  against the current matrix state, confirm every Section A entry
   is still accurate + every shipped item has been removed.
 - **At each new gap-probing Q close** (per
   [[feedback-implementer-perspective-gap-probing]]): if the Q

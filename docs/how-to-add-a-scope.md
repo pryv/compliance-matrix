@@ -61,7 +61,7 @@ excluded_items: []      # for curated scopes only
 ## Authoring tiers
 
 Every requirement row has three optional content fields read by different
-audiences — all from the implementer's perspective:
+audiences, all from the implementer's perspective:
 
 | Field | Audience | Tone | Length |
 |---|---|---|---|
@@ -73,25 +73,25 @@ The WAB renders all three when a row is expanded, with visual hierarchy
 (overview prominent, technical in monospace). A reader stops at the level
 they need.
 
-Always write `overview` for any non-`out-of-scope` row — the validator
+Always write `overview` for any non-`out-of-scope` row, the validator
 warns when it's missing.
 
-## Coverage status — what to pick
+## Coverage status: what to pick
 
 Pick the status that answers the implementer's question "what does Pryv
 do for me on this requirement?":
 
-- `implemented` — works out of the box; no config needed; you can point an
+- `implemented`: works out of the box; no config needed; you can point an
   auditor at running behaviour + a test code.
-- `configurable` — works when a specific config is set; cite the config
+- `configurable`: works when a specific config is set; cite the config
   keys (`config_keys:`) and a test that exercises that path.
-- `facilitated` — Pryv reduces your work but you still do part of it;
+- `facilitated`: Pryv reduces your work but you still do part of it;
   describe what's yours in `overview`/`detail`.
-- `documented` — Pryv ships guidance only; cite the doc (`docs:` or
+- `documented`: Pryv ships guidance only; cite the doc (`docs:` or
   `qms_docs:`).
-- `out-of-scope` — RARE. Means: no software contribution AND no implementer
+- `out-of-scope`: RARE. Means: no software contribution AND no implementer
   obligation flows from this row alone. Do NOT use `out-of-scope` just
-  because the article is declarative or because "Pryv doesn't do it" — most
+  because the article is declarative or because "Pryv doesn't do it", most
   declarative articles still imply something for the implementer (e.g.,
   GDPR Art.2 puts your whole deployment in material scope; that's not
   "out-of-scope", it's `facilitated` with an overview explaining the
@@ -112,7 +112,7 @@ Apply consistently across all authored fields:
 npm run validate
 ```
 
-Strict-by-default rules — fails on:
+Strict-by-default rules, fails on:
 
 - unknown `reqid` (referenced but missing from `dev-site`'s `requirements.yml`)
 - broken test code (referenced but not found in any
@@ -133,17 +133,17 @@ Produces `dist/compliance.sqlite` consumed by the WAB and other tooling.
 - Mark every cell `draft: true` as you go.
 - When user-reviewed: set `draft: false` + add `reviewed_by` + `reviewed_at`.
 - Coverage status meaning:
-  - `implemented` — works out of the box
-  - `configurable` — works with specific config keys (cite them in `config_keys:`)
-  - `facilitated` — reduces work but implementer does X
-  - `documented` — guidance only (cite the doc in `docs:`)
-  - `out-of-scope` — not for software
+  - `implemented`: works out of the box
+  - `configurable`: works with specific config keys (cite them in `config_keys:`)
+  - `facilitated`: reduces work but implementer does X
+  - `documented`: guidance only (cite the doc in `docs:`)
+  - `out-of-scope`: not for software
 
 ## 6. Linkages
 
-- `functional_specs:` — IDs from `dev-site/src/_functional-specifications/requirements.yml`
-- `tests:` — `[CODE]` identifiers from open-pryv.io test descriptions
-- `docs:` — relative paths into `dev-site/src/`
-- `qms_docs:` — relative paths into `compliance-matrix/qms/`
-- `config_keys:` — dotted paths into open-pryv.io config (e.g.,
+- `functional_specs:`: IDs from `dev-site/src/_functional-specifications/requirements.yml`
+- `tests:`: `[CODE]` identifiers from open-pryv.io test descriptions
+- `docs:`: relative paths into `dev-site/src/`
+- `qms_docs:`: relative paths into `compliance-matrix/qms/`
+- `config_keys:`: dotted paths into open-pryv.io config (e.g.,
   `storages.engines.postgresql.database`)

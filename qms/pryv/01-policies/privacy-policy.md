@@ -30,7 +30,7 @@ The development of open-pryv.io (where privacy is a product requirement)
 and the project's own limited processing of personal data (contributor
 accounts, issue reporters, mailing-list subscribers).
 
-## Policy statements — privacy as a product property
+## Policy statements: privacy as a product property
 
 1. **Data minimization is structural.** Pryv stores personal data
    per-user and exposes it only through explicit, scoped accesses. The
@@ -49,7 +49,7 @@ accounts, issue reporters, mailing-list subscribers).
    privacy-protective choice; broadening exposure is a deliberate
    operator action.
 
-## Policy statements — the project's own processing
+## Policy statements: the project's own processing
 
 5. The project processes the minimum personal data needed to run an
    open-source project and does not sell or repurpose it.

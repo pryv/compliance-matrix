@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * backfill-pryv-effort-saved.js — one-shot backfill that adds the
+ * backfill-pryv-effort-saved.js, one-shot backfill that adds the
  * `pryv_effort_saved` field to every row whose coverage is one of
  * implemented / configurable / documented and which doesn't already
  * have the field.

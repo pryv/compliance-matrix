@@ -122,7 +122,7 @@ export function App () {
           <>
             <div className='mb-3 rounded bg-amber-50 border border-amber-200 text-xs text-amber-900 px-3 py-2'>
               Revoking an access deletes its token immediately. On older deployments it may not
-              cascade to webhooks created by that access — verify with your operator.
+              cascade to webhooks created by that access, verify with your operator.
             </div>
             <table className='w-full text-sm bg-white border border-slate-200 rounded-lg overflow-hidden'>
               <thead className='bg-slate-100 text-slate-600'>

@@ -1,7 +1,7 @@
 # scheduled-retention-job
 
 A reference **backend** job that enforces data-retention rules against a Pryv
-deployment — the operator-owned half of storage limitation. Pryv ships the
+deployment, the operator-owned half of storage limitation. Pryv ships the
 composable primitives (`events.get?toTime=<cutoff>`, two-stage
 `events.delete`, `streams.delete`, `auth.delete`, the audit-log inactivity
 oracle); the scheduler, the rule language and any legal-hold overrides are the
@@ -14,7 +14,7 @@ operator's. This sample is the recipe.
   164.530(j)** retention/disposal.
 
 It is a Node script (not a web app) because retention is a scheduled backend
-task — the topology should reflect that.
+task, the topology should reflect that.
 
 ## Run
 
@@ -34,24 +34,24 @@ export PRYV_API_ENDPOINT="https://<token>@<username>.pryv.me"   # cross-user per
 ## Rule language
 
 See [`retention.yml`](./retention.yml). Each rule targets a stream class with
-a `max_age` and an action (`trash` → `delete`). Intentionally minimal — no
+a `max_age` and an action (`trash` → `delete`). Intentionally minimal, no
 boolean composition, no per-rule rollback. The summary (deleted count,
 elapsed, errors per rule) is printed to stdout and can be piped to your
 observability sink.
 
 ## Deployment wrappers
 
-- [`deploy/systemd-timer/`](./deploy/systemd-timer/) — `.service` + `.timer`.
-- [`deploy/kubernetes/`](./deploy/kubernetes/) — a `CronJob`.
-- [`deploy/github-actions/`](./deploy/github-actions/) — a scheduled workflow.
+- [`deploy/systemd-timer/`](./deploy/systemd-timer/): `.service` + `.timer`.
+- [`deploy/kubernetes/`](./deploy/kubernetes/): a `CronJob`.
+- [`deploy/github-actions/`](./deploy/github-actions/): a scheduled workflow.
 
 ## Honest limitations (also printed by the script)
 
-- **Legal-hold opt-out is not implemented** — excluding held records is the
+- **Legal-hold opt-out is not implemented**: excluding held records is the
   operator's responsibility.
-- **No atomic rollback** on partial failure — monitor the summary + alert.
+- **No atomic rollback** on partial failure, monitor the summary + alert.
 - **High-frequency series** attached to deleted events need a separate
-  `DELETE /events/<id>/series` call — out of scope for this minimal sample.
+  `DELETE /events/<id>/series` call, out of scope for this minimal sample.
 - Audit rows for deletions survive per your `audit.onUserDelete` setting; with
   PostgreSQL baseStorage, historical backups may still contain deleted data
   until rotated.

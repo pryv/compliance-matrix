@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * validate.js — strict-by-default validation of the compliance matrix.
+ * validate.js, strict-by-default validation of the compliance matrix.
  *
  * Run from repo root:  npm run validate
  *
@@ -53,7 +53,7 @@ const e = (msg) => errors.push(msg);
 const w = (msg) => warnings.push(msg);
 
 if (!BACKLOG_DIR_PRESENT) {
-  w(`backlog dir '${BACKLOG_DIR}' absent (standalone/CI checkout) — planned.backlog existence checks skipped`);
+  w(`backlog dir '${BACKLOG_DIR}' absent (standalone/CI checkout), planned.backlog existence checks skipped`);
 }
 
 // ---------- 1. Load schemas ----------
@@ -94,7 +94,7 @@ if (fs.existsSync(DEV_SITE_REQUIREMENTS)) {
   walk(root.sections || []);
   console.log(`[OK]   dev-site reqids loaded: ${knownReqids.size}`);
 } else {
-  w(`dev-site requirements.yml not found at ${DEV_SITE_REQUIREMENTS} — reqid xref skipped`);
+  w(`dev-site requirements.yml not found at ${DEV_SITE_REQUIREMENTS}, reqid xref skipped`);
 }
 
 // ---------- 3. Load test codes from open-pryv.io ----------
@@ -129,7 +129,7 @@ if (fs.existsSync(PRIMITIVES_DOC)) {
   while ((m = re.exec(txt)) !== null) knownPrimitives.add(m[1]);
   console.log(`[OK]   pryv primitives loaded: ${knownPrimitives.size}`);
 } else {
-  w('docs/pryv-primitives.md not found — pryv_primitives xref skipped');
+  w('docs/pryv-primitives.md not found, pryv_primitives xref skipped');
 }
 
 // ---------- 4. Load scope yamls ----------
@@ -139,7 +139,7 @@ console.log(`[INFO] scopes/ files found: ${scopeFiles.length}`);
 
 const allScopeIds = new Set();
 const allScopes = [];
-const allCells = new Set(); // 'scope.id.ref' — populated in section 5
+const allCells = new Set(); // 'scope.id.ref', populated in section 5
 
 for (const f of scopeFiles) {
   let scope;
@@ -268,7 +268,7 @@ for (const { scope, file } of allScopes) {
       }
     }
 
-    // sample_apps resolution (local path) — external URLs are allowed without check
+    // sample_apps resolution (local path), external URLs are allowed without check
     for (const s of r.sample_apps || []) {
       if (s.startsWith('http://') || s.startsWith('https://')) continue;
       const p = path.join(ROOT, 'samples', s.replace(/^samples\//, ''));
@@ -310,7 +310,7 @@ for (const { scope, file } of allScopes) {
 // ---------- 5b. QMS cross-link checks ----------
 // Every QMS document's frontmatter matrix_evidence_for[] must resolve to a
 // real matrix row (the reciprocal of a requirement's qms_docs[] citation).
-// satisfies[] is free-form (paywalled standards — not validated against a
+// satisfies[] is free-form (paywalled standards, not validated against a
 // clause catalogue).
 
 const parseFrontmatter = (txt) => {

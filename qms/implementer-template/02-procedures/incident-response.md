@@ -1,5 +1,5 @@
 ---
-title: "{{organization}} — Incident Response Procedure"
+title: "{{organization}}, Incident Response Procedure"
 id: impl-proc-incident
 draft: true
 owner: "{{security-contact}}"
@@ -14,7 +14,7 @@ reviewed_by: null
 reviewed_at: null
 ---
 
-# {{organization}} — Incident Response Procedure
+# {{organization}}: Incident Response Procedure
 
 ## Purpose
 

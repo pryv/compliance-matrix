@@ -84,7 +84,7 @@ export function Generate () {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      setStatus(`Done — ${chosen.length} scope(s) + gap report + QMS bundled.`);
+      setStatus(`Done, ${chosen.length} scope(s) + gap report + QMS bundled.`);
     } catch (e) {
       setError((e as Error).message);
       setStatus(null);
@@ -101,7 +101,7 @@ export function Generate () {
       <h1 className='text-xl font-semibold text-slate-800 mb-1'>Generate a compliance pack</h1>
       <p className='text-sm text-slate-600 mb-6'>
         Answer the short questionnaire, pick the regulations that apply to your
-        deployment, and download a documentation skeleton — per-scope coverage
+        deployment, and download a documentation skeleton, per-scope coverage
         with evidence pointers, a gap report of your responsibilities, and a
         filled-in copy of the implementer QMS template. Everything runs in your
         browser. This is a starting point, not legal advice.
