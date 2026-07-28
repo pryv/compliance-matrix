@@ -72,18 +72,22 @@ Proposal: `proposals/account-backup-dsar-completeness.md` (shared with the v0.4.
 primitive). Aliases as Pryv-native pseudonymisation.
 
 **Status (2026-06-30)**: SHIPPED in `open-pryv.io` `4054c67a` (`accesses.create
-{randomAlias:true}` + `account.changeUsername`; tested on PostgreSQL + SQLite).
-Proposal stamped. The rows below are ready to reclassify per their "After
-shipping" notes (the primitive now exists in core, not just app-layer).
+{randomAlias:true}` + `account.changeUsername`; tested on PostgreSQL + SQLite,
+`[AL01]`-`[AL05]` in `components/api-server/test/accesses-alias.test.js`).
 
-| Scope | Ref | Kind | Impact | After shipping |
-|---|---|---|---|---|
-| gdpr | Art.4 | feature | medium | mention `auth.randomAlias` as pseudonymisation primitive |
-| gdpr | Art.32 | feature | medium | name aliases as switch-on primitive at Art.32 §1(a); coverage stays F:Infrastructure but adds primitive entry |
-| hipaa-privacy | 164.514(c) | feature | medium | row likely moves F:Storage → Configurable (alias IS the re-id code) |
-| iso-27001 | A.8.11 | feature | medium | row could move F:Primitive → Configurable |
-| iso-27701 | A.7.4.5 | feature | low | stronger derives_from |
-| ccpa | 1798.140(ae) | feature | low | deployment-pattern recommendation shifts |
+**Rows walked — entry discharged (verified 2026-07-28).** All six rows cite the
+shipped primitive; `randomAlias` is in the primitive catalogue (`docs/pryv-primitives.md`)
+and carried in each row's `pryv_primitives`. No `planned:` chips were ever queued for
+this slug, so none needed discharging.
+
+| Scope | Ref | Walked | Where the shipped primitive is cited |
+|---|---|---|---|
+| gdpr | Art.4 | ✅ | pseudonymisation term maps to `accesses.create {randomAlias:true}` |
+| gdpr | Art.32 | ✅ | primitive named as shipped in the §1(a) narrative |
+| hipaa-privacy | 164.514(c) | ✅ | alias cited as the re-identification-code mechanism |
+| iso-27001 | A.8.11 | ✅ | named as what Pryv does natively for masking-by-projection |
+| iso-27701 | A.7.4.5 | ✅ | stale "planned / backlog `ALIASES`" prose corrected 2026-07-28 |
+| ccpa | 1798.140(ae) | ✅ | deployment-pattern recommendation cites the alias |
 
 Proposal: `proposals/aliases-as-pseudonymization-primitive.md`
 
@@ -281,20 +285,22 @@ no scope row changes.
 Filed during Q16; flagged as a scope-drift example in internal
 gap-probing scope-discipline notes.
 
-### `RATE-LIMITING-RECIPES` (no proposal mirror yet)
+### `RATE-LIMITING-RECIPES`
 
 **Where the work lives**: `dev-deploy` or new docs repo
 (reference nginx / HAProxy / Cloudflare configs). Q6 outcome —
 voluntarily missing at Pryv layer; ship reference configs.
 
-No `planned:` chips today (waiting on `proposals/rate-limiting-
-recipes.md` to be filed alongside `context/rate-limiting-and-dos-
-protection.md`). Likely affected rows when configs ship:
+**Tracking card**: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705775&issue=pryv%7Copen-pryv.io%7C117
 
-| Scope | Ref | Suggested kind | Note |
-|---|---|---|---|
-| iso-27001 | A.8.21 | enhancement | cite the recipes |
-| hipaa-security | 164.308(a)(5)(ii)(C) | enhancement | cite the recipes |
+| Scope | Ref | Kind | Impact | After shipping |
+|---|---|---|---|---|
+| iso-27001 | A.8.21 | enhancement | low | row cites concrete reference configurations instead of the architectural rationale alone |
+| hipaa-security | 164.308(a)(5)(ii)(C) | enhancement | low | log-in monitoring gains a companion enforcement artefact on the auth endpoints |
+
+Proposal: `proposals/rate-limiting-recipes.md` (filed 2026-07-28,
+alongside `context/rate-limiting-and-dos-protection.md`). Chips live on
+both rows above.
 
 ### `PLATFORMDB-AT-REST-ENCRYPTION` — **superseded by container-encrypted-volume**
 
@@ -415,7 +421,7 @@ directing reporters at the public issue tracker).
 
 Proposal: `proposals/vulnerability-disclosure-program.md`.
 
-### `CONFIG-EFFECTIVE-EXPOSURE` (no proposal mirror yet)
+### `CONFIG-EFFECTIVE-EXPOSURE`
 
 **Where the work lives**: `open-pryv.io` — new
 `GET /system/admin/config/effective` admin route + SPA
@@ -431,22 +437,31 @@ Surfaced 2026-05-21 by DPIA Section (d) safeguards inventory
 feed gap-probing. Also unlocks cross-core drift
 detection + operator runbook + post-hoc debugging use-cases.
 
-Likely affected rows when the endpoint ships:
+**Tracking card**: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705795&issue=pryv%7Copen-pryv.io%7C118
 
-| Scope | Ref | Suggested kind | Impact | After shipping |
-|---|---|---|---|---|
-| gdpr | Art.30(1)(g) | feature | medium | cite endpoint as evidence-emitter for "description of technical security measures"; coverage tier could shift F:Awareness → F:Evidence Med |
-| gdpr | Art.32 | feature | low | strengthen evidence narrative around operator-visible safeguards |
-| gdpr | Art.35 | feature | medium | DPIA Section (d) safeguards inventory cites the endpoint output; coverage tier shifts F:Awareness Low → F:Evidence Med |
-| iso-27001 | A.8.9 | feature | medium | direct match — configuration management evidence; row could move F:Storage / F:Primitive → Configurable |
-| hipaa-security | 164.308(a)(8) | feature | medium | evaluation evidence — technical baseline snapshot; coverage strengthens |
+Affected rows when the endpoint ships:
 
-No `proposals/<slug>.md` mirror filed yet — the work absorbs
-cleanly into the bootstrap-admin-panel spec. File one if the
-DPIA-evidence framing later wants `planned:` chips on the matrix
-rows above (in which case the `CONFIG-EFFECTIVE-EXPOSURE` backlog
-becomes a one-line stub pointing at the admin-panel work to
-satisfy the validator's chip → backlog resolution requirement).
+| Scope | Ref | Kind | Impact | Chip | After shipping |
+|---|---|---|---|---|---|
+| gdpr | Art.30 | feature | medium | ✅ | cite endpoint as evidence-emitter for the §1(g) "description of technical security measures" |
+| gdpr | Art.32 | feature | low | ✅ | strengthen evidence narrative around operator-visible safeguards |
+| gdpr | Art.35 | feature | medium | ✅ | DPIA safeguards inventory cites the endpoint output; coverage tier could shift F:Awareness Low → F:Evidence Med |
+| iso-27001 | A.8.9 | feature | medium | ✅ | direct match — configuration management evidence; row could move F:Storage / F:Primitive → Configurable |
+| hipaa-security | 164.308(a)(8) | feature | medium | ✅ | evaluation gains a technical baseline snapshot instead of a per-cycle reconstruction |
+
+Proposal: `proposals/config-effective-exposure.md` (filed 2026-07-28).
+The chips carry no `backlog:` key: the work has no standalone backlog
+file and is delivered by the bootstrap + admin-panel effort, and
+`planned.backlog` is optional in the schema. The earlier note here
+claimed a backlog stub was required to satisfy the validator; that is
+not the case (`scripts/validate.js` only resolves `backlog` when it is
+set).
+
+⚑ **Lookup note.** The `164.308(a)(8)` ref is **quoted** in
+`scopes/hipaa-security.yml` (`- ref: "164.308(a)(8)"`), unlike most refs in
+that file. A `grep '^  - ref: 164.308'` will not find it and can lead to the
+false conclusion that the row is missing. Several HIPAA refs in the 164.310+
+range are quoted the same way.
 
 ### `SHARED-SECRETS` (SHIPPED — rows walked 2026-07-22)
 

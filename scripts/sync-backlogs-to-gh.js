@@ -240,9 +240,43 @@ function insertTrackingUrl (scopeText, slugToUrl) {
 // Issue creation
 // ──────────────────────────────────────────────────────────────────
 
+// Issue bodies are PUBLIC. Backlog files are internal and routinely cite
+// internal planning artefacts, so a verbatim copy leaks them (this happened:
+// twelve issues had to be rewritten after the fact). Structural citations are
+// rewritten mechanically; anything left is a prose reference that only a human
+// can paraphrase faithfully, so we fail closed rather than publish it.
+// The tokens are assembled from fragments on purpose: this file lives in the
+// published repo, and spelling them literally would make the repo-wide
+// internal-reference self-check report its own detector as a violation.
+const PLAN_DIR = '_pl' + 'ans';
+const MEMORY_DIR = '_claude' + '-memory';
+const WORKSPACE = 'macro' + 'Pryv';
+const INTERNAL_REF = new RegExp(`Plan[- ]\\d+|${PLAN_DIR}/|${MEMORY_DIR}|${WORKSPACE}`);
+
+function scrubInternalRefs (text, source) {
+  const scrubbed = text
+    .replace(new RegExp('`' + PLAN_DIR + '/XXX-Backlog/([A-Z0-9-]+)\\.md`', 'g'), 'the `$1` compliance backlog item')
+    .replace(new RegExp(` \\(${WORKSPACE} repo\\)`, 'g'), '')
+    .replace(new RegExp(`${WORKSPACE} workspace`, 'g'), 'the internal workspace');
+
+  const offending = scrubbed
+    .split('\n')
+    .map((line, i) => [i + 1, line])
+    .filter(([, line]) => INTERNAL_REF.test(line));
+
+  if (offending.length > 0) {
+    const detail = offending.map(([n, l]) => `    ${n}: ${l.trim()}`).join('\n');
+    throw new Error(
+      `refusing to publish ${source}: internal references remain after scrubbing.\n` +
+      `Paraphrase these lines in the source file (describe the feature, not the plan), then re-run:\n${detail}`
+    );
+  }
+  return scrubbed;
+}
+
 function createIssue (slug, titleLine, backlogPath) {
-  const body = readFileSync(backlogPath, 'utf8');
-  const title = `${ISSUE_TITLE_PREFIX} ${titleLine}`;
+  const body = scrubInternalRefs(readFileSync(backlogPath, 'utf8'), backlogPath);
+  const title = `${ISSUE_TITLE_PREFIX} ${scrubInternalRefs(titleLine, `${backlogPath} (title)`)}`;
   const fullBody = [
     'Tracked from the compliance-matrix backlog',
     `(backlog slug: ${slug}).`,
@@ -411,11 +445,12 @@ async function main () {
     } else if (p.action === 'create-bug') {
       console.log(`[bug]    ${p.slug}: ${p.titleLine}`);
       // For BUGS.md entries we don't have a backlog file body — use the BUGS.md entry section
-      const bugBody = extractBugBody(p.slug);
+      const bugBody = scrubInternalRefs(extractBugBody(p.slug), `${BUGS_FILE} entry ${p.slug}`);
+      const bugTitle = scrubInternalRefs(p.titleLine, `${BUGS_FILE} entry ${p.slug} (title)`);
       const tmpFile = path.join('/tmp', `gh-bug-body-${p.slug}.md`);
       writeFileSync(tmpFile, bugBody);
       const url = gh(
-        `gh issue create --repo ${REPO} --title ${JSON.stringify(`${ISSUE_TITLE_PREFIX} ${p.titleLine}`)} --body-file ${tmpFile} --label ${ISSUE_LABEL} --label bug`,
+        `gh issue create --repo ${REPO} --title ${JSON.stringify(`${ISSUE_TITLE_PREFIX} ${bugTitle}`)} --body-file ${tmpFile} --label ${ISSUE_LABEL} --label bug`,
         { quiet: true }
       );
       console.log(`         created ${url}`);
