@@ -1,24 +1,24 @@
 # Proposal: MFA: document the extension point + ship reference plugins
 
-**Status:** step 2 (server-side TOTP) IMPLEMENTED, pending merge/release; steps 1
-(docs) and 3 (WebAuthn) future. Mirror of the macroPryv backlog item
-`_plans/XXX-Backlog/COMPLIANCE-MFA-MODERN-METHODS.md`, in the perspective of
-`_plans/40-OAUTH2-Account-based-signatures-later/` (the broader
-auth-modernisation plan).
+**Status:** step 2 (server-side TOTP) SHIPPED to `open-pryv.io` master
+(`b606b328`, 2026-09-02); steps 1 (full docs) and 3 (WebAuthn) future. Mirror of
+the macroPryv backlog item `_plans/XXX-Backlog/COMPLIANCE-MFA-MODERN-METHODS.md`,
+in the perspective of `_plans/40-OAUTH2-Account-based-signatures-later/` (the
+broader auth-modernisation plan).
 
-> **Step 2 implemented 2026-09-01 (Plan 119), pending merge.** Server-side TOTP
+> **Step 2 shipped 2026-09-02 in `b606b328` (Plan 119).** Server-side TOTP
 > (RFC 6238) is built in `open-pryv.io/components/business/src/mfa/` (in-process
 > `TotpService` + `MfaMethod` registry + config normalizer) and is the default
 > method when MFA is enabled; SMS unchanged; secrets encrypted at rest; RFC
 > golden-vector-tested; cross-model security-reviewed (a HIGH concurrent-replay
-> finding fixed). It lands on branch `feature/mfa-totp-default` (not yet merged
-> to `master` / released). **The auth-strength matrix rows are NOT discharged
-> here yet** — that happens at release: on merge, lift the `hipaa-security`
-> 164.312(d) / 164.308(a)(5)(ii)(D), `iso-27001` A.8.5 / A.5.17, `diga` A1.2.4
-> posture with the shipped-in-process-TOTP + NIST 800-63B AAL2 wording, walk
-> UPDATE-TRIGGERS Section A/B, and update the primitives-doc MFA section. Known
-> post-ship hardening (per-user rate limit, replay compare-and-set) tracked
-> alongside.
+> finding fixed). Now on `master` (not yet in a tagged release). The
+> auth-strength rows this strengthens — `hipaa-security` 164.312(d) /
+> 164.308(a)(5)(ii)(D), `iso-27001` A.8.5 / A.5.17, `diga` A1.2.4 — stay
+> `Implemented | High` and gain a stronger evidence chain (in-process TOTP,
+> NIST 800-63B AAL2 without a third-party service); the matrix-row detail text
+> refresh is the remaining matrix-data step. Known post-ship hardening (per-user
+> rate limit, replay compare-and-set) tracked in
+> `_plans/XXX-Backlog/MFA-TOTP-HARDENING.md`.
 
 ## Today's posture (correct + currently understated)
 

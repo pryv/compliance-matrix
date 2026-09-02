@@ -158,41 +158,45 @@ A privileged stream namespace managed by the core (not user-creatable).
 
 Multi-factor authentication via the `mfa.*` API methods
 (`mfa.activate`, `mfa.confirm`, `mfa.challenge`, `mfa.verify`,
-`mfa.deactivate`, `mfa.recover`). Opt-in per `services.mfa.mode`
-operator config.
+`mfa.deactivate`, `mfa.recover`). Enabled per `services.mfa`
+operator config (off by default).
 
-**Pluggable**: `components/business/src/mfa/Service.ts` defines an
-abstract `Service` base class with `challenge()` and `verify()`
-methods. Two subclasses ship today, both targeting HTTP-callable
-external providers:
+**Multi-method, TOTP-default**: MFA is pluggable via an `MfaMethod`
+interface + a per-method registry in
+`components/business/src/mfa/`. When an operator enables MFA, an
+**in-process authenticator-app factor (TOTP, RFC 6238) is the
+default method**; SMS remains fully supported. Config shape:
+`services.mfa.active` + `defaultMethod` + `methods.{totp,sms}`
+(the legacy single-valued `services.mfa.mode` is still honoured via
+an in-memory shim, so existing SMS deployments are unchanged).
 
-- `ChallengeVerifyService`: two-step external provider (separate
-  challenge + verify endpoints).
-- `SingleService`: one-step external provider (single endpoint
-  does both).
+Shipped methods:
 
-The shipped subclasses are configured with SMS provider templates
-by default (Twilio-style HTTP endpoints with `{{ username }}`
-placeholder substitution), but the abstraction is generic over
-any HTTP-callable provider. Operators can:
+- **`TotpService`** (in-process, no third-party service): generates
+  the secret, serves an `otpauth://` URI + Base32 secret at
+  enrolment, verifies RFC 6238 codes with a drift window and a
+  per-user single-use replay guard. **Secrets are encrypted at rest**
+  (AES-256-GCM) under an operator key (`methods.totp.secretsKey` or
+  derived from `auth.adminAccessKey`); enrolment fails closed when no
+  key is available.
+- **`ChallengeVerifyService`** / **`SingleService`** (SMS): HTTP-callable
+  external providers (two-step or single-step), generic over any
+  provider matching that shape (Twilio Authy, Auth0 MFA API, Duo Web
+  webhook, etc.) via config, or extend the `MfaMethod` interface in
+  code.
 
-- **Config-only:** point `services.mfa` URLs at any HTTP MFA
-  provider matching the challenge/verify or single-step shape
-  (Twilio Authy, Auth0 MFA API, Duo Web webhook, etc.).
-- **Code-level:** extend `Service` to implement any provider,
-  internal or external.
-
-In-process ceremonies (server-side TOTP, WebAuthn) currently
-require a `Service`-subclass implementation. Reference plugins for
-TOTP + WebAuthn are tracked under internal backlog slug
+WebAuthn is not yet shipped; it plus the full "writing an MFA
+provider" guide are tracked under internal backlog slug
 `MFA-MODERN-METHODS` (matrix-side mirror at
 `proposals/mfa-modern-methods.md`).
 
 - **Compliance role**: authentication strength control (ISO 27001
   A.8.5, HIPAA-Security 164.312(d), GDPR Art.32 multi-aspect, DiGA
-  Annex 1.2.4, PIPEDA Principle 4.7). Which NIST AAL the deployment
-  can claim depends on the configured provider; AAL2 requires TOTP
-  + push or WebAuthn (SMS-only is AAL1 under NIST SP 800-63B Rev 3).
+  Annex 1.2.4, PIPEDA Principle 4.7). With the in-process TOTP factor,
+  a deployment can claim **NIST SP 800-63B Rev 3 AAL2 out of the box,
+  without any third-party service** (TOTP is a multi-factor OTP
+  authenticator); SMS/PSTN is a "restricted" authenticator (AAL1) under
+  the same guidance.
 
 ### `shared-secrets`
 

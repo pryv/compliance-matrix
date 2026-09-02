@@ -193,9 +193,17 @@ Proposal: `proposals/e2e-encryption.md`
 
 ### `MFA-MODERN-METHODS`
 
+**TOTP portion SHIPPED 2026-09-02 (open-pryv.io `b606b328`)** — server-side TOTP
+(RFC 6238) is built in and the default MFA method (in-process `TotpService` +
+`MfaMethod` registry + config normalizer; SMS unchanged; secrets encrypted at
+rest). Slug stays OPEN for the remaining scope: WebAuthn plugin + the full
+"writing an MFA provider" docs. The rows below stay `Implemented | High` and
+gain a stronger evidence chain (in-process TOTP → NIST 800-63B AAL2 without a
+third-party service); the row-detail refresh + WebAuthn are outstanding.
+
 **Where the work lives**: `open-pryv.io`
-(`components/business/src/mfa/`). Reference TOTP / WebAuthn plugins +
-AAL-tier mapping docs.
+(`components/business/src/mfa/`). WebAuthn plugin + AAL-tier mapping docs
+remain; TOTP done.
 
 | Scope | Ref | Kind | Impact | After shipping |
 |---|---|---|---|---|
