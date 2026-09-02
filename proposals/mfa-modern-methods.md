@@ -20,7 +20,7 @@ broader auth-modernisation plan).
 > NIST 800-63B AAL2 without a third-party service); the matrix-row detail text
 > refresh is the remaining matrix-data step. Known post-ship hardening (per-user
 > rate limit, replay compare-and-set) tracked in Plan 119 sub-plan 1
-> (`_plans/119-mfa-totp-default-atwork/PLAN1-hardening-followups.md`).
+> (`_plans/XXX-Backlog/MFA-TOTP-HARDENING.md`; Plan 119 closed + archived).
 
 ## Today's posture (correct + currently understated)
 
