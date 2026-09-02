@@ -158,8 +158,10 @@ A privileged stream namespace managed by the core (not user-creatable).
 
 Multi-factor authentication via the `mfa.*` API methods
 (`mfa.activate`, `mfa.confirm`, `mfa.challenge`, `mfa.verify`,
-`mfa.deactivate`, `mfa.recover`). Enabled per `services.mfa`
-operator config (off by default).
+`mfa.deactivate`, `mfa.recover`). **Enabled by default** (authenticator-app
+TOTP works out of the box, no configuration); set `services.mfa.active: false`
+to disable. Nothing is forced on users (login only challenges enrolled
+accounts). `service.info().features.mfa.methods` advertises the active methods.
 
 **Multi-method, TOTP-default**: MFA is pluggable via an `MfaMethod`
 interface + a per-method registry in
