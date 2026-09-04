@@ -242,7 +242,9 @@ applied below.
 
 Proposal: `proposals/breach-scope-tool.md` (Status: shipped)
 
-### `QUICKSTART-DOCKER-HTTP-EXAMPLE` (DX-only: no matrix row updates)
+### `QUICKSTART-DOCKER-HTTP-EXAMPLE` (DX-only: no matrix row updates) — SHIPPED 2026-09-04
+
+**Status: shipped 2026-09-04.** Delivered as the published `customer-resources/quickstart-docker` page on the rebuilt developer docs site (now served at the pryv.github.io root); the complete dnsLess + HTTP-only + Docker walkthrough addresses all three papercuts. No matrix row changed (DX-only, as noted below).
 
 **Where the work lives**: `open-pryv.io/INSTALL.md` + `dev-site/src/customer-resources/pryv.io-setup.md` documentation. Three reader-experience papercuts surfaced during a walk-through of the dnsLess + HTTP + Docker quickstart on a fresh box (mbp2, 2026-05-27): (1) env-var placeholders in `production-config.yml` aren't expanded; (2) the Docker image bundles rqlite + SQLite but not PostgreSQL; (3) the "Minimal production config" example omits several required `storages.engines.*` path keys.
 
