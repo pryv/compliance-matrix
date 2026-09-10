@@ -372,6 +372,14 @@ requirements:
       to an OAuth client via `bin/oauth-client.js`; open self-service
       registration (`POST /oauth2/register`) is deliberately disabled.
 
+      **Federated sign-in (SSO).** An account holder may also authenticate
+      through an external OpenID Connect provider (`sso.*`, beta, off by
+      default). It mints a normal Pryv session but is gated so an external
+      identity cannot claim an account whose email was never inbox-proved,
+      MFA (when active) is still enforced, and the session token reaches
+      the auth app via a one-time shared secret, never a URL. Sign-ins and
+      refusals are recorded in the audit trail (`sso.login`, `sso.refused`).
+
       **Credential transmission to third parties.** When a credential
       must be handed to a counterparty, the shared-secrets endpoints
       (`open-pryv.io/components/shared-secrets/`) replace URL-embedded

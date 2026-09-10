@@ -881,7 +881,12 @@ requirements:
       mechanism to point at instead of a prohibition alone. A
       `secretSharing: forbidden` feature permission, inherited by
       child accesses, lets you exclude publicly-exposed tokens from
-      the mechanism entirely.
+      the mechanism entirely. The same one-time-key mechanism carries the
+      session token when an account holder signs in through an external
+      OpenID Connect provider (`sso.*`, beta, off by default): the token
+      is never placed in the redirect URL, and the federated login is
+      gated so an external identity cannot claim an account whose email
+      was never inbox-proved.
 
   - ref: A.5.18
     title: A.5.18 Access rights

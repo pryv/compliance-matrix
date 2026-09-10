@@ -178,7 +178,7 @@ requirements:
     pryv_effort_saved: medium
     draft: true
     pryv_primitives: [system-streams, MFA, access]
-    config_keys: [services.mfa.mode, auth.passwordRules]
+    config_keys: [services.mfa.mode, auth.passwordRules, sso.enabled]
     tests: [MA01, MA02, MA03]
     planned:
       - kind: enhancement
@@ -198,6 +198,13 @@ requirements:
       flows live alongside (`mfa.recover`) so an account is not lost
       when a device is. The implementer chooses whether MFA is required
       universally or per-role.
+
+      An operator may also enable federated sign-in through an external
+      OpenID Connect provider (`sso.*`, beta, off by default). It is gated
+      so an external identity cannot take over an account whose email was
+      never inbox-proved, and the minted session token is never carried in
+      a URL (delivered to the auth app via a one-time shared secret). MFA,
+      when active, is still enforced on the federated path.
 
   - ref: 164.308(a)(7)(ii)(A)
     title: Data backup plan, Required
@@ -535,7 +542,11 @@ requirements:
       revokes the whole token chain and records both the detection
       and the resulting revocation (open-pryv.io `829f7238`), so the
       §164.312(b) trail covers delegated-app authorization activity,
-      not just data access.
+      not just data access. Federated sign-in (SSO, beta) emits into the
+      same pipeline: `sso.login` (user-resolved, in the account's trail)
+      and `sso.refused` (pre-identification: no-account / unproved email /
+      mint failure, syslog), so an attempted account takeover through an
+      external identity is itself auditable.
 
   - ref: 164.312(c)(1)
     title: Integrity, standard
