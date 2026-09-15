@@ -547,6 +547,60 @@ primitive citations within it.
 No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so
 it carries no `planned:` chips.
 
+### `ACCOUNT-DELEGATION` (SHIPPED: rows walked 2026-09-15)
+
+**Where the work lives**: `open-pryv.io/components/delegation/` (plugin:
+reserved `:_delegation:*` stream-id namespace + guard hooks; NOT a storage
+engine) plus the `delegations.*` method family + routes in
+`components/api-server/src/methods/delegations.ts` /
+`routes/delegations.ts`, `accessInfo` surfacing in `methods/utility.ts`, and
+audit registry entries in `components/audit/`. Commits: skeleton `46ae0c23`,
+attach handshake `1a797815`, delegate token + audit / accessInfo `6f220187`,
+authoritative genuine-login detach `6c618f24`, create-from-delegate
+`42c4b7d8`, internal-read hardening + same-core audit parity `e75f2155`,
+wildcard-read exclusion `00edf2a1`. Falls under **B.1 (new API methods)**,
+**B.4 (new primitive)**, **B.7 (architectural change)**, and **B.8
+(token-class enforcement)**.
+
+An account can be controlled by one or more **delegate accounts**; a delegate
+holds an owner-equivalent personal token over the controlled account with one
+exception, it can never remove a delegation. Detach is authoritative and gated
+on a **genuine login of the controlled account** (a `type:'personal'` token
+carrying no forge-protected `clientData.delegation` marker; the marker is
+forge-guarded on create and update). Controlled-account-initiated invite /
+accept handshake; create-from-delegate (optional email/password seed);
+same-core and cross-core (same platform); per-delegate audit attribution on
+the controlled account; additive `accessInfo.delegation` field. The whole
+`:_delegation:*` namespace is plugin-owned and guarded (no user
+create/write/delete, internal subtree read-guarded, excluded from wildcard
+reads).
+
+**Row walk done (2026-09-15)**: new `delegation` primitive added to
+`docs/pryv-primitives.md` (B.4); new context note
+`context/delegation-model.md` (B.7); rows updated:
+
+| Scope | Ref | What changed |
+|---|---|---|
+| gdpr | Art.8 | delegation is now the technical control for the parental-holder-of-responsibility case; `facilitation_mode` storage → **primitive**, `pryv_effort_saved` low → **medium**, `draft` true → **false**; `permissions` + `delegation` added to `pryv_primitives`; overview/detail rewritten (owner-reclaim at majority via genuine-login detach; age-blindness statement kept accurate) |
+| hipaa-privacy | 164.502(g) | delegation cited as the personal-representative mechanism (owner-equivalent token, audited, revocable by genuine login); `facilitation_mode` storage → **primitive**, `pryv_effort_saved` low → **medium**, `draft` true → **false**; `delegation` + `audit` added to `pryv_primitives` |
+| gdpr | Art.7 | `delegation` added to `pryv_primitives`; detail gains a withdrawability paragraph (delegate cannot remove a delegation; holder detaches via genuine login) |
+| gdpr | Art.32 | `delegation` added; new "Delegate-account control: IMPLEMENTED" per-aspect bullet |
+| hipaa-security | 164.312(a)(1) | `delegation` added; detail gains a "Delegate-account token class" paragraph |
+| hipaa-security | 164.312(d) | `delegation` added; detail gains a "Delegate tokens authenticate AS the controlled account" paragraph (accessInfo attribution + genuine-login revocation) |
+| soc2 | CC6.1 | `delegation` added; detail gains a "Delegate-account access path" paragraph |
+| soc2 | CC6.2 | `delegation` added; detail gains a "Delegate-credential issuance + de-provisioning" paragraph |
+| soc2 | CC6.3 | `delegation` added; detail gains a "Delegate-account access removal" paragraph (broad grant caveat + authoritative removal + per-delegate audit) |
+| iso-27001 | A.5.15 | `delegation` added; detail gains a "Delegate-account token class" paragraph |
+| iso-27001 | A.5.16 | `delegation` added; detail gains a "Delegate-account identity lifecycle" paragraph |
+
+Only Art.8 + 164.502(g) shifted tier/mode (they gained a concrete technical
+control where they were storage-only conventions); the B.8 access-control /
+authN rows already sat at the right tier and gained the new token class as an
+additional cited primitive + a detail paragraph.
+
+No `proposals/<slug>.md` mirror and no `planned:` chips: the work is
+**shipped**, not planned.
+
 ## Section B: Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued
@@ -613,6 +667,11 @@ Reverse-check: which rows should cite the new primitive in their
 `pryv_primitives: [...]` array? Greppable from
 `docs/pryv-primitives.md`.
 
+Most recent: `delegation` (2026-09-15), cited on `gdpr.Art.7` / `Art.8` /
+`Art.32`, `hipaa-privacy.164.502(g)`, `hipaa-security.164.312(a)(1)` /
+`164.312(d)`, `soc2.CC6.1` / `CC6.2` / `CC6.3`, `iso-27001.A.5.15` / `A.5.16`.
+See the `ACCOUNT-DELEGATION` entry in Section A.
+
 ### B.5: Open-pryv.io major version bump (2.x → 3.x)
 
 Mass-touch: `applies_to_versions` field on every row that's expected
@@ -629,6 +688,10 @@ benefit from pointing at the new scope.
 ### B.7: Major Pryv-side architectural change
 
 Touches `context/*.md` notes. Recent examples:
+- Account delegation (owner-equivalent control of one account by another,
+  genuine-login-gated authoritative detach; added
+  `context/delegation-model.md`, 2026-09-15). See the `ACCOUNT-DELEGATION`
+  entry in Section A.
 - Multi-core data-residency model (touched
   `context/core-affinity-architecture.md`).
 - `cluster_kv` + `access-state` (added to PlatformDB catalogue
@@ -677,6 +740,13 @@ Most recent: 2026-06-24, CMC gates refined in two waves:
    directly.
 
 Compliance-side note updated in `context/cmc-consent-primitives.md`.
+
+**2026-09-15, account delegation adds a new token class**: the delegate
+personal token (owner-equivalent over another account, but unable to remove a
+delegation; detach gated on a genuine login of the controlled account). Rows
+refreshed: `gdpr.Art.7` + `Art.32`, `hipaa-security.164.312(a)(1)` +
+`164.312(d)`, `soc2.CC6.1` / `CC6.2` / `CC6.3`, `iso-27001.A.5.15` / `A.5.16`.
+See the `ACCOUNT-DELEGATION` entry in Section A + `context/delegation-model.md`.
 
 ### B.9: OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
 

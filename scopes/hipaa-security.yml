@@ -321,7 +321,7 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [access, permissions, system-streams]
+    pryv_primitives: [access, permissions, system-streams, delegation]
     tests: [AA01, AA02, ACCP]
     overview: |
       Per-stream permissions are enforced at every API call; an access
@@ -357,6 +357,21 @@ requirements:
       `open-pryv.io/components/oauth2/src/clientRegistry.ts`), so an
       issued authorization code cannot be diverted to an unregistered
       callback.
+
+      **Delegate-account token class.** Account delegation
+      (`open-pryv.io/components/delegation/`) adds a delegate token:
+      an owner-equivalent personal token one account holds over
+      another. It is still bound by the same per-stream permission
+      surface, but its defining access-control property is the
+      teardown rule, a delegate can never remove a delegation, and
+      dissolving one requires a genuine login on the controlled
+      account (a personal token with no forge-protected delegation
+      marker; the marker is forge-guarded on create and update). The
+      `:_delegation:*` namespace is plugin-owned and guarded end to
+      end (no user create/write/delete, internal subtree read-guarded
+      and excluded from wildcard reads), and each delegate's actions
+      are audited on the controlled account. See
+      `context/delegation-model.md`.
 
   - ref: 164.312(a)(2)(i)
     title: Unique user identification, Required
@@ -621,7 +636,7 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [access, MFA, system-streams]
+    pryv_primitives: [access, MFA, system-streams, delegation]
     config_keys: [services.mfa.mode, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds]
     tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07]
     planned:
@@ -700,6 +715,20 @@ requirements:
       endpoint refuses to mint for it. An advisory per-client key
       inventory (`list-keys`) shows what a revocation will hit before
       you run it (open-pryv.io `4c0a5ade`).
+
+      **Delegate tokens authenticate AS the controlled account.** With
+      account delegation (`open-pryv.io/components/delegation/`), a
+      delegate holds a session-backed, owner-equivalent personal token
+      that authenticates as the controlled account, but the two are
+      never conflated: `accessInfo` exposes an additive `delegation`
+      field naming the acting delegate, and audit attributes each
+      delegate's actions on the controlled account (same-core +
+      cross-core). Authentication as the account is revocable by the
+      one party who can genuinely log in to it: detach is gated on a
+      personal token carrying no forge-protected delegation marker (the
+      marker is forge-guarded for every token class), so no delegate
+      can impersonate a genuine login or block a takeover. See
+      `context/delegation-model.md`.
 
   - ref: 164.312(e)(1)
     title: Transmission security, standard

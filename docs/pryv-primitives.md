@@ -619,6 +619,38 @@ page template. Forked + rebranded per platform.
   UI must surface it correctly per Art.7(2) (presented in clear plain
   language, distinguishable, etc.).
 
+### `delegation`
+
+Owner-equivalent control of one account by one or more **delegate accounts**,
+implemented as a plugin (reserved `:_delegation:*` stream-id namespace + guard
+hooks; `open-pryv.io/components/delegation/`), not a storage engine — all state
+lives in the controlled account's standard per-user storage.
+
+- **Delegate token**: a personal-class, session-backed token minted on the
+  controlled account. It carries full owner authority over that account's data
+  with ONE exception — it can never remove a delegation.
+- **Genuine-login detach gate**: dissolving a delegation requires an
+  interactive login on the controlled account (a `type:'personal'` access with
+  NO forge-protected `clientData.delegation` marker). The marker's absence — not
+  the token type — proves a genuine login; the marker is forge-guarded on
+  create and update, so no delegate can forge one or tear a relationship down.
+  Teardown on the controlled account is authoritative; the delegate's mirror is
+  advisory.
+- **Handshake**: controlled-account-initiated invite → delegate accept/refuse;
+  the only no-credential step is the operator-admin-key-gated invite, everything
+  after rides forge-protected marker accesses. Create-from-delegate provisions a
+  fresh controlled account (optional email/password seed). Same-core and
+  cross-core (same platform).
+- **Attribution**: audit on the controlled account stamps `content.delegation`
+  and attributes each delegate's actions under its own delegate-token stream
+  (same-core + cross-core parity). `accessInfo` exposes an additive `delegation`
+  field.
+- **Compliance role**: the technical mechanism for a party to act on behalf of
+  an account holder — parental holder of responsibility (GDPR Art.8), personal
+  representative (HIPAA §164.502(g)) — with per-actor audit attribution and
+  owner-reclaim by genuine login. See
+  [`../context/delegation-model.md`](../context/delegation-model.md).
+
 ## How to cite primitives in a scope YAML
 
 ```yaml

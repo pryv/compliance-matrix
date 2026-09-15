@@ -75,7 +75,7 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [access, permissions, system-streams]
+    pryv_primitives: [access, permissions, system-streams, delegation]
     tests: [AA01, AA02, ACCP]
     overview: |
       Logical access control is enforced at the API surface by the
@@ -94,6 +94,19 @@ requirements:
       minted app access carries only the user's granted subset of the
       referenced consent offer's permissions. PKCE (S256) is mandatory
       for every client.
+
+      **Delegate-account token class.** Account delegation
+      (`open-pryv.io/components/delegation/`) adds an owner-equivalent
+      delegate token one account holds over another. It is bound by the
+      same per-stream permissions as any token; its access-control
+      property is the non-forgeable, authoritative teardown, a delegate
+      can never remove a delegation, and dissolving one requires a
+      genuine login on the controlled account (a personal token with no
+      forge-protected delegation marker). The `:_delegation:*`
+      namespace is plugin-owned and guarded end to end (no user
+      create/write/delete; internal subtree read-guarded and excluded
+      from wildcard reads); each delegate's actions are audited on the
+      controlled account. See `context/delegation-model.md`.
 
   - ref: A.5.34
     title: A.5.34 Privacy and protection of personal information
@@ -796,7 +809,7 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [access, system-streams, audit]
+    pryv_primitives: [access, system-streams, audit, delegation]
     derives_from: [iso-27001.A.5.15, hipaa-security.164.308(a)(4)(ii)(C)]
     tests: [AA01, AA02, ACCP, UZEV]
     overview: |
@@ -825,6 +838,19 @@ requirements:
       only) against an exact-match registered redirect-URI set. Open
       self-registration is disabled, so every client identity is
       operator-authorised before it exists.
+
+      **Delegate-account identity lifecycle.** Account delegation
+      (`open-pryv.io/components/delegation/`) manages the lifecycle of a
+      delegate relationship between two accounts: a controlled-account-
+      initiated invite / accept handshake creates it (create-from-
+      delegate can provision the controlled account itself, optional
+      email/password seed), an owner-equivalent delegate token enables
+      it, and an authoritative detach terminates it, reserved to a
+      genuine login on the controlled account (a delegate can never
+      remove a delegation). Each delegate acts under its own
+      attributable token, audited on the controlled account (same-core
+      + cross-core), and `accessInfo` names the acting delegate. See
+      `context/delegation-model.md`.
 
   - ref: A.5.17
     title: A.5.17 Authentication information

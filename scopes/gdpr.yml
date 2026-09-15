@@ -396,7 +396,7 @@ requirements:
     draft: false
     reviewed_by: Pryv compliance
     reviewed_at: "2026-07-18"
-    pryv_primitives: [access, permissions, clientData, CMC, event]
+    pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md]
     tests: [AA01, ACCP, USAD]
     overview: |
@@ -442,6 +442,16 @@ requirements:
       revoking it tears down the app's refresh chain. Demonstrability
       rests on that data-grant + the signed offer material (the access
       + its version history), not on a separate event log.
+
+      Delegate-account authorization (withdrawability, §3): where a
+      delegate holds an owner-equivalent token over an account
+      (account delegation, `open-pryv.io/components/delegation/`), the
+      account holder never surrenders control, a delegate can never
+      remove a delegation, and the holder withdraws it by a genuine
+      login on their own account and detaching (the authoritative
+      teardown, gated on a personal token carrying no forge-protected
+      delegation marker). Each delegate's actions are audited on the
+      controlled account. See `context/delegation-model.md`.
     technical: |
       - Snapshot semantics: `context/access-versioning.md` (full head
         clone into history row per update).
@@ -543,23 +553,56 @@ requirements:
       (Member States may lower to no less than 13); below that age,
       parental holder of responsibility must consent.
     coverage: facilitated
-    pryv_effort_saved: low
-    facilitation_mode: storage
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
-    pryv_primitives: [access, clientData, event]
+    pryv_primitives: [access, permissions, delegation, clientData, event]
     overview: |
-      Pryv neither knows nor validates a subject's age, age +
+      Pryv still neither knows nor validates a subject's age, age +
       parental-authority verification happens at your app's
-      registration / consent UX. The platform is age-blind by
+      registration / consent UX, and the platform is age-blind by
       design (verified: default `custom.systemStreams.account`
       ships only `email`; no `birthDate` / `dateOfBirth` /
-      `minor` field in the catalogue). Once verified, the
-      artefacts you keep travel alongside the access via the
-      `clientData` convention family (see
+      `minor` field in the catalogue). What Pryv now DOES give you
+      is a technical control for the "parental holder of
+      responsibility" case itself: **account delegation**. A
+      parent or guardian holds an owner-equivalent delegate token
+      over the child's account, every action is audited per
+      delegate on the child's account, and the child reclaims sole
+      control at the age of majority through a genuine login (which
+      is what lets them detach the guardian). Age is still verified
+      by you; delegation is the control mechanism, not the age
+      check. The consent artefacts you keep travel alongside the
+      access via the `clientData` convention family (see
       `context/client-data-conventions.md`).
     detail: |
-      Convention (operator-side editorial discipline; no Pryv
-      enforcement):
+      **Parental holder of responsibility, as a technical control
+      (delegation).** Pryv's account-delegation primitive
+      (`open-pryv.io/components/delegation/`) lets a parent /
+      guardian account hold an **owner-equivalent delegate token**
+      over the child's account: full owner authority over the
+      child's data, EXCEPT the delegate can never remove the
+      delegation. Every delegate action is attributable on the
+      child's account (per-delegate audit stamping), which gives
+      you the "who acted for the child, and when" record Art.8
+      implies once parental consent is in force. Multi-holder cases
+      (both parents / joint guardians) are expressed as multiple
+      delegates, each independently audited; no delegate can
+      unilaterally shed a co-holder's oversight. **Owner reclaim at
+      majority** is intrinsic: because detach is gated on a
+      *genuine login on the child's account* (a personal token with
+      no forge-protected delegation marker, not any delegate
+      token), the young person regains sole control simply by
+      logging in and detaching the guardian(s) — no operator
+      intervention required. `create-from-delegate` (with an
+      optional email/password seed) covers the "guardian sets up
+      the account first" flow while still leaving the child a
+      genuine login for later reclaim. See
+      `context/delegation-model.md`.
+
+      **Consent-artefact conventions (operator-side editorial
+      discipline; no Pryv enforcement) still apply on top of the
+      delegation control:**
 
       - `account.clientData.age_verification_method`,
         free-text or structured record of HOW age was verified
@@ -1514,7 +1557,7 @@ requirements:
     pryv_effort_saved: high
     facilitation_mode: infrastructure
     draft: true
-    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency]
+    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -1569,6 +1612,18 @@ requirements:
           carve-out; fragment URIs rejected), curated-only client
           registration, and short-TTL access tokens paired with
           single-use rotating refresh tokens.
+        - Delegate-account control: IMPLEMENTED, account delegation
+          (`open-pryv.io/components/delegation/`) issues a delegate an
+          owner-equivalent personal token over another account while
+          keeping teardown authoritative and non-forgeable: a delegate
+          can never remove a delegation, and detach is gated on a
+          genuine login of the controlled account (a personal token
+          carrying no forge-protected delegation marker). The whole
+          `:_delegation:*` namespace is plugin-owned and guarded (no
+          user create/write/delete; internal subtree read-guarded and
+          excluded from wildcard reads), and each delegate's actions
+          are audited on the controlled account (same-core +
+          cross-core). See `context/delegation-model.md`.
         - Credential hand-off: IMPLEMENTED, the shared-secrets
           endpoints (`open-pryv.io/components/shared-secrets/`) hand a
           credential to a third party by a one-time random key instead

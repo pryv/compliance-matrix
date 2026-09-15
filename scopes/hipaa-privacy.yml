@@ -671,21 +671,37 @@ requirements:
       individual with respect to uses + disclosures of PHI, subject to
       enumerated exceptions (abuse / neglect concerns, endangerment).
     coverage: facilitated
-    pryv_effort_saved: low
-    facilitation_mode: storage
+    pryv_effort_saved: medium
+    facilitation_mode: primitive
     draft: true
-    pryv_primitives: [access, clientData]
+    pryv_primitives: [access, delegation, clientData, audit]
     derives_from: [hipaa-privacy.164.502]
     overview: |
-      Pryv pattern: the personal
-      representative holds an `app` or `shared` access to the subject's
-      data with full scope (the effective "treat as individual"
-      technical permission). The access's
-      `clientData.representative_relationship` +
-      `clientData.legal_basis` capture the relationship; the
-      revocation-by-exception pattern is `accesses.update` to narrow
-      / `accesses.delete` to remove. The "abuse / neglect /
-      endangerment" determination is clinical / legal judgement.
+      Pryv's account-delegation primitive
+      (`open-pryv.io/components/delegation/`) is the technical
+      mechanism for "treat the personal representative as the
+      individual": the representative holds an **owner-equivalent
+      delegate token** over the subject's account, full owner
+      authority over the data, with the single exception that a
+      delegate can never remove its own delegation. Every action the
+      representative takes is **audited per delegate on the subject's
+      account**, so uses and disclosures made under the
+      representative's authority are attributable. The individual
+      **revokes** the representative by a genuine login on their own
+      account and detaching (the authoritative teardown; a delegate
+      cannot block it), which is the technical shape of §164.502(g)'s
+      exceptions (abuse / neglect / endangerment) once the covered
+      entity makes that clinical / legal determination. Same-core and
+      cross-core (same platform) both carry the audited attribution;
+      see `context/delegation-model.md`.
+
+      A lighter-weight alternative where full owner-equivalence is not
+      wanted: the representative holds a scoped `app` / `shared`
+      access instead, with `clientData.representative_relationship` +
+      `clientData.legal_basis` capturing the relationship and
+      `accesses.update` / `accesses.delete` narrowing or removing it.
+      The "abuse / neglect / endangerment" determination is clinical /
+      legal judgement either way.
 
   - ref: "164.512(a)"
     title: Uses + disclosures required by law

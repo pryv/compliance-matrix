@@ -339,7 +339,7 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [access, permissions, system-streams, MFA, encryption-at-rest-secrets, letsEncrypt-integration, shared-secrets]
+    pryv_primitives: [access, permissions, system-streams, MFA, encryption-at-rest-secrets, letsEncrypt-integration, shared-secrets, delegation]
     tests: [AA01, AA02, ACCP, MA01, MA02, SHS02, SHS09, SHS13]
     derives_from: [iso-27001.A.5.15, iso-27001.A.8.5, hipaa-security.164.312(a)(1)]
     planned:
@@ -398,6 +398,19 @@ requirements:
       you exclude designated access classes from minting shared
       secrets at all.
 
+      **Delegate-account access path.** Account delegation
+      (`open-pryv.io/components/delegation/`) lets one account hold an
+      owner-equivalent delegate token over another. It rides the same
+      per-stream permission enforcement as any token, and its logical-
+      access guarantee is the non-forgeable teardown: a delegate can
+      never remove a delegation, and dissolving one requires a genuine
+      login on the controlled account (a personal token with no
+      forge-protected delegation marker). The `:_delegation:*`
+      namespace is plugin-owned and guarded (no user create/write/
+      delete; internal subtree read-guarded and excluded from wildcard
+      reads); each delegate's actions are audited on the controlled
+      account. See `context/delegation-model.md`.
+
   - ref: CC6.2
     title: CC6.2 User registration, credential issuance, and de-provisioning
     text: |
@@ -409,7 +422,7 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [access, system-streams, audit]
+    pryv_primitives: [access, system-streams, audit, delegation]
     tests: [AA01, AA02, ACCP, UZEV]
     derives_from: [iso-27001.A.5.16, iso-27001.A.5.18, hipaa-security.164.308(a)(3)(ii)(C)]
     overview: |
@@ -436,6 +449,19 @@ requirements:
       is shipped (`open-pryv.io/components/oauth2/`, open-pryv.io
       2.0.0-rc.8).
 
+      **Delegate-credential issuance + de-provisioning.** Account
+      delegation (`open-pryv.io/components/delegation/`) issues a
+      delegate an owner-equivalent personal token over another account
+      through a controlled-account-initiated invite / accept handshake
+      (the only no-credential step is the operator-admin-key-gated
+      invite); create-from-delegate can provision a fresh controlled
+      account at the same time. De-provisioning is authoritative and
+      reserved to the controlled account: a delegate can never remove a
+      delegation, and detach is gated on a genuine login of the
+      controlled account. Issuance and teardown are audited per
+      delegate on the controlled account (same-core + cross-core). See
+      `context/delegation-model.md`.
+
   - ref: CC6.3
     title: CC6.3 Role-based access, least privilege, segregation of duties
     text: |
@@ -447,7 +473,7 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [access, permissions, system-streams, audit]
+    pryv_primitives: [access, permissions, system-streams, audit, delegation]
     tests: [AA01, AA02, ACCP]
     derives_from: [iso-27001.A.5.15, iso-27001.A.5.18, iso-27001.A.5.3]
     overview: |
@@ -491,6 +517,19 @@ requirements:
       propagation window (open-pryv.io `7b6321aa`). For DPoP-bound apps
       the same is available per client key (`revoke-key <jkt>`,
       open-pryv.io `4c0a5ade`).
+
+      **Delegate-account access removal.** Account delegation
+      (`open-pryv.io/components/delegation/`) is a deliberately BROAD,
+      owner-equivalent grant, so where least privilege matters choose a
+      scoped `app` / `shared` access instead; delegation is for the
+      "act as the account holder" case. What CC6.3 relies on where full
+      delegation IS used is the removal + review half: each delegate's
+      actions are audited per delegate on the controlled account
+      (same-core + cross-core), and removal is authoritative and
+      reserved to the account holder, a delegate can never remove a
+      delegation, and detach is gated on a genuine login of the
+      controlled account (a personal token with no forge-protected
+      delegation marker). See `context/delegation-model.md`.
 
   - ref: CC6.4
     title: CC6.4 Physical access to facilities and protected assets
