@@ -194,6 +194,25 @@ gate accepts the relationship's own data-grant access directly.
   `accesses.delete` + (cross-account) `consent/revoke-cmc`; CMC bidirectionality
   ensures the counterparty is notified.
 
+  **Scope of the enforcement, verified 2026-09-15.** A relationship is carried by
+  two accesses, one on each account, each holding the other party's token. Both
+  are now destroyed on a withdrawal, each by the server that hosts it: the
+  withdrawing side deletes the access the peer was using against it, and the
+  receiving side deletes the access the revoke arrived through when the
+  `consent/revoke-cmc` lands (`handleIncomingRevoke`). Until that receiving-side
+  teardown shipped, only the local half was enforced, so a party that withdrew
+  kept a working token on the counterparty's account until their own app deleted
+  it; the documentation instructed integrators to do so. The subject-withdrawal
+  direction (the data subject withdraws, the requester loses read) was enforced
+  throughout, since that is the local half on the subject's own account.
+
+  Residual, and deliberate: delivery of the notification is best-effort. A revoke
+  that never reaches the peer means the peer never runs its teardown, so the
+  withdrawing party's access on that account outlives the relationship until an
+  operator prunes it. The withdrawal is complete and effective on the withdrawing
+  account regardless, which is where the subject's data lives in the
+  subject-withdrawal case.
+
 - **HIPAA-Privacy §164.508 (Authorizations)**: same primitive maps;
   authorization is an access with the appropriate scope; revocation is
   symmetric.
