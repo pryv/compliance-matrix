@@ -600,6 +600,51 @@ additional cited primitive + a detail paragraph.
 
 No `proposals/<slug>.md` mirror and no `planned:` chips: the work is
 **shipped**, not planned.
+### `EMAIL-VERIFICATION` (SHIPPED: rows walked 2026-09-15)
+
+**Where the work lives**: `open-pryv.io/components/business/src/emails/`
+(`challenge.ts`, `mailCapability.ts`, `registrationPolicy.ts`, `container.ts`)
++ `POST {register}/email-challenge`, `/email-challenge/verify`; the existing
+`POST /:username/account/verify-email`; the `/verify-email` page in
+app-web-user-account. Falls under **B.1 (new API methods)**, **B.2 (new config
+keys)** and the changed-default case.
+
+Two flows. An address on an existing account is proved by a mailed link, and
+that flow is now **on by default** (`services.email.enabled.verifyEmail`), with
+a soft landing so a deployment missing the page URL or a mail setup keeps
+booting with a warning instead of refusing. Separately, an operator may require
+a **code-proved address before an account is created**
+(`account.emailVerification.requireAtRegistration`, default off): a one-time
+code is mailed, exchanged for a single-use proof bound to that address, and the
+proof must accompany `POST /users`. Only the hash of a code or token is stored.
+A proved address carries `verificationMethod: 'email-code'` or `'email-link'`,
+which is what third-party sign-in linking requires before it will attach an
+external identity to an account.
+
+**Row walk done (2026-09-15): no row impact, no tier shifts.** Searched every
+file under `scopes/` for `verifyEmail`, `emailVerification`,
+`verificationMethod`, `account.verifyEmail` and for proved-address / sign-in
+linking language: **no row cites this surface**, so there is nothing to
+re-cite or re-tier. The rows B.1 nominates for identity and logical access
+(`hipaa-security.164.312(a)(1)`, `soc2.CC6.1`, `soc2.CC6.3`) make claims about
+per-stream permission enforcement on an authenticated caller, not about how
+strongly the account holder's identity was established when the account was
+created — a different claim, which no row currently makes.
+
+**Flagged for the matrix owner, deliberately NOT written here:** this feature
+would support a new identity-assurance claim (an operator can require a proved
+address at sign-up; account addresses are proved by default), which is the kind
+of evidence `soc2.CC6.1` / `hipaa-security.164.312(a)(1)` could cite. Adding an
+auditor-facing claim is a row-design decision, so it is surfaced rather than
+taken. Test codes available to cite if it is taken up: `[EMCR1-12]`
+(registration gate over HTTP), `[EMCH1-13]` (challenge accounting and
+throttles), `[EMLK1-2]` (link format), `[CV-GA1-4]` / `[CKCF1-3]` (the
+default-on validator), `[SSOLI7]` (a code-proved address links on first
+sign-in). Config keys: `account.emailVerification.*`,
+`services.email.enabled.verifyEmail`, `services.email.emailChallengeTemplate`.
+
+No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so it
+carries no `planned:` chips.
 
 ## Section B: Trigger categories (no specific backlog slug yet)
 
