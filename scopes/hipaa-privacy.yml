@@ -673,7 +673,9 @@ requirements:
     coverage: facilitated
     pryv_effort_saved: medium
     facilitation_mode: primitive
-    draft: true
+    draft: false
+    reviewed_by: Pryv compliance
+    reviewed_at: "2026-09-15"
     pryv_primitives: [access, delegation, clientData, audit]
     derives_from: [hipaa-privacy.164.502]
     overview: |

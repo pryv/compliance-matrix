@@ -555,7 +555,9 @@ requirements:
     coverage: facilitated
     pryv_effort_saved: medium
     facilitation_mode: primitive
-    draft: true
+    draft: false
+    reviewed_by: Pryv compliance
+    reviewed_at: "2026-09-15"
     pryv_primitives: [access, permissions, delegation, clientData, event]
     overview: |
       Pryv still neither knows nor validates a subject's age, age +
