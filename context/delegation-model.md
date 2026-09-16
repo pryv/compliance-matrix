@@ -80,6 +80,19 @@ oversight by removing a co-delegate.
   stay server-side; the delegate retrieves its token through a wrapper rather
   than holding a cross-core control endpoint directly.
 
+  ⚑ **Accuracy note (2026-09-16).** The cross-core half of this statement was
+  aspirational for the 2.0.0-rc.19 and rc.20 releases: resolving the peer
+  account's core read a field that is written only when an operator configures
+  an explicit core URL, which the installation wizard and the bootstrap bundle
+  do not do. On a platform relying on DNS-derived core URLs, every cross-core
+  delegation call was refused, so only the same-core half of the capability was
+  actually reachable there. Resolution was corrected to use the platform's own
+  core-URL helper (derivation included); the statement above describes the
+  corrected behaviour and holds for releases carrying that fix. Compliance rows
+  citing delegation are unaffected in substance, since none of them depends on
+  the accounts living on different cores, but a reader auditing a deployment
+  running rc.20 or earlier should expect same-core only.
+
 ## Namespace guard posture (`:_delegation:*`)
 
 The whole `:_delegation:*` namespace is plugin-owned end-to-end. Unlike the
