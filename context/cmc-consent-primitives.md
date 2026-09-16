@@ -194,6 +194,11 @@ gate accepts the relationship's own data-grant access directly.
   `accesses.delete` + (cross-account) `consent/revoke-cmc`; CMC bidirectionality
   ensures the counterparty is notified.
 
+  **Shipped in `open-pryv.io` 2.0.0-rc.20** (deployed 2026-09-16 to all three
+  cores; client helpers in `@pryv/cmc` 3.13.0). Verified live on a deployed core:
+  the withdrawing party's own grant answers 200 before the revocation and 403
+  after it.
+
   **Scope of the enforcement, verified 2026-09-15.** A relationship is carried by
   two accesses, one on each account, each holding the other party's token. Both
   are now destroyed on a withdrawal, each by the server that hosts it: the
