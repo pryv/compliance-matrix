@@ -101,9 +101,24 @@ The atomic data record.
 
 ### `audit`
 
-Records every API method invocation per user.
+Records API method invocations per user.
 
-- **Stored**: per-user SQLite (see `components/audit/`).
+- **Stored**: per-user SQLite by default, or shared PostgreSQL tables when the
+  operator selects the PostgreSQL audit engine, which the installation wizard
+  does for PostgreSQL platforms (see `components/audit/` and the engines under
+  `storages/engines/`). The audit engine is chosen independently of the engine
+  serving user data, so a PostgreSQL platform does not imply a PostgreSQL audit
+  store or the reverse.
+- **Write timing, and what that means for completeness**: the audit row is
+  written after the response, so a failure to write it does not fail the call
+  the subject made; it is logged and that record is lost. Storage pressure is
+  therefore the failure mode to watch rather than a rejected request. Corrected
+  2026-09-16: an earlier version of this entry said "records every API method
+  invocation", which overstated a best-effort write as a guarantee. On the
+  PostgreSQL audit engine the known cause of such loss, streamed audit reads
+  occupying the connections that writes needed, is removed by giving those reads
+  a separate pool (`auditReadPoolSize`); operators sizing audit storage should
+  keep the two pools' budgets distinct.
 - **Captures**: timestamp, user, access reference (`accessId` +
   `accessSerial`), method, source (transport + ip), URL query string,
   success / error, and an optional integrity checksum of the affected
