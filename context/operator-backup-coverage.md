@@ -57,9 +57,9 @@ Operator-hosted Express service that wrapped `@pryv/account-backup` 1.0.x behind
 | accesses (per-access history) | ✅ raw history rows | ✅ **0.5.0+** opt-in: `accesses-history/<accessId>.json` per access, fetched via `GET /accesses/<id>?includeHistory=true`. CLI prompts; off by default (O(N) calls) | symmetric coverage when the operator opts in |
 | profile (private + public + per-app) | ✅ raw rows | ✅ `/profile/private` + `/profile/public` + per-app `/profile/app` | symmetric |
 | webhooks | ✅ raw rows (no token replay risk on operator side) | ✅ **CLI + webapp** (v0.7.0+): per-access `/webhooks` aggregated to `webhooks.json` keyed by `accessId` | symmetric, both flavors; expired (401/403) tokens skipped silently and non-fatally |
-| events | ✅ raw rows from events table (cross-user filter by `user_id`) | ✅ **0.5.0+** chunked monthly: `events-YYYY-MM.json` (one file per UTC month in the discovered range; probed via `limit=1` ascending + descending) | subject side avoids single-shot timeout at production scale |
+| events | ✅ raw rows from events table (cross-user filter by `user_id`), streamed a batch at a time (`events.exportAllStreamed`, falling back to `exportAll` on an engine that does not offer it) | ✅ **0.5.0+** chunked monthly: `events-YYYY-MM.json` (one file per UTC month in the discovered range; probed via `limit=1` ascending + descending) | subject side avoids single-shot timeout at production scale |
 | attachments | ✅ binary stream from `eventFiles.getAttachmentStream(userId, eventId, fileId)` | ✅ **CLI + webapp** (v0.7.0+): opt-in binary stream from `GET /events/<id>/<attId>?readToken=…` piped chunk-by-chunk through the `StorageWriter` | symmetric, both flavors |
-| audit | ✅ per-user audit store (`auditStorage.forUser(userId).exportAllEvents()`) | ✅ `GET /audit/logs?fromTime=…&toTime=…` → `audit_logs.json` | same data; audit-store is also exposed as streams under the `:_audit:` store prefix (e.g., `:_audit:access-<accessId>`), both backups capture it via different paths |
+| audit | ✅ per-user audit store (`auditStorage.forUser(userId).exportAllEventsStreamed()`, falling back to `exportAllEvents()`) | ✅ `GET /audit/logs?fromTime=…&toTime=…` → `audit_logs.json` | same data; audit-store is also exposed as streams under the `:_audit:` store prefix (e.g., `:_audit:access-<accessId>`), both backups capture it via different paths |
 | HFS series data points | ✅ per-user series DB (`seriesConnection.exportDatabase(userId)`) | ✅ **CLI + webapp** (v0.7.0+): per-event `GET /events/<id>/series` → `hf-data/<eventId>.json` | symmetric, both flavors |
 | account / system-streams account-tree | ✅ raw rows from user-account storage | ✅ `/account` (the standard system-streams account tree) | symmetric for visible system streams |
 | MFA enrolment metadata | ✅ in private profile (`profile.mfa = { content, recoveryCodes }`) | ✅ already in `profile_private.json` (`profile.get` returns the full profile verbatim) | **fully exported on both sides**, including `content` (template substitutions, phone number, headers) and `recoveryCodes` (10 UUIDs that bypass the SMS challenge). **Operator security note:** the subject backup file is therefore as sensitive as a password reset link, implementer must transport over a secure channel and document destruction policy. Recovery codes can be rotated post-export by re-running activate-confirm |
@@ -91,6 +91,16 @@ Operator-hosted Express service that wrapped `@pryv/account-backup` 1.0.x behind
 ## Where the asymmetries are unintentional (known gaps)
 
 None known after 0.5.0, per-access version history shipped behind an opt-in CLI flag; MFA enrolment metadata was already covered (re-verified during the 0.5.0 audit, `profile.mfa` rides verbatim through `profile.get`, which was the source of an earlier mis-classification).
+
+**Operator-side scale (addressed 2026-09-17).** The subject-side tool has chunked its events
+fetch since 0.5.0 specifically to survive production-scale accounts, while the operator tool
+held each collection in memory in full. That was a practicability limit rather than a coverage
+gap, but it pointed the same way: a right of access that the operator's own tool cannot run to
+completion on a large account is not usefully fulfillable. Events and audit now stream through
+the export a batch at a time on both engines, so operator-backup memory is bounded by the
+writer's chunk size rather than by the size of the account. Measured on 200 000 audit rows:
+peak RSS 603 MB streamed versus 786 MB buffered on SQLite, 505 MB versus 778 MB on PostgreSQL,
+with byte-identical output. No coverage, format, or restore semantics changed.
 
 The only items deliberately left out are the restore-side gaps documented in the intentional-asymmetries section (audit/webhooks/accesses can't be replayed safely).
 
