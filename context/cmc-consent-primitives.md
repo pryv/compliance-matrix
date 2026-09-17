@@ -108,6 +108,37 @@ defined (`components/oauth2/src/audit.ts` names the event catalogue) but **not
 yet wired**, the helper is a no-op stub. The citable consent evidence today is
 therefore the data-grant access + the signed offer material, not an event log.
 
+## Per-permission annotations on a consent request
+
+Since 2026-09 an offer or request can state what each permission means to the
+user, not only which permissions are wanted. Two display-layer annotations,
+carried in the consent layer and stripped before an access is minted
+(`components/business/src/accesses/permissionSet.ts`):
+
+| Annotation | Meaning for the consent screen |
+|---|---|
+| `mandatory: true` | required: the entry is ticked and cannot be unticked |
+| neither flag | optional, offered pre-selected (the user opts out) |
+| `optIn: true` | optional, offered NOT pre-selected (the user opts in) |
+
+`optIn` is the Recital 32-aligned choice for an optional permission where
+consent is the lawful basis, since a pre-ticked box is not consent. The two
+annotations cannot be combined on one entry. `optIn` never changes what may be
+granted, only how the screen opens, so the grant rule (`checkConsentGrant`)
+returns the same verdict with or without it.
+
+⚑ **The same granularity now covers the ORIGINAL auth-request path**, which
+previously had no consent layer at all and, more importantly, **no server-side
+check**: the accept stored whatever token the authentication page posted. An
+auth request may now carry a `consent` object, and when it does, the accept
+(`components/api-server/src/routes/reg/consentCheck.ts`) reads the access that
+was actually created and validates it against the offer with the same
+`checkConsentGrant` the CMC and OAuth2 paths use. One rule, three call sites.
+A check that cannot be performed (the user's core unreachable, storage down)
+is refused with `503 consent-check-unavailable` rather than accepted, so an
+unverifiable grant is never waved through. Requests without a `consent` object
+keep their previous behaviour exactly, including the opaque-token contract.
+
 ## Gates on access-state-mutating consent triggers
 
 CMC's access-state-mutating lifecycle triggers are gated server-side. Two

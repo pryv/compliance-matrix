@@ -810,6 +810,17 @@ Config lives under the `oauth:` block (`oauth.accessTokenTTL`,
 `oauth.clientRegistration.mode`, `oauth.requireAppAccountMfa`,
 `oauth.grantTypesSupported`, `oauth.audAllowList`).
 
+**Consent granularity extended 2026-09-17** (open-pryv.io
+`feature/consent-permission-optionality`, branch pushed, NOT yet released):
+an `optIn` annotation joins `mandatory` in the consent lexicon, and the
+ORIGINAL auth-request path (`POST {serviceInfo.access}`) gains both a consent
+form and the server-side grant validation it never had. Rows refreshed:
+`gdpr.Art.7` (§4 granular consent + the new validated legacy path, `tests:`
+gains `RA71`, `RA72`, `PS11`, `PS13`) and
+`context/cmc-consent-primitives.md` (new "Per-permission annotations"
+section). ⚑ The cited test codes exist on that branch only, so this matrix
+change lands with the merge, not before it.
+
 Rows refreshed on this landing (delegated-app authN/authZ + consent):
 - `hipaa-security.164.312(d)` (person/entity authentication) +
   `164.312(a)(1)` (access control).

@@ -398,7 +398,7 @@ requirements:
     reviewed_at: "2026-07-18"
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md]
-    tests: [AA01, ACCP, USAD]
+    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13]
     overview: |
       The access Pryv mints when your user grants permission IS your
       durable consent record, versioned permissions + clientData
@@ -426,7 +426,30 @@ requirements:
 
       Granular consent (§4), different processing purposes can be
       expressed as separate accesses with different permissions, each
-      independently withdrawable.
+      independently withdrawable. Within ONE request, a requester also
+      states what each permission means to the user: required, optional
+      and offered pre-selected, or optional and offered unselected
+      (`mandatory` / `optIn`, the consent-form annotations in
+      `open-pryv.io/components/business/src/accesses/permissionSet.ts`).
+      `optIn` is the Recital 32-aligned choice for an optional permission
+      where consent is the lawful basis, because a pre-ticked box is not
+      consent; the published guidance recommends it explicitly. The
+      annotations are display-layer only and are stripped before an
+      access is minted, so no stored permission carries one.
+
+      The SAME granularity now reaches the ORIGINAL authorization path,
+      not only OAuth2. An auth request (`POST {serviceInfo.access}`) may
+      carry a `consent` object beside its plain permissions; the
+      authentication page then presents each entry in the state the
+      requester asked for and mints only what the user kept. Crucially
+      the result is VERIFIED server-side: the accept
+      (`open-pryv.io/components/api-server/src/routes/reg/consentCheck.ts`)
+      reads the access actually created and refuses it unless it matches
+      what was offered (`checkConsentGrant`, the same rule the OAuth2 and
+      cross-account paths use, so there is one rule and three call
+      sites). A check that cannot be performed is refused, never waved
+      through. Requests that carry no `consent` object behave exactly as
+      before, so this is additive for existing integrations.
 
       Second consent path, OAuth2 authorization (§1, §4), where your
       user authorises a delegated app through Pryv's OAuth2
