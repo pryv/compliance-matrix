@@ -31,9 +31,14 @@ keyed across the cluster:
 - **DNS records** for `<coreId>.<domain>` + subject CNAMEs.
 - **TLS materials** (`tls-cert/<hostname>`, `tls-acme-account`,
   bootstrap-bundle CA artefacts).
-- **`access-state/<key>`**: cross-core access state for
-  short-lived per-flow tokens.
-- **`cluster_kv/<key>`**: operator-shared ephemeral state.
+- **`access-state/<key>`**: short-lived OAuth2 code and refresh-token
+  rows, keyed by the SHA-256 of the credential and carrying no access
+  token (no credential is stored in PlatformDB since open-pryv.io
+  `3e72be4f`).
+
+`cluster_kv` (MFA sessions, `/reg/access` sign-in request state) is
+**not** PlatformDB: it is an in-memory store held by each core's master
+process, shared by that core's workers only, never replicated.
 
 PlatformDB does **not** carry events, streams, accesses (other
 than the short-lived state above), profiles, audit, or attachments.
@@ -116,6 +121,7 @@ It is **not** the right mental model for:
   by the subject running the backup against the counterparty's
   endpoint separately.
 - Internal architecture notes, `forwardIfCrossCore` is the
-  registration-time exception; `cluster_kv` + `access-state`
-  are the ephemeral cross-core state surfaces (the only
-  non-registration coupling besides CMC).
+  registration-time exception; `access-state` (hashed OAuth2 rows)
+  is the ephemeral cross-core state surface (the only
+  non-registration coupling besides CMC). `cluster_kv` is
+  core-local, not cross-core.

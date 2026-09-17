@@ -2112,7 +2112,7 @@ requirements:
       **Tier 1, Identification + routing layer (cluster-
       replicated).** PlatformDB rows (`user-core/<username>`,
       `user-unique-fields/email`, `dns/<subdomain>`,
-      `access-state/`, `cluster_kv/*`, see
+      `access-state/` (hashed OAuth2 rows, no credentials), see
       `context/cross-border-platformdb-implications.md` for the
       verified keyspace inventory) replicate cluster-wide via
       rqlite Raft. In a multi-region cluster, this **is** a
