@@ -52,7 +52,10 @@ request:
 ```
 
 This event lives on the requester's own account, immutable per Pryv event
-semantics. It records what was *asked*.
+semantics. It records what was *asked*. Open-link invites may carry
+`expiresAt: null` (no expiry); the link is then ended by
+`consent/invalidate-link-cmc`, and the consent record of each participant is
+unaffected by the link's lifetime.
 
 On `accept-cmc`, the plugin transactionally:
 1. Creates the bidirectional shared access pair (one access on each side).
