@@ -544,9 +544,9 @@ requirements:
       Least privilege also holds for apps a delegate authorizes on the
       controlled account: they receive a scoped `app` access with the
       permissions they requested, never the owner-equivalent token.
-      Such an access can be modified or revoked by the account holder,
-      the delegate or the app itself like any access (revocation
-      cascades to what the app created) `[DCH06]`, `[DCH08]`,
+      Such an access can be modified or revoked by the account holder
+      or the delegate, and revoked by the app itself, like any app
+      access (revocation cascades to what the app created) `[DCH06]`, `[DCH08]`,
       `[DCH09]`, and is removed automatically when the delegation is
       removed `[DCH12]`. In open-pryv.io master, not yet in a release
       after 2.0.0-rc.22.

@@ -647,6 +647,7 @@ No `planned:` chips and no proposal mirror: shipped work. Stamping the lineage
 on the OAuth2 and CMC grant paths (which would lift the refusals) is not
 scheduled; if it is, file it as a backlog item with chips on `gdpr.Art.7` and
 `hipaa-security.164.312(a)(1)`.
+
 ### `EMAIL-VERIFICATION` (SHIPPED: rows walked 2026-09-15)
 
 **Where the work lives**: `open-pryv.io/components/business/src/emails/`

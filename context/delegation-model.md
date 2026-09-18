@@ -181,8 +181,9 @@ the delegated grant against the offer exactly as for the holder's own grant
 is a display hint for the app; `accessInfo` is the authoritative answer.
 
 **Delete and update policy.** A `delegated-child` access is an ordinary grant,
-not plugin-owned control-plane state: the account holder, the delegate and the
-app itself may update or revoke it through the standard access rules, and a
+not plugin-owned control-plane state: the account holder and the delegate may
+update or revoke it, and the app may revoke itself (no access can update
+itself), through the standard access rules, and a
 revoke cascades to the accesses the app created `[DCH06]`, `[DCH08]`,
 `[DCH09]`, `[DUG04-05]`, `[DAD05-07]`. The plugin-owned kinds (control,
 delegate token, invite capability, notify, and any unknown kind) stay
