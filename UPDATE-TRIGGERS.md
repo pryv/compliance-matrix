@@ -547,6 +547,27 @@ primitive citations within it.
 No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so
 it carries no `planned:` chips.
 
+**Extended 2026-09-18 (primitive now backs the `/reg/access` auth-request
+credential hand-off).** The shared-secrets primitive's stated motivation was
+credential hand-off during auth / consent flows (an access token used to sit in
+a URL query parameter, persisting in history / referrers / access logs). That
+flow is now wired to the primitive: `POST /reg/access` takes an optional
+`credentialHandoff: 'shared-secret'`, the `ACCEPTED` poll then carries a one-time
+`handoff` key and a token-less `apiEndpoint` instead of the token, and the app
+retrieves the credential exactly once. The server converts an inline accept into
+a secret (authenticated as the app token, on the user's core), and the auth UI
+can create the secret itself (the token then never reaches the core that answered
+the request); config `access:handoffTtl` bounds the secret. Delivered on
+open-pryv.io `master` `7c53ebb0`, lib-js `master` `edc6540`,
+app-web-user-account `main` `b88f222`, dev-site2 `main` `1594b8d` (all unreleased).
+No new primitive and no coverage-tier shift: this STRENGTHENS the same rows
+already walked above (gdpr Art.32, iso-27001 A.5.17 / A.8.12,
+hipaa-security 164.312(e)(1), soc2 CC6.1) by realising the credential-hand-off
+aspect their detail bullets already describe. Tests to cite at the next
+scope-YAML evidence refresh: `reg-access.test.js` `[RA95]`-`[RA108]` (server) and
+the client SDK / auth-UI hand-off suites. New API surface falls under **B.1**;
+`access:handoffTtl` is a new config key.
+
 ### `ACCOUNT-DELEGATION` (SHIPPED: rows walked 2026-09-15)
 
 **Where the work lives**: `open-pryv.io/components/delegation/` (plugin:
