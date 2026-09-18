@@ -559,7 +559,9 @@ a secret (authenticated as the app token, on the user's core), and the auth UI
 can create the secret itself (the token then never reaches the core that answered
 the request); config `access:handoffTtl` bounds the secret. Delivered on
 open-pryv.io `master` `7c53ebb0`, lib-js `master` `edc6540`,
-app-web-user-account `main` `b88f222`, dev-site2 `main` `1594b8d` (all unreleased).
+app-web-user-account `main` `b88f222`, dev-site2 `main` `1594b8d` (released in
+open-pryv.io 2.0.0-rc.23, lib-js 3.13.0 and app-web-user-account 0.2.0; docs
+published 2026-09-18).
 No new primitive and no coverage-tier shift: this STRENGTHENS the same rows
 already walked above (gdpr Art.32, iso-27001 A.5.17 / A.8.12,
 hipaa-security 164.312(e)(1), soc2 CC6.1) by realising the credential-hand-off
@@ -626,8 +628,8 @@ No `proposals/<slug>.md` mirror and no `planned:` chips: the work is
 2026-09-18).** open-pryv.io master `91b06363` (lineage attribute, accessInfo
 `grantedVia`, audit attribution, detach revocation, `/reg/access` `actAs` +
 `delegation` hint), `ef0a3f75` + `5943ca0b` (owner-only OAuth2 consent and CMC
-accept / scope-update / offer). Merged, **not yet in a release** after
-2.0.0-rc.22; the rows say so. Section B walk:
+accept / scope-update / offer). Released in **2.0.0-rc.23**; the rows
+say so. Section B walk:
 
 - **New access-info field** (B.1): `accessInfo.delegation.grantedVia: 'app'`
   for an access granted through a delegation.
@@ -893,7 +895,7 @@ Config lives under the `oauth:` block (`oauth.accessTokenTTL`,
 `oauth.grantTypesSupported`, `oauth.audAllowList`).
 
 **Consent granularity extended 2026-09-17** (open-pryv.io
-`feature/consent-permission-optionality`, branch pushed, NOT yet released):
+`feature/consent-permission-optionality`, released in 2.0.0-rc.21):
 an `optIn` annotation joins `mandatory` in the consent lexicon, and the
 ORIGINAL auth-request path (`POST {serviceInfo.access}`) gains both a consent
 form and the server-side grant validation it never had. Rows refreshed:
@@ -962,7 +964,7 @@ token obtained through account delegation (`403 access_denied`, nothing
 minted, `[OE27]`), since the OAuth access carries no delegation lineage and
 would outlive the delegation. Rows refreshed: `gdpr.Art.7`,
 `hipaa-security.164.312(a)(1)`, `iso-27001.A.5.15` (with the B.8 entry of the
-same date). Merged on open-pryv.io master, not yet in a release.
+same date). Released in open-pryv.io 2.0.0-rc.23.
 
 ### B.10 Observability emitted-surface changes
 

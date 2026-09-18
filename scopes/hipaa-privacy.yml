@@ -706,7 +706,7 @@ requirements:
       its uses and disclosures are audited on the individual's account
       with the representative named on every record. Revoking the
       representative revokes every app access granted that way
-      (open-pryv.io master, not yet in a release after 2.0.0-rc.22).
+      (open-pryv.io 2.0.0-rc.23).
 
       A lighter-weight alternative where full owner-equivalence is not
       wanted: the representative holds a scoped `app` / `shared`

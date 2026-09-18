@@ -469,8 +469,7 @@ requirements:
       delegation: detach deletes every access granted through it, and
       nothing the account holder granted `[DCH12]`. So credentials
       issued under a delegate's authority do not survive the end of
-      that authority. In open-pryv.io master, not yet in a release
-      after 2.0.0-rc.22.
+      that authority. In open-pryv.io 2.0.0-rc.23.
 
   - ref: CC6.3
     title: CC6.3 Role-based access, least privilege, segregation of duties
@@ -528,6 +527,14 @@ requirements:
       the same is available per client key (`revoke-key <jkt>`,
       open-pryv.io `4c0a5ade`).
 
+      Expiry removes derived access too: a `shared` access managed by an
+      app access can no longer outlive it (it inherits the app access's
+      expiry at creation, clearing that expiry is refused, and
+      authentication refuses a never-expiring shared access once its app
+      access has expired, `5d609bfa`), and a webhook stops firing and
+      becomes `inactive` once its access has expired (`3394b95f`), both
+      in open-pryv.io 2.0.0-rc.23.
+
       **Delegate-account access removal.** Account delegation
       (`open-pryv.io/components/delegation/`) is a deliberately BROAD,
       owner-equivalent grant, so where least privilege matters choose a
@@ -548,8 +555,7 @@ requirements:
       or the delegate, and revoked by the app itself, like any app
       access (revocation cascades to what the app created) `[DCH06]`, `[DCH08]`,
       `[DCH09]`, and is removed automatically when the delegation is
-      removed `[DCH12]`. In open-pryv.io master, not yet in a release
-      after 2.0.0-rc.22.
+      removed `[DCH12]`. In open-pryv.io 2.0.0-rc.23.
 
   - ref: CC6.4
     title: CC6.4 Physical access to facilities and protected assets

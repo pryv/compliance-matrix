@@ -102,6 +102,13 @@ requirements:
         - Audit chain: every subsequent API call would fail authentication
           (after delete) or fall outside the new scope (after update),
           producing a verifiable termination boundary.
+        - Expiry-driven termination: A `shared` access managed by an app
+          access can no longer outlive it (it inherits the app access's
+          expiry at creation, clearing that expiry is refused, and
+          authentication refuses a never-expiring shared access once its
+          app access has expired, `5d609bfa`), and a webhook stops
+          firing and becomes `inactive` once its access has expired
+          (`3394b95f`), both in open-pryv.io 2.0.0-rc.23.
 
       For workforce-scale deployments (e.g., hospital with 100+ staff),
       Pryv composes with two patterns covered in
@@ -383,8 +390,7 @@ requirements:
       through the delegation, at any depth, and nothing else `[DCH12]`.
       Grant paths that cannot yet record the lineage (OAuth2 consent,
       CMC accept / scope-update / offer) refuse a delegation-derived
-      token `[DCH14]`, `[OE27]`. In open-pryv.io master, not yet in a
-      release after 2.0.0-rc.22.
+      token `[DCH14]`, `[OE27]`. In open-pryv.io 2.0.0-rc.23.
 
   - ref: 164.312(a)(2)(i)
     title: Unique user identification, Required
@@ -582,8 +588,7 @@ requirements:
       `content.delegation = { delegateUsername, delegateHostSlug }`, so
       an app acting for a controlled account is traceable on that
       account's trail to the person who authorized it `[DCH05]` (the
-      app-grant case is in open-pryv.io master, not yet in a release
-      after 2.0.0-rc.22; see `context/delegation-model.md`).
+      app-grant case is in open-pryv.io 2.0.0-rc.23; see `context/delegation-model.md`).
 
   - ref: 164.312(c)(1)
     title: Integrity, standard
@@ -760,7 +765,7 @@ requirements:
       hint only; `accessInfo` is the authoritative answer. An access
       granted through a delegation cannot pass for a genuine login
       either: it cannot detach the delegation `[DCH11]`. In
-      open-pryv.io master, not yet in a release after 2.0.0-rc.22.
+      open-pryv.io 2.0.0-rc.23.
 
   - ref: 164.312(e)(1)
     title: Transmission security, standard

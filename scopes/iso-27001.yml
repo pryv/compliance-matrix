@@ -115,7 +115,7 @@ requirements:
       `[DCH12]`. Grant paths that cannot record that mark (OAuth2
       consent, CMC accept / scope-update / offer) refuse
       delegation-derived tokens `[DCH14]`, `[OE27]`. In open-pryv.io
-      master, not yet in a release after 2.0.0-rc.22.
+      2.0.0-rc.23.
 
   - ref: A.5.34
     title: A.5.34 Privacy and protection of personal information
@@ -865,8 +865,7 @@ requirements:
       carry that lineage for their whole life: `accessInfo` reports
       them as granted through the delegation (`grantedVia: 'app'`,
       naming the delegate) `[DCH02]`, and they end with the delegation
-      `[DCH12]`. In open-pryv.io master, not yet in a release after
-      2.0.0-rc.22.
+      `[DCH12]`. In open-pryv.io 2.0.0-rc.23.
 
   - ref: A.5.17
     title: A.5.17 Authentication information
@@ -947,6 +946,14 @@ requirements:
       Same primitive surface as A.5.15 + A.5.16, accesses.create /
       .update / .delete cover the lifecycle stages; access version
       history provides the review-evidence layer.
+
+      When an access expires, what hangs off it ends too: a `shared`
+      access managed by an app access can no longer outlive it (it
+      inherits the app access's expiry at creation, clearing that expiry
+      is refused, and authentication refuses a never-expiring shared
+      access once its app access has expired, `5d609bfa`), and a webhook
+      stops firing and becomes `inactive` once its access has expired
+      (`3394b95f`), both in open-pryv.io 2.0.0-rc.23.
 
   - ref: A.5.19
     title: A.5.19 Information security in supplier relationships

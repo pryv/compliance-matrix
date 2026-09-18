@@ -491,8 +491,8 @@ requirements:
       access_denied` `[OE27]`, and writing `consent/accept-cmc`,
       `consent/scope-update-cmc` or `consent/request-cmc` answers
       `delegation-grant-requires-owner` `[DCH14]`. These gates are in
-      open-pryv.io master (`91b06363`, `ef0a3f75`, `5943ca0b`) and
-      not yet in a release after 2.0.0-rc.22.
+      open-pryv.io 2.0.0-rc.23 (`91b06363`, `ef0a3f75`,
+      `5943ca0b`).
     technical: |
       - Snapshot semantics: `context/access-versioning.md` (full head
         clone into history row per update).
@@ -658,8 +658,7 @@ requirements:
       every access granted through that delegation is revoked with it
       `[DCH12]`, so no parental consent outlives parental control.
       Whether a given parent may consent for a given app remains your
-      determination. In open-pryv.io master, not yet in a release
-      after 2.0.0-rc.22.
+      determination. In open-pryv.io 2.0.0-rc.23.
 
       **Consent-artefact conventions (operator-side editorial
       discipline; no Pryv enforcement) still apply on top of the
@@ -1663,6 +1662,13 @@ requirements:
           dedicated streams.
         - Access control: IMPLEMENTED, `permissions` enforce stream-
           level scope at every API call (technical control, not policy).
+          Expiry is enforced down the chain: a `shared` access managed
+          by an app access can no longer outlive it (it inherits the app
+          access's expiry at creation, clearing that expiry is refused,
+          and authentication refuses a never-expiring shared access once
+          its app access has expired, `5d609bfa`), and a webhook stops
+          firing and becomes `inactive` once its access has expired
+          (`3394b95f`), both in open-pryv.io 2.0.0-rc.23.
         - Authentication strength: IMPLEMENTED, `mfa.*` API methods,
           opt-in per `services.mfa.mode`.
         - Delegated-app authorization: IMPLEMENTED, the OAuth2
@@ -1690,8 +1696,7 @@ requirements:
           lineage attribute and is revoked with the delegation, and the
           grant paths that cannot record the lineage (OAuth2 consent,
           CMC accept / scope-update / offer) refuse delegation-derived
-          tokens (open-pryv.io master, not yet in a release after
-          2.0.0-rc.22). See `context/delegation-model.md`.
+          tokens (open-pryv.io 2.0.0-rc.23). See `context/delegation-model.md`.
         - Credential hand-off: IMPLEMENTED, the shared-secrets
           endpoints (`open-pryv.io/components/shared-secrets/`) hand a
           credential to a third party by a one-time random key instead

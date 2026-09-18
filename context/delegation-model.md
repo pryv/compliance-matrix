@@ -145,8 +145,8 @@ access on the controlled account with the permissions the app requested. The
 app receives that access only; the owner-equivalent delegate token never
 leaves the page. An app can opt out per request (`actAs: 'deny'` on the auth
 request). Shipped on open-pryv.io master in `91b06363`, `ef0a3f75`,
-`5943ca0b` (not yet in a release at the time of writing: 2.0.0-rc.22 and
-earlier do not carry it).
+`5943ca0b`, released in 2.0.0-rc.23 (2.0.0-rc.22 and earlier do not
+carry it).
 
 **The lineage attribute.** Every access created through `accesses.create`
 while the caller is authenticated by a delegate token, or by an access itself
