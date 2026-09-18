@@ -128,9 +128,99 @@ marker, so a client need not parse `clientData`:
 - for a **delegate token**: `{ isDelegatedAccess: true, controlledUsername,
   delegate }` — the caller learns it is operating a controlled account and
   which delegate identity it is acting as;
-- for a **control** access: `{ kind: 'control', controlledUsername, delegate }`.
+- for a **control** access: `{ kind: 'control', controlledUsername, delegate }`;
+- for an access **granted through a delegation** (see the next section):
+  `{ isDelegatedAccess: true, controlledUsername, delegate, grantedVia: 'app' }`.
 
 The field is additive only; existing `accessInfo` consumers are unaffected.
+
+## Accesses granted through a delegation (`delegated-child`)
+
+A delegate may grant a third-party app access to the controlled account, the
+way the account holder grants one. The platform's authentication page does it:
+after the delegate signs in, it asks whom the access is for, obtains a
+delegate token for the chosen controlled account (kept in the page's memory
+only, never stored and never handed to the app), and creates an ordinary `app`
+access on the controlled account with the permissions the app requested. The
+app receives that access only; the owner-equivalent delegate token never
+leaves the page. An app can opt out per request (`actAs: 'deny'` on the auth
+request). Shipped on open-pryv.io master in `91b06363`, `ef0a3f75`,
+`5943ca0b` (not yet in a release at the time of writing: 2.0.0-rc.22 and
+earlier do not carry it).
+
+**The lineage attribute.** Every access created through `accesses.create`
+while the caller is authenticated by a delegate token, or by an access itself
+granted that way, carries a server-stamped attribute
+`clientData.delegation = { kind: 'delegated-child', relId, delegate,
+viaAccessId }`:
+
+- `relId` names the delegation relationship, `delegate` the delegate
+  identity (`username`, and `hostSlug` when known), `viaAccessId` the access
+  that created it (the delegate token, or the parent app access for an access
+  an app created in turn), so the chain back to the delegation is recorded on
+  the access itself.
+- It is stamped from the authenticated access only, never from the request:
+  a client-supplied `clientData.delegation` is still refused on create and on
+  update for every token class, so the attribute cannot be forged, changed or
+  removed by any client. An update that replaces or clears `clientData` keeps
+  it. `[DLN01-04]`, `[DCH01]`, `[DCH03]`, `[DCH04]`, `[DCH06]`, `[DCH07]`,
+  `[DUP01-04]`.
+- `accessInfo` reports it (`grantedVia: 'app'`, above) `[DCH02]`, and every
+  audit record of an action taken with such an access carries the delegate in
+  `content.delegation`, as for the delegate token itself `[DCH05]`.
+
+**Consent is recorded on the subject's account.** The access, which is the
+consent record in Pryv (see `context/cmc-consent-primitives.md`), lives on the
+controlled account: the account of the data subject, not the delegate's. It is
+versioned and revocable like any access, and the subject (for example a young
+person who has taken over their account) sees it among their apps. The grant
+itself is audited on the controlled account under the delegate token that
+created it. When the auth request carries a consent form, the server checks
+the delegated grant against the offer exactly as for the holder's own grant
+`[DCH13]`. The `delegation` block an auth page posts with the accepted request
+is a display hint for the app; `accessInfo` is the authoritative answer.
+
+**Delete and update policy.** A `delegated-child` access is an ordinary grant,
+not plugin-owned control-plane state: the account holder, the delegate and the
+app itself may update or revoke it through the standard access rules, and a
+revoke cascades to the accesses the app created `[DCH06]`, `[DCH08]`,
+`[DCH09]`, `[DUG04-05]`, `[DAD05-07]`. The plugin-owned kinds (control,
+delegate token, invite capability, notify, and any unknown kind) stay
+protected. The attribute propagates: an access a `delegated-child` access
+creates is stamped with the same relationship, `viaAccessId` naming its
+creator. Such an access cannot detach the delegation: the genuine-login gate
+above is unchanged `[DCH11]`. If the account holder later signs in to the same
+app on the same device, the existing delegated access is reused (the lineage
+attribute is not compared as app data) and still ends with the delegation
+`[DCH10]`.
+
+**Revocation cascade at detach.** Detaching a delegate deletes, right after
+the delegate token, every `delegated-child` access of that relationship, at
+any depth, and nothing else: accesses the account holder granted are
+untouched `[DCH12]`, `[DDCH1]`. Ending the delegation therefore ends every
+grant made through it, so no third-party access outlives the authority that
+created it. This is a behaviour change for apps that held such an access
+(announced as breaking in the open-pryv.io changelog); the holder can grant
+the app again from a genuine login.
+
+**Grant paths a delegation may not use.** Some paths create durable grants
+outside `accesses.create` and cannot yet record the lineage attribute, so a
+grant made there would survive the end of the delegation. Until they record
+it, a delegate token and any access granted through a delegation are refused
+on them, and only the account holder can grant there:
+
+- OAuth2 consent (`POST /oauth2/authorize/accept`): `403 access_denied`, and
+  nothing is minted `[OE27]`;
+- writing `consent/accept-cmc`, `consent/scope-update-cmc` or
+  `consent/request-cmc` (publishing a CMC offer, whose capability and
+  back-channel accesses are written the same way): `400 invalid-operation`
+  with `delegation-grant-requires-owner` `[DCH14]`, `[DDG01-03]`.
+
+What stays on your plate: the auth page that offers "who is this for?" is the
+platform's reference auth UI; a deployment using its own auth UI decides
+whether to offer it. The age of the subject, and whether a given delegate may
+consent for a given app, remain your determination (Pryv does not verify
+either).
 
 ## Where this shows up in the matrix
 
@@ -148,4 +238,10 @@ The field is additive only; existing `accessInfo` consumers are unaffected.
   HIPAA-Security §164.312(a)(1) + §164.312(d), SOC 2 CC6.1 / CC6.2 / CC6.3,
   ISO 27001 A.5.15 / A.5.16) — delegation adds a new token class (the delegate
   personal token) whose defining access-control property is the
-  genuine-login-gated, authoritative detach.
+  genuine-login-gated, authoritative detach. Accesses granted through a
+  delegation add the lineage attribute, its revocation cascade at detach, and
+  the owner-only grant paths (OAuth2 consent, CMC accept / scope-update /
+  offer).
+- **Audit rows** (HIPAA-Security §164.312(b)): actions taken by an app
+  granted through a delegation name the delegate on the controlled account's
+  audit record.

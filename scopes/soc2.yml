@@ -423,7 +423,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, system-streams, audit, delegation]
-    tests: [AA01, AA02, ACCP, UZEV]
+    tests: [AA01, AA02, ACCP, UZEV, DCH01, DCH12]
     derives_from: [iso-27001.A.5.16, iso-27001.A.5.18, hipaa-security.164.308(a)(3)(ii)(C)]
     overview: |
       The full credential lifecycle is Pryv primitives: registration
@@ -462,6 +462,16 @@ requirements:
       delegate on the controlled account (same-core + cross-core). See
       `context/delegation-model.md`.
 
+      Credentials a delegate issues to apps for the controlled account
+      follow the same lifecycle: each is an ordinary app access on the
+      controlled account, marked by the server as granted through the
+      delegation `[DCH01]`, and they are removed together with the
+      delegation: detach deletes every access granted through it, and
+      nothing the account holder granted `[DCH12]`. So credentials
+      issued under a delegate's authority do not survive the end of
+      that authority. In open-pryv.io master, not yet in a release
+      after 2.0.0-rc.22.
+
   - ref: CC6.3
     title: CC6.3 Role-based access, least privilege, segregation of duties
     text: |
@@ -474,7 +484,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, audit, delegation]
-    tests: [AA01, AA02, ACCP]
+    tests: [AA01, AA02, ACCP, DCH06, DCH08, DCH09, DCH12]
     derives_from: [iso-27001.A.5.15, iso-27001.A.5.18, iso-27001.A.5.3]
     overview: |
       Least privilege is native: an access carries only the
@@ -530,6 +540,16 @@ requirements:
       delegation, and detach is gated on a genuine login of the
       controlled account (a personal token with no forge-protected
       delegation marker). See `context/delegation-model.md`.
+
+      Least privilege also holds for apps a delegate authorizes on the
+      controlled account: they receive a scoped `app` access with the
+      permissions they requested, never the owner-equivalent token.
+      Such an access can be modified or revoked by the account holder,
+      the delegate or the app itself like any access (revocation
+      cascades to what the app created) `[DCH06]`, `[DCH08]`,
+      `[DCH09]`, and is removed automatically when the delegation is
+      removed `[DCH12]`. In open-pryv.io master, not yet in a release
+      after 2.0.0-rc.22.
 
   - ref: CC6.4
     title: CC6.4 Physical access to facilities and protected assets

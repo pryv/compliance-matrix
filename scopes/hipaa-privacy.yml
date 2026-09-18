@@ -677,6 +677,7 @@ requirements:
     reviewed_by: Pryv compliance
     reviewed_at: "2026-09-15"
     pryv_primitives: [access, delegation, clientData, audit]
+    tests: [DCH01, DCH05, DCH12]
     derives_from: [hipaa-privacy.164.502]
     overview: |
       Pryv's account-delegation primitive
@@ -696,6 +697,16 @@ requirements:
       entity makes that clinical / legal determination. Same-core and
       cross-core (same platform) both carry the audited attribution;
       see `context/delegation-model.md`.
+
+      The representative can also authorize an app for the individual
+      through the auth request: the app receives an ordinary app
+      access on the individual's account (never the representative's
+      owner-equivalent token), stamped by the server with a
+      non-forgeable lineage attribute naming the representative, and
+      its uses and disclosures are audited on the individual's account
+      with the representative named on every record. Revoking the
+      representative revokes every app access granted that way
+      (open-pryv.io master, not yet in a release after 2.0.0-rc.22).
 
       A lighter-weight alternative where full owner-equivalence is not
       wanted: the representative holds a scoped `app` / `shared`

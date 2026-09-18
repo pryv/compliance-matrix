@@ -600,6 +600,53 @@ additional cited primitive + a detail paragraph.
 
 No `proposals/<slug>.md` mirror and no `planned:` chips: the work is
 **shipped**, not planned.
+
+**Follow-up: apps granted access for a controlled account (rows walked
+2026-09-18).** open-pryv.io master `91b06363` (lineage attribute, accessInfo
+`grantedVia`, audit attribution, detach revocation, `/reg/access` `actAs` +
+`delegation` hint), `ef0a3f75` + `5943ca0b` (owner-only OAuth2 consent and CMC
+accept / scope-update / offer). Merged, **not yet in a release** after
+2.0.0-rc.22; the rows say so. Section B walk:
+
+- **New access-info field** (B.1): `accessInfo.delegation.grantedVia: 'app'`
+  for an access granted through a delegation.
+- **New audit content kind** (audit family of B.1): records produced by such
+  an access carry `content.delegation`, as for the delegate token.
+- **New access attribute** (B.7): server-stamped
+  `clientData.delegation = { kind: 'delegated-child', relId, delegate,
+  viaAccessId }`, non-forgeable, kept across updates, propagated to the
+  accesses such an app creates, revocable like any access, deleted at detach
+  (BREAKING for apps that relied on keeping it).
+- **Grant refusals** (B.8 token class + B.9 OAuth2): a delegate token or an
+  access granted through a delegation is refused on OAuth2 consent (`403
+  access_denied`) and on writing `consent/accept-cmc`,
+  `consent/scope-update-cmc`, `consent/request-cmc` (`400 invalid-operation`,
+  `delegation-grant-requires-owner`).
+
+Context notes: `context/delegation-model.md` (new section "Accesses granted
+through a delegation"), `context/cmc-consent-primitives.md` (gates section),
+`docs/pryv-primitives.md` (`delegation` entry). Rows (detail paragraph added,
+`tests:` extended; **no tier shift**, `reviewed_at` left unchanged so the
+added prose awaits the next review pass):
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.7 | consent a delegate gives: record on the subject's account, withdrawable, revoked with the delegation; owner-only OAuth2 / CMC grant paths | `DCH12`, `DCH13`, `DCH14`, `OE27` |
+| gdpr | Art.8 | the parent consents to an app for the child; record on the child's account, audited with the delegate named, revoked at detach | `DCH01`, `DCH02`, `DCH05`, `DCH12` |
+| gdpr | Art.32 | "Delegate-account control" bullet: apps get an app access, lineage, revocation, refusals | (none added) |
+| hipaa-privacy | 164.502(g) | representative authorizes apps for the individual; representative named on every record; revoked with the representative | `DCH01`, `DCH05`, `DCH12` |
+| hipaa-security | 164.312(a)(1) | "Apps granted access through a delegation" paragraph | `DCH01`, `DCH03`, `DCH12`, `DCH14`, `OE27` |
+| hipaa-security | 164.312(b) | audit records of such apps name the delegate | `DCH05` |
+| hipaa-security | 164.312(d) | `grantedVia` identifies an app acting for a controlled account; hint vs authoritative; cannot detach | `DCH02`, `DCH03`, `DCH11` |
+| soc2 | CC6.2 | app credentials issued under a delegate's authority end with it | `DCH01`, `DCH12` |
+| soc2 | CC6.3 | least privilege for delegated app grants; modify / revoke / cascade | `DCH06`, `DCH08`, `DCH09`, `DCH12` |
+| iso-27001 | A.5.15 | delegated app grants: scoped, non-forgeable mark, removed with the delegation; refusals | `DCH01`, `DCH03`, `DCH12`, `DCH14`, `OE27` |
+| iso-27001 | A.5.16 | lifecycle of app identities a delegate authorizes | `DCH02`, `DCH12` |
+
+No `planned:` chips and no proposal mirror: shipped work. Stamping the lineage
+on the OAuth2 and CMC grant paths (which would lift the refusals) is not
+scheduled; if it is, file it as a backlog item with chips on `gdpr.Art.7` and
+`hipaa-security.164.312(a)(1)`.
 ### `EMAIL-VERIFICATION` (SHIPPED: rows walked 2026-09-15)
 
 **Where the work lives**: `open-pryv.io/components/business/src/emails/`
@@ -733,6 +780,10 @@ benefit from pointing at the new scope.
 ### B.7: Major Pryv-side architectural change
 
 Touches `context/*.md` notes. Recent examples:
+- Apps granted access for a controlled account (server-stamped
+  `delegated-child` lineage attribute on accesses, revoked at detach;
+  `context/delegation-model.md` gained a section, 2026-09-18). See the
+  follow-up under `ACCOUNT-DELEGATION` in Section A.
 - Account delegation (owner-equivalent control of one account by another,
   genuine-login-gated authoritative detach; added
   `context/delegation-model.md`, 2026-09-15). See the `ACCOUNT-DELEGATION`
@@ -792,6 +843,15 @@ delegation; detach gated on a genuine login of the controlled account). Rows
 refreshed: `gdpr.Art.7` + `Art.32`, `hipaa-security.164.312(a)(1)` +
 `164.312(d)`, `soc2.CC6.1` / `CC6.2` / `CC6.3`, `iso-27001.A.5.15` / `A.5.16`.
 See the `ACCOUNT-DELEGATION` entry in Section A + `context/delegation-model.md`.
+
+**2026-09-18, delegation-derived tokens refused on grant paths**: a delegate
+token, or an access granted through a delegation, may not write
+`consent/accept-cmc`, `consent/scope-update-cmc` or `consent/request-cmc`
+(`delegation-grant-requires-owner`), nor consent through OAuth2 (`403
+access_denied`), because those grants would outlive the delegation. Rows
+refreshed: `gdpr.Art.7` + `Art.32`, `hipaa-security.164.312(a)(1)`,
+`iso-27001.A.5.15`; `context/cmc-consent-primitives.md` gates section. See the
+follow-up under `ACCOUNT-DELEGATION` in Section A.
 
 ### B.9: OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
 
@@ -874,6 +934,13 @@ follow-ups above plus client-revoke live propagation:
   previously issued tokens lived out their TTL. Recorded in `soc2.CC6.3`.
   Next-touch refresh candidates for the removal/termination family:
   `hipaa-security.164.308(a)(3)(ii)(C)`, `iso-27001.A.5.18`, `gdpr.Art.32`.
+
+**Owner-only consent, 2026-09-18**: `POST /oauth2/authorize/accept` refuses a
+token obtained through account delegation (`403 access_denied`, nothing
+minted, `[OE27]`), since the OAuth access carries no delegation lineage and
+would outlive the delegation. Rows refreshed: `gdpr.Art.7`,
+`hipaa-security.164.312(a)(1)`, `iso-27001.A.5.15` (with the B.8 entry of the
+same date). Merged on open-pryv.io master, not yet in a release.
 
 ### B.10 Observability emitted-surface changes
 

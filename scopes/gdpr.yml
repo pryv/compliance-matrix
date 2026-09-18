@@ -398,7 +398,7 @@ requirements:
     reviewed_at: "2026-07-18"
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md]
-    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13]
+    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH14, OE27]
     overview: |
       The access Pryv mints when your user grants permission IS your
       durable consent record, versioned permissions + clientData
@@ -475,6 +475,24 @@ requirements:
       teardown, gated on a personal token carrying no forge-protected
       delegation marker). Each delegate's actions are audited on the
       controlled account. See `context/delegation-model.md`.
+
+      Consent given by a delegate for the account it controls (§1,
+      §3): a delegate may grant an app access to the controlled
+      account through the auth request. The resulting access is the
+      consent record and it lives on the data subject's account,
+      carrying a server-stamped, non-forgeable lineage attribute
+      (`clientData.delegation.kind: 'delegated-child'`) that names the
+      delegate; the grant is checked against the offer like any other
+      `[DCH13]`. The subject can withdraw it like any access, and
+      removing the delegate withdraws every grant made through it
+      `[DCH12]`. The paths that cannot yet record that lineage refuse
+      a delegation-derived token, so a delegate cannot make a grant
+      that outlives the delegation: OAuth2 consent answers `403
+      access_denied` `[OE27]`, and writing `consent/accept-cmc`,
+      `consent/scope-update-cmc` or `consent/request-cmc` answers
+      `delegation-grant-requires-owner` `[DCH14]`. These gates are in
+      open-pryv.io master (`91b06363`, `ef0a3f75`, `5943ca0b`) and
+      not yet in a release after 2.0.0-rc.22.
     technical: |
       - Snapshot semantics: `context/access-versioning.md` (full head
         clone into history row per update).
@@ -582,6 +600,7 @@ requirements:
     reviewed_by: Pryv compliance
     reviewed_at: "2026-09-15"
     pryv_primitives: [access, permissions, delegation, clientData, event]
+    tests: [DCH01, DCH02, DCH05, DCH12]
     overview: |
       Pryv still neither knows nor validates a subject's age, age +
       parental-authority verification happens at your app's
@@ -624,6 +643,23 @@ requirements:
       the account first" flow while still leaving the child a
       genuine login for later reclaim. See
       `context/delegation-model.md`.
+
+      **The parent consents to an app for the child.** Through the
+      auth request, a delegate can grant a third-party app access to
+      the child's account (the app never receives the delegate's
+      owner-equivalent token). The consent record, the app access,
+      lives on the **child's** account and carries a server-stamped
+      lineage attribute naming the consenting delegate
+      (`clientData.delegation.kind: 'delegated-child'`, reported by
+      `accessInfo` as `grantedVia: 'app'`) `[DCH01]`, `[DCH02]`; the
+      app's actions are audited on the child's account with the
+      delegate named `[DCH05]`. The young person sees the app among
+      their own and can revoke it; when the guardian is detached,
+      every access granted through that delegation is revoked with it
+      `[DCH12]`, so no parental consent outlives parental control.
+      Whether a given parent may consent for a given app remains your
+      determination. In open-pryv.io master, not yet in a release
+      after 2.0.0-rc.22.
 
       **Consent-artefact conventions (operator-side editorial
       discipline; no Pryv enforcement) still apply on top of the
@@ -1648,7 +1684,14 @@ requirements:
           user create/write/delete; internal subtree read-guarded and
           excluded from wildcard reads), and each delegate's actions
           are audited on the controlled account (same-core +
-          cross-core). See `context/delegation-model.md`.
+          cross-core). Apps a delegate grants access to the controlled
+          account receive an ordinary app access, never the
+          owner-equivalent token; that access carries a non-forgeable
+          lineage attribute and is revoked with the delegation, and the
+          grant paths that cannot record the lineage (OAuth2 consent,
+          CMC accept / scope-update / offer) refuse delegation-derived
+          tokens (open-pryv.io master, not yet in a release after
+          2.0.0-rc.22). See `context/delegation-model.md`.
         - Credential hand-off: IMPLEMENTED, the shared-secrets
           endpoints (`open-pryv.io/components/shared-secrets/`) hand a
           credential to a third party by a one-time random key instead

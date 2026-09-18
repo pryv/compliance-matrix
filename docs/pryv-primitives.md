@@ -660,6 +660,13 @@ lives in the controlled account's standard per-user storage.
   and attributes each delegate's actions under its own delegate-token stream
   (same-core + cross-core parity). `accessInfo` exposes an additive `delegation`
   field.
+- **Apps granted through a delegation**: a delegate can grant an app an
+  ordinary `app` access on the controlled account (the app never holds the
+  delegate token). Such an access carries a server-stamped lineage attribute
+  (`clientData.delegation.kind: 'delegated-child'`, reported by `accessInfo` as
+  `grantedVia: 'app'`), its actions are audited with the delegate named, and
+  detach revokes it. OAuth2 consent and CMC grants refuse delegation-derived
+  tokens.
 - **Compliance role**: the technical mechanism for a party to act on behalf of
   an account holder — parental holder of responsibility (GDPR Art.8), personal
   representative (HIPAA §164.502(g)) — with per-actor audit attribution and

@@ -183,6 +183,22 @@ distinct gate shapes, chosen per trigger by what's at stake:
   explicit deny path; the existing feature-permission contract carries
   over unchanged.
 
+- **Tokens obtained through account delegation are refused on the grant
+  triggers.** A delegate token is `personal`-class, so the personal-token
+  gate alone would let it write `consent/accept-cmc` on the account it
+  controls. Grants written by CMC do not record that they came through a
+  delegation, so they would outlive it when the delegate is removed. A
+  delegate token, and any access granted through a delegation, is therefore
+  refused when writing `consent/accept-cmc`, `consent/scope-update-cmc` or
+  `consent/request-cmc` (publishing an offer, whose capability and
+  back-channel accesses are written the same way): `400 invalid-operation` +
+  `error.data.id === 'delegation-grant-requires-owner'`. The refusal runs
+  before the content is validated. The same rule refuses OAuth2 consent
+  (`POST /oauth2/authorize/accept` answers `403 access_denied`). Only the
+  account holder, signed in genuinely, makes these grants; revoke is not
+  affected. Test codes: `[DCH14]`, `[DDG01-03]`, `[OE27]`; details in
+  `context/delegation-model.md`.
+
 Apps that hold only an app- or shared-access token (e.g. a third-party
 patient app that received its access via `/auth/access`) delegate **accept**
 + **scope-update** to Pryv's authorization web pages via the `/cmc-accept`

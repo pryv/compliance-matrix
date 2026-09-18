@@ -322,7 +322,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation]
-    tests: [AA01, AA02, ACCP]
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH14, OE27]
     overview: |
       Per-stream permissions are enforced at every API call; an access
       can read or write only the streams its `permissions[]` lists, at
@@ -372,6 +372,19 @@ requirements:
       and excluded from wildcard reads), and each delegate's actions
       are audited on the controlled account. See
       `context/delegation-model.md`.
+
+      **Apps granted access through a delegation.** When a delegate
+      grants a software program access to the controlled account, the
+      program receives an ordinary `app` access bound to the requested
+      permissions, never the owner-equivalent token. The server stamps
+      it with a lineage attribute no client can set, change or remove
+      (`clientData.delegation.kind: 'delegated-child'`) `[DCH01]`,
+      `[DCH03]`, and removing the delegate deletes every access granted
+      through the delegation, at any depth, and nothing else `[DCH12]`.
+      Grant paths that cannot yet record the lineage (OAuth2 consent,
+      CMC accept / scope-update / offer) refuse a delegation-derived
+      token `[DCH14]`, `[OE27]`. In open-pryv.io master, not yet in a
+      release after 2.0.0-rc.22.
 
   - ref: 164.312(a)(2)(i)
     title: Unique user identification, Required
@@ -509,7 +522,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream]
-    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07]
+    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05]
     planned:
       - kind: feature
         summary: "Chained / signed audit log strengthens tamper-resistance evidence"
@@ -562,6 +575,15 @@ requirements:
       and `sso.refused` (pre-identification: no-account / unproved email /
       mint failure, syslog), so an attempted account takeover through an
       external identity is itself auditable.
+
+      Account delegation extends the per-record attribution: a record
+      produced by a delegate token, or by an app access a delegate
+      granted on the controlled account, carries
+      `content.delegation = { delegateUsername, delegateHostSlug }`, so
+      an app acting for a controlled account is traceable on that
+      account's trail to the person who authorized it `[DCH05]` (the
+      app-grant case is in open-pryv.io master, not yet in a release
+      after 2.0.0-rc.22; see `context/delegation-model.md`).
 
   - ref: 164.312(c)(1)
     title: Integrity, standard
@@ -638,7 +660,7 @@ requirements:
     draft: true
     pryv_primitives: [access, MFA, system-streams, delegation]
     config_keys: [services.mfa.mode, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds]
-    tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07]
+    tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07, DCH02, DCH03, DCH11]
     planned:
       - kind: enhancement
         summary: "Reference MFA plugins (TOTP / WebAuthn) + primitive-catalogue doc surface the pluggability"
@@ -729,6 +751,16 @@ requirements:
       marker is forge-guarded for every token class), so no delegate
       can impersonate a genuine login or block a takeover. See
       `context/delegation-model.md`.
+
+      The same field identifies an app acting for a controlled account:
+      an app access a delegate granted reports `delegation` with
+      `grantedVia: 'app'` and the delegate's identity, from a
+      server-stamped attribute no client can forge `[DCH02]`, `[DCH03]`.
+      The auth-request result's own `delegation` block is a display
+      hint only; `accessInfo` is the authoritative answer. An access
+      granted through a delegation cannot pass for a genuine login
+      either: it cannot detach the delegation `[DCH11]`. In
+      open-pryv.io master, not yet in a release after 2.0.0-rc.22.
 
   - ref: 164.312(e)(1)
     title: Transmission security, standard

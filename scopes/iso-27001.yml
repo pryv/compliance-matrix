@@ -76,7 +76,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation]
-    tests: [AA01, AA02, ACCP]
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH14, OE27]
     overview: |
       Logical access control is enforced at the API surface by the
       access + permissions primitives; every read/write request is
@@ -107,6 +107,15 @@ requirements:
       create/write/delete; internal subtree read-guarded and excluded
       from wildcard reads); each delegate's actions are audited on the
       controlled account. See `context/delegation-model.md`.
+
+      Apps a delegate authorizes on the controlled account get a scoped
+      `app` access, never the owner-equivalent token; the server marks
+      it as granted through the delegation (no client can forge the
+      mark) and removes it with the delegation `[DCH01]`, `[DCH03]`,
+      `[DCH12]`. Grant paths that cannot record that mark (OAuth2
+      consent, CMC accept / scope-update / offer) refuse
+      delegation-derived tokens `[DCH14]`, `[OE27]`. In open-pryv.io
+      master, not yet in a release after 2.0.0-rc.22.
 
   - ref: A.5.34
     title: A.5.34 Privacy and protection of personal information
@@ -811,7 +820,7 @@ requirements:
     draft: true
     pryv_primitives: [access, system-streams, audit, delegation]
     derives_from: [iso-27001.A.5.15, hipaa-security.164.308(a)(4)(ii)(C)]
-    tests: [AA01, AA02, ACCP, UZEV]
+    tests: [AA01, AA02, ACCP, UZEV, DCH02, DCH12]
     overview: |
       Pryv's account + access primitives implement the full identity
       lifecycle: create (registration), enable (login + access mint),
@@ -851,6 +860,13 @@ requirements:
       attributable token, audited on the controlled account (same-core
       + cross-core), and `accessInfo` names the acting delegate. See
       `context/delegation-model.md`.
+
+      App identities a delegate authorizes for the controlled account
+      carry that lineage for their whole life: `accessInfo` reports
+      them as granted through the delegation (`grantedVia: 'app'`,
+      naming the delegate) `[DCH02]`, and they end with the delegation
+      `[DCH12]`. In open-pryv.io master, not yet in a release after
+      2.0.0-rc.22.
 
   - ref: A.5.17
     title: A.5.17 Authentication information
