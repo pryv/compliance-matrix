@@ -204,6 +204,25 @@ Slug stays OPEN for the remaining scope: WebAuthn plugin + the full
 gain a stronger evidence chain (in-process TOTP → NIST 800-63B AAL2 without a
 third-party service); the row-detail refresh + WebAuthn are outstanding.
 
+**Hardening released in `2.0.0-rc.27` (2026-09-28, tag commit `0bd31d17`)**:
+the per-account limiter is a **backoff, not a lockout** (open-pryv.io
+`6231a37c`, default `aa445c43`; `services.mfa.attempts.backoff`: 3 free
+failures within 900 s, then delays doubling from 2 s up to 300 s, 429
+`too-many-attempts` + `Retry-After`; a password holder cannot lock the real
+user out; `maxSeconds: 0` disables; platform-wide policy; the former
+`attempts.perAccount` / `lockoutSeconds` keys are no longer read and trigger a
+boot warning); the per-session ceiling counts parallel attempts (`1d91696c`);
+TOTP codes are consumed with a storage compare-and-set, so one code releases
+exactly one token (`43293101`, `6231a37c`); `services.mfa` is validated at boot
+(`214b0b2b`); the private profile shows the MFA enrolment without secrets and
+refuses writes to it (`25239783`, `7ce9ea6f`), so subject account backups carry
+no usable MFA secret. Walked 2026-09-28: `hipaa-security.164.312(d)`,
+`hipaa-security.164.308(a)(5)(ii)(C)`, `iso-27001.A.8.5`, `iso-27001.A.8.21`
+gained the backoff evidence (tests `[MA12A]` `[MBKF1]` `[PCS1]` `[MCHK1]`);
+rows stay `Implemented | High` (A.8.5, 164.312(d)) and the chips stay (WebAuthn
+still outstanding). `RATE-LIMITING-RECIPES` chips unchanged: they cover password
+login and the rest of the API, which still rely on the edge.
+
 **Where the work lives**: `open-pryv.io`
 (`components/business/src/mfa/`). WebAuthn plugin + AAL-tier mapping docs
 remain; TOTP done.

@@ -3,7 +3,10 @@
 **Voluntarily missing at the Pryv layer.** Rate limiting and DoS
 protection are deliberately handled at the reverse-proxy / WAF /
 API-gateway layer, **not** inside open-pryv.io itself. Several
-matrix rows surface this stance.
+matrix rows surface this stance. One narrow exception since
+open-pryv.io 2.0.0-rc.27: failed MFA second factors are throttled
+in-process by a per-account backoff (see "What is in Pryv-side scope
+today" below).
 
 ## Why this is deliberate
 
@@ -91,9 +94,9 @@ Rows whose `detail` should call out the operator-side responsibility
 | iso-27001 | A.8.6 capacity management | F: Infrastructure \| Medium | unchanged; clarify "reactive scaling, not protective throttling" |
 | iso-27001 | A.8.21 network services security | F: Infrastructure \| Medium | unchanged; spell out operator-side rate-limit responsibility |
 | iso-27001 | A.5.7 threat intelligence | F: Evidence \| Low | unchanged; cite audit feed for operator's threat-intel programme |
-| hipaa-security | 164.308(a)(5)(ii)(C) login monitoring | F: Evidence \| Medium | unchanged; clarify "Pryv surfaces the events; operator chooses lockout policy" |
+| hipaa-security | 164.308(a)(5)(ii)(C) login monitoring | F: Evidence \| Medium | unchanged; clarify "Pryv surfaces the events; operator chooses lockout policy" for passwords; cites the Pryv-side MFA backoff (rc.27) |
 | hipaa-security | 164.308(a)(6)(i) incident procedures | F: Evidence \| Medium | unchanged; same framing |
-| hipaa-security | 164.312(d) authentication | Implemented \| High | unchanged; mention failed-auth visibility + fail2ban pattern |
+| hipaa-security | 164.312(d) authentication | Implemented \| High | unchanged; mention failed-auth visibility + fail2ban pattern; cites the Pryv-side MFA backoff, atomic TOTP consumption and boot-time `services.mfa` check (rc.27) |
 
 ## What is in Pryv-side scope today
 
@@ -101,6 +104,22 @@ Rows whose `detail` should call out the operator-side responsibility
 - Connection timeouts at the Node.js HTTP server layer.
 - The Lets-Encrypt + bootstrap-bundle layers don't expose
   unauthenticated mutation endpoints; the public surface is small.
+- **Per-account MFA backoff** (open-pryv.io 2.0.0-rc.27, `6231a37c`,
+  `aa445c43`). Pryv itself throttles second-factor guessing: after
+  `services.mfa.attempts.backoff.freeFailures` failed second factors
+  (default 3) within `perAccountWindowSeconds` (default 900 s), each
+  further failure delays the next attempt, doubling from `baseSeconds`
+  (2 s) up to `maxSeconds` (300 s); `mfa.verify` / `mfa.confirm` /
+  `mfa.challenge` answer 429 `too-many-attempts` with `Retry-After`
+  meanwhile. It is a delay, never a lockout (a password holder cannot
+  lock the real user out; a success clears it). The counter is keyed
+  on the account and lives on its home core, so the multi-core
+  objection above does not apply to it. The `attempts` block is
+  platform-wide policy (same values on every core);
+  `backoff.maxSeconds: 0` disables it when you throttle at the edge
+  instead. This covers the second factor only: password logins
+  (`/auth/login`), `/reg/access` and the rest of the API still rely on
+  the edge recipes above.
 
 These are baseline; they don't substitute for an edge-layer
 protection.

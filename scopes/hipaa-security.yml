@@ -201,7 +201,8 @@ requirements:
       authentication strength beyond a password alone, see §164.312(d).
     detail: |
       Password is one possible factor; MFA via the `mfa.*` API methods
-      (SMS-based by default) is the second factor when enabled. Recovery
+      (authenticator-app TOTP by default since open-pryv.io 2.0.0-rc.14,
+      SMS supported) is the second factor when enabled. Recovery
       flows live alongside (`mfa.recover`) so an account is not lost
       when a device is. The implementer chooses whether MFA is required
       universally or per-role.
@@ -664,8 +665,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams, delegation]
-    config_keys: [services.mfa.mode, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds]
-    tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07, DCH02, DCH03, DCH11]
+    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds]
+    tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11]
     planned:
       - kind: enhancement
         summary: "Reference MFA plugins (TOTP / WebAuthn) + primitive-catalogue doc surface the pluggability"
@@ -685,16 +686,19 @@ requirements:
       (`components/business/src/mfa/Service.ts`) defines
       `challenge()` + `verify()` methods; two subclasses ship
       (`ChallengeVerifyService`, `SingleService`) targeting
-      HTTP-callable external providers (SMS by config default). An
+      HTTP-callable external providers (SMS). An
       operator can plug in any provider matching the
       challenge/verify shape via `services.mfa` config (Twilio Authy,
       Auth0 MFA, Duo Web push, …) without writing code, or extend
-      `Service` to implement any in-process method.
+      `Service` to implement any in-process method. Since open-pryv.io
+      2.0.0-rc.14 (`b606b328`) an in-process authenticator-app factor
+      (TOTP, RFC 6238, secrets encrypted at rest) is built in and is
+      the default method; SMS stays supported.
 
-      NIST AAL framing: the achievable AAL depends on which provider
+      NIST AAL framing: the achievable AAL depends on which method
       is configured. SMS-only is AAL1 under NIST SP 800-63B Rev 3.
-      TOTP + push or WebAuthn-based providers reach AAL2. Reference
-      plugins for in-process TOTP + WebAuthn are tracked under
+      TOTP + push or WebAuthn-based providers reach AAL2. The
+      remaining WebAuthn plugin is tracked under
       internal backlog slug `MFA-MODERN-METHODS` (matrix-side mirror
       at `proposals/mfa-modern-methods.md`); the broader OAuth2
       auth-stack modernisation arc subsumes this work.
@@ -703,6 +707,29 @@ requirements:
       at login, at sensitive operations, or both. The MA test series
       exercises activate / confirm / challenge / verify / deactivate
       / recover paths.
+
+      **Second-factor guessing is throttled by Pryv itself (open-pryv.io
+      2.0.0-rc.27).** A per-account backoff, not a lockout (open-pryv.io
+      `6231a37c`, default in `aa445c43`): after
+      `services.mfa.attempts.backoff.freeFailures` failed second factors
+      (default 3) within `perAccountWindowSeconds` (default 900 s), each
+      further failure delays the next attempt by `baseSeconds` (default
+      2 s), doubling up to `maxSeconds` (default 300 s). During the delay
+      `mfa.verify` / `mfa.confirm` / `mfa.challenge` answer 429
+      `too-many-attempts` with `Retry-After`, and a code sent during the
+      delay is neither checked nor counted, so guessing stays slow while
+      someone who only holds the password cannot lock the real user out.
+      A success clears the tally; `backoff.maxSeconds: 0` turns it off
+      (for example when you throttle at the edge instead). The `attempts`
+      block is platform-wide: set the same values on every core. The
+      per-session ceiling (5 attempts) also counts parallel attempts
+      correctly (`1d91696c`). A TOTP code is consumed with a storage
+      compare-and-set (`43293101`, `6231a37c`), so concurrent verifies of
+      one code release exactly one token, and impossible `services.mfa`
+      settings refuse the boot (`214b0b2b`). The former lockout keys
+      (`attempts.perAccount`, `attempts.lockoutSeconds`) are no longer
+      read; a boot warning names them. Tests: `[MA12A]`-`[MA12K]`,
+      `[MBKF1]`-`[MBKF3]`, `[PCS1]`, `[MCHK1]`.
 
       **A second authentication path, OAuth2.** Beyond the token +
       MFA stack above, Pryv can authenticate delegated apps through a
@@ -1115,9 +1142,10 @@ requirements:
     pryv_effort_saved: medium
     facilitation_mode: evidence
     draft: true
-    pryv_primitives: [audit, observability-provider]
+    pryv_primitives: [audit, observability-provider, MFA]
     derives_from: [iso-27001.A.8.15]
-    tests: [AT01, AT02, AT51]
+    config_keys: [services.mfa.attempts.backoff]
+    tests: [AT01, AT02, AT51, MA12A, MBKF1]
     planned:
       - kind: enhancement
         summary: "Reference reverse-proxy rate-limiting configurations add an enforcement companion to log-in monitoring on the authentication endpoints"
@@ -1132,14 +1160,25 @@ requirements:
       signals. The discrepancy-reporting cadence + threshold tuning
       are operator-side procedure.
     detail: |
-      **Pryv surfaces the events; operator chooses the lockout
-      policy.** Pryv does not in-process rate-limit login attempts
-      or lock accounts after N failures by itself (deliberate;
-      multi-core deployments make in-process counters mis-fire +
-      lockout sensitivity is workload-specific). Operator pattern:
-      `fail2ban` watching the audit log + banning IPs that exceed
-      N auth failures in T minutes; reverse-proxy
+      **Pryv surfaces the events; you choose the lockout
+      policy for passwords.** Pryv does not in-process rate-limit
+      password logins or lock accounts after N failures by itself
+      (deliberate; multi-core deployments make in-process counters
+      mis-fire + lockout sensitivity is workload-specific). Operator
+      pattern: `fail2ban` watching the audit log + banning IPs that
+      exceed N auth failures in T minutes; reverse-proxy
       `limit_req_zone` for per-IP rate caps on `/auth/login`.
+
+      **Exception: the second factor.** Since open-pryv.io 2.0.0-rc.27
+      Pryv enforces a per-account backoff on failed MFA attempts
+      (open-pryv.io `6231a37c`, `aa445c43`; `services.mfa.attempts.backoff`,
+      default: after 3 failures within 15 minutes, delays doubling from
+      2 s up to 5 minutes, answered 429 `too-many-attempts` with
+      `Retry-After`). It is a delay, never a lockout: a success clears
+      it and the real user waits at most `maxSeconds`. The counter lives
+      on the account's home core, so the multi-core objection above does
+      not apply. Tests `[MA12A]`-`[MA12K]`, `[MBKF1]`-`[MBKF3]`. See
+      §164.312(d).
 
       Full operator-side rate-limiting framing + reference-config
       backlog: `context/rate-limiting-and-dos-protection.md` +

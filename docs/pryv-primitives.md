@@ -378,10 +378,14 @@ modules.
 - **Compliance role**: GDPR Art.15 (right of access) + Art.20 (data
   portability) substrate. Subject-runnable, no operator dependency
   for routine DSARs (the subject has their own credentials).
-- **Operator security note**: `profile_private.json` carries
-  `profile.mfa = { content, recoveryCodes }` verbatim, treat any
-  backup as a password-reset-equivalent secret. By design (the subject
-  is entitled to their full MFA state).
+- **Operator security note**: `profile_private.json` carries the
+  subject's MFA enrolment (`profile.mfa` as `{ method, content, totp:
+  { confirmedAt, algorithm, digits, periodSeconds } }`) but no usable
+  MFA secret: since open-pryv.io 2.0.0-rc.27 (`7ce9ea6f`) the
+  private-profile read leaves out the encrypted TOTP secret, the replay
+  step and the recovery-code hashes. Treat any backup as confidential
+  personal data (it can hold the SMS phone number); it is not MFA-bypass
+  material.
 - **Restore path** stays experimental + CLI-only, audit / webhooks /
   accesses are deliberately not replayed; HF series + multi-attachment
   round-trip is the known-lossy edge.

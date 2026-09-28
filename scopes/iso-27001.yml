@@ -210,8 +210,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams]
-    config_keys: [services.mfa.mode]
-    tests: [MA01, MA02, MA03, MA04, MA05]
+    config_keys: [services.mfa.mode, services.mfa.attempts.backoff]
+    tests: [MA01, MA02, MA03, MA04, MA05, MA12A, MBKF1, PCS1, MCHK1]
     planned:
       - kind: enhancement
         summary: "Reference TOTP / WebAuthn plugins + AAL-tier mapping doc strengthen the A.8.5 evidence chain"
@@ -225,6 +225,30 @@ requirements:
       (MA01-MA09) exercises activate / confirm / challenge / verify /
       deactivate / recover. Authentication strength tier is the
       operator's policy choice; technical primitives are shipped.
+    detail: |
+      **Failed second factors are throttled by Pryv (open-pryv.io
+      2.0.0-rc.27).** A per-account backoff, never a lockout
+      (open-pryv.io `6231a37c`, `aa445c43`): after
+      `services.mfa.attempts.backoff.freeFailures` failures (default 3)
+      within `perAccountWindowSeconds` (default 900 s), each further
+      failure delays the next attempt, doubling from `baseSeconds`
+      (2 s) up to `maxSeconds` (300 s); `mfa.verify` / `mfa.confirm` /
+      `mfa.challenge` answer 429 `too-many-attempts` with `Retry-After`
+      meanwhile, and a code sent during the delay is not checked. A
+      password holder cannot lock the real user out, and a success
+      clears the tally. The `attempts` block is platform-wide policy
+      (same values on every core); `backoff.maxSeconds: 0` disables it.
+
+      **Single-use codes and safe configuration.** A TOTP code is
+      consumed with a storage compare-and-set (open-pryv.io `43293101`,
+      `6231a37c`), so concurrent verifies of one code release exactly
+      one token; the per-session attempt ceiling counts parallel
+      attempts (`1d91696c`); and impossible `services.mfa` settings
+      refuse the boot (`214b0b2b`). The private profile shows the MFA
+      enrolment without its secrets and refuses writes to it
+      (`25239783`, `7ce9ea6f`); recovery codes are stored hashed
+      (`ef66853e`). Tests `[MA12A]`-`[MA12K]`, `[MBKF1]`-`[MBKF3]`,
+      `[PCS1]`, `[MCHK1]`.
 
   - ref: A.8.10
     title: A.8.10 Information deletion
@@ -1211,7 +1235,10 @@ requirements:
       (2) abuse signatures are operator-specific. Pryv contributes
       the **detection layer** (audit log + observability metrics +
       `accesses.delete` revocation); enforcement happens at the edge.
-      Full rationale + operator mitigation patterns + reference-
+      One narrow exception: failed MFA second factors are throttled
+      in-process by a per-account backoff (open-pryv.io 2.0.0-rc.27,
+      `services.mfa.attempts.backoff`), counted on the account's home
+      core, see A.8.5. Full rationale + operator mitigation patterns + reference-
       config backlog: `context/rate-limiting-and-dos-protection.md`
       + internal backlog slug `RATE-LIMITING-RECIPES`.
 

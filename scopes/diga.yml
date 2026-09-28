@@ -310,7 +310,11 @@ requirements:
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467852&issue=pryv%7Copen-pryv.io%7C78
         impact: medium
     overview: |
-      MFA via the `mfa.*` API methods (`services.mfa.mode` enables it);
+      MFA via the `mfa.*` API methods (live by default since
+      open-pryv.io 2.0.0-rc.14 with authenticator-app TOTP,
+      `services.mfa.active`; the legacy `services.mfa.mode` is still
+      honoured); failed second factors hit a per-account backoff, not a
+      lockout, since 2.0.0-rc.27 (see HIPAA §164.312(d));
       personal-token + access-token model gives separation of user
       identity from app identity. The BfArM "strong authentication
       where sensitive health data is processed" bar maps to MFA on by
