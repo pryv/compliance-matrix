@@ -220,9 +220,10 @@ requirements:
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467852&issue=pryv%7Copen-pryv.io%7C78
         impact: medium
     overview: |
-      Token-based auth by default; multi-factor via `mfa.*` API methods
-      when `services.mfa.mode` is enabled. The MFA test series
-      (MA01-MA09) exercises activate / confirm / challenge / verify /
+      Token-based auth by default; multi-factor via `mfa.*` API methods,
+      live by default since open-pryv.io 2.0.0-rc.14 (`services.mfa.active`;
+      TOTP built in, SMS providers pluggable). The MFA acceptance series
+      (`[MFAA]`) exercises activate / confirm / challenge / verify /
       deactivate / recover. Authentication strength tier is the
       operator's policy choice; technical primitives are shipped.
     detail: |
@@ -912,7 +913,10 @@ requirements:
     overview: |
       Pryv stores
       credentials on a privileged system-stream (`:_system:password`
-      etc.); MFA secrets follow the same isolation. Operator's
+      etc.). MFA secrets stay server-side: the TOTP secret encrypted at
+      rest in the private profile, recovery codes stored hashed, and
+      neither is returned by the profile methods (open-pryv.io
+      `7ce9ea6f`). Operator's
       secret-distribution + secret-rotation policy is the
       organizational programme; Pryv provides the secure storage tier.
     detail: |

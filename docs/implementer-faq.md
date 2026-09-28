@@ -110,6 +110,12 @@ Tracked under internal backlog slug `MFA-MODERN-METHODS`, as part
 of the broader OAuth2 / account-based-signatures auth-modernisation
 arc.
 
+**Update:** server-side TOTP is built in and the default MFA method
+since open-pryv.io 2.0.0-rc.14 (`b606b328`); 2.0.0-rc.27 adds a
+per-account backoff on failed second factors (never a lockout),
+atomic consumption of TOTP codes and a boot-time check of
+`services.mfa`. WebAuthn is the part still open.
+
 **Matrix encoding:**
 - `proposals/mfa-modern-methods.md`: mirror of the upstream
   backlog; three-step modernisation (docs → TOTP → WebAuthn).
