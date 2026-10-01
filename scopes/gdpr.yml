@@ -403,16 +403,19 @@ requirements:
       - kind: feature
         summary: "A delegate may accept a cross-account consent for the account it manages; the accept event names the delegate and the grant carries lineage, ends with the delegation and notifies the requester"
         proposal: proposals/carer-consent-lineage.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
         eta_release: 2.0.0-rc.30
         impact: medium
       - kind: feature
         summary: "Reviewed detach: the account holder keeps or drops each consent a delegate gave before detaching it, nothing kept by default"
         proposal: proposals/carer-consent-lineage.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
         eta_release: 2.0.0-rc.31
         impact: low
       - kind: feature
         summary: "Consent invites inside the authorisation request, each decided on its own and never implied by approving the app access"
         proposal: proposals/carer-consent-lineage.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
         eta_release: 2.0.0-rc.32
         impact: low
     overview: |
@@ -621,11 +624,13 @@ requirements:
       - kind: feature
         summary: "The parent may accept a cross-account consent for the child; the record names the parent and the consent ends with parental control"
         proposal: proposals/carer-consent-lineage.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
         eta_release: 2.0.0-rc.30
         impact: medium
       - kind: feature
         summary: "Owner reclaim at majority extends to consents: the young person reviews the parent's consents at detach and keeps only what they choose"
         proposal: proposals/carer-consent-lineage.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
         eta_release: 2.0.0-rc.31
         impact: medium
     overview: |

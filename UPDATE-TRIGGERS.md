@@ -726,8 +726,8 @@ walks: B.1 (new `delegations.detachDelegate` parameter `keepAccessIds`,
 `/reg/access` `cmcInvites`, error ids `cmc-handler-delegation-ended` and the
 invalid keep list), B.8 (the gated set on consent-bearing writes changes).
 
-**Tracking card**: to be filled when the v2 board card exists; then add its URL
-as `tracking_url` on every chip above.
+**Tracking card**: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
+(set as `tracking_url` on every chip above).
 
 Proposal: `proposals/carer-consent-lineage.md`.
 

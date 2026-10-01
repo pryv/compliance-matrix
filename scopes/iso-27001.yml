@@ -81,6 +81,7 @@ requirements:
       - kind: feature
         summary: "Cross-account consent grants accepted by a delegate carry the delegation lineage and are removed with it; CMC accept leaves the refused grant paths"
         proposal: proposals/carer-consent-lineage.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
         eta_release: 2.0.0-rc.30
         impact: low
     overview: |
