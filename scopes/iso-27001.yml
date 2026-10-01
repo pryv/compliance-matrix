@@ -76,14 +76,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation]
-    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH14, OE27]
-    planned:
-      - kind: feature
-        summary: "Cross-account consent grants accepted by a delegate carry the delegation lineage and are removed with it; CMC accept leaves the refused grant paths"
-        proposal: proposals/carer-consent-lineage.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
-        eta_release: 2.0.0-rc.30
-        impact: low
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27]
     overview: |
       Logical access control is enforced at the API surface by the
       access + permissions primitives; every read/write request is
@@ -119,10 +112,21 @@ requirements:
       `app` access, never the owner-equivalent token; the server marks
       it as granted through the delegation (no client can forge the
       mark) and removes it with the delegation `[DCH01]`, `[DCH03]`,
-      `[DCH12]`. Grant paths that cannot record that mark (OAuth2
-      consent, CMC accept / scope-update / offer) refuse
-      delegation-derived tokens `[DCH14]`, `[OE27]`. In open-pryv.io
-      2.0.0-rc.23.
+      `[DCH12]`. In open-pryv.io 2.0.0-rc.23. Since open-pryv.io
+      2.0.0-rc.30 the rule also covers cross-account (CMC) data grants:
+      a delegate may accept one for the controlled account, the grant
+      carries the same mark (reported by `access-info`) `[DCH15]`, the
+      accept event names the approving delegate, server-stamped
+      `[DCH16]`, and the detach deletes the grant and notifies the
+      requester `[DCH18]`. Since open-pryv.io 2.0.0-rc.31 the account
+      holder, detaching the delegate, may keep named CMC data grants
+      that delegate gave (`keepAccessIds`): a kept grant loses the mark
+      and becomes the holder's own `[DCH21]`, a list naming any other
+      access is refused whole before any change `[DCH23]`, and every
+      other access granted through the delegation is removed as before.
+      Grant paths that still cannot record the
+      mark (OAuth2 consent, publishing a CMC offer, widening a CMC
+      grant) refuse delegation-derived tokens `[DCH17]`, `[OE27]`.
 
   - ref: A.5.34
     title: A.5.34 Privacy and protection of personal information

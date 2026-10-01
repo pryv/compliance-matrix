@@ -1,6 +1,12 @@
 # Consent given by a carer (delegate) for the account they manage
 
-**Status:** scheduled platform work, not shipped. **Delivery vehicle:** scheduled
+**Status:** shipped in full. Delegate accept with lineage shipped in open-pryv.io
+`9ba9c78c` (2.0.0-rc.30; feature commits `87bbdfb1`, `d495d5d4`, `29836b29`, merge
+`bc7410e0`); reviewed detach shipped in `b77320df` (2.0.0-rc.31; reference account
+app app-web-user-account 0.10.0, superseded by 0.11.0); consent invites in the
+authorisation request shipped in `6496ffbb` (2.0.0-rc.32, merge `f262854b`;
+app-web-user-account 0.11.0 `791e3ae`). Every chip of this slug is discharged and the
+rows rewritten on 2026-10-01. **Delivery vehicle:** scheduled
 open-pryv.io releases tracked by the three public issues below, not a backlog item.
 There is no standalone backlog file; this mirror exists so the affected rows can carry
 `planned:` chips and so a reader can see what will change and when.
@@ -22,7 +28,7 @@ child's account to share data. Can the parent accept that for the child, and if 
 do, will the record show it was the parent, and will the consent end when the parent
 stops managing the account?"*
 
-## Today's state (verified, open-pryv.io 2.0.0-rc.23 onwards)
+## State before this work (verified, open-pryv.io 2.0.0-rc.23 to rc.29)
 
 | Control | Status | Anchor |
 |---|---|---|
@@ -59,15 +65,56 @@ show that a carer acted.
 - Unchanged: `consent/request-cmc` and `consent/scope-update-cmc` stay refused to
   delegation-derived tokens; OAuth2 consent stays owner-only (`[OE27]` stays cited).
 
+**As shipped in rc.30 (`9ba9c78c`), differences from the plan above.** Detach
+deletes the delegate's consent grants itself, synchronously and before it answers
+(a hard delete, as every CMC revoke), then forwards `consent/revoke-cmc` to each
+requester through the same notification path as a raw `accesses.delete`; it does
+not write a `consent/revoke-cmc` trigger on the managed account. The subject-side
+record of a consent ended by a detach is therefore the accept event (`approvedBy`,
+`dataGrantAccessId`) plus the audit row of `delegations.detachDelegate`; a
+per-grant withdrawal marker on the accept event moves to rc.31. The writable token
+is the delegate token itself: an app or shared access the delegate granted stays
+refused by the CMC personal-token gate. Tests: `[DCH15]` (lineage, `approvedBy`,
+`access-info`), `[DCH16]` (`approvedBy` not client-settable), `[DCH17]` (request and
+scope-update stay owner-only), `[DCH18]` (detach deletes and notifies), `[DCH19]`
+(accept in progress at detach mints nothing); `[DCH14]` now asserts the narrowed
+refusal.
+
 ### rc.31 (issue #144): reviewed detach
 
 - `delegations.detachDelegate` gains `keepAccessIds`: the account holder (genuine login)
   reviews the consents the delegate gave and keeps or drops each; nothing is kept unless
   chosen. A kept grant loses its lineage attribute and its accept event gains
   `ownerConfirmedAt`, so it becomes the holder's own consent with the history preserved.
-  Dropped grants are revoked with notification, as in rc.30.
+  Dropped grants are revoked with notification, as in rc.30, and their accept
+  events gain a withdrawal marker.
 - This is the technical shape of a young person reclaiming their account at majority:
   they decide, consent by consent, which of the carer's decisions they adopt.
+
+**As shipped in rc.31 (`b77320df`).** One call, `delegations.detachDelegate { username,
+keepAccessIds? }` (over HTTP, repeated `keepAccessIds` query parameters). Every id must
+name a consent grant (a CMC data grant with `clientData.cmc.role === 'counterparty'`)
+carrying the lineage of the relationship being removed; otherwise the whole call is
+refused before any write (`400`, `delegation-invalid-keep-list`, `error.data.accessId`
+names the first id refused). Kept: `clientData.delegation` removed from the grant (it is
+then the holder's own, `access-info` reports no delegation, the requester is told
+nothing) and `content.ownerConfirmedAt` on the accept event, `approvedBy` kept as
+history. Dropped: deleted and notified as in rc.30, plus `content.withdrawal = { at, by:
+'delegation-detach', relId }` on the accept event. `approvedBy`, `ownerConfirmedAt` and
+`withdrawal` form one server-owned record: dropped from any client create, restored from
+the stored event on any client update, never added by an update, by any token. The
+other accesses granted through the delegation are deleted whatever the keep list. The
+keep-list check reads the relationship's accesses before any write; the sweep re-reads
+them after the delegate token is deleted, so a grant minted during the deletion is still
+caught. Page rule (reference account app): nothing preselected; a grant whose accept
+event is not `completed` (delivery to the requester never finished) is shown as not
+delivered and cannot be kept; when the consents cannot be listed, nothing is removed;
+after the call the page reports the consents that actually survived. Tests: `[DCH21]`
+(keep path), `[DCH22]` (drop path, withdrawal marker), `[DCH23]` (foreign id refused,
+nothing changed), `[DCH24]` (markers cannot be forged or erased through the API),
+`[DDK07]` (withdrawal vs confirmation markers), `[APB08]`..`[APB12]` (server-owned field
+hook); app-web-user-account `[DKP7]` (undelivered grant cannot be kept), `[DKP8]`
+(listing failure removes nothing).
 
 ### rc.32 (issue #145): consent invites in the authorisation request
 
@@ -76,6 +123,27 @@ show that a carer acted.
   Decline, never implied by approving the app access, and accepts them before granting
   the app access. Outcomes returned to the app are hints; the authoritative record is
   the accept event on the subject's account.
+
+**As shipped in rc.32 (`6496ffbb`).** `POST /reg/access` accepts `cmcInvites: [{
+capabilityUrl, mandatory?, for? }]`: 1 to 8 entries, each `capabilityUrl` an absolute
+http(s) URL of at most 2048 characters, `mandatory` boolean (default `false`), `for`
+`'self'` (default) or `'target'`; anything else `400 invalid-parameters`; stored
+normalised, echoed on the 201 answer (the detection signal: an older core drops the
+field) and on NEED_SIGNIN; the request size ceiling still applies. With `ACCEPTED` the
+page posts one outcome per invite under `cmcInvites` (`{ acceptEventId,
+dataGrantAccessId?, acceptedFor?: 'self' }`, `{ declined: true }` or `{ reason }`);
+the core checks length and shape before any write, refuses them on another status or
+on a request without invites, stores them as `cmcInviteOutcomes` (never read from the
+posted body) and serves them as `cmcInvites` in every ACCEPTED answer, inline or
+hand-off. Two reserved `reasonId`s on REFUSED: `REFUSED_MANDATORY_CONSENT` (a mandatory
+invite declined) and `MANDATORY_CONSENT_FAILED` (a mandatory invite could not be
+accepted). Reference account app 0.11.0: decide, then accept (mandatory first), then
+grant; each invite its own block with its own Approve and Decline; declines answered
+with `consent/refuse-cmc`; `for: 'target'` accepted with the delegate token on the
+managed account. Capability URLs stay in the request (core memory only, at most one
+hour). Tests: `[RCI1]`..`[RCI9]`; app-web-user-account `[ACI2]` (declined mandatory
+refuses before any write), `[ACI14]` (declines answered with a refusal before the
+grant).
 
 ## Affected matrix rows
 
@@ -105,4 +173,12 @@ delegation") and `context/cmc-consent-primitives.md` (gates section).
 
 The chips carry no `backlog:` key: the work is delivered by scheduled platform releases,
 not a backlog file, and `planned.backlog` is optional in the schema. The `tracking_url`
-will point at the v2 board card once it exists.
+pointed at the v2 board card
+(https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555).
+
+**Discharged 2026-10-01.** Every chip above is removed from the rows: rc.30 on
+`gdpr.Art.7`, `gdpr.Art.8`, `hipaa-security.164.312(a)(1)`, `iso-27001.A.5.15`; rc.31 on
+`gdpr.Art.7` and `gdpr.Art.8`; rc.32 on `gdpr.Art.7`. No tier shifted: `gdpr.Art.7` was
+already at the top tier, and the `gdpr.Art.8` `pryv_effort_saved` move medium to high
+named above is left to the next review pass of that row. The row-by-row walk, with the
+test codes added, is in `UPDATE-TRIGGERS.md` Section A under `CARER-CONSENT-LINEAGE`.

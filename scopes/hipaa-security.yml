@@ -330,14 +330,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation]
-    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH14, OE27]
-    planned:
-      - kind: feature
-        summary: "Cross-account consent grants accepted by a delegate carry the delegation lineage and are revoked with it; CMC accept leaves the refused grant paths"
-        proposal: proposals/carer-consent-lineage.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
-        eta_release: 2.0.0-rc.30
-        impact: low
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27]
     overview: |
       Per-stream permissions are enforced at every API call; an access
       can read or write only the streams its `permissions[]` lists, at
@@ -396,9 +389,24 @@ requirements:
       (`clientData.delegation.kind: 'delegated-child'`) `[DCH01]`,
       `[DCH03]`, and removing the delegate deletes every access granted
       through the delegation, at any depth, and nothing else `[DCH12]`.
-      Grant paths that cannot yet record the lineage (OAuth2 consent,
-      CMC accept / scope-update / offer) refuse a delegation-derived
-      token `[DCH14]`, `[OE27]`. In open-pryv.io 2.0.0-rc.23.
+      In open-pryv.io 2.0.0-rc.23. The same rule covers a cross-account
+      (CMC) data grant a delegate accepts for the controlled account
+      (open-pryv.io 2.0.0-rc.30): the grant carries the lineage
+      attribute and `access-info` names the delegate `[DCH15]`, the
+      accept event records the approving delegate, server-stamped and
+      not client-settable `[DCH16]`, and the detach deletes the grant
+      before it answers, the requester being notified by
+      `consent/revoke-cmc` `[DCH18]`. The one exception is explicit:
+      since open-pryv.io 2.0.0-rc.31 the individual, detaching the
+      delegate through a genuine login, may keep named CMC data grants
+      that delegate gave (`keepAccessIds`); a kept grant loses the
+      lineage attribute and becomes the individual's own `[DCH21]`, a
+      list naming any other access is refused whole before any change
+      `[DCH23]`, and every other access granted through the delegation
+      is deleted as before. Grant paths that still cannot
+      record the lineage (OAuth2 consent, publishing a CMC offer,
+      widening a CMC grant) refuse a delegation-derived token
+      `[DCH17]`, `[OE27]`.
 
   - ref: 164.312(a)(2)(i)
     title: Unique user identification, Required

@@ -686,14 +686,15 @@ added prose awaits the next review pass):
 | iso-27001 | A.5.16 | lifecycle of app identities a delegate authorizes | `DCH02`, `DCH12` |
 
 No `planned:` chips and no proposal mirror: shipped work. Stamping the lineage
-on the CMC accept path (which lifts the `consent/accept-cmc` refusal) is now
-**scheduled**: see `CARER-CONSENT-LINEAGE` just below, which carries the chips
-on `gdpr.Art.7`, `gdpr.Art.8`, `hipaa-security.164.312(a)(1)` and
-`iso-27001.A.5.15`. Lifting the OAuth2 refusal (`[OE27]`) and the
+on the CMC accept path (which lifts the `consent/accept-cmc` refusal) has since
+**shipped** in open-pryv.io 2.0.0-rc.30 (`9ba9c78c`): see `CARER-CONSENT-LINEAGE`
+just below, whose rc.30 rows were walked on 2026-10-01 (`[DCH14]` replaced by
+`[DCH15]`..`[DCH18]` on `gdpr.Art.7`, `hipaa-security.164.312(a)(1)` and
+`iso-27001.A.5.15`). Lifting the OAuth2 refusal (`[OE27]`) and the
 `consent/request-cmc` / `consent/scope-update-cmc` refusals is still not
 scheduled.
 
-### `CARER-CONSENT-LINEAGE` (scheduled: open-pryv.io 2.0.0-rc.30, rc.31, rc.32)
+### `CARER-CONSENT-LINEAGE` (SHIPPED in open-pryv.io 2.0.0-rc.30 `9ba9c78c`, rc.31 `b77320df`, rc.32 `6496ffbb`; all chips discharged, rows walked 2026-10-01)
 
 **Where the work lives**: `open-pryv.io/components/cmc/` (accept handler,
 a stamping hook for `content.approvedBy`), `components/delegation/` (lineage
@@ -705,29 +706,108 @@ https://github.com/pryv/open-pryv.io/issues/143 (rc.30),
 https://github.com/pryv/open-pryv.io/issues/144 (rc.31),
 https://github.com/pryv/open-pryv.io/issues/145 (rc.32).
 
-| Scope | Ref | Kind | Impact | Release | After shipping |
-|---|---|---|---|---|---|
-| gdpr | Art.7 | feature | medium | rc.30 | delegate-given cross-account consent: `approvedBy` on the accept event, lineage on the grant, revoked with notification at detach; `[DCH14]` replaced by the new tests, `[OE27]` kept |
-| gdpr | Art.7 | feature | low | rc.31 | withdrawability: owner review at detach, nothing kept by default, `ownerConfirmedAt` |
-| gdpr | Art.7 | feature | low | rc.32 | §2: consent invites decided one by one inside the authorisation request |
-| gdpr | Art.8 | feature | medium | rc.30 | the parent accepts a cross-account consent for the child, recorded and ended with parental control; `pryv_effort_saved` may move medium → high |
-| gdpr | Art.8 | feature | medium | rc.31 | owner reclaim at majority covers the parent's consents (reviewed detach) |
-| hipaa-security | 164.312(a)(1) | feature | low | rc.30 | CMC accept leaves the refusal list; the CMC data grant carries lineage and ends with the delegation |
-| iso-27001 | A.5.15 | feature | low | rc.30 | same correction as 164.312(a)(1) |
+**rc.30 part: SHIPPED** in open-pryv.io 2.0.0-rc.30 (release commit
+`9ba9c78c`; feature commits `87bbdfb1`, `d495d5d4`, `29836b29`, merge
+`bc7410e0`). A delegate token may write `consent/accept-cmc` for the managed
+account; the data grant carries `clientData.delegation` (reported by
+`access-info`), the accept event carries the server-stamped
+`content.approvedBy`; detach deletes the grant (hard delete, as every CMC
+revoke) and forwards `consent/revoke-cmc` to the requester (best-effort); an
+accept in progress when the delegation ends fails with
+`cmc-handler-delegation-ended`. Request and scope-update stay owner-only. The
+subject-side record of a consent ended by a detach is the accept event
+(`approvedBy`, `dataGrantAccessId`) plus the audit row of
+`delegations.detachDelegate`; the per-grant withdrawal marker comes with the
+reviewed detach.
 
-**When to walk the rows**: when each release is tagged (not at merge), walk the
-rows of that release, discharge their chips, and replace `[DCH14]` in `tests:`
-by the test codes the release adds. At rc.30 also walk, without a chip:
-`gdpr.Art.32` (Delegate-account control bullet), `hipaa-privacy.164.502(g)`,
-`hipaa-security.164.312(b)`, `soc2.CC6.2`, `soc2.CC6.3`, `iso-27001.A.5.16`,
-and update `context/delegation-model.md` ("Accesses granted through a
-delegation") and `context/cmc-consent-primitives.md` (gates section). Section B
-walks: B.1 (new `delegations.detachDelegate` parameter `keepAccessIds`,
-`/reg/access` `cmcInvites`, error ids `cmc-handler-delegation-ended` and the
-invalid keep list), B.8 (the gated set on consent-bearing writes changes).
+Rows walked 2026-10-01 (chips of rc.30 discharged, `[DCH14]` replaced by
+`[DCH15]`..`[DCH18]` in `tests:`, `[OE27]` kept; no tier shift; `reviewed_at`
+left unchanged so the added prose awaits the next review pass):
+
+| Scope | Ref | What changed | Tests |
+|---|---|---|---|
+| gdpr | Art.7 | rc.30 chip discharged; delegate-given cross-account consent paragraph (lineage, `approvedBy`, ends at detach with notice, subject-side record); withdrawal paragraph notes that CMC teardown paths hard-delete the grant, so the record is the `consent/*` events plus the audit trail | `DCH15`, `DCH16`, `DCH17`, `DCH18` (replacing `DCH14`) |
+| gdpr | Art.8 | rc.30 chip discharged; "The parent accepts a cross-account consent for the child" paragraph | `DCH15`, `DCH16`, `DCH18` added |
+| gdpr | Art.32 | (no chip) Delegate-account control bullet: CMC accept left the refused paths | (none) |
+| hipaa-security | 164.312(a)(1) | chip discharged; "Apps granted access through a delegation" paragraph covers CMC data grants | `DCH15`..`DCH18` (replacing `DCH14`) |
+| iso-27001 | A.5.15 | chip discharged; same correction as 164.312(a)(1) | `DCH15`..`DCH18` (replacing `DCH14`) |
+
+Walked without change (their text does not state the CMC accept refusal and
+their claim does not shift): `hipaa-privacy.164.502(g)`,
+`hipaa-security.164.312(b)`, `soc2.CC6.2`, `soc2.CC6.3`, `iso-27001.A.5.16`.
+Context notes updated: `context/delegation-model.md` (new "Cross-account
+consents a delegate gives" paragraph in "Accesses granted through a
+delegation"; refusal list narrowed) and `context/cmc-consent-primitives.md`
+(gates section; Art.7 withdrawability record shape for the CMC hard-delete
+paths). Section B: B.8 walked (gated set changed, see the 2026-10-01 entry
+there); B.1: new error id `cmc-handler-delegation-ended`, new accept-event
+field `content.approvedBy`, no new method.
+
+**rc.31 part: SHIPPED** in open-pryv.io 2.0.0-rc.31 (release commit
+`b77320df`; reference account app app-web-user-account 0.10.0 `374d29e`,
+superseded by 0.11.0). `delegations.detachDelegate { username,
+keepAccessIds? }`: the account holder keeps named consent grants the delegate
+gave, nothing kept by default; an id that is not a consent grant of the
+relationship being removed refuses the whole call before any write (`400`,
+`delegation-invalid-keep-list`). A kept grant loses `clientData.delegation`
+and its accept event records `content.ownerConfirmedAt`; a dropped grant is
+deleted and notified as at rc.30 and its accept event records
+`content.withdrawal = { at, by: 'delegation-detach', relId }`. `approvedBy`,
+`ownerConfirmedAt` and `withdrawal` are server-owned (dropped on create, kept
+on update, never added by an update, any token). Page rule in the reference
+account app: nothing preselected, an undelivered consent cannot be kept, a
+listing failure removes nothing.
+
+**rc.32 part: SHIPPED** in open-pryv.io 2.0.0-rc.32 (release commit
+`6496ffbb`, merge `f262854b`; reference account app 0.11.0 `791e3ae`).
+`POST /reg/access` accepts `cmcInvites` (1 to 8 entries, stored normalised,
+echoed on 201 and NEED_SIGNIN); outcomes posted as `cmcInvites` with
+`ACCEPTED`, stored as `cmcInviteOutcomes` (never read from the body), served
+as `cmcInvites` in every ACCEPTED answer; reserved `reasonId`s
+`REFUSED_MANDATORY_CONSENT` and `MANDATORY_CONSENT_FAILED` on REFUSED. The
+reference account app decides, accepts, then grants, and answers declines with
+`consent/refuse-cmc`.
+
+Rows walked 2026-10-01 for rc.31 and rc.32 (every remaining chip discharged:
+no `planned:` entry for this proposal is left in `scopes/`; no tier shift;
+`reviewed_at` left unchanged so the added prose awaits the next review pass;
+page tests of app-web-user-account are cited in prose only, since `tests:`
+resolves against open-pryv.io):
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.7 | rc.31 + rc.32 chips discharged; new withdrawability paragraph (review at detach, nothing kept by default, undelivered consents cannot be kept, `ownerConfirmedAt` / `withdrawal`, server-owned record, `delegation-invalid-keep-list`); new §2 paragraph on consent invites in the authorisation request (decided one by one, decide-accept-grant order, reserved `reasonId`s, outcomes are hints stored under a name the poster cannot write; Art.7(4) `mandatory` left to you); §3 teardown note points at the withdrawal marker; page tests `[DKP7]`, `[DKP8]`, `[ACI2]`, `[ACI14]` in prose | `DCH21`..`DCH24`, `DDK07`, `APB08`..`APB12`, `RCI1`..`RCI9` |
+| gdpr | Art.8 | rc.31 chip discharged; "Owner reclaim at majority covers the parent's consents" paragraph; `for: 'target'` invites sentence. `pryv_effort_saved` medium → high (named in the chip as possible) NOT applied: left to the row's next review | `DCH21`..`DCH24`, `DDK07`, `RCI1` |
+| gdpr | Art.32 | (no chip) Delegate-account control bullet: a CMC grant is deleted with the delegation unless the holder keeps it | (none) |
+| hipaa-security | 164.312(a)(1) | (no chip) "Apps granted access through a delegation": the keep-list exception to "detach deletes every access granted through the delegation" | `DCH21`, `DCH23` |
+| iso-27001 | A.5.15 | (no chip) same exception | `DCH21`, `DCH23` |
+
+Walked without change: `soc2.CC6.2`, `soc2.CC6.3`, `iso-27001.A.5.16`,
+`hipaa-privacy.164.502(g)` (their detach claims are about app accesses a
+delegate authorizes, which the keep list cannot keep: they still end with the
+delegation), `hipaa-security.164.312(b)` (the detach is audited as before).
+Context notes updated: `context/delegation-model.md` (review at detach,
+server-owned record, what remains after detach, consent invites for a managed
+account), `context/cmc-consent-primitives.md` (consent invites in the auth
+request; gates section; Art.7 withdrawability: the withdrawal marker),
+`context/cross-border-platformdb-implications.md` (the core-local `/reg/access`
+state may now hold invite capability URLs).
+
+Section B walks: **B.1** done. rc.31: new parameter
+`delegations.detachDelegate.keepAccessIds`, new error id
+`delegation-invalid-keep-list` (`DelegationErrorIds.INVALID_KEEP_LIST`), new
+server-owned accept-event fields `content.ownerConfirmedAt` and
+`content.withdrawal`, no new method. rc.32: new `/reg/access` request field
+`cmcInvites` and ACCEPTED outcome field (stored `cmcInviteOutcomes`), reserved
+`reasonId`s, no new method. The B.1 row families were checked: only
+`hipaa-security.164.312(a)(1)` (access control) carries a claim the keep list
+touches (above); the DSAR, rectification, erasure, restriction and audit
+families, and the SOC 2 parallels, cite neither surface. B.2 (no new
+event-type format: `consent/accept-cmc` gains content fields), B.3, B.4, B.6,
+B.9, B.10: none. B.8: the gated set is unchanged since rc.30.
 
 **Tracking card**: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
-(set as `tracking_url` on every chip above).
+(was the `tracking_url` of every chip of this slug).
 
 Proposal: `proposals/carer-consent-lineage.md`.
 
@@ -936,6 +1016,20 @@ access_denied`), because those grants would outlive the delegation. Rows
 refreshed: `gdpr.Art.7` + `Art.32`, `hipaa-security.164.312(a)(1)`,
 `iso-27001.A.5.15`; `context/cmc-consent-primitives.md` gates section. See the
 follow-up under `ACCOUNT-DELEGATION` in Section A.
+
+**2026-10-01, `consent/accept-cmc` leaves the delegation-gated set**
+(open-pryv.io 2.0.0-rc.30, `9ba9c78c`): a delegate token may now write
+`consent/accept-cmc` for the managed account, because the data grant it mints
+records the delegation lineage (`clientData.delegation`) and the accept event
+records the delegate (`content.approvedBy`, server-stamped); the grant is
+deleted at detach and the requester notified. The gated set is now
+`consent/request-cmc` + `consent/scope-update-cmc`
+(`delegation-grant-requires-owner`) plus OAuth2 consent (`403 access_denied`).
+An app or shared access the delegate granted is still refused on accept by the
+CMC personal-token gate. Rows refreshed: `gdpr.Art.7`, `gdpr.Art.8`,
+`gdpr.Art.32`, `hipaa-security.164.312(a)(1)`, `iso-27001.A.5.15`;
+`context/cmc-consent-primitives.md` gates section;
+`context/delegation-model.md`. See `CARER-CONSENT-LINEAGE` in Section A.
 
 ### B.9: OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
 

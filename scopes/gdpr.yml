@@ -398,26 +398,7 @@ requirements:
     reviewed_at: "2026-07-18"
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md]
-    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH14, OE27]
-    planned:
-      - kind: feature
-        summary: "A delegate may accept a cross-account consent for the account it manages; the accept event names the delegate and the grant carries lineage, ends with the delegation and notifies the requester"
-        proposal: proposals/carer-consent-lineage.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
-        eta_release: 2.0.0-rc.30
-        impact: medium
-      - kind: feature
-        summary: "Reviewed detach: the account holder keeps or drops each consent a delegate gave before detaching it, nothing kept by default"
-        proposal: proposals/carer-consent-lineage.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
-        eta_release: 2.0.0-rc.31
-        impact: low
-      - kind: feature
-        summary: "Consent invites inside the authorisation request, each decided on its own and never implied by approving the app access"
-        proposal: proposals/carer-consent-lineage.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
-        eta_release: 2.0.0-rc.32
-        impact: low
+    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, OE27]
     overview: |
       The access Pryv mints when your user grants permission IS your
       durable consent record, versioned permissions + clientData
@@ -437,7 +418,15 @@ requirements:
       with narrower `permissions` (scope-down). Both bump the access
       serial + snapshot the pre-mutation state. Cross-account:
       `consent/revoke-cmc` triggers symmetric teardown on both sides
-      via the CMC plugin.
+      via the CMC plugin. The CMC teardown paths (a `consent/revoke-cmc`
+      revoke, an accept rolled back, a delegation detach) remove the
+      data grant outright rather than marking it deleted, so for those
+      withdrawals the record you demonstrate is the `consent/*` events
+      (the accept on the subject's account, the request on the
+      requester's) plus the audit trail, not the access version chain.
+      For a consent a delegation detach ends, the accept event also
+      records the end itself (`content.withdrawal`, see below).
+      See `context/cmc-consent-primitives.md`.
 
       Intelligible form (§2): you write the UX (app-web-auth3 template
       is a starting point). Pryv enforces the technical contract; your
@@ -469,6 +458,40 @@ requirements:
       sites). A check that cannot be performed is refused, never waved
       through. Requests that carry no `consent` object behave exactly as
       before, so this is additive for existing integrations.
+
+      Consent invites in the same authorisation request (§2 "clearly
+      distinguishable", open-pryv.io 2.0.0-rc.32, `6496ffbb`): an app
+      may ask the user, in the one sign-in, to also answer the
+      cross-account (CMC) consent invites it received, by adding
+      `cmcInvites` (1 to 8 entries: the invite's capability URL,
+      `mandatory`, and `for` the user's own account or an account the
+      user manages through delegation) to the auth request. Pryv
+      validates the list when the request is created, stores it
+      normalised and echoes it on the 201 answer and on the poll the
+      authentication page reads `[RCI1]`, `[RCI2]`, `[RCI6]`. The
+      reference account app (app-web-user-account 0.11.0) presents
+      each invite as its own block with its own Approve and Decline,
+      never implied by approving the app access; it decides, then
+      accepts the approved invites (mandatory ones first), then grants
+      the app access, and answers each declined invite to its requester
+      with `consent/refuse-cmc`. A declined mandatory invite ends the
+      request refused with `reasonId: 'REFUSED_MANDATORY_CONSENT'`
+      before anything is written, and a mandatory invite that could not
+      be accepted ends it with `reasonId: 'MANDATORY_CONSENT_FAILED'`
+      (app-web-user-account tests `[ACI2]`, `[ACI14]`). The page posts
+      one outcome per invite with the acceptance; Pryv checks their
+      number and shape before any write, refuses them on any other
+      status, stores them under a name the poster cannot write
+      directly, and serves them back to the app in the accepted answer
+      `[RCI3]`, `[RCI4]`, `[RCI5]`, `[RCI7]`, `[RCI8]`, `[RCI9]`. These
+      outcomes are a hint to the app: the record of each consent is the
+      accept event on the subject's account and the request event on
+      the requester's, as for any CMC consent, and `mandatory` is
+      enforced by the authentication page, not re-checked by the core.
+      What stays on your plate: a deployment using its own auth UI must
+      present the invites the same way, and whether making an invite
+      `mandatory` for an app access is compatible with consent being
+      freely given (Art.7(4)) is your determination.
 
       Second consent path, OAuth2 authorization (§1, §4), where your
       user authorises a delegated app through Pryv's OAuth2
@@ -504,14 +527,71 @@ requirements:
       delegate; the grant is checked against the offer like any other
       `[DCH13]`. The subject can withdraw it like any access, and
       removing the delegate withdraws every grant made through it
-      `[DCH12]`. The paths that cannot yet record that lineage refuse
-      a delegation-derived token, so a delegate cannot make a grant
-      that outlives the delegation: OAuth2 consent answers `403
-      access_denied` `[OE27]`, and writing `consent/accept-cmc`,
-      `consent/scope-update-cmc` or `consent/request-cmc` answers
-      `delegation-grant-requires-owner` `[DCH14]`. These gates are in
-      open-pryv.io 2.0.0-rc.23 (`91b06363`, `ef0a3f75`,
+      `[DCH12]`. In open-pryv.io 2.0.0-rc.23 (`91b06363`, `ef0a3f75`,
       `5943ca0b`).
+
+      A delegate may also give a cross-account consent (CMC) for the
+      account it manages, writing `consent/accept-cmc` with its
+      delegate token (open-pryv.io 2.0.0-rc.30, `9ba9c78c`). Pryv
+      records it on the subject's account, in two places. The data
+      grant carries the same lineage attribute
+      (`clientData.delegation`, naming the relationship and the
+      delegate, taken from the authenticated token, never from the
+      request), and `access-info` with the grant's token reports it, so
+      your counterparty can tell a delegate gave the consent
+      `[DCH15]`. The accept event records who approved in
+      `content.approvedBy` (the delegate and the relationship), stamped
+      by the server: a client cannot supply, change or remove it, and an
+      accept the account holder writes carries none `[DCH16]`. The
+      consent ends with the delegation unless the account holder keeps
+      it at detach (below): detaching the delegate deletes
+      the grant before the detach answers (a hard delete, as every CMC
+      revoke) and the requester receives `consent/revoke-cmc`
+      (best-effort, never holding the detach) `[DCH18]`. An accept
+      still in progress when the delegation ends mints no grant
+      (`cmc-handler-delegation-ended`). After a detach, the subject-side
+      record of such a consent is the accept event (`approvedBy`,
+      `dataGrantAccessId`, and the outcome of the review below) plus the
+      audit row of `delegations.detachDelegate`.
+
+      Withdrawability of a delegate's consents at detach (§3,
+      open-pryv.io 2.0.0-rc.31, `b77320df`): before a delegate is
+      detached, the account holder reviews each cross-account consent
+      that delegate gave and keeps or withdraws it, with one call,
+      `delegations.detachDelegate { username, keepAccessIds? }`.
+      Nothing is kept by default: a detach without `keepAccessIds`
+      withdraws every such consent. Every id in the list must be a
+      consent grant given through the relationship being removed,
+      otherwise the whole call is refused (`400`,
+      `delegation-invalid-keep-list`) before anything is written
+      `[DCH23]`. A kept consent loses its delegation lineage and becomes
+      the account holder's own (`access-info` no longer reports a
+      delegation, the requester is told nothing), and its accept event
+      records `content.ownerConfirmedAt` `[DCH21]`. A consent not kept
+      is deleted, its requester receives `consent/revoke-cmc`, and its
+      accept event records `content.withdrawal = { at, by:
+      'delegation-detach', relId }`, so every consent a delegate gave
+      carries its own end on the subject's account `[DCH22]`, `[DDK07]`.
+      `approvedBy`, `ownerConfirmedAt` and `withdrawal` are written by
+      the server only: no token, the account holder's included, can
+      write, change or erase them through the API (dropped on create,
+      kept as stored on update, never added by an update) `[DCH24]`,
+      `[APB08]` to `[APB12]`. The reference account app opens this
+      review with nothing preselected, and a consent whose delivery to
+      the requester never completed is listed as not delivered and
+      cannot be kept, so it is withdrawn; if the consents cannot be
+      listed, nothing is removed (app-web-user-account tests `[DKP7]`,
+      `[DKP8]`). A deployment using its own account UI must offer the
+      same review.
+
+      The paths that still cannot record the lineage refuse a
+      delegation-derived token, so a delegate cannot make a grant that
+      outlives the delegation: publishing an offer
+      (`consent/request-cmc`) and widening a grant
+      (`consent/scope-update-cmc`) answer
+      `delegation-grant-requires-owner` `[DCH17]`, and OAuth2 consent
+      answers `403 access_denied` `[OE27]`. Whether a given delegate may
+      consent for the account it manages remains your determination.
     technical: |
       - Snapshot semantics: `context/access-versioning.md` (full head
         clone into history row per update).
@@ -619,20 +699,7 @@ requirements:
     reviewed_by: Pryv compliance
     reviewed_at: "2026-09-15"
     pryv_primitives: [access, permissions, delegation, clientData, event]
-    tests: [DCH01, DCH02, DCH05, DCH12]
-    planned:
-      - kind: feature
-        summary: "The parent may accept a cross-account consent for the child; the record names the parent and the consent ends with parental control"
-        proposal: proposals/carer-consent-lineage.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
-        eta_release: 2.0.0-rc.30
-        impact: medium
-      - kind: feature
-        summary: "Owner reclaim at majority extends to consents: the young person reviews the parent's consents at detach and keeps only what they choose"
-        proposal: proposals/carer-consent-lineage.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=259442555
-        eta_release: 2.0.0-rc.31
-        impact: medium
+    tests: [DCH01, DCH02, DCH05, DCH12, DCH15, DCH16, DCH18, DCH21, DCH22, DCH23, DCH24, DDK07, RCI1]
     overview: |
       Pryv still neither knows nor validates a subject's age, age +
       parental-authority verification happens at your app's
@@ -691,6 +758,43 @@ requirements:
       `[DCH12]`, so no parental consent outlives parental control.
       Whether a given parent may consent for a given app remains your
       determination. In open-pryv.io 2.0.0-rc.23.
+
+      **The parent accepts a cross-account consent for the child.**
+      When a study or another account asks the child's account to share
+      data through cross-account messaging (CMC), the parent can give
+      that consent with their delegate token, without signing in as the
+      child (open-pryv.io 2.0.0-rc.30). The record is on the child's
+      account: the data grant carries the lineage attribute naming the
+      parent, and the requester's `access-info` reports it `[DCH15]`;
+      the accept event names the parent in `content.approvedBy`,
+      stamped by the server and impossible for a client to forge
+      `[DCH16]`. An app's authorisation request can carry such consent
+      invites for the child's account (`cmcInvites` with `for:
+      'target'`, open-pryv.io 2.0.0-rc.32) `[RCI1]`: the reference
+      account app accepts them with the parent's delegate token on the
+      child's account, so they are recorded exactly the same way, each
+      decided on its own.
+
+      **Owner reclaim at majority covers the parent's consents.** When
+      the young person detaches the guardian, they review, consent by
+      consent, the cross-account consents the guardian gave, and keep
+      only the ones they choose (`delegations.detachDelegate` with
+      `keepAccessIds`, open-pryv.io 2.0.0-rc.31). Nothing is kept by
+      default, and a keep list naming anything but a consent this
+      guardian gave is refused whole, before any change `[DCH23]`. A
+      kept consent becomes the young person's own: the lineage is
+      removed and the accept event records `ownerConfirmedAt`, with
+      `approvedBy` kept as history `[DCH21]`. Every other consent is
+      deleted at once, the requester is told (`consent/revoke-cmc`,
+      best-effort) `[DCH18]`, `[DCH22]`, and its accept event records
+      the withdrawal (`content.withdrawal`, naming the detach) `[DDK07]`.
+      These markers are server-written and cannot be forged or erased
+      through the API by the parent or anyone else `[DCH24]`. The accept
+      events and the audit row of the detach stay on the child's account
+      as the record of each consent, of who gave it, and of how it
+      ended. App accesses the guardian granted are not part of the
+      review: they end with the delegation, as above. Publishing offers
+      and widening a grant stay with the account holder.
 
       **Consent-artefact conventions (operator-side editorial
       discipline; no Pryv enforcement) still apply on top of the
@@ -1727,8 +1831,13 @@ requirements:
           owner-equivalent token; that access carries a non-forgeable
           lineage attribute and is revoked with the delegation, and the
           grant paths that cannot record the lineage (OAuth2 consent,
-          CMC accept / scope-update / offer) refuse delegation-derived
-          tokens (open-pryv.io 2.0.0-rc.23). See `context/delegation-model.md`.
+          CMC scope-update / offer) refuse delegation-derived tokens
+          (open-pryv.io 2.0.0-rc.23). Since open-pryv.io 2.0.0-rc.30 a
+          delegate may accept a CMC consent for the controlled account:
+          the data grant carries the same lineage and is deleted with
+          the delegation, unless the account holder, reviewing the
+          delegate's consents at detach, keeps it as their own
+          (open-pryv.io 2.0.0-rc.31). See `context/delegation-model.md`.
         - Credential hand-off: IMPLEMENTED, the shared-secrets
           endpoints (`open-pryv.io/components/shared-secrets/`) hand a
           credential to a third party by a one-time random key instead
