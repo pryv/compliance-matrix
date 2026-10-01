@@ -399,6 +399,22 @@ requirements:
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md]
     tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH14, OE27]
+    planned:
+      - kind: feature
+        summary: "A delegate may accept a cross-account consent for the account it manages; the accept event names the delegate and the grant carries lineage, ends with the delegation and notifies the requester"
+        proposal: proposals/carer-consent-lineage.md
+        eta_release: 2.0.0-rc.30
+        impact: medium
+      - kind: feature
+        summary: "Reviewed detach: the account holder keeps or drops each consent a delegate gave before detaching it, nothing kept by default"
+        proposal: proposals/carer-consent-lineage.md
+        eta_release: 2.0.0-rc.31
+        impact: low
+      - kind: feature
+        summary: "Consent invites inside the authorisation request, each decided on its own and never implied by approving the app access"
+        proposal: proposals/carer-consent-lineage.md
+        eta_release: 2.0.0-rc.32
+        impact: low
     overview: |
       The access Pryv mints when your user grants permission IS your
       durable consent record, versioned permissions + clientData
@@ -601,6 +617,17 @@ requirements:
     reviewed_at: "2026-09-15"
     pryv_primitives: [access, permissions, delegation, clientData, event]
     tests: [DCH01, DCH02, DCH05, DCH12]
+    planned:
+      - kind: feature
+        summary: "The parent may accept a cross-account consent for the child; the record names the parent and the consent ends with parental control"
+        proposal: proposals/carer-consent-lineage.md
+        eta_release: 2.0.0-rc.30
+        impact: medium
+      - kind: feature
+        summary: "Owner reclaim at majority extends to consents: the young person reviews the parent's consents at detach and keeps only what they choose"
+        proposal: proposals/carer-consent-lineage.md
+        eta_release: 2.0.0-rc.31
+        impact: medium
     overview: |
       Pryv still neither knows nor validates a subject's age, age +
       parental-authority verification happens at your app's

@@ -77,6 +77,12 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation]
     tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH14, OE27]
+    planned:
+      - kind: feature
+        summary: "Cross-account consent grants accepted by a delegate carry the delegation lineage and are removed with it; CMC accept leaves the refused grant paths"
+        proposal: proposals/carer-consent-lineage.md
+        eta_release: 2.0.0-rc.30
+        impact: low
     overview: |
       Logical access control is enforced at the API surface by the
       access + permissions primitives; every read/write request is

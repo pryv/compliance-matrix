@@ -686,9 +686,50 @@ added prose awaits the next review pass):
 | iso-27001 | A.5.16 | lifecycle of app identities a delegate authorizes | `DCH02`, `DCH12` |
 
 No `planned:` chips and no proposal mirror: shipped work. Stamping the lineage
-on the OAuth2 and CMC grant paths (which would lift the refusals) is not
-scheduled; if it is, file it as a backlog item with chips on `gdpr.Art.7` and
-`hipaa-security.164.312(a)(1)`.
+on the CMC accept path (which lifts the `consent/accept-cmc` refusal) is now
+**scheduled**: see `CARER-CONSENT-LINEAGE` just below, which carries the chips
+on `gdpr.Art.7`, `gdpr.Art.8`, `hipaa-security.164.312(a)(1)` and
+`iso-27001.A.5.15`. Lifting the OAuth2 refusal (`[OE27]`) and the
+`consent/request-cmc` / `consent/scope-update-cmc` refusals is still not
+scheduled.
+
+### `CARER-CONSENT-LINEAGE` (scheduled: open-pryv.io 2.0.0-rc.30, rc.31, rc.32)
+
+**Where the work lives**: `open-pryv.io/components/cmc/` (accept handler,
+a stamping hook for `content.approvedBy`), `components/delegation/` (lineage
+helper, detach sweep, `keepAccessIds`), `components/api-server/src/methods/events.ts`
+(the delegation guard set), `components/api-server/src/routes/reg/access.ts`
+(`cmcInvites`). Delivered by scheduled platform releases, not a backlog file,
+so the chips carry no `backlog:` key. Public issues:
+https://github.com/pryv/open-pryv.io/issues/143 (rc.30),
+https://github.com/pryv/open-pryv.io/issues/144 (rc.31),
+https://github.com/pryv/open-pryv.io/issues/145 (rc.32).
+
+| Scope | Ref | Kind | Impact | Release | After shipping |
+|---|---|---|---|---|---|
+| gdpr | Art.7 | feature | medium | rc.30 | delegate-given cross-account consent: `approvedBy` on the accept event, lineage on the grant, revoked with notification at detach; `[DCH14]` replaced by the new tests, `[OE27]` kept |
+| gdpr | Art.7 | feature | low | rc.31 | withdrawability: owner review at detach, nothing kept by default, `ownerConfirmedAt` |
+| gdpr | Art.7 | feature | low | rc.32 | §2: consent invites decided one by one inside the authorisation request |
+| gdpr | Art.8 | feature | medium | rc.30 | the parent accepts a cross-account consent for the child, recorded and ended with parental control; `pryv_effort_saved` may move medium → high |
+| gdpr | Art.8 | feature | medium | rc.31 | owner reclaim at majority covers the parent's consents (reviewed detach) |
+| hipaa-security | 164.312(a)(1) | feature | low | rc.30 | CMC accept leaves the refusal list; the CMC data grant carries lineage and ends with the delegation |
+| iso-27001 | A.5.15 | feature | low | rc.30 | same correction as 164.312(a)(1) |
+
+**When to walk the rows**: when each release is tagged (not at merge), walk the
+rows of that release, discharge their chips, and replace `[DCH14]` in `tests:`
+by the test codes the release adds. At rc.30 also walk, without a chip:
+`gdpr.Art.32` (Delegate-account control bullet), `hipaa-privacy.164.502(g)`,
+`hipaa-security.164.312(b)`, `soc2.CC6.2`, `soc2.CC6.3`, `iso-27001.A.5.16`,
+and update `context/delegation-model.md` ("Accesses granted through a
+delegation") and `context/cmc-consent-primitives.md` (gates section). Section B
+walks: B.1 (new `delegations.detachDelegate` parameter `keepAccessIds`,
+`/reg/access` `cmcInvites`, error ids `cmc-handler-delegation-ended` and the
+invalid keep list), B.8 (the gated set on consent-bearing writes changes).
+
+**Tracking card**: to be filled when the v2 board card exists; then add its URL
+as `tracking_url` on every chip above.
+
+Proposal: `proposals/carer-consent-lineage.md`.
 
 ### `EMAIL-VERIFICATION` (SHIPPED: rows walked 2026-09-15)
 
