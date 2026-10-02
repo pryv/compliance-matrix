@@ -432,8 +432,8 @@ tooling (Syft + Grype for SBOM + image scan; CycloneDX artefact
 publishing); provenance + signing (cosign + SLSA attestation).
 Surfaced 2026-05-21 by supply-chain compliance gap-probing.
 
-Candidate tools: OWASP-ZAP / Snyk / Grype. OWASP-ZAP is DAST, not
-SCA: a candidate for separate web-app security testing, beyond the
+Candidate tools (implementer FAQ Q24): OWASP-ZAP / Snyk / Grype.
+OWASP-ZAP is DAST, not SCA: a candidate for separate web-app security testing, beyond the
 software-supply-chain scope.
 
 | Scope | Ref | Kind | Impact | After shipping |
