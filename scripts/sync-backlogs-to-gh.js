@@ -309,7 +309,7 @@ async function main () {
   console.log(`Target project: ${ORG} #${PROJECT_NUMBER}`);
   console.log('');
 
-  // Phase 1, discover matrix-relevant backlog slugs (chip references)
+  // Step 1, discover matrix-relevant backlog slugs (chip references)
   const allBacklogs = listBacklogFiles();
   const matrixSlugs = matrixRelevantSlugs();
   console.log(`Matrix-relevant backlog slugs (referenced by chips): ${matrixSlugs.size}`);
@@ -332,7 +332,7 @@ async function main () {
   }
   const inScope = relevant.filter(b => !isDxOnlyBacklog(b.path));
 
-  // Phase 2, discover existing tracking_url values across all scopes
+  // Step 2, discover existing tracking_url values across all scopes
   const knownTracking = new Map();   // SLUG → url
   const scopeFiles = listScopeFiles();
   for (const sf of scopeFiles) {
@@ -347,12 +347,12 @@ async function main () {
   }
   console.log('');
 
-  // Phase 3, discover existing GitHub issues
+  // Step 3, discover existing GitHub issues
   console.log('Fetching existing GitHub issues...');
   const existingIssues = listExistingComplianceIssues();
   console.log(`Found ${existingIssues.length} existing issues with [compliance-matrix] label or [V2] title.`);
 
-  // Phase 4, for each backlog, decide action
+  // Step 4, for each backlog, decide action
   const plan = [];   // {slug, action: 'map'|'create'|'skip', issueNumber?, issueUrl?, reason?}
   for (const b of inScope) {
     if (knownTracking.has(b.slug)) {
@@ -380,7 +380,7 @@ async function main () {
     plan.push({ slug: b.slug, action: 'create', titleLine: backlogTitleLine(b.path), path: b.path });
   }
 
-  // Phase 5, also discover BUGS.md orphan bugs
+  // Step 5, also discover BUGS.md orphan bugs
   const orphanBugs = parseBugsFile();
   console.log(`Found ${orphanBugs.length} orphan bug(s) in the orphan-bugs registry "Open" section.`);
   for (const bug of orphanBugs) {
@@ -393,7 +393,7 @@ async function main () {
     }
   }
 
-  // Phase 6, print plan
+  // Step 6, print plan
   console.log('');
   console.log('## Plan');
   console.log('');
@@ -425,7 +425,7 @@ async function main () {
     return;
   }
 
-  // Phase 7, apply
+  // Step 7, apply
   console.log('');
   console.log('## APPLYING...');
   console.log('');
@@ -461,7 +461,7 @@ async function main () {
     }
   }
 
-  // Phase 8, update scopes/*.yml with new tracking_url values
+  // Step 8, update scopes/*.yml with new tracking_url values
   console.log('');
   console.log('## Updating scopes/*.yml...');
   for (const sf of scopeFiles) {
