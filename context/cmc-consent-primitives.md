@@ -85,7 +85,8 @@ chain mirrors the negotiation history.
 
 For single-platform deployments where consent is given by the user to the
 operator's app (not to a third party), the same primitive applies but
-simpler: the user creates an access for the app via `app-web-auth3` flow;
+simpler: the user creates an access for the app through the auth flow
+(the `/auth` page of the account app, app-web-user-account);
 clientData can carry the consent text shown; permissions encode the scope.
 No `consent/*` events needed (the negotiation IS the local auth flow).
 

@@ -1,7 +1,7 @@
 # Implementer FAQ: gap-probing answers
 
-Q&A from the implementer-perspective gap-probing sessions on the
-matrix. Each entry pairs (a) the question a Pryv customer might ask
+Questions an implementer asks when evaluating the platform against
+the matrix, answered in dated rounds. Each entry pairs (a) the question a Pryv customer might ask
 during evaluation with (b) the answer + the matrix-side encoding
 that resulted. Each entry links to the commit on
 `pryv/compliance-matrix master` that recorded the decision.
@@ -1093,6 +1093,45 @@ itself works as documented; the matrix just needed to surface
 the regulatory framing correctly.
 
 **Commit:** *(this commit)*.
+
+### Q19: Consent withdrawal (GDPR Art.7(3)): does Pryv give the data subject a way to withdraw, or is that on the implementer?
+
+**Answer.** The withdrawal mechanism ships by default; the user
+interface around it is the implementer's. `DELETE /accesses/:id` is
+always available, and the data subject, with a personal token, can
+revoke any access granted on their account without the other
+party's participation, so withdrawal is as easy as the grant at the
+API level. Where and how the subject is offered that action (a
+"connected apps" page, an in-app button, a support procedure) is
+decided by the implementer; the reference account app
+(app-web-user-account) ships a connected-apps page that calls it.
+Cross-account (CMC) relationships add the `consent/revoke-cmc`
+signal so the counterparty is told (see
+`context/cmc-consent-primitives.md`).
+
+**Matrix encoding:** cited as "withdrawal API exists by default" in
+`context/privacy-by-design-and-default.md` (default 12) and on the
+`gdpr` withdrawal rows (`DELETE /accesses/:id` as the standard path,
+together with Q28).
+
+### Q20: DPIA (GDPR Art.35(7)): which parts can Pryv provide, and who writes section (d), the measures addressing the risks?
+
+**Answer.** The DPIA is the controller's document. Pryv supplies the
+building blocks an implementer cites in section (d): the platform
+defaults and architectural safeguards (per-subject segregation,
+access control independent of processes, per-subject audit), and the
+configuration that shows which of them are in force. The implementer
+assembles them into the safeguards inventory for their deployment,
+alongside their own measures (clinical logic, client-side
+classification, organisational controls). A read-only endpoint
+exposing the effective configuration, so the "which defaults are in
+force" claim can be proved rather than asserted, is planned (the
+`CONFIG-EFFECTIVE-EXPOSURE` backlog item).
+
+**Matrix encoding:** the composition recipes in
+`context/privacy-by-design-and-default.md` (Art.25 evidence pack)
+and `context/special-categories-operator-facilitated.md` (Art.9
+claim) cite this answer.
 
 ## Session 2026-05-21
 
