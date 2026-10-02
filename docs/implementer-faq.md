@@ -1566,10 +1566,9 @@ shifts F:Awareness Low → F:Evidence Medium.
 
 **Phase 2, Pipeline tooling** (~1.5 days):
 
-User-recommended tools (operator framing 2026-05-21): OWASP-ZAP,
-Snyk, Grype. Note OWASP-ZAP is a DAST proxy scanner, not a
-dependency tool, fits Phase 3 candidate as separate web-app
-security testing. Recommended Phase 2 stack:
+Candidate tools: OWASP-ZAP, Snyk, Grype. OWASP-ZAP is a DAST proxy
+scanner, not a dependency tool: a candidate for separate web-app
+security testing, outside this pipeline. Recommended Phase 2 stack:
 
 - **Syft**: CycloneDX SBOM emission for npm tree + Docker
   image.

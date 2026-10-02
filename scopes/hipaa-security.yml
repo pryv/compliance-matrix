@@ -250,7 +250,7 @@ requirements:
       chosen encryption scheme in their backup-plan SOP for
       §164.308(a)(7)(ii)(A) compliance.
     technical: |
-      Backup chunking + integrity restored in plan 28 phase 1 (see
+      Backup chunking + integrity restored (see
       `open-pryv.io/CHANGELOG-v2-back.md`).
 
   - ref: 164.308(a)(7)(ii)(B)
