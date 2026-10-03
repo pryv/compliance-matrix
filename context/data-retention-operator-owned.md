@@ -81,9 +81,8 @@ external retention job:
 ## The operator pattern (recommended)
 
 Retention is **a scheduled job the operator owns**, running
-adjacent to the Pryv API. The pattern parallels the operator-side
-backup-encryption pattern (Q15: Pryv produces the artefact, the
-operator wraps it). Concrete shape:
+adjacent to the Pryv API: Pryv provides the deletion primitives,
+the operator owns the schedule and the rules. Concrete shape:
 
 ```
 # 1. Configure retention policy declaratively, per stream class

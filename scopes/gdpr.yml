@@ -668,9 +668,11 @@ requirements:
       7. **Audit log**: automatic capture of every read/write
          under any access; audit-minimality (Q9: no request body)
          is a feature for sensitive data, not a limitation.
-      8. **Backup tiering (Q15)**: operator wraps sensitive-tier
-         dumps with stricter encryption + retention than ordinary
-         tiers; `bin/backup.js` is the integration point.
+      8. **Backup tiering (Q15)**: operator encrypts sensitive-tier
+         backups with a separate recipient key (`bin/backup.js
+         --recipient-pubkey`, built in since open-pryv.io
+         2.0.0-rc.5) and applies stricter retention than ordinary
+         tiers.
 
       The toolkit's reach varies by deployment topology, full
       strength for vertically-integrated operators, partial for
@@ -1771,14 +1773,20 @@ requirements:
     overview: |
       Multi-aspect article,
       Pryv implements several aspects for you (access control,
-      encryption-in-transit, restoration) and provides configurable
-      controls for others (encryption-at-rest, pseudonymisation, data
-      residency). Organizational measures (regular testing, incident
+      restoration) and provides configurable controls for others
+      (encryption-in-transit, encryption-at-rest, pseudonymisation,
+      data residency). Organizational measures (regular testing, incident
       response procedures) stay in your court.
     detail: |
       Per-aspect:
-        - Encryption in transit: IMPLEMENTED, TLS 1.3 via built-in
-          Let's Encrypt integration; mTLS between cores in a cluster.
+        - Encryption in transit: CONFIGURABLE, the core terminates TLS
+          when `http.ssl.*` is configured (certificates issued and
+          renewed by the built-in Let's Encrypt integration when
+          `letsEncrypt.enabled` is set), otherwise it serves plain HTTP
+          and your reverse proxy terminates TLS; the core sets no TLS
+          version of its own (Node.js defaults, a TLS 1.2 floor on Node
+          24). Between cores, Raft runs over mTLS once `bin/bootstrap.js`
+          has written `storages.engines.rqlite.tls` (default plain TCP).
           Behind a proxy that terminates TLS, set
           `hostedSites.<name>.hsts: always` so the sites the core hosts
           (e.g. the account web app) still send

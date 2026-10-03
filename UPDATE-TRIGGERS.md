@@ -1240,6 +1240,35 @@ commit `9d0de352`). No tier shifts, no `planned:` chips involved.
   answer. The two backup rows that cited audit-API tests (`[AT04]`,
   `[AT05]`, `[AT06]`) as backup evidence now cite the backup tests.
 
+**Corrections made in the same pass** (claims the code at 2.0.0-rc.34
+did not support):
+- **TLS was described as default-on TLS 1.3 with no plaintext path.**
+  The core serves HTTPS only when `http.ssl.*` is configured
+  (`letsEncrypt.*` keeps that certificate issued); otherwise it serves
+  plain HTTP for a reverse proxy to front, and it sets no TLS version
+  of its own (Node.js defaults). Re-tiered `implemented` to
+  `configurable`: `hipaa-security.164.312(e)(1)`, `164.312(e)(2)(i)`,
+  `164.312(e)(2)(ii)`, `iso-27001.A.8.20`, `soc2.CC6.6`, `soc2.CC6.7`,
+  `diga.A1.2.1`, `hds.Activity.3.cryptography`. Wording only:
+  `gdpr.Art.32`, `iso-27001.A.8.24` / `A.8.27`, `soc2.CC6.1`,
+  `hds.Activity.3`, `hipaa-breach.164.400` / `164.402` / `164.402(2)`,
+  `ccpa.1798.150`, the `letsEncrypt-integration` primitive,
+  `context/privacy-by-design-and-default.md`.
+- **Backups were described as unencrypted by design.** `bin/backup.js`
+  has opt-in built-in encryption since 2.0.0-rc.5
+  (`--recipient-pubkey` / `--encrypt-passphrase`):
+  `hipaa-security.164.308(a)(7)(ii)(A)`, `iso-27001.A.8.13`, FAQ Q15
+  and the places citing it.
+- **Multi-core replication was described as protecting user data.**
+  Only the platform DB is replicated; user data is core-affine:
+  `hipaa-security.164.308(a)(7)(ii)(B)`, `iso-27001.A.8.13` / `A.8.14`,
+  `soc2.CC7.5` / `A1.2`.
+- **Operator backup integrity was attributed to `pg_dump` / SQLite WAL.**
+  Corrected in `context/operator-backup-coverage.md`.
+- **Malware rows re-tiered** `out-of-scope` to `facilitated | low |
+  infrastructure` (attachment sandbox): `iso-27001.A.8.7`,
+  `hipaa-security.164.308(a)(5)(ii)(B)`.
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check

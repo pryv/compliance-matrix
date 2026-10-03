@@ -292,7 +292,8 @@ requirements:
     detail: |
       The §1798.150 trigger is narrow, encrypted-and-redacted PI
       that leaks doesn't ground a statutory-damages claim. Pryv's
-      posture (TLS default + operator-side at-rest encryption + per-
+      posture (TLS in the core or at your proxy, as you configure it
+      + operator-side at-rest encryption + per-
       access access-control + audit) substantially constrains the
       surface where §1798.150 can attach. Encryption-at-rest is
       operator-side (LUKS, PG TDE, etc.) for event content today;

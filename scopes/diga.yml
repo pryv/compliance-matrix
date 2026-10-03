@@ -192,18 +192,26 @@ requirements:
     text: |
       All communication interfaces of the digital health application
       shall employ Transport Layer Security at current state of the art.
-    coverage: implemented
+    coverage: configurable
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
     derives_from: [gdpr.Art.32]
+    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls]
     tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC]
     overview: |
-      Pryv's built-in ACME integration ships TLS 1.3 default-on with
-      automated renewal + cluster-replicated rotation; inter-core
-      traffic runs over mTLS with a cluster-private CA. There is no
-      plaintext shipped path. BfArM's "current state of the art"
-      requirement is met by current cipher-suite defaults.
+      TLS is configured, not default: the core terminates it when
+      `http.ssl.*` is set (the built-in ACME integration issues, renews
+      and replicates certificates across the cluster when
+      `letsEncrypt.enabled` is set), otherwise it serves plain HTTP and
+      your reverse proxy terminates TLS. Inter-core Raft traffic runs
+      over mTLS with a cluster-private CA once `bin/bootstrap.js` has
+      written `storages.engines.rqlite.tls` (default plain TCP). The
+      core sets no TLS version or cipher options of its own, so
+      "current state of the art" in the core rests on Node.js defaults
+      (on the Node 24 the image runs: TLS 1.2 floor, TLS 1.3 when the
+      client supports it); if BfArM expects a TLS 1.3-only or narrower
+      cipher policy, enforce it at your proxy.
 
   - ref: A1.2.7
     title: Annex 1.2, Penetration test within 12 months

@@ -432,9 +432,15 @@ via one switch; no application code change.
 ### `letsEncrypt-integration`
 
 Built-in ACME client that issues + renews certificates, replicates
-across cluster via rqlite, hot-swaps via cluster IPC.
+across cluster via rqlite, hot-swaps via cluster IPC. Opt-in
+(`letsEncrypt.enabled`, off by default); the core serves HTTPS only when
+`http.ssl.keyFile` / `http.ssl.certFile` are set, and the integration
+keeps the certificate behind those paths issued and renewed. Without
+`http.ssl.*` the core serves plain HTTP and TLS belongs to your
+reverse proxy. The core sets no TLS version or cipher options of its
+own: Node.js defaults apply (TLS 1.2 floor on Node 24).
 
-- **Compliance role**: TLS guaranteed-fresh; encryption-in-transit
+- **Compliance role**: TLS guaranteed-fresh when enabled; encryption-in-transit
   (GDPR Art.32, HIPAA-Security 164.312(e), ISO 27001 A.8.24).
 
 ### `data-residency`
