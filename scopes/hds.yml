@@ -115,6 +115,17 @@ requirements:
       key management, transport, retention, and the "outsourced"
       (separate physical location) element. Pryv provides the
       backup-generation, payload-encryption, and restoration primitives.
+    detail: |
+      **Backups taken before open-pryv.io 2.0.0-rc.34 are incomplete:**
+      they carry no high-frequency series data, on every series engine,
+      and nothing warned. Take a new backup after upgrading, and do not
+      count older archives as a full copy of series data. Since
+      2.0.0-rc.34 the series are exported and restored (series move
+      between any two series engines, InfluxDB included), and the
+      manifest's `coreVersion` reports the core's release, which you
+      can record in your backup register. Backup and restore round
+      trips are tested in open-pryv.io (`[BKSR]`, `[BKEV]`, `[BKVR]`).
+    tests: [BKSR, BKEV, BKVR]
 
   - ref: Activity.6
     title: Activity 6, Archival of health data

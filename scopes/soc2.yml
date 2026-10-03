@@ -628,7 +628,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, access, permissions]
-    tests: [ACMEINT, ATRENC, BUNDLEENC]
+    config_keys: [hostedSites.<name>.hsts]
+    tests: [ACMEINT, ATRENC, BUNDLEENC, HSHT]
     derives_from: [iso-27001.A.8.24, hipaa-security.164.312(e)(1), hipaa-security.164.312(e)(2)(ii)]
     overview: |
       Transmission is TLS 1.3 end-to-end (client ↔ core direct, no
@@ -638,6 +639,9 @@ requirements:
       (HKDF-derived per-key); bootstrap bundles for core-to-core movement
       are AES-256-GCM (scrypt). Bulk event-data at-rest encryption is an
       operator-side storage-layer choice (LUKS / SSE-KMS / customer keys).
+      If your proxy terminates TLS, set `hostedSites.<name>.hsts: always`
+      so the sites the core hosts keep sending `Strict-Transport-Security`
+      (open-pryv.io 2.0.0-rc.34); see hipaa-security 164.312(e)(2)(ii).
 
   - ref: CC6.8
     title: CC6.8 Prevention and detection of unauthorized or malicious software
@@ -651,6 +655,7 @@ requirements:
     draft: true
     pryv_primitives: [observability-provider, audit, data-types]
     derives_from: [iso-27001.A.8.7]
+    tests: [ACTY]
     overview: |
       Anti-malware / endpoint protection is a host-and-network control,
       not shipped in Pryv. Pryv's contribution is detection-adjacent:
@@ -658,6 +663,13 @@ requirements:
       ingest, the dependency-audit pipeline guards the software supply
       chain, and audit + observability surface anomalous behaviour. AV +
       application-allowlisting on the hosts is your operator scope.
+      One prevention control is built in: since open-pryv.io
+      2.0.0-rc.34 an attachment whose declared type a browser executes
+      or renders as a document (HTML, SVG and other XML, JavaScript) is
+      served in a sandbox (`Content-Security-Policy: sandbox;
+      default-src 'none'`), so an uploaded file cannot run script on
+      the API origin. It does not scan attachment content: uploads are
+      not refused for their type.
 
   # ───────────────────────────────────────────────────────────────
   # CC7 System Operations
@@ -906,6 +918,16 @@ requirements:
       fire suppression) are facility-side; your hoster's certification
       covers them. Backup cadence, retention, and offsite policy are
       yours.
+    detail: |
+      Two open-pryv.io 2.0.0-rc.34 changes to plan for. Backups taken
+      before 2.0.0-rc.34 carry no high-frequency series data (on every
+      series engine, with no warning): take a new backup after
+      upgrading. The replicated platform DB moves to rqlite 10.5.1
+      (crash-safe, checksummed snapshot store; a node stops on a
+      node-local SQLite error); its data directory upgrade is one-way,
+      so back up every node before the first start
+      (`open-pryv.io/INSTALL.md`, "Upgrading the bundled rqlite (9.x to
+      10.x)").
 
   - ref: A1.3
     title: A1.3, Recovery plan testing
@@ -1075,13 +1097,17 @@ requirements:
     draft: true
     pryv_primitives: [event, audit, backup-restore]
     derives_from: [hipaa-security.164.312(c)(1)]
+    tests: [BKSR, BKEV]
     overview: |
       Storage integrity: event version history preserves prior states,
       the audit log can carry a per-event integrity checksum, and
       backup-restore provides a recoverable copy. Together these give an
       accuracy + completeness signal for stored data. Tamper-evidence on
       the audit log itself (hash chaining) is a future primitive, see
-      the CC7.4 chain proposal.
+      the CC7.4 chain proposal. The recoverable copy is complete for
+      high-frequency series only from open-pryv.io 2.0.0-rc.34 (earlier
+      operator backups held no series data); the backup and restore
+      round trip is tested (`[BKSR]`, `[BKEV]`).
 
   # ───────────────────────────────────────────────────────────────
   # P1-P8, Privacy (additional category)

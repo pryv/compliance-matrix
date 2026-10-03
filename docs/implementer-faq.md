@@ -67,7 +67,9 @@ posture).
 **Engine-switch is supported.** `bin/backup.js` dumps user data in
 engine-neutral format; `--restore` reads into whichever engine the
 target deployment uses. Operators can start strict-on-SQLite, scale
-to PG later (or vice versa for emergency DR).
+to PG later (or vice versa for emergency DR). Run the backup on
+open-pryv.io 2.0.0-rc.34 or later: earlier backups carry no
+high-frequency series data.
 
 **Side question, per-account DB on PG?** Technically yes (PG
 supports many DBs per cluster), but **sharp cardinality limit**: PG

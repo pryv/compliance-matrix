@@ -311,6 +311,14 @@ from a backup file.
 
 - **Per-user granularity** (key for engine-dependent erasure semantics
   in GDPR Art.17 + ISO 27001 A.8.10).
+- **Contents**: account data, streams, accesses, profile, webhooks,
+  events, attachments, audit and high-frequency series. Series are
+  carried only since open-pryv.io 2.0.0-rc.34: earlier backups hold
+  none (on every series engine, with no warning), so take a new backup
+  after upgrading. Restores work across engines, series included
+  (InfluxDB series backups could not be restored before 2.0.0-rc.34).
+  The manifest's `coreVersion` reports the core's release. Tests:
+  `[BKSR]`, `[BKEV]`, `[BKVR]`.
 - **Compliance role**: data restorability (GDPR Art.32 §1(c)) +
   per-user erasure path for SQLite engine.
 

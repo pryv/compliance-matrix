@@ -224,12 +224,22 @@ requirements:
     draft: true
     pryv_primitives: [backup-restore]
     config_keys: [backup.outputDir, backup.includeAttachments]
-    tests: [AT04, AT05]
+    tests: [BKSR, BKEV, BKVR]
     overview: |
-      `bin/backup.js` produces per-user backup files (events, streams,
-      accesses, attachments). `--restore` rebuilds a user from a backup
+      `bin/backup.js` produces per-user backup files (account data,
+      streams, accesses, profile, webhooks, events, attachments, audit,
+      high-frequency series). `--restore` rebuilds a user from a backup
       file. The backup procedure ("when, where, how often") is yours to
       schedule; the underlying primitive is shipped.
+
+      **Take a new backup after upgrading to open-pryv.io 2.0.0-rc.34
+      or later.** Earlier backups carry no high-frequency series data
+      on any series engine, with no warning: backup and restore
+      addressed each user's series under a different key than the one
+      the series are stored under. Since 2.0.0-rc.34 the series are
+      exported and restored, series move between any two series engines
+      (InfluxDB backups could not be restored before), and the backup
+      manifest's `coreVersion` reports the core's release.
     detail: |
       Per-user backup files are advantageous for HIPAA's "exact copies"
       language because the backup unit matches the natural protected-
@@ -251,7 +261,16 @@ requirements:
       §164.308(a)(7)(ii)(A) compliance.
     technical: |
       Backup chunking + integrity restored (see
-      `open-pryv.io/CHANGELOG-v2-back.md`).
+      `open-pryv.io/CHANGELOG-v2-back.md`). Series namespace shared by
+      backup, restore, account deletion and the series server:
+      `open-pryv.io/components/business/src/series/namespace.ts`
+      (2.0.0-rc.34). `[BKSR]` runs series through backup and restore in
+      each test matrix (PostgreSQL or SQLite base, with the default or
+      the InfluxDB series engine), `[BKEV]` the events store round trip,
+      `[BKVR]` the manifest version; `just test-backup-roundtrip`
+      (`open-pryv.io/tools/backup-roundtrip/`) backs a seeded user up
+      and restores it PostgreSQL to SQLite and back, comparing the
+      bundles.
 
   - ref: 164.308(a)(7)(ii)(B)
     title: Disaster recovery plan, Required
@@ -263,7 +282,7 @@ requirements:
     draft: true
     pryv_primitives: [backup-restore, multi-core-mTLS, letsEncrypt-integration]
     config_keys: [cluster.discoveryEnabled, letsEncrypt.certRenewer]
-    tests: [AT06, BUNDLEENC]
+    tests: [BKSR, BUNDLEENC]
     overview: |
       Two layers Pryv gives you: (1) cold restore from `bin/backup.js
       --restore`, the canonical recovery path; (2) hot redundancy via a
@@ -277,6 +296,25 @@ requirements:
       joining core boots via `bin/master.js --bootstrap`. Lets-Encrypt
       certificates replicate across the cluster via rqlite keys, so a
       surviving core can serve TLS without re-issuing.
+
+      **Platform DB recovery (open-pryv.io 2.0.0-rc.34).** The bundled
+      rqlite is 10.5.1: its snapshot store is crash-safe (under 9.x a
+      node killed while taking a snapshot could later restore stale
+      pages into its copy of the platform DB), its snapshot files are
+      checksummed, and a node stops on a node-local SQLite error
+      instead of diverging silently. The first start on 10.x converts
+      the rqlite data directory one way, so put the upgrade in your
+      recovery plan: back up every node (`/db/backup` plus an archive
+      of the data directory taken while the core is stopped), check the
+      snapshot store, and upgrade the nodes of a cluster back to back;
+      a rollback to an older release needs that archived directory.
+      Procedure: `open-pryv.io/INSTALL.md`, "Upgrading the bundled
+      rqlite (9.x to 10.x)".
+
+      **Restore your series too.** Operator backups taken before
+      open-pryv.io 2.0.0-rc.34 carry no high-frequency series data, so
+      a restore from them loses every series point; take a new backup
+      after upgrading (see 164.308(a)(7)(ii)(A)).
 
   # ───────────────────────────────────────────────────────────────
   # §164.310 Physical Safeguards (framing only)
@@ -887,8 +925,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
-    config_keys: [letsEncrypt.enabled]
-    tests: [ACMEINT, ACMEORCH, CERTUTILS]
+    config_keys: [letsEncrypt.enabled, hostedSites.<name>.hsts]
+    tests: [ACMEINT, ACMEORCH, CERTUTILS, HSHT]
     overview: |
       TLS 1.3 in transit is default-on via the built-in ACME
       integration; mTLS between cores is the inter-node default once
@@ -900,6 +938,20 @@ requirements:
       the core then serves plain HTTP only on its loopback. The TLS
       requirement holds at the transmission boundary, wherever the
       operator chooses to place that boundary.
+
+      **HSTS behind a TLS-terminating proxy (open-pryv.io
+      2.0.0-rc.34).** Sites the core hosts (`hostedSites`, e.g. the
+      account web app) send `Strict-Transport-Security` by default
+      only when the core itself terminates TLS, so behind a proxy they
+      used to send none. Set `hostedSites.<name>.hsts: always` when your
+      proxy terminates TLS and the site is HTTPS-only (browsers only
+      honour the header received over HTTPS); `never` turns it off.
+      The setting comes from configuration only (no `X-Forwarded-Proto`
+      is trusted), an invalid value refuses the boot, and the value is
+      `max-age=31536000` for that host only. In dnsLess mode the site
+      shares the API's host, so the header covers that whole host. The
+      core does not add HSTS to API answers on a separate API host: set
+      it on your proxy if you want it there.
 
   # ───────────────────────────────────────────────────────────────
   # §164.314 Organizational requirements
