@@ -278,9 +278,7 @@ requirements:
       bundles. Backup options are CLI flags of `bin/backup.js`, not
       config keys. Encryption: `open-pryv.io/storages/interfaces/backup/BackupCipher.ts`
       (tests in `open-pryv.io/storages/test/backup-encryption.test.js`),
-      released in 2.0.0-rc.5 (commit `ea27bf35`; open-pryv.io's
-      CHANGELOG-v2.md lists it under 2.0.0-rc.4, but the first tag that
-      contains the commit is 2.0.0-rc.5).
+      released in 2.0.0-rc.5 (commit `ea27bf35`).
 
   - ref: 164.308(a)(7)(ii)(B)
     title: Disaster recovery plan, Required
