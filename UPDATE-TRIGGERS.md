@@ -1196,6 +1196,82 @@ whole-path URL obfuscation, log forwarding off and a working
 `high_security` opt-in. That fix was deployed and wire-validated before
 the rebuild replaced it.
 
+### B.11 New security-relevant config keys, response headers, platform DB and backup behaviour
+
+**When it fires**: an open-pryv.io release adds a config key that
+changes a security property (transport, headers, integrity checks), or
+changes how responses are served, how the platform DB (rqlite) stores
+and recovers its data, or what `bin/backup.js` carries. Walk the
+transport rows (`hipaa-security.164.312(e)(*)`, `iso-27001.A.8.20` /
+`A.8.24`, `soc2.CC6.6` / `CC6.7`, the encryption-in-transit bullet of
+`gdpr.Art.32`), the application-security rows (`iso-27001.A.8.26`,
+`soc2.CC6.8`), the availability / integrity rows (`gdpr.Art.32` §1(b),
+`iso-27001.A.8.14` / `A.8.22`, `soc2.A1.2`,
+`hipaa-security.164.308(a)(7)(ii)(B)`), and the backup rows
+(`hipaa-security.164.308(a)(7)(ii)(A)`, `iso-27001.A.8.13`,
+`hds.Activity.5`, `soc2.PI1.5`, the `backup-restore` primitive,
+`context/operator-backup-coverage.md`). Add any new key to the rows'
+`config_keys:` and its `[CODE]` tests to `tests:`.
+
+**Walked 2026-10-03 for open-pryv.io 2.0.0-rc.34** (tag `2.0.0-rc.34`,
+commit `9d0de352`). The rc.34 changes themselves shift no tier; ten
+rows are re-tiered by the corrections listed after this list. No
+`planned:` chips involved.
+- **`hostedSites.<name>.hsts`** (`auto` | `always` | `never`; HSTS on
+  hosted-site answers behind a TLS-terminating proxy; `[HSHT]`):
+  `hipaa-security.164.312(e)(2)(ii)`, `iso-27001.A.8.20`, `soc2.CC6.7`,
+  `gdpr.Art.32`. The core never adds HSTS to API answers on a separate
+  API host.
+- **Attachments with an active content type served in a sandbox**
+  (`Content-Security-Policy: sandbox; default-src 'none'`; `[ACTY]`):
+  `iso-27001.A.8.26`, `soc2.CC6.8`, `gdpr.Art.32`.
+- **rqlite 10.5.1** (crash-safe, checksummed snapshot store; a node
+  stops on a node-local SQLite error; one-way data directory upgrade;
+  HTTP port 4001 unauthenticated, keep it closed): `gdpr.Art.32`,
+  `iso-27001.A.8.14`, `iso-27001.A.8.22`, `soc2.A1.2`,
+  `hipaa-security.164.308(a)(7)(ii)(B)`. The 2.0.0-rc.33 periodic
+  platform DB integrity check (`storages.platform.integrityCheckIntervalMs`)
+  is cited on `gdpr.Art.32` at the same time.
+- **Backups carry high-frequency series data** (earlier backups held
+  none; InfluxDB series now restore; manifest `coreVersion` real;
+  `[BKSR]`, `[BKVR]`): `hipaa-security.164.308(a)(7)(ii)(A)` / `(B)`,
+  `iso-27001.A.8.13`, `hds.Activity.5`, `soc2.A1.2`, `soc2.PI1.5`,
+  `gdpr.Art.32`, the `backup-restore` primitive,
+  `context/operator-backup-coverage.md`,
+  `context/per-engine-isolation.md`, the implementer FAQ's engine-switch
+  answer. The two backup rows that cited audit-API tests (`[AT04]`,
+  `[AT05]`, `[AT06]`) as backup evidence now cite the backup tests.
+
+**Corrections made in the same pass** (claims the code at 2.0.0-rc.34
+did not support):
+- **TLS was described as default-on TLS 1.3 with no plaintext path.**
+  The core serves HTTPS only when `http.ssl.*` is configured
+  (`letsEncrypt.*` keeps that certificate issued); otherwise it serves
+  plain HTTP for a reverse proxy to front, and it sets no TLS version
+  of its own (Node.js defaults). Re-tiered `implemented | high` to
+  `configurable | medium` (multi-step setup, and behind a proxy Pryv
+  carries none of the TLS): `hipaa-security.164.312(e)(1)`, `164.312(e)(2)(i)`,
+  `164.312(e)(2)(ii)`, `iso-27001.A.8.20`, `soc2.CC6.6`, `soc2.CC6.7`,
+  `diga.A1.2.1`, `hds.Activity.3.cryptography`. Wording only:
+  `gdpr.Art.32`, `iso-27001.A.8.24` / `A.8.27`, `soc2.CC6.1`,
+  `hds.Activity.3`, `hipaa-breach.164.400` / `164.402` / `164.402(2)`,
+  `ccpa.1798.150`, the `letsEncrypt-integration` primitive,
+  `context/privacy-by-design-and-default.md`.
+- **Backups were described as unencrypted by design.** `bin/backup.js`
+  has opt-in built-in encryption since 2.0.0-rc.5
+  (`--recipient-pubkey` / `--encrypt-passphrase`):
+  `hipaa-security.164.308(a)(7)(ii)(A)`, `iso-27001.A.8.13`, FAQ Q15
+  and the places citing it.
+- **Multi-core replication was described as protecting user data.**
+  Only the platform DB is replicated; user data is core-affine:
+  `hipaa-security.164.308(a)(7)(ii)(B)`, `iso-27001.A.8.13` / `A.8.14`,
+  `soc2.CC7.5` / `A1.2`.
+- **Operator backup integrity was attributed to `pg_dump` / SQLite WAL.**
+  Corrected in `context/operator-backup-coverage.md`.
+- **Malware rows re-tiered** `out-of-scope` to `facilitated | low |
+  infrastructure` (attachment sandbox): `iso-27001.A.8.7`,
+  `hipaa-security.164.308(a)(5)(ii)(B)`.
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check

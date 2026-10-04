@@ -67,7 +67,9 @@ posture).
 **Engine-switch is supported.** `bin/backup.js` dumps user data in
 engine-neutral format; `--restore` reads into whichever engine the
 target deployment uses. Operators can start strict-on-SQLite, scale
-to PG later (or vice versa for emergency DR).
+to PG later (or vice versa for emergency DR). Run the backup on
+open-pryv.io 2.0.0-rc.34 or later: earlier backups carry no
+high-frequency series data.
 
 **Side question, per-account DB on PG?** Technically yes (PG
 supports many DBs per cluster), but **sharp cardinality limit**: PG
@@ -785,54 +787,45 @@ extension model works today.
 
 ### Q15: `bin/backup.js`: does the dump file ship encrypted at rest by Pryv?
 
-**Short answer:** **no, voluntarily missing by design; encryption
-of backups is operator-side.** `bin/backup.js` produces an
-**unencrypted dump file**; the operator wraps it with their
-at-rest encryption layer (LUKS on the backup volume, GPG / age
-before offsite ship, S3 SSE-KMS / Azure SSE / customer-managed
-keys on bucket-level encryption) at the storage boundary. Same
-pattern as the broader bulk-event-data at-rest encryption posture
-(per Q1: at-rest encryption of bulk data is voluntarily
-operator-side; see `proposals/e2e-encryption.md`).
+**Short answer:** **yes, on request.** Since open-pryv.io
+2.0.0-rc.5, `bin/backup.js` encrypts its own output when you pass
+a key; without one it writes plaintext (gzip-compressed) files, as
+before.
 
-**Why this classification stands** (vs "missing feature"): the
-matrix's `Implemented | High` for HIPAA §164.308(a)(7)(ii)(A) and
-`F: Infrastructure | Medium` for ISO 27001 A.8.13 both hold,
-Pryv ships the backup primitive (`bin/backup.js` per-user dump
-+ `--restore`); the *encryption layer* on the dump file is a
-storage-engineering concern handled outside the Pryv runtime.
-Implementer documents the chosen encryption scheme in their
-backup-plan SOP.
+- `--recipient-pubkey <pem>` (recommended): a random per-backup
+  data key is wrapped with your RSA public key (RSA-OAEP, SHA-256).
+  The backup host holds no secret that can decrypt its own output;
+  only the private-key holder can restore (`--restore ...
+  --private-key <pem>`).
+- `--encrypt-passphrase <s>` or `PRYV_BACKUP_PASSPHRASE`: a
+  scrypt-derived key. Simpler, but the host that made the backup can
+  decrypt it (`--restore ... --decrypt-passphrase <s>`).
 
-**Concrete operator pipelines** (any one of these satisfies the
-"protected at the same security level as the source" expectation
-of ISO A.8.13):
+Every file is encrypted with per-file authenticated AES-256-GCM
+(HKDF-derived subkey per file, chunked) after gzip, so plaintext
+never reaches the destination disk. The backup root carries a
+cleartext `encryption.json` (crypto headers and the wrapped key
+only, no user data), a `RESTORE-README.md` and a standalone
+`decrypt-backup.mjs`, so the key holder can recover the data
+without Pryv. Code: `open-pryv.io/storages/interfaces/backup/BackupCipher.ts`.
 
-- `bin/backup.js --output-dir /backups/<user>/`, with `/backups`
-  mounted on a LUKS-encrypted volume.
-- `bin/backup.js | gpg --encrypt --recipient backup-keypair`
-  before `aws s3 cp`.
-- `bin/backup.js --output-dir /tmp/backup/`, then
-  `restic backup` (built-in AES-256 encryption + content-
-  addressable storage + de-duplication) to S3 / B2 / Azure.
-- S3 bucket-level SSE-KMS with a customer-managed CMK + IAM
-  least-privilege on the upload role.
+**What stays yours:** choosing the key model, key custody (a lost
+private key or passphrase makes the backup unrecoverable),
+transport, retention, offsite copies, and any extra layer you want
+on top (LUKS on the backup volume, S3 SSE-KMS with a customer-managed
+key, restic). If you run plaintext backups, that outer layer is
+what protects them.
 
-**HDS Activity.5** (Outsourced backup) already documents this
-explicitly in its row overview, the operator handles transport
-+ retention + at-rest encryption; Pryv provides the
-backup-generation + restoration primitives.
+**Correction (2026-10-03):** an earlier version of this answer said
+backups were unencrypted by design and encryption was operator-side
+only. That predated the built-in encryption and was wrong for every
+release from 2.0.0-rc.5 on.
 
 **Matrix encoding:**
-- `hipaa-security.164.308(a)(7)(ii)(A)` detail extended with
-  the operator-side encryption framing + cross-reference to the
-  e2e-encryption proposal as the broader pattern.
-- `iso-27001.A.8.13` detail extended with the same.
-- `hds.Activity.5` already had this language, no change needed.
-
-No backlog filed: this is "voluntarily missing by design" +
-already reflected in existing row tiers; the gap was the prose
-not surfacing the operator-side scope cleanly enough.
+- `hipaa-security.164.308(a)(7)(ii)(A)` and `iso-27001.A.8.13`
+  details describe the built-in opt-in encryption and cite the
+  `backup-payload-encryption` primitive.
+- `hds.Activity.5` already described it.
 
 **Commit:** *(this commit)*.
 
@@ -1182,7 +1175,7 @@ require seeing clinical context, drug-interaction databases,
 calibration metadata, which would violate Pryv's data-
 minimisation posture. The split is consistent with the broader
 implementer-owns-clinical-logic architecture (Q9 audit-minimality,
-Q12 core-affinity, Q15 backup-encryption-is-operator-side, Q19
+Q12 core-affinity, Q15 backup-key-custody-is-operator-side, Q19
 revocation-UI-is-implementer-side, Q20 DPIA-section-(d)-is-
 implementer-assembled).
 
@@ -1255,8 +1248,8 @@ Art.9 enforcement layer from a toolkit of 8 levers.
    - Audit log automatically captures every read/write,
      audit-minimality (Q9) means the audit is safe to retain
      at long horizons.
-   - Backup encryption tiering via `bin/backup.js` wrapping
-     (Q15 operator-side encryption framing).
+   - Backup encryption tiering via `bin/backup.js`'s built-in
+     encryption with a per-tier recipient key (Q15).
 
 **The two-deployment-topology distinction**: central to
 classifying this row honestly:
@@ -1287,7 +1280,7 @@ deployment-specific facilitation strength is in the detail prose.
 5. Per-engine isolation at storage layer (storage-engine plugins).
 6. `customExtensions.customAuthStepFn` access-grant gate.
 7. Audit log automatic capture (Pryv-invariant).
-8. Backup encryption tiering (operator-side, Q15 pattern).
+8. Backup encryption tiering (built-in encryption, operator-held keys, Q15).
 
 CMC consent flows (Q18) are a ninth lever for cross-account
 sensitive sharing: `consent/accept-cmc` IS the Art.9(2)(a)
@@ -1352,7 +1345,7 @@ No backlog, no proposal, no `planned:` chips. Classification is
 **"voluntarily missing + highly facilitated"**: a useful sub-
 pattern of "voluntarily missing" worth naming explicitly
 alongside the simpler "voluntarily missing + operator-owned" we
-saw in Q15 (backup encryption).
+saw in Q31 (retention scheduling).
 
 **Commit:** *(this commit)*.
 
@@ -2286,7 +2279,7 @@ primitive, automatic retention enforcement is the operator's
 external scheduled job, composing existing primitives
 (`events.get toTime=<cutoff>` + `events.delete` two-stage +
 `streams.delete` + `auth.delete` + the audit log as inactivity
-oracle). Same shape as Q15 backup encryption: Pryv provides the
+oracle). Pryv provides the
 deletion APIs and the audit trace; the operator owns the
 scheduler + retention-rule definitions + legal-hold overrides.
 
@@ -2451,11 +2444,11 @@ deliberate reasons:
 - **No `planned:` chips** added, same reason.
 - **No `proposals/` mirror**: same reason.
 
-Classification: **"voluntarily missing + operator-owned"**.
-Same shape as Q15 backup encryption (`gdpr.Art.32` /
-`hipaa-security.164.308(a)(7)(ii)(A)`); Pryv ships the
-generation primitive, operator owns the wrapping policy +
-scheduling. Distinct from Q22 "voluntarily missing + highly
+Classification: **"voluntarily missing + operator-owned"**:
+Pryv ships the primitives, the operator owns the policy +
+scheduling. (An earlier version cited Q15 backup encryption as the
+same shape; backup encryption is built in since open-pryv.io
+2.0.0-rc.5, so only its key custody is operator-owned.) Distinct from Q22 "voluntarily missing + highly
 facilitated" (special-category data) because retention is
 genuinely operator-territory by-design; even a
 vertically-integrated operator builds the retention job at the
@@ -2595,7 +2588,7 @@ new sample-app candidate + matrix-prose strengthening on
 **Short answer:** **Two-surface split.** **Identification**
 is filled by existing primitives + Q17 BREACH-SCOPE-TOOL (audit
 log → per-subject roster). **Delivery** is **voluntarily missing
-+ operator-owned**, same shape as Q15 backup encryption + Q31
++ operator-owned**, same shape as Q31
 retention. The audit-trace bridge that lands per-recipient
 send-receipts inside Pryv's event chain uses operator-authored
 `compliance/breach-notification/sent-cmc` events satisfying
@@ -2719,7 +2712,7 @@ the account.
 Classification: **"voluntarily missing + operator-owned"**
 (delivery side) + **"filled by existing primitive"**
 (identification side, with Q17 BREACH-SCOPE-TOOL completing
-the per-subject roster). Same shape as Q15 backup encryption,
+the per-subject roster). Same shape as
 Q31 retention. Distinct from Q22 "voluntarily missing +
 highly facilitated" because breach-comm delivery is
 genuinely operator-territory even for vertically-integrated

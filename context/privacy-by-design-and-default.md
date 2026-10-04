@@ -166,15 +166,22 @@ values on the GET path are recorded as-is, see
 `content-query-audit-semantics.md`) AND accountability-enforcing
 (you can't hide what you did).
 
-### 3. TLS enforced by default
+### 3. TLS: a deployment choice, not a code default
 
-The optional Let's Encrypt integration (`letsEncrypt.enabled:
-true` opt-in in dev, default-on posture in production deployments)
-makes
-HTTPS the default. HTTP-only is a deliberate dev-mode opt-in
-that gets flagged by `config-validation` warnings. The
-`Dockerfile` + INSTALL.md surface point operators toward
-HTTPS as the primary path.
+TLS is not enforced by the core's default configuration
+(re-checked against open-pryv.io 2.0.0-rc.34). The core serves
+HTTPS when `http.ssl.keyFile` / `http.ssl.certFile` are set, with
+the optional Let's Encrypt integration (`letsEncrypt.enabled:
+true`, off by default) issuing and renewing that certificate;
+otherwise it serves plain HTTP on `http.ip` (127.0.0.1 by
+default) for a reverse proxy to front. No config check warns
+about an HTTP-only setup. The core sets no TLS version or cipher
+options of its own, so Node.js defaults apply (TLS 1.2 floor on
+Node 24). INSTALL.md documents both placements ("Running
+standalone with HTTPS", "Running behind nginx", with
+`docs/nginx-ingress-sample.conf`). For privacy by default,
+your deployment must pick one: this is an operator obligation,
+not something the code does for you.
 
 ### 4. Hosting region pinned per user (architectural data-residency)
 

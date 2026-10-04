@@ -668,9 +668,11 @@ requirements:
       7. **Audit log**: automatic capture of every read/write
          under any access; audit-minimality (Q9: no request body)
          is a feature for sensitive data, not a limitation.
-      8. **Backup tiering (Q15)**: operator wraps sensitive-tier
-         dumps with stricter encryption + retention than ordinary
-         tiers; `bin/backup.js` is the integration point.
+      8. **Backup tiering (Q15)**: operator encrypts sensitive-tier
+         backups with a separate recipient key (`bin/backup.js
+         --recipient-pubkey`, built in since open-pryv.io
+         2.0.0-rc.5) and applies stricter retention than ordinary
+         tiers.
 
       The toolkit's reach varies by deployment topology, full
       strength for vertically-integrated operators, partial for
@@ -1754,6 +1756,8 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation]
+    config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs]
+    tests: [HSHT, ACTY, BKSR]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -1769,14 +1773,26 @@ requirements:
     overview: |
       Multi-aspect article,
       Pryv implements several aspects for you (access control,
-      encryption-in-transit, restoration) and provides configurable
-      controls for others (encryption-at-rest, pseudonymisation, data
-      residency). Organizational measures (regular testing, incident
+      restoration) and provides configurable controls for others
+      (encryption-in-transit, encryption-at-rest, pseudonymisation,
+      data residency). Organizational measures (regular testing, incident
       response procedures) stay in your court.
     detail: |
       Per-aspect:
-        - Encryption in transit: IMPLEMENTED, TLS 1.3 via built-in
-          Let's Encrypt integration; mTLS between cores in a cluster.
+        - Encryption in transit: CONFIGURABLE, the core terminates TLS
+          when `http.ssl.*` is configured (certificates issued and
+          renewed by the built-in Let's Encrypt integration when
+          `letsEncrypt.enabled` is set), otherwise it serves plain HTTP
+          and your reverse proxy terminates TLS; the core sets no TLS
+          version of its own (Node.js defaults, a TLS 1.2 floor on Node
+          24). Between cores, Raft runs over mTLS once `bin/bootstrap.js`
+          has written `storages.engines.rqlite.tls` (default plain TCP).
+          Behind a proxy that terminates TLS, set
+          `hostedSites.<name>.hsts: always` so the sites the core hosts
+          (e.g. the account web app) still send
+          `Strict-Transport-Security` (open-pryv.io 2.0.0-rc.34; by
+          default the header is sent only when the core terminates
+          TLS).
         - Encryption at rest: CONFIGURABLE, the
           `container-encrypted-volume` companion (opt-in `CEV_ENABLED`)
           provisions an encrypted volume covering the full user-data
@@ -1867,10 +1883,34 @@ requirements:
           core's control plane offline. Leader-failover HA is an explicit
           operator topology choice (run ≥3 voters; two voters are
           rejected as a fragile 2-of-2 quorum); health-checks + audit log
-          round out the ongoing-CIA evidence.
+          round out the ongoing-CIA evidence. Platform DB integrity:
+          since open-pryv.io 2.0.0-rc.34 the bundled rqlite (10.5.1)
+          keeps its snapshot store crash-safe, checksums its snapshot
+          files and stops a node on a node-local SQLite error rather
+          than letting its copy diverge; the master also re-checks
+          this node's copy every
+          `storages.platform.integrityCheckIntervalMs` (default 1 h,
+          2.0.0-rc.33) and logs an error on a failed check. The 9.x to
+          10.x upgrade is one-way for the rqlite data directory: follow
+          `open-pryv.io/INSTALL.md`, "Upgrading the bundled rqlite (9.x
+          to 10.x)", and keep rqlite's HTTP port (4001) closed to the
+          outside, as it is unauthenticated.
         - Restoration (§1(c)): IMPLEMENTED, `bin/backup.js --restore`
           per-user; single-node `peers.json` recovery restores cluster
-          availability after a quorum loss.
+          availability after a quorum loss. Operator backups carry
+          high-frequency series data only since open-pryv.io
+          2.0.0-rc.34 (earlier backups silently held none, on every
+          series engine): take a new backup after upgrading.
+        - Stored active content: IMPLEMENTED, an attachment whose
+          declared type a browser executes or renders as a document
+          (HTML, SVG and other XML, JavaScript) is served with
+          `Content-Security-Policy: sandbox; default-src 'none'` next
+          to `Content-Disposition: attachment`, so a file uploaded into
+          an account cannot run script on the API origin with the
+          viewer's session (open-pryv.io 2.0.0-rc.34,
+          `components/api-server/src/middleware/attachment-access.ts`).
+          Uploads are not refused for their type; an app that displays
+          HTML or SVG attachments renders them in its own sandbox.
         - Regular testing (§1(d)): FILLED BY EXISTING PRIMITIVES.
           **Existing evidence (citable today)**:
             - **Multi-engine CI test matrix**: ~2351 tests on

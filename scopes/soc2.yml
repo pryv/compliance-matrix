@@ -354,9 +354,9 @@ requirements:
       read/write is checked against the access's per-stream + level
       permissions, token-based authentication is the default, and MFA is
       available via the mfa.* methods when you enable it. System streams
-      isolate privileged data (credentials, MFA state). No plaintext
-      transport path ships. You define who gets which access; Pryv
-      enforces it.
+      isolate privileged data (credentials, MFA state). Transport
+      encryption is configured (in the core or at your proxy, see
+      CC6.7). You define who gets which access; Pryv enforces it.
     detail: |
       **OAuth2 as a second logical-access path.** Alongside token +
       MFA authentication, Pryv ships a standards-based OAuth2
@@ -602,20 +602,26 @@ requirements:
     text: |
       The entity implements logical access security measures to protect
       against threats from sources outside its system boundaries.
-    coverage: implemented
-    pryv_effort_saved: high
+    coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, access]
+    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls]
     tests: [ACMEINT, ACMEORCH, BUNDLEENC]
     derives_from: [iso-27001.A.8.20, hipaa-security.164.312(e)(1)]
     overview: |
-      The external boundary is the TLS-terminating HTTPS API: TLS 1.3 in
-      transit with the built-in ACME integration (auto-renewal +
-      cluster-replicated rotation), token-gated access on every request,
-      no plaintext path. Inter-core traffic in a cluster runs over mTLS
-      on a private CA, separating the control plane from the user-facing
-      plane. Edge controls (WAF, firewall, rate limiting) sit in your
-      reverse proxy by design, see context/rate-limiting-and-dos-protection.md.
+      Every API request is token-gated, whatever the deployment. The
+      transport side of the boundary is configured: the core terminates
+      TLS itself when `http.ssl.*` is set (with the built-in ACME
+      integration issuing, renewing and replicating certificates when
+      `letsEncrypt.enabled` is set), otherwise it serves plain HTTP
+      (default `http.ip` 127.0.0.1) and your reverse proxy terminates
+      TLS. Inter-core Raft traffic runs over mTLS on a private CA once
+      `bin/bootstrap.js` has written `storages.engines.rqlite.tls`
+      (default `tls: null`, plain TCP), separating the control plane
+      from the user-facing plane. Edge controls (WAF, firewall, rate
+      limiting) sit in your reverse proxy by design, see
+      context/rate-limiting-and-dos-protection.md.
 
   - ref: CC6.7
     title: CC6.7 Restriction and encryption of information in transmission and movement
@@ -624,20 +630,29 @@ requirements:
       information to authorized internal and external users and
       processes, and protects it during transmission, movement, or
       removal to meet the entity's objectives.
-    coverage: implemented
-    pryv_effort_saved: high
+    coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, access, permissions]
-    tests: [ACMEINT, ATRENC, BUNDLEENC]
+    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, hostedSites.<name>.hsts]
+    tests: [ACMEINT, ATRENC, BUNDLEENC, HSHT]
     derives_from: [iso-27001.A.8.24, hipaa-security.164.312(e)(1), hipaa-security.164.312(e)(2)(ii)]
     overview: |
-      Transmission is TLS 1.3 end-to-end (client ↔ core direct, no
-      Pryv-shipped intermediary that could log or cache). Movement is
+      Transmission is TLS once you configure where it terminates: in
+      the core (`http.ssl.*`, certificates from the built-in ACME
+      integration when `letsEncrypt.enabled` is set) or in your reverse
+      proxy, with the core serving plain HTTP behind it. The core sets
+      no TLS version of its own, so Node.js defaults apply (TLS 1.2
+      floor on the Node 24 the image runs). Pryv ships no intermediary
+      that could log or cache traffic. Movement is
       restricted by the permission model, a credential only moves the
       data its scope permits. Operator secrets at rest use AES-256-GCM
       (HKDF-derived per-key); bootstrap bundles for core-to-core movement
       are AES-256-GCM (scrypt). Bulk event-data at-rest encryption is an
       operator-side storage-layer choice (LUKS / SSE-KMS / customer keys).
+      If your proxy terminates TLS, set `hostedSites.<name>.hsts: always`
+      so the sites the core hosts keep sending `Strict-Transport-Security`
+      (open-pryv.io 2.0.0-rc.34); see hipaa-security 164.312(e)(2)(ii).
 
   - ref: CC6.8
     title: CC6.8 Prevention and detection of unauthorized or malicious software
@@ -651,6 +666,7 @@ requirements:
     draft: true
     pryv_primitives: [observability-provider, audit, data-types]
     derives_from: [iso-27001.A.8.7]
+    tests: [ACTY]
     overview: |
       Anti-malware / endpoint protection is a host-and-network control,
       not shipped in Pryv. Pryv's contribution is detection-adjacent:
@@ -658,6 +674,13 @@ requirements:
       ingest, the dependency-audit pipeline guards the software supply
       chain, and audit + observability surface anomalous behaviour. AV +
       application-allowlisting on the hosts is your operator scope.
+      One prevention control is built in: since open-pryv.io
+      2.0.0-rc.34 an attachment whose declared type a browser executes
+      or renders as a document (HTML, SVG and other XML, JavaScript) is
+      served in a sandbox (`Content-Security-Policy: sandbox;
+      default-src 'none'`), so an uploaded file cannot run script on
+      the API origin. It does not scan attachment content: uploads are
+      not refused for their type.
 
   # ───────────────────────────────────────────────────────────────
   # CC7 System Operations
@@ -779,10 +802,12 @@ requirements:
     derives_from: [iso-27001.A.8.14, hipaa-security.164.308(a)(7)(ii)(B)]
     overview: |
       Recovery primitives: bin/backup.js + --restore rebuild a user from
-      backup; a multi-core cluster gives in-line Raft replication +
-      cluster-replicated TLS certs so a surviving core keeps serving when
-      a peer fails. The recovery-objective targets (RTO / RPO) and the
-      drill cadence are your policy.
+      backup, the recovery path for user data; a multi-core cluster
+      replicates the platform DB and TLS certs over Raft, so the other
+      cores keep serving their own users when a peer fails (the failed
+      core's users wait for that core or its restore: user data is not
+      replicated between cores). The recovery-objective targets
+      (RTO / RPO) and the drill cadence are your policy.
 
   # ───────────────────────────────────────────────────────────────
   # CC8 Change Management
@@ -900,12 +925,23 @@ requirements:
     derives_from: [iso-27001.A.8.13, iso-27001.A.8.14, hipaa-security.164.308(a)(7)(ii)(A)]
     overview: |
       Backup + recovery infrastructure ships: bin/backup.js produces
-      per-user backups, multi-core topology gives in-line Raft
-      replication, TLS certs replicate across the cluster so a surviving
-      core stays user-facing. Environmental protections (power, cooling,
+      per-user backups (the only copy of user data Pryv makes),
+      multi-core topology replicates the platform DB and TLS certs over
+      Raft so the remaining cores stay user-facing for their own users;
+      user data is not replicated between cores. Environmental protections (power, cooling,
       fire suppression) are facility-side; your hoster's certification
       covers them. Backup cadence, retention, and offsite policy are
       yours.
+    detail: |
+      Two open-pryv.io 2.0.0-rc.34 changes to plan for. Backups taken
+      before 2.0.0-rc.34 carry no high-frequency series data (on every
+      series engine, with no warning): take a new backup after
+      upgrading. The replicated platform DB moves to rqlite 10.5.1
+      (crash-safe, checksummed snapshot store; a node stops on a
+      node-local SQLite error); its data directory upgrade is one-way,
+      so back up every node before the first start
+      (`open-pryv.io/INSTALL.md`, "Upgrading the bundled rqlite (9.x to
+      10.x)").
 
   - ref: A1.3
     title: A1.3, Recovery plan testing
@@ -1075,13 +1111,17 @@ requirements:
     draft: true
     pryv_primitives: [event, audit, backup-restore]
     derives_from: [hipaa-security.164.312(c)(1)]
+    tests: [BKSR, BKEV]
     overview: |
       Storage integrity: event version history preserves prior states,
       the audit log can carry a per-event integrity checksum, and
       backup-restore provides a recoverable copy. Together these give an
       accuracy + completeness signal for stored data. Tamper-evidence on
       the audit log itself (hash chaining) is a future primitive, see
-      the CC7.4 chain proposal.
+      the CC7.4 chain proposal. The recoverable copy is complete for
+      high-frequency series only from open-pryv.io 2.0.0-rc.34 (earlier
+      operator backups held no series data); the backup and restore
+      round trip is tested (`[BKSR]`, `[BKEV]`).
 
   # ───────────────────────────────────────────────────────────────
   # P1-P8, Privacy (additional category)

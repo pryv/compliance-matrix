@@ -192,12 +192,13 @@ captured) is a feature here, not a limitation, audit captures
 *which* event was written, not the field values, so the audit
 itself is safer to retain than the events would be.
 
-### 8. Backup encryption (operator-side, per Q15)
+### 8. Backup encryption (built in, key custody operator-side, per Q15)
 
-`bin/backup.js` is unencrypted by design (Q15), operator wraps
-the dump with their own encryption layer. For Art.9 data, this is
-where the operator applies the stricter tier: separate
-encryption key, separate off-site copy, separate retention policy.
+`bin/backup.js` encrypts its output when given a recipient public
+key or a passphrase (opt-in, open-pryv.io 2.0.0-rc.5 onward;
+plaintext otherwise). For Art.9 data, this is where the operator
+applies the stricter tier: a separate recipient key (held off the
+backup host), separate off-site copy, separate retention policy.
 
 ### 9. CMC counter-party metadata (per Q18 + Q22)
 

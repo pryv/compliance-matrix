@@ -292,27 +292,44 @@ requirements:
     pryv_effort_saved: medium
     facilitation_mode: infrastructure
     draft: true
-    pryv_primitives: [backup-restore, multi-core-mTLS]
+    pryv_primitives: [backup-restore, backup-payload-encryption, multi-core-mTLS]
+    tests: [BKSR, BKEV, BKVR]
     overview: |
       `bin/backup.js`
-      produces per-user backup files; multi-core cluster topology
-      gives in-line replication (rqlite Raft + mTLS). The operator's
+      produces per-user backup files, the only copy of user data Pryv
+      makes; a multi-core cluster replicates the platform DB only
+      (rqlite Raft + mTLS), not user data, which stays on each user's
+      home core. The operator's
       backup policy (cadence, retention, offsite) is layered on top.
-      "Regularly tested" is the operator's drill. (Backup integration
-      tests at the [code] level are a coverage gap, backlog
-      candidate for the open-pryv.io test suite.)
+      "Regularly tested" is the operator's drill. On the Pryv side,
+      backup and restore round trips are tested: `[BKSR]` (series
+      data), `[BKEV]` (events store), `[BKVR]` (manifest version), and
+      `just test-backup-roundtrip` in open-pryv.io backs a seeded user
+      up and restores it PostgreSQL to SQLite and back, comparing the
+      bundles on counts and content (2.0.0-rc.34).
+
+      **Take a new backup after upgrading to open-pryv.io 2.0.0-rc.34
+      or later.** Earlier `bin/backup.js` backups carry no
+      high-frequency series data on any series engine, with no
+      warning, and series backed up from InfluxDB could not be
+      restored. Since 2.0.0-rc.34 the series are exported and restored
+      and move between any two series engines.
     detail: |
-      **Encryption of the backup archive is operator-side by
-      design.** `bin/backup.js` writes an unencrypted dump file;
-      the operator wraps it with their at-rest encryption layer
-      (LUKS / GPG / age / S3 SSE-KMS / Azure SSE / customer-
-      managed keys) at the storage boundary. Same pattern as the
-      bulk-event-data at-rest encryption posture (operator-side
-      infrastructure layer is the deliberate choice; see
-      `proposals/e2e-encryption.md`). A.8.13's "protected at the
-      same security level as the source data" expectation is met
-      by the operator's encryption pipeline, documented in the
-      backup-policy SOP.
+      **Backup encryption is built in, opt-in** (open-pryv.io
+      2.0.0-rc.5 onward). Without flags `bin/backup.js` writes
+      plaintext (gzip-compressed) files. `--recipient-pubkey <pem>`
+      (recommended: the per-backup data key is RSA-OAEP-wrapped to
+      your public key, so the backup host cannot decrypt its own
+      output) or `--encrypt-passphrase` / `PRYV_BACKUP_PASSPHRASE`
+      (scrypt) encrypts every file with per-file authenticated
+      AES-256-GCM before it reaches the destination, and the backup
+      ships a standalone `decrypt-backup.mjs` plus `RESTORE-README.md`
+      for recovery without Pryv. A.8.13's "protected at the same
+      security level as the source data" expectation is met by
+      enabling one of the two key models, or by your own layer
+      (LUKS / S3 SSE-KMS / ...) on a plaintext backup; record the
+      choice and the key custody (a lost key or passphrase makes the
+      backup unrecoverable) in your backup-policy SOP.
 
   - ref: A.8.15
     title: A.8.15 Logging
@@ -410,17 +427,32 @@ requirements:
     text: |
       Networks and network devices shall be secured, managed and
       controlled to protect information in systems and applications.
-    coverage: implemented
-    pryv_effort_saved: high
+    coverage: configurable
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
-    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC]
+    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, hostedSites.<name>.hsts]
+    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC, HSHT]
     overview: |
-      TLS 1.3 in transit (built-in ACME integration with auto-renewal +
-      cluster-replicated rotation); mTLS between cores in a multi-
-      core cluster with a private cluster CA. No plaintext path
-      shipped. Operator-side network controls (firewalls, network
+      TLS in transit once configured: either the core terminates it
+      (`http.ssl.*`, with the built-in ACME integration issuing,
+      renewing and replicating certificates across the cluster when
+      `letsEncrypt.enabled` is set) or your reverse proxy does and the
+      core serves plain HTTP behind it (default `http.ip` 127.0.0.1).
+      Between cores, Raft runs over mutual TLS on a private cluster CA
+      once `bin/bootstrap.js` has written `storages.engines.rqlite.tls`
+      (default `tls: null`, plain TCP). The core sets no TLS version of
+      its own: Node.js defaults apply (TLS 1.2 floor on the Node 24 the
+      image runs). Operator-side network controls (firewalls, network
       segmentation) sit on top.
+    detail: |
+      When a proxy in front of the core terminates TLS, set
+      `hostedSites.<name>.hsts: always` on each HTTPS-only site the
+      core hosts so its answers carry `Strict-Transport-Security`
+      (open-pryv.io 2.0.0-rc.34). The default, `auto`, sends the header
+      only when the core itself terminates TLS; `never` turns it off.
+      The core does not add HSTS to API answers on a separate API
+      host, so set it on your proxy there.
 
   - ref: A.8.24
     title: A.8.24 Use of cryptography
@@ -430,7 +462,7 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS]
+    pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, backup-payload-encryption]
     config_keys: [letsEncrypt.atRestKey]
     tests: [ACMEINT, ATRENC, BUNDLEENC]
     planned:
@@ -441,9 +473,14 @@ requirements:
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=180707914&issue=pryv%7Copen-pryv.io%7C34
         impact: low
     overview: |
-      TLS 1.3 for transit, AES-256-GCM for at-rest operator secrets
+      TLS for transit (in the core when `http.ssl.*` / `letsEncrypt.*`
+      is configured, otherwise in your proxy; the core sets no TLS
+      version of its own, so Node.js defaults apply, a TLS 1.2 floor on
+      Node 24), AES-256-GCM for at-rest operator secrets
       (HKDF-derived per-key with purpose labels), AES-256-GCM
-      (scrypt-derived) for bootstrap bundle encryption. The operator's
+      (scrypt-derived) for bootstrap bundle encryption, per-file
+      AES-256-GCM for `bin/backup.js` output when encryption is
+      requested. The operator's
       cryptography policy (key custody, rotation cadence, algorithm
       choice for engine-side at-rest encryption) is layered on top.
 
@@ -611,13 +648,30 @@ requirements:
     text: |
       Protection against malware shall be implemented and supported by
       appropriate user awareness.
-    coverage: out-of-scope
+    coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: infrastructure
     draft: true
+    tests: [ACTY]
     overview: |
-      Anti-malware is a host / endpoint / network-layer control,
-      Pryv-the-software doesn't include AV or endpoint protection.
-      The operator's hosting environment carries this (HDS Activity 1+2
-      certified hosters typically inherit it from the CSP).
+      Anti-malware is mostly a host / endpoint / network-layer control:
+      Pryv-the-software doesn't include AV or endpoint protection, and
+      your hosting environment carries that part (HDS Activity 1+2
+      certified hosters typically inherit it from the CSP). Pryv does
+      store and serve files your users upload, and contributes one
+      narrow control there: since open-pryv.io 2.0.0-rc.34 an
+      attachment whose declared type a browser executes or renders as a
+      document (HTML, SVG and other XML, JavaScript) is served with
+      `Content-Security-Policy: sandbox; default-src 'none'` next to
+      `Content-Disposition: attachment`, so it cannot run script on the
+      API origin.
+    detail: |
+      What stays yours: Pryv does not scan attachment content and does
+      not refuse uploads by type, so a malicious PDF or executable is
+      stored and served as uploaded. If your users exchange files,
+      scan them (at upload in your app, or at your proxy) and cover the
+      user-awareness half of the control in your ISMS. Code:
+      `open-pryv.io/components/api-server/src/middleware/attachment-access.ts`.
 
   - ref: A.8.8
     title: A.8.8 Management of technical vulnerabilities
@@ -751,6 +805,14 @@ requirements:
       cluster-internal control plane and the user-facing data plane.
       The operator's network segmentation (VPCs, security groups,
       firewall rules) layers on top.
+    detail: |
+      Keep rqlite's HTTP port (default 4001) closed to the outside: it
+      is unauthenticated, and since open-pryv.io 2.0.0-rc.34 (rqlite
+      10.5.1) it also serves rqlite's web console. Cores replicate and
+      forward writes over the Raft port (default 4002, mutual TLS);
+      open 4001 between cores only for admin tools you run against a
+      peer (`open-pryv.io/INSTALL.md`, "Upgrading the bundled rqlite
+      (9.x to 10.x)").
 
   - ref: A.8.28
     title: A.8.28 Secure coding
@@ -1129,11 +1191,26 @@ requirements:
     pryv_primitives: [multi-core-mTLS, backup-restore, letsEncrypt-integration]
     derives_from: [iso-27001.A.5.23, hipaa-security.164.308(a)(7)(ii)(B)]
     overview: |
-      Multi-core HA + Raft
-      replication give in-line redundancy; backup-restore + cluster-
-      replicated TLS certs let a surviving core continue user-facing
-      operation when a peer fails. The availability target +
-      redundancy depth (cores per region) is operator policy.
+      Multi-core Raft replication
+      makes the platform DB (user-to-core index, shared settings,
+      certificates) redundant, so the cluster keeps routing and serving
+      TLS when a peer fails. User data is not replicated between
+      cores: the users homed on a failed core are unavailable until
+      that core, or its restore from backup, is back. Redundancy of
+      user data is yours to add under the storage engine (e.g.
+      PostgreSQL streaming replication, replicated volumes). The
+      availability target + redundancy depth is operator policy.
+    detail: |
+      Since open-pryv.io 2.0.0-rc.34 the replicated platform DB runs on
+      rqlite 10.5.1: a node killed while taking a snapshot no longer
+      risks restoring stale pages into its copy (as under 9.x),
+      snapshot files are checksummed, a node stops on a node-local
+      SQLite error instead of diverging, and the first write a follower
+      forwards to a restarted leader no longer fails once. Upgrading a
+      cluster is one-way for each node's data directory and needs the
+      nodes upgraded back to back (followers first, never adding a node
+      while versions are mixed): `open-pryv.io/INSTALL.md`, "Upgrading
+      the bundled rqlite (9.x to 10.x)".
 
   - ref: A.8.17
     title: A.8.17 Clock synchronization
@@ -1268,12 +1345,25 @@ requirements:
     draft: true
     pryv_primitives: [audit]
     derives_from: [iso-27001.A.8.25]
+    tests: [ACTY]
     overview: |
       For the operator running
       Pryv as one of its applications, this compliance matrix IS the
       catalogue of identified + specified + approved security
       requirements Pryv satisfies. For the operator's own applications
       built on Pryv, the requirements are their editorial work.
+    detail: |
+      Example of a requirement Pryv implements for you: content a user
+      uploads cannot attack other users through the API origin. Since
+      open-pryv.io 2.0.0-rc.34 an attachment whose declared type a
+      browser executes or renders as a document (HTML, SVG and other
+      XML, JavaScript) is served with `Content-Security-Policy:
+      sandbox; default-src 'none'` next to `Content-Disposition:
+      attachment`, on the token and the `readToken` paths alike
+      (`open-pryv.io/components/api-server/src/middleware/attachment-access.ts`).
+      Uploads are not refused for their type. If your app displays HTML
+      or SVG attachments, fetch the content and render it in your app's
+      own sandbox: that part of the requirement is yours.
 
   - ref: A.8.27
     title: A.8.27 Secure system architecture and engineering principles
@@ -1290,7 +1380,7 @@ requirements:
     overview: |
       Pryv's architecture is
       informed by secure-by-design principles (per-user isolation,
-      least-privilege permissions, encryption-by-default in transit,
+      least-privilege permissions, TLS in the core or at the proxy,
       system-stream privilege separation). The operator's own
       engineering team applies the same principles to app-layer code.
       Pryv-side architecture documentation lives in public

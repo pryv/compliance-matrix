@@ -311,6 +311,14 @@ from a backup file.
 
 - **Per-user granularity** (key for engine-dependent erasure semantics
   in GDPR Art.17 + ISO 27001 A.8.10).
+- **Contents**: account data, streams, accesses, profile, webhooks,
+  events, attachments, audit and high-frequency series. Series are
+  carried only since open-pryv.io 2.0.0-rc.34: earlier backups hold
+  none (on every series engine, with no warning), so take a new backup
+  after upgrading. Restores work across engines, series included
+  (InfluxDB series backups could not be restored before 2.0.0-rc.34).
+  The manifest's `coreVersion` reports the core's release. Tests:
+  `[BKSR]`, `[BKEV]`, `[BKVR]`.
 - **Compliance role**: data restorability (GDPR Art.32 §1(c)) +
   per-user erasure path for SQLite engine.
 
@@ -424,9 +432,15 @@ via one switch; no application code change.
 ### `letsEncrypt-integration`
 
 Built-in ACME client that issues + renews certificates, replicates
-across cluster via rqlite, hot-swaps via cluster IPC.
+across cluster via rqlite, hot-swaps via cluster IPC. Opt-in
+(`letsEncrypt.enabled`, off by default); the core serves HTTPS only when
+`http.ssl.keyFile` / `http.ssl.certFile` are set, and the integration
+keeps the certificate behind those paths issued and renewed. Without
+`http.ssl.*` the core serves plain HTTP and TLS belongs to your
+reverse proxy. The core sets no TLS version or cipher options of its
+own: Node.js defaults apply (TLS 1.2 floor on Node 24).
 
-- **Compliance role**: TLS guaranteed-fresh; encryption-in-transit
+- **Compliance role**: TLS guaranteed-fresh when enabled; encryption-in-transit
   (GDPR Art.32, HIPAA-Security 164.312(e), ISO 27001 A.8.24).
 
 ### `data-residency`
