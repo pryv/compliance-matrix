@@ -295,7 +295,7 @@ requirements:
       ePHI in transit shall be protected via TLS; cryptographic key
       management shall follow the operator's documented procedures.
     coverage: configurable
-    pryv_effort_saved: high
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-secrets]
     derives_from: [iso-27001.A.8.24, hipaa-security.164.312(e)(1)]

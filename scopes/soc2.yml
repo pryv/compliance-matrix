@@ -603,7 +603,7 @@ requirements:
       The entity implements logical access security measures to protect
       against threats from sources outside its system boundaries.
     coverage: configurable
-    pryv_effort_saved: high
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, access]
     config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls]
@@ -631,7 +631,7 @@ requirements:
       processes, and protects it during transmission, movement, or
       removal to meet the entity's objectives.
     coverage: configurable
-    pryv_effort_saved: high
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, access, permissions]
     config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, hostedSites.<name>.hsts]

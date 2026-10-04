@@ -428,7 +428,7 @@ requirements:
       Networks and network devices shall be secured, managed and
       controlled to protect information in systems and applications.
     coverage: configurable
-    pryv_effort_saved: high
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
     config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, hostedSites.<name>.hsts]
@@ -670,10 +670,8 @@ requirements:
       not refuse uploads by type, so a malicious PDF or executable is
       stored and served as uploaded. If your users exchange files,
       scan them (at upload in your app, or at your proxy) and cover the
-      user-awareness half of the control in your ISMS. Re-tiered from
-      out-of-scope on 2026-10-03: Pryv now contributes a technical
-      control, and attachments make the implementer obligation real
-      (`open-pryv.io/components/api-server/src/middleware/attachment-access.ts`).
+      user-awareness half of the control in your ISMS. Code:
+      `open-pryv.io/components/api-server/src/middleware/attachment-access.ts`.
 
   - ref: A.8.8
     title: A.8.8 Management of technical vulnerabilities

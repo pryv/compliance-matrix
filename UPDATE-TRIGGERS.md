@@ -1214,7 +1214,9 @@ transport rows (`hipaa-security.164.312(e)(*)`, `iso-27001.A.8.20` /
 `config_keys:` and its `[CODE]` tests to `tests:`.
 
 **Walked 2026-10-03 for open-pryv.io 2.0.0-rc.34** (tag `2.0.0-rc.34`,
-commit `9d0de352`). No tier shifts, no `planned:` chips involved.
+commit `9d0de352`). The rc.34 changes themselves shift no tier; ten
+rows are re-tiered by the corrections listed after this list. No
+`planned:` chips involved.
 - **`hostedSites.<name>.hsts`** (`auto` | `always` | `never`; HSTS on
   hosted-site answers behind a TLS-terminating proxy; `[HSHT]`):
   `hipaa-security.164.312(e)(2)(ii)`, `iso-27001.A.8.20`, `soc2.CC6.7`,
@@ -1246,8 +1248,9 @@ did not support):
   The core serves HTTPS only when `http.ssl.*` is configured
   (`letsEncrypt.*` keeps that certificate issued); otherwise it serves
   plain HTTP for a reverse proxy to front, and it sets no TLS version
-  of its own (Node.js defaults). Re-tiered `implemented` to
-  `configurable`: `hipaa-security.164.312(e)(1)`, `164.312(e)(2)(i)`,
+  of its own (Node.js defaults). Re-tiered `implemented | high` to
+  `configurable | medium` (multi-step setup, and behind a proxy Pryv
+  carries none of the TLS): `hipaa-security.164.312(e)(1)`, `164.312(e)(2)(i)`,
   `164.312(e)(2)(ii)`, `iso-27001.A.8.20`, `soc2.CC6.6`, `soc2.CC6.7`,
   `diga.A1.2.1`, `hds.Activity.3.cryptography`. Wording only:
   `gdpr.Art.32`, `iso-27001.A.8.24` / `A.8.27`, `soc2.CC6.1`,

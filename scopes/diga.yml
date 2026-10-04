@@ -193,7 +193,7 @@ requirements:
       All communication interfaces of the digital health application
       shall employ Transport Layer Security at current state of the art.
     coverage: configurable
-    pryv_effort_saved: high
+    pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
     derives_from: [gdpr.Art.32]
