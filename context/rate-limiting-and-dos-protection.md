@@ -138,13 +138,18 @@ considered. Backlog candidate; not currently filed.
 
 ## Reference configs (planned)
 
-While in-process rate-limiting stays out of scope, **shipping
-reference reverse-proxy configurations** as part of the deployment
-docs is on the backlog: nginx / HAProxy / Cloudflare / Traefik /
-Caddy snippets that an operator can drop in + tweak. Per-route +
-per-workload-profile (consumer-app, B2B research, hospital) +
-fail2ban jail recipes that consume Pryv's audit feed. Tracked
-under internal backlog slug `RATE-LIMITING-RECIPES`.
+While in-process rate-limiting stays out of scope, a **reference
+reverse-proxy configuration** now ships with the developer site:
+[Rate limiting and DoS protection](https://pryv.github.io/customer-resources/rate-limiting/)
+(nginx + fail2ban, verified end to end against a running core).
+It keys limits on the routes that matter (per IP on login, MFA,
+registration, password reset and access requests; per token on data
+reads and writes), caps bodies and slow clients, returns a JSON 429,
+bans addresses with fail2ban jails reading the nginx logs, gives
+limits for three workload profiles (consumer app, B2B research,
+hospital) and a load test that proves each limit fires. HAProxy,
+Cloudflare, Traefik and Caddy apply the same route table; dedicated
+snippets for them are not shipped yet.
 
 ## Related primitives
 

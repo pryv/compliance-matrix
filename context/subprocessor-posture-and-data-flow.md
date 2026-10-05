@@ -312,8 +312,8 @@ consume it directly.
   Pryv-side artefact contributes.
 - **CDN / reverse-proxy** sitting in front of the core
   (nginx / HAProxy / Cloudflare). Pryv doesn't ship one; the
-  operator's deployment topology choice (per the
-  `RATE-LIMITING-RECIPES` backlog Q6) determines whether a CDN
+  operator's deployment topology choice (see the
+  rate-limiting reference configuration) determines whether a CDN
   vendor is in scope.
 - **External monitoring** beyond the observability-provider
   integration (e.g., Prometheus + Grafana the operator runs

@@ -200,13 +200,14 @@ limits, per-route limits, WAF rules, account-lockout via fail2ban,
 DDoS scrubbing, burst / cost protection, all in their existing
 reverse-proxy / WAF / API-gateway stack.
 
-**Future direction:** ship reference reverse-proxy configs (nginx,
-HAProxy, Cloudflare, Traefik, Caddy) per workload profile
-(consumer-app, B2B research, hospital) + matching fail2ban jail
-definitions. Tracked under internal backlog slug
-`RATE-LIMITING-RECIPES`. Doesn't change the
-Pryv-side stance; closes the operator-experience gap of "what do
-I actually configure?"
+**Reference configuration (shipped):** the developer site's
+[Rate limiting and DoS protection](https://pryv.github.io/customer-resources/rate-limiting/)
+page gives a verified nginx + fail2ban setup, with limits per
+workload profile (consumer-app, B2B research, hospital). HAProxy,
+Cloudflare, Traefik and Caddy apply the same route table; dedicated
+snippets for them are still to come. Doesn't change the Pryv-side
+stance; closes the operator-experience gap of "what do I actually
+configure?"
 
 **Matrix encoding:**
 - `context/rate-limiting-and-dos-protection.md`: full rationale +
@@ -1516,7 +1517,7 @@ integrations, each off by default:
   to Pryv; operator-to-provider relationship.
 - **CDN / reverse-proxy** if you deploy one (nginx /
   Cloudflare). Pryv doesn't ship one; operator's deployment
-  topology choice (per `RATE-LIMITING-RECIPES` backlog Q6)
+  topology choice (see the rate-limiting reference configuration)
   determines whether a CDN vendor is in scope.
 - **External monitoring** beyond the observability-provider
   integration (Prometheus + Grafana operator runs themselves,

@@ -8,7 +8,7 @@
  *   1. Every scopes/*.yml parses + matches JSON Schema (scope + requirement).
  *   2. Every functional_specs reqid resolves in dev-site requirements.yml.
  *   3. Every test code appears in at least one open-pryv.io/components/{*}/test file.
- *   4. Every docs path exists in dev-site/src/ or compliance-matrix/docs/.
+ *   4. Every docs path exists in dev-site2/src/content/docs/, dev-site/src/ or compliance-matrix/docs/.
  *   5. Every qms_docs path exists in compliance-matrix/qms/.
  *   6. Evidence-completeness: coverage=implemented|configurable requires tests[].
  *   7. Curated scopes have at least one excluded_items entry.
@@ -45,6 +45,9 @@ const OPEN_PRYV_TEST_GLOB = path.join(
   'open-pryv.io/components/*/test/**/*.{js,ts}'
 );
 const DEV_SITE_SRC = path.join(WORKSPACE_ROOT, 'dev-site/src');
+// The published developer site (pryv.github.io) is built from dev-site2; the
+// older dev-site source is still searched for paths cited before the move.
+const DEV_SITE2_DOCS = path.join(WORKSPACE_ROOT, 'dev-site2/src/content/docs');
 
 const errors = [];
 const warnings = [];
@@ -244,12 +247,13 @@ for (const { scope, file } of allScopes) {
     for (const d of r.docs || []) {
       const [filePart] = d.split('#');
       const candidates = [
+        path.join(DEV_SITE2_DOCS, filePart),
         path.join(DEV_SITE_SRC, filePart),
         path.join(ROOT, 'docs', filePart),
         path.join(ROOT, 'references', filePart),
       ];
       if (!candidates.some(fs.existsSync)) {
-        e(`${cell}: docs path '${d}' not found (tried dev-site/src/, docs/, references/)`);
+        e(`${cell}: docs path '${d}' not found (tried dev-site2/src/content/docs/, dev-site/src/, docs/, references/)`);
       }
     }
 

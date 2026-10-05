@@ -1265,13 +1265,7 @@ requirements:
     derives_from: [iso-27001.A.8.15]
     config_keys: [services.mfa.attempts.backoff]
     tests: [AT01, AT02, AT51, MA12A, MBKF1]
-    planned:
-      - kind: enhancement
-        summary: "Reference reverse-proxy rate-limiting configurations add an enforcement companion to log-in monitoring on the authentication endpoints"
-        proposal: proposals/rate-limiting-recipes.md
-        backlog: RATE-LIMITING-RECIPES
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705775&issue=pryv%7Copen-pryv.io%7C117
-        impact: low
+    docs: [customer-resources/rate-limiting.md#fail2ban]
     overview: |
       Login + authentication-
       failure events are captured in the audit log (per `auth.*` API
@@ -1299,9 +1293,12 @@ requirements:
       not apply. Tests `[MA12A]`-`[MA12K]`, `[MBKF1]`-`[MBKF3]`. See
       §164.312(d).
 
-      Full operator-side rate-limiting framing + reference-config
-      backlog: `context/rate-limiting-and-dos-protection.md` +
-      internal backlog slug `RATE-LIMITING-RECIPES`.
+      Full operator-side rate-limiting framing:
+      `context/rate-limiting-and-dos-protection.md`. Enforcement
+      companion on the authentication endpoints: the reference nginx +
+      fail2ban configuration (`customer-resources/rate-limiting.md`)
+      limits password logins and MFA attempts per IP and bans an address
+      after repeated failed logins.
 
   - ref: 164.308(a)(6)(i)
     title: Security incident procedures, standard
@@ -1313,6 +1310,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, observability-provider, access]
     derives_from: [hipaa-security.164.308(a)(1)(i)]
+    docs: [customer-resources/rate-limiting.md#verify-the-limits-fire]
     overview: |
       Incident-response procedure
       is the operator's organizational programme. Pryv contributes

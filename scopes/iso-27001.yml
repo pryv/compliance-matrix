@@ -1171,6 +1171,7 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [observability-provider, multi-core-mTLS]
+    docs: [customer-resources/rate-limiting.md]
     overview: |
       Pryv-side capacity
       surfaces: per-core observability metrics (memory, CPU, latency,
@@ -1305,13 +1306,7 @@ requirements:
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, observability-provider]
     derives_from: [iso-27001.A.8.20]
-    planned:
-      - kind: enhancement
-        summary: "Reference reverse-proxy rate-limiting configurations give the network-services row a concrete artefact instead of an architectural rationale"
-        proposal: proposals/rate-limiting-recipes.md
-        backlog: RATE-LIMITING-RECIPES
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705775&issue=pryv%7Copen-pryv.io%7C117
-        impact: low
+    docs: [customer-resources/rate-limiting.md]
     overview: |
       Pryv's external
       network surface is the TLS-terminating HTTPS API + the embedded
@@ -1330,9 +1325,12 @@ requirements:
       One narrow exception: failed MFA second factors are throttled
       in-process by a per-account backoff (open-pryv.io 2.0.0-rc.27,
       `services.mfa.attempts.backoff`), counted on the account's home
-      core, see A.8.5. Full rationale + operator mitigation patterns + reference-
-      config backlog: `context/rate-limiting-and-dos-protection.md`
-      + internal backlog slug `RATE-LIMITING-RECIPES`.
+      core, see A.8.5. Full rationale + operator mitigation patterns:
+      `context/rate-limiting-and-dos-protection.md`. Reference nginx +
+      fail2ban configuration, verified against a running core (per-IP
+      and per-token limits on the routes that matter, ban jails, limits
+      per workload profile, a load test proving the limits fire):
+      `customer-resources/rate-limiting.md` on the developer site.
 
   - ref: A.8.26
     title: A.8.26 Application security requirements

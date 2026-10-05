@@ -379,6 +379,7 @@ requirements:
     draft: true
     pryv_primitives: [multi-core-mTLS, letsEncrypt-integration, backup-restore, observability-provider]
     derives_from: [iso-27001.A.5.23, mdr.A1.17]
+    docs: [customer-resources/rate-limiting.md]
     overview: |
       Pryv-side availability:
       multi-core HA (cluster topology + Raft replication); TLS

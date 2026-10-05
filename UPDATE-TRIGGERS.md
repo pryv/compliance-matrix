@@ -325,9 +325,18 @@ gap-probing scope-discipline notes.
 
 ### `RATE-LIMITING-RECIPES`
 
-**Where the work lives**: `dev-deploy` or new docs repo
-(reference nginx / HAProxy / Cloudflare configs). Q6 outcome,
-voluntarily missing at Pryv layer; ship reference configs.
+**Status (2026-10-05): nginx + fail2ban shipped; chips discharged.** The developer
+site page [Rate limiting and DoS protection](https://pryv.github.io/customer-resources/rate-limiting/)
+(source `dev-site2/src/content/docs/customer-resources/rate-limiting.md`, verified end
+to end against a running core) is now cited as `docs:` on iso-27001 A.8.6 and A.8.21,
+hipaa-security 164.308(a)(5)(ii)(C) and 164.308(a)(6)(i), and diga A1.4.3. Coverage
+tiers are unchanged (the contribution stays facilitated). Dedicated HAProxy /
+Cloudflare / Traefik / Caddy snippets remain a backlog item with no chips: they
+would add no row shift. When the client-IP attribution changes (trusted-proxy list),
+refresh the page's "How Pryv reads the client IP" paragraph.
+
+**Where the work lives**: the developer site (`dev-site2`, customer resources).
+Q6 outcome, voluntarily missing at Pryv layer; ship reference configs.
 
 **Tracking card**: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705775&issue=pryv%7Copen-pryv.io%7C117
 
@@ -337,8 +346,8 @@ voluntarily missing at Pryv layer; ship reference configs.
 | hipaa-security | 164.308(a)(5)(ii)(C) | enhancement | low | log-in monitoring gains a companion enforcement artefact on the auth endpoints |
 
 Proposal: `proposals/rate-limiting-recipes.md` (filed 2026-07-28,
-alongside `context/rate-limiting-and-dos-protection.md`). Chips live on
-both rows above.
+alongside `context/rate-limiting-and-dos-protection.md`). The chips that lived
+on both rows above were discharged on 2026-10-05 (the rows now cite the page).
 
 ### `PLATFORMDB-AT-REST-ENCRYPTION`: **superseded by container-encrypted-volume**
 
