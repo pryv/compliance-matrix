@@ -112,8 +112,8 @@ It is **not** the right mental model for:
 
 - `docs/pryv-primitives.md`: `data-residency` primitive entry
   cites the user-to-core binding mechanism.
-- `proposals/clock-skew-cluster-checks.md`: Q11-outcome backlog
-  proposal that depends on this architecture.
+- `proposals/clock-skew-cluster-checks.md`: Q11-outcome proposal
+  (shipped) that depends on this architecture.
 - `proposals/audit-log-chaining.md`: the chain is per-core because
   the data plane is per-core.
 - `proposals/account-backup-dsar-completeness.md`: CMC-shared data

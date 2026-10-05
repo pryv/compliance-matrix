@@ -470,9 +470,9 @@ users live on exactly one core, the data plane never proxies
 across cores, and PlatformDB is an indexing + uniqueness service
 (not a routing layer). So **cores never need to agree on clock
 value or cert validity**; the dangerous failure modes are all
-intra-core. Two **small queued additions** (`CLOCK-SKEW-CLUSTER-CHECKS`)
-will add server-side skew detection at two natural checkpoints:
-bootstrap-join + pre-cert-load.
+intra-core. Two **server-side checks shipped** in open-pryv.io
+`5266b697` (released after 2.0.0-rc.34) detect skew at the two
+natural checkpoints: bootstrap-join + pre-cert-load.
 
 **Architectural correction recorded** (from this Q):
 - A user is **assigned to one core**; subsequent API calls resolve
@@ -493,7 +493,7 @@ bootstrap-join + pre-cert-load.
 | # | Question | Answer |
 |---|---|---|
 | 1 | Audit row timestamps coherent across cores? | **Not relevant**, audit rows from a single user land on a single core (core-affine). Per-core monotonic time is the only requirement; cross-core ordering not meaningful by design. |
-| 2 | LE cert rotation across cores? | Cores do **not** need to agree on cert validity; each core's TLS stack judges its loaded cert against its own clock at handshake time. The risk model is intra-core: forward-skew past `notAfter` → that core's TLS rejects its own cert; backward-skew before `notBefore` of a freshly-rotated cert → refuses to load it. LE's 60-day issue / 90-day expire gives ~30 days of overlap so it takes weeks of drift to bite. Queued fix: pre-load validity check refuses the swap if local clock falls outside the new cert's window. |
+| 2 | LE cert rotation across cores? | Cores do **not** need to agree on cert validity; each core's TLS stack judges its loaded cert against its own clock at handshake time. The risk model is intra-core: forward-skew past `notAfter` → that core's TLS rejects its own cert; backward-skew before `notBefore` of a freshly-rotated cert → refuses to load it. LE's 60-day issue / 90-day expire gives ~30 days of overlap so it takes weeks of drift to bite. Shipped: a certificate whose window does not contain the local clock is neither materialized nor hot-swapped (tolerance `cluster.clockSkewSeconds`, default 30 s). |
 | 3 | Access expiry across cores? | **Not relevant**, an access is core-bound; a user authenticating on core-A then calling core-B cannot happen. One core, one clock judges expiry. |
 
 **Pryv's contribution today:**
@@ -501,25 +501,28 @@ bootstrap-join + pre-cert-load.
   `components/api-server/src/methods/helpers/setCommonMeta.ts:49`).
 - Webhook payloads include `serverTime`
   (`components/business/src/webhooks/Webhook.ts:185`).
-- That's the **client-side** skew-detection primitive. No
-  server-side skew detection today.
+- That's the **client-side** skew-detection primitive; the
+  server-side checks are below.
 
-**Planned addition** (small dev, two intra-core checkpoints):
+**Shipped 2026-10-05** (open-pryv.io `5266b697`, two intra-core checkpoints):
 
-1. **Bootstrap-join skew check**: joining core compares its
-   `Date.now()` to the issuer's `serverTime` before ack; refuses
-   to ack if `|delta| > cluster.clockSkewThresholdSec`
-   (default `30s`). Operator fixes NTP, retries.
-2. **Pre-cert-load validity check**: worker-side `acme:rotate`
-   handler parses the new cert with `x509.X509Certificate`, checks
-   `validFromDate / validToDate` vs local clock with the same
-   `clockSkewThresholdSec`. Refuses the swap on failure; keeps
-   previous cert loaded; logs for operator alert.
+1. **Bootstrap-join skew check**: before the ack, the joining core
+   reads the issuer's time (`meta.serverTime` of its API root, else
+   the HTTP `Date` header) and refuses the join when the clocks
+   differ by more than `--bootstrap-clock-skew-seconds` (default
+   30 s, `0` disables). The join token is not used: fix NTP, run the
+   same command again.
+2. **Pre-cert-load validity check**: a certificate whose
+   `notBefore..notAfter` window does not contain the local clock
+   (tolerance `cluster.clockSkewSeconds`, default 30 s, on
+   `notBefore`) is not materialized from PlatformDB nor hot-swapped
+   into the workers; the core keeps the previous certificate, logs
+   the refusal and retries every minute. A custom certificate outside
+   its window is reported at boot.
 
-After shipping, `iso-27001.A.8.17` (Clock synchronization) moves
-from `out-of-scope` to `F: Awareness | Low`; Pryv contributes
-detection at two checkpoints + the existing `serverTime` client
-helper; operator still runs NTP.
+`iso-27001.A.8.17` (Clock synchronization) moved from `out-of-scope`
+to `F: Awareness | Low`: Pryv detects skew at two checkpoints on top
+of the `serverTime` client helper; you still run NTP on every host.
 
 **Audit-log-chaining (Q2 backlog) precondition recorded.** The
 chain reconstructs per-core only because the data plane is

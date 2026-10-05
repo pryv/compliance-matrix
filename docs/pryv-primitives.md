@@ -147,15 +147,15 @@ Records API method invocations per user.
   [`../context/core-affinity-architecture.md`](../context/core-affinity-architecture.md)),
   so per-core monotonic time suffices; cross-core ordering is not
   meaningful by design. Clock synchronization between hosts is the
-  operator's responsibility (NTP); `iso-27001.A.8.17` row carries
-  the planned bootstrap-join + pre-cert-load skew-detection
-  proposal (`proposals/clock-skew-cluster-checks.md`).
+  operator's responsibility (NTP); since open-pryv.io `5266b697`
+  Pryv detects skew at bootstrap-join and at certificate load
+  (`iso-27001.A.8.17`, `proposals/clock-skew-cluster-checks.md`).
 - **`meta.serverTime` for clients**: every API response carries
   `meta.serverTime` (Unix timestamp seconds;
   `components/api-server/src/methods/helpers/setCommonMeta.ts:49`)
   + webhook payloads include the same. Clients use this to detect
-  their own clock skew vs the server, the existing client-side
-  primitive that pairs with the planned server-side skew checks.
+  their own clock skew vs the server, the client-side primitive
+  that pairs with the server-side skew checks.
 
 ### `system-streams`
 

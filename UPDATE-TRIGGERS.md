@@ -127,18 +127,19 @@ clevis/aws-kms key providers, opt-in via `CEV_ENABLED`.
 No pre-existing `planned:` chips to discharge: this is a new shipped primitive.
 Proposal: `proposals/container-encrypted-volume.md` (Status: shipped).
 
-### `CLOCK-SKEW-CLUSTER-CHECKS`
+### `CLOCK-SKEW-CLUSTER-CHECKS`: SHIPPED 2026-10-05
 
-**Where the work lives**: `open-pryv.io`
-(`components/business/src/bootstrap/applyBundle.ts` +
-`components/business/src/acme/`). Two small intra-core checkpoints:
-bootstrap-join skew check + pre-cert-load validity check.
+**Where the work lived**: `open-pryv.io` `5266b697` (released after 2.0.0-rc.34):
+`components/business/src/bootstrap/consumer.ts` (join check, flag
+`--bootstrap-clock-skew-seconds`), `components/business/src/acme/` +
+`components/api-server/src/server.ts` (certificate validity window, config
+key `cluster.clockSkewSeconds`). Chip discharged.
 
-| Scope | Ref | Kind | Impact | After shipping |
+| Scope | Ref | Kind | Impact | Applied |
 |---|---|---|---|---|
-| iso-27001 | A.8.17 | feature | medium | row moves Out-of-scope → F:Awareness | Low |
+| iso-27001 | A.8.17 | feature | medium | row moved Out-of-scope → F:Awareness \| Low |
 
-Proposal: `proposals/clock-skew-cluster-checks.md`
+Proposal: `proposals/clock-skew-cluster-checks.md` (Status: shipped).
 
 ### `CONTENT-INDEXING` (SHIPPED 2026-06-11: no chips were queued)
 

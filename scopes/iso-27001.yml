@@ -1218,19 +1218,18 @@ requirements:
     text: |
       Clocks of information processing systems used by the organization
       shall be synchronized to approved time sources.
-    coverage: out-of-scope
+    coverage: facilitated
+    pryv_effort_saved: low
+    facilitation_mode: awareness
     draft: true
-    planned:
-      - kind: feature
-        summary: "Bootstrap-join + pre-cert-load clock-skew detection (would shift row to F:Awareness|Low)"
-        proposal: proposals/clock-skew-cluster-checks.md
-        backlog: CLOCK-SKEW-CLUSTER-CHECKS
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467834&issue=pryv%7Copen-pryv.io%7C77
-        impact: medium
+    pryv_primitives: [multi-core-mTLS, letsEncrypt-integration]
     overview: |
-      Clock sync is the host-OS concern (chronyd / ntpd); Pryv stores
-      whatever timestamp the host produces. The operator ensures every
-      host in the cluster runs a synchronized clock service.
+      Clock sync stays your host's job (chronyd / ntpd): Pryv stores
+      whatever timestamp the host produces. Pryv makes a badly skewed
+      clock visible at the two points where it breaks a core: a new
+      core whose clock differs from the cluster's is refused at join,
+      and a TLS certificate outside the local clock's validity window
+      is neither installed nor hot-swapped.
     detail: |
       Pryv's architecture is **core-affine**, every user's data
       operations resolve to one core (see
@@ -1243,19 +1242,23 @@ requirements:
       response carries `meta.serverTime` (Unix timestamp seconds;
       `components/api-server/src/methods/helpers/setCommonMeta.ts`).
       Webhook payloads include the same. Clients use this to detect
-      their own clock skew vs the server. Server-to-server skew
-      detection is not currently shipped, operators rely on host
-      NTP for that.
+      their own clock skew vs the server.
 
-      **Planned addition** (see
+      **Shipped** (open-pryv.io `5266b697`, released after
+      2.0.0-rc.34; see
       `proposals/clock-skew-cluster-checks.md`): two intra-core
-      checkpoints, bootstrap-join skew check (refuse to ack when
-      the joining core's clock differs from the issuer's
-      `serverTime` by more than `cluster.clockSkewThresholdSec`)
-      + pre-cert-load validity check (refuse to swap a rotated
-      cert whose `notBefore..notAfter` window doesn't contain the
-      local clock). After these ship the row moves from
-      `out-of-scope` to `F: Awareness | Low`.
+      checkpoints. (1) Bootstrap join: before acking, a new core
+      compares its clock with the issuing core's (`meta.serverTime`
+      of its API root, else the HTTP `Date` header) and refuses the
+      join beyond `--bootstrap-clock-skew-seconds` (default 30 s, `0`
+      disables); the join token is not used, so fixing the clock and
+      re-running succeeds. (2) Certificate load: a certificate whose
+      `notBefore..notAfter` window does not contain the local clock
+      (tolerance `cluster.clockSkewSeconds`, default 30 s) is not
+      materialized from PlatformDB nor hot-swapped into the workers,
+      and a custom certificate outside its window is reported at boot.
+      What stays yours: run a clock service on every host. Pryv does
+      no periodic clock polling.
 
   - ref: A.8.18
     title: A.8.18 Use of privileged utility programs
