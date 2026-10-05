@@ -112,13 +112,18 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, CMC]
     derives_from: [gdpr.Art.7]
-    tests: [AA02, ACCP]
+    tests: [AA02, ACCP, CN58, CN59, CN60]
     overview: |
       Withdrawal = `accesses.delete`; modification = `accesses.update`
       with new permissions / clientData. Both are versioned and
       auditable; the prior consent state is preserved for §7
       demonstrability. Cross-account (CMC) consent withdrawal uses
-      `consent/revoke-cmc` for symmetric teardown.
+      `consent/revoke-cmc` for symmetric teardown, and from the
+      open-pryv.io release after 2.0.0-rc.35 the principal's own
+      accept event records each withdrawal, whichever party and path
+      ended it (`content.withdrawal`, server-owned, never overwritten)
+      `[CN58]`, `[CN59]`, `[CN60]`. See
+      `context/cmc-consent-primitives.md`.
 
   - ref: A.7.4.1
     title: A.7.4.1 Limit collection

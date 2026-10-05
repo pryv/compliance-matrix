@@ -398,7 +398,7 @@ requirements:
     reviewed_at: "2026-07-18"
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md]
-    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, OE27]
+    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27]
     overview: |
       The access Pryv mints when your user grants permission IS your
       durable consent record, versioned permissions + clientData
@@ -424,8 +424,28 @@ requirements:
       withdrawals the record you demonstrate is the `consent/*` events
       (the accept on the subject's account, the request on the
       requester's) plus the audit trail, not the access version chain.
-      For a consent a delegation detach ends, the accept event also
-      records the end itself (`content.withdrawal`, see below).
+      The person's own accept event also records the end itself,
+      whatever ended the consent: `content.withdrawal = { at, by,
+      accessId, revokeEventId? }`, with `by: 'accesses.delete'` (the
+      data grant deleted through the API) `[CN58]`, `[DH16]`,
+      `'revoke-cmc'` (the person wrote a `consent/revoke-cmc`) `[CN59]`,
+      `[HR32]` or `'peer-revoke'` (the requester withdrew) `[CN60]`, in
+      the open-pryv.io release after 2.0.0-rc.35 (expected
+      2.0.0-rc.36, `1420fe72`,
+      https://github.com/pryv/open-pryv.io/issues/146); a delegation
+      detach has recorded `by: 'delegation-detach'` since 2.0.0-rc.31
+      (see below). The marker is server-owned, written only once the
+      grant is gone, never overwritten once set, and written as a
+      versioned update, so the accept event's history shows the consent
+      before it ended. Recording it is best-effort (a teardown never
+      fails on it), so the events and audit trail stay the fallback
+      record. A `consent/revoke-cmc` whose delete of the grant fails no
+      longer reads completed: it ends `failed`
+      (`cmc-revoke-delete-failed`) and is retried without telling the
+      peer twice, and nothing is recorded as withdrawn until the delete
+      succeeds `[HR34]`, `[CD26]`. If your app lists a person's
+      consents, treat an accept event carrying `withdrawal` as ended;
+      the `@pryv/cmc` client does so by default from its next release.
       See `context/cmc-consent-primitives.md`.
 
       Intelligible form (§2): you write the UX (app-web-auth3 template
@@ -468,7 +488,13 @@ requirements:
       user manages through delegation) to the auth request. Pryv
       validates the list when the request is created, stores it
       normalised and echoes it on the 201 answer and on the poll the
-      authentication page reads `[RCI1]`, `[RCI2]`, `[RCI6]`. The
+      authentication page reads `[RCI1]`, `[RCI2]`, `[RCI6]`. An invite
+      may also name the data grant the person mints by accepting it
+      (`accessName`, 1 to 256 characters, open-pryv.io release after
+      2.0.0-rc.35, https://github.com/pryv/open-pryv.io/issues/147), so
+      each consent carries a name you choose among the person's
+      accesses; the authentication page passes it to the accept
+      `[RCI10]`, `[RCI11]`. The
       reference account app (app-web-user-account 0.11.0) presents
       each invite as its own block with its own Approve and Decline,
       never implied by approving the app access; it decides, then
@@ -701,7 +727,7 @@ requirements:
     reviewed_by: Pryv compliance
     reviewed_at: "2026-09-15"
     pryv_primitives: [access, permissions, delegation, clientData, event]
-    tests: [DCH01, DCH02, DCH05, DCH12, DCH15, DCH16, DCH18, DCH21, DCH22, DCH23, DCH24, DDK07, RCI1]
+    tests: [DCH01, DCH02, DCH05, DCH12, DCH15, DCH16, DCH18, DCH21, DCH22, DCH23, DCH24, DDK07, RCI1, RAM01, RAM02, RAM03]
     overview: |
       Pryv still neither knows nor validates a subject's age, age +
       parental-authority verification happens at your app's
@@ -759,7 +785,16 @@ requirements:
       every access granted through that delegation is revoked with it
       `[DCH12]`, so no parental consent outlives parental control.
       Whether a given parent may consent for a given app remains your
-      determination. In open-pryv.io 2.0.0-rc.23.
+      determination. In open-pryv.io 2.0.0-rc.23. An app meant only for
+      the managed account (for example a parent-facing app that should
+      only ever hold the child's data) can require that the access be
+      granted for an account the user manages, never for the user's own
+      (`actAsManagedOnly: true` on the auth request, open-pryv.io
+      release after 2.0.0-rc.35,
+      https://github.com/pryv/open-pryv.io/issues/148). Pryv validates,
+      stores and echoes the field `[RAM01]`, `[RAM02]`, `[RAM03]`, but
+      the authentication page enforces it, not the core: a deployment
+      using its own auth UI must honour it.
 
       **The parent accepts a cross-account consent for the child.**
       When a study or another account asks the child's account to share

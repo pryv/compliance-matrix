@@ -894,6 +894,56 @@ Common touchpoints when API surface changes:
   disposal), `soc2.CC6.1` + `soc2.CC6.3` (logical access control),
   `soc2.P6.2` (record of disclosures, audit).
 
+**Walked 2026-10-05 for open-pryv.io master `0ebed334`** (the release after
+2.0.0-rc.35, expected 2.0.0-rc.36). No new API method, no tier shift, no
+`planned:` chips involved (none was queued on the rows below); `reviewed_at`
+left unchanged so the added prose awaits the next review pass.
+- **New values of an existing server-owned accept-event field**
+  (https://github.com/pryv/open-pryv.io/issues/146, merge `1420fe72`; commits
+  `4b6d3b3c`, `b9a0121f`, `7218a655`, `1bcd66b8`, `88838020`):
+  `consent/accept-cmc` `content.withdrawal` is now written on every teardown
+  path as `{ at, by, accessId, revokeEventId? }`, `by: 'accesses.delete' |
+  'revoke-cmc' | 'peer-revoke'` (a delegation detach keeps `'delegation-detach'`
+  with its `relId`); never overwritten. New failure reason
+  `cmc-revoke-delete-failed`: a `consent/revoke-cmc` whose local delete fails
+  ends `failed` and is retried instead of reading completed. Client side:
+  `@pryv/cmc` `listAcceptedRelationships` leaves withdrawn relationships out by
+  default from its next release (new `includeWithdrawn` parameter). Tests
+  `[CN58]`, `[CN59]`, `[CN60]`, `[DH16]`, `[HR32]`, `[HR34]`, `[CD26]`.
+- **New `/reg/access` request field `cmcInvites[].accessName`**
+  (https://github.com/pryv/open-pryv.io/issues/147): names the data grant per
+  consent invite. Tests `[RCI10]`, `[RCI11]`.
+- **New `/reg/access` request field `actAsManagedOnly`**
+  (https://github.com/pryv/open-pryv.io/issues/148): the access may only be
+  granted for an account the user manages; enforced by the authentication page,
+  not the core. Tests `[RAM01]`, `[RAM02]`, `[RAM03]`.
+- **Removed `/reg/access` outcome `REDIRECTED`** (security hardening, merge
+  `1aa22e1a`, commit `62ab4f7e`; BREAKING for a page that posted it, none
+  shipped did): refused with `400 invalid-parameters`, no `redirectUrl` stored.
+  Test `[MC04D]`.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.7 | §3 teardown note: the withdrawal marker on every path (`by` values, server-owned, never overwritten, versioned, best-effort), failed revoke retried, `@pryv/cmc` lister default; §2 invites paragraph: `accessName` | `CN58`, `CN59`, `CN60`, `DH16`, `HR32`, `HR34`, `CD26`, `RCI10`, `RCI11` |
+| gdpr | Art.8 | "The parent consents to an app for the child": `actAsManagedOnly`, enforced by the authentication page | `RAM01`, `RAM02`, `RAM03` |
+| iso-27701 | A.7.3.4 | cross-account withdrawal recorded on the principal's own accept event | `CN58`, `CN59`, `CN60` |
+| hipaa-privacy | 164.508 | "right to revoke" mapping: the revocation recorded on the individual's accept event | `CN58`, `CN59`, `CN60` |
+| iso-27001 | A.8.26 | second example: the `REDIRECTED` outcome removed from the sign-in flow | `MC04D` |
+
+Walked without change: `pipeda.Principle.4.3` (withdrawal via
+`accesses.delete`, still true), `gdpr.Art.21` and `gdpr.Art.25` default 12
+(withdrawal API by default, still true), `hipaa-privacy.164.502(g)` (an app a
+representative authorizes; `actAsManagedOnly` is a request-side restriction the
+page enforces, not a new grant path). The B.1 row families (DSAR,
+rectification, erasure, restriction, access control, audit, and the SOC 2
+parallels) cite none of these surfaces. Context notes updated:
+`context/cmc-consent-primitives.md` (auth request: `accessName`; gates section;
+Art.7 withdrawability: the marker on every path; Art.7(3)),
+`context/delegation-model.md` (`actAsManagedOnly`). FAQ Q19 notes the marker.
+B.2 (no new event-type format: `consent/accept-cmc` gains values of an
+existing content field), B.3, B.4, B.6, B.8 (no token-class change), B.9, B.10,
+B.11: none.
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May

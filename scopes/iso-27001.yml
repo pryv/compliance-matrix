@@ -1346,7 +1346,7 @@ requirements:
     draft: true
     pryv_primitives: [audit]
     derives_from: [iso-27001.A.8.25]
-    tests: [ACTY]
+    tests: [ACTY, MC04D]
     overview: |
       For the operator running
       Pryv as one of its applications, this compliance matrix IS the
@@ -1365,6 +1365,19 @@ requirements:
       Uploads are not refused for their type. If your app displays HTML
       or SVG attachments, fetch the content and render it in your app's
       own sandbox: that part of the requirement is yours.
+
+      A second example, in the sign-in flow: an authorisation request
+      (`POST /reg/access`) no longer has a `REDIRECTED` outcome
+      (open-pryv.io release after 2.0.0-rc.35, `62ab4f7e`, merged in
+      `1aa22e1a`). That status let anyone holding a request key store an
+      unvalidated URL that was then served to the authentication page
+      under a field such pages follow. It is now refused (`400
+      invalid-parameters`), no outcome post stores a `redirectUrl`, and
+      the poll never answers `REDIRECTED` `[MC04D]`. No shipped
+      authentication page sent it; if your own page did, it must stop
+      (a request stays on the core that created it, and an account on
+      another core is served through the shared-secret hand-off
+      between cores).
 
   - ref: A.8.27
     title: A.8.27 Secure system architecture and engineering principles

@@ -148,7 +148,15 @@ keep their previous behaviour exactly, including the opaque-token contract.
 `{ capabilityUrl, mandatory?, for? }` (`for: 'self'` by default, or
 `'target'` for an account the user manages through delegation), validated at
 creation (`400 invalid-parameters` otherwise), stored normalised and echoed on
-the 201 answer and the NEED_SIGNIN poll `[RCI1]`, `[RCI2]`, `[RCI6]`. The
+the 201 answer and the NEED_SIGNIN poll `[RCI1]`, `[RCI2]`, `[RCI6]`. From
+the open-pryv.io release after 2.0.0-rc.35 (expected 2.0.0-rc.36, `1420fe72`,
+https://github.com/pryv/open-pryv.io/issues/147) an entry may also carry
+`accessName` (1 to 256 characters): the name of the data grant the person
+mints by accepting that invite, so the requester chooses how the consent is
+named among the person's accesses. It is stored as sent, echoed with its entry
+only, and passed by the authentication page to the accept; the core never uses
+it, and a request with a malformed one is refused before anything is stored
+`[RCI10]`, `[RCI11]`. The
 authentication page answers each invite on its own, never implied by
 approving the app access: it decides, accepts the approved invites, then
 grants the app access, and answers declined invites with
@@ -227,7 +235,9 @@ distinct gate shapes, chosen per trigger by what's at stake:
   covers the two markers that review writes on the accept event,
   `ownerConfirmedAt` and `withdrawal`: by any token, dropped on create,
   kept as stored on update, never added by an update `[DCH24]`,
-  `[APB08]`..`[APB12]`. An app or shared access the delegate
+  `[APB08]`..`[APB12]`; `withdrawal` is now also written on the other
+  teardown paths (see the Art.7 withdrawability paragraph below) and is
+  protected the same way `[CN58]`. An app or shared access the delegate
   granted is still refused on accept by the personal-token gate above.
   Writing `consent/scope-update-cmc` or `consent/request-cmc` (publishing
   an offer, whose capability and back-channel accesses are written outside
@@ -281,10 +291,42 @@ gate accepts the relationship's own data-grant access directly.
     and the `consent/request-cmc` event on the requester's account, the
     `consent/revoke-cmc` event where one was written or received, and the
     audit trail (for a detach, the audit row of
-    `delegations.detachDelegate`). Since open-pryv.io 2.0.0-rc.31
-    (`b77320df`) a consent ended by a detach also carries its end on the
-    accept event itself: `content.withdrawal = { at, by:
-    'delegation-detach', relId }` `[DCH22]`, `[DDK07]`. A consent the
+    `delegations.detachDelegate`).
+    **The withdrawal on the person's own accept event.** Since open-pryv.io
+    2.0.0-rc.31 (`b77320df`) a consent ended by a detach carries its end on
+    the accept event itself: `content.withdrawal = { at, by:
+    'delegation-detach', relId }` `[DCH22]`, `[DDK07]`. From the
+    open-pryv.io release after 2.0.0-rc.35 (expected 2.0.0-rc.36,
+    `1420fe72`, https://github.com/pryv/open-pryv.io/issues/146) every
+    other teardown path records it too: the `consent/accept-cmc` event in
+    the person's `:_cmc:apps:<app>` scope carries `content.withdrawal = {
+    at, by, accessId, revokeEventId? }` (`at` in seconds), with `by:
+    'accesses.delete'` when the data grant is deleted through the API
+    `[CN58]`, `[DH16]`, `'revoke-cmc'` when the person writes a
+    `consent/revoke-cmc` (`revokeEventId` is that trigger) `[CN59]`,
+    `[HR32]`, and `'peer-revoke'` when the requester withdraws
+    (`revokeEventId` is the revocation's arrival in the person's inbox)
+    `[CN60]`. The marker sits on the person's side (the one who accepted);
+    the requester's record stays its request event and the revocation it
+    wrote or received. It is written only once the grant is actually gone,
+    never overwritten once set (the first teardown to record it wins), and
+    written as a versioned update, so the accept event's history still
+    shows the consent before it ended. After `accesses.delete` it lands
+    shortly after the delete answers, and the person's socket clients are
+    notified when it does. Recording it is best-effort: a teardown never
+    fails because the marker could not be written, so where a marker is
+    missing the events and audit trail above remain the record. A
+    `consent/revoke-cmc` whose delete of the grant fails on the writer's
+    own account no longer reads completed: the trigger ends `failed`
+    (`cmc-revoke-delete-failed`, naming the accesses still in place) and
+    is retried without delivering the revocation again to a peer the
+    first attempt reached, and nothing is recorded as withdrawn until the
+    delete succeeds `[HR34]`, `[CD26]`. Apps listing a person's consents
+    should treat an accept event carrying `withdrawal` as ended: the
+    `@pryv/cmc` client's `listAcceptedRelationships` leaves those out by
+    default from its next release (expected 3.18.0; `includeWithdrawn:
+    true` lists them), and against a core without the marker an ended
+    relationship still looks active there. A consent the
     account holder keeps at detach (`keepAccessIds`, nothing kept by
     default, refused whole with `delegation-invalid-keep-list` when an id
     is not a consent this delegation gave `[DCH23]`) is not withdrawn: its
@@ -292,7 +334,7 @@ gate accepts the relationship's own data-grant access directly.
     `content.ownerConfirmedAt` `[DCH21]`. `approvedBy`,
     `ownerConfirmedAt` and `withdrawal` are server-owned: no token can
     write, change or erase them through the API `[DCH24]`,
-    `[APB08]`..`[APB12]`.
+    `[APB08]`..`[APB12]`, `[CN58]`.
     Revoke is access-permission-gated (`AccessLogic.canDeleteAccess`,
     honours `selfRevoke`), so the relationship's own data-grant access
     can self-revoke without an auth-page bounce, preserving the
@@ -309,7 +351,12 @@ gate accepts the relationship's own data-grant access directly.
 
 - **GDPR Art.7(3) (Right to withdraw)**: `implemented` via
   `accesses.delete` + (cross-account) `consent/revoke-cmc`; CMC bidirectionality
-  ensures the counterparty is notified.
+  ensures the counterparty is notified. From the open-pryv.io release after
+  2.0.0-rc.35 (expected 2.0.0-rc.36, `1420fe72`), the person's own accept
+  event records each withdrawal, whichever party and path ended it
+  (`content.withdrawal`, see the Art.7 withdrawability paragraph above)
+  `[CN58]`, `[CN59]`, `[CN60]`, and a revoke whose local delete failed is
+  retried instead of reading completed `[HR34]`.
 
   **Shipped in `open-pryv.io` 2.0.0-rc.20** (deployed 2026-09-16 to all three
   cores; client helpers in `@pryv/cmc` 3.13.0). Verified live on a deployed core:
