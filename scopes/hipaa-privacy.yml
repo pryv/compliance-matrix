@@ -87,7 +87,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, clientData, CMC, event]
-    tests: [AA01, ACCP]
+    tests: [AA01, ACCP, CN58, CN59, CN60]
     overview: |
       The authorization Pryv mints when your subject grants an access IS
       the §164.508 authorization record, versioned, immutable per
@@ -105,7 +105,11 @@ requirements:
         - signature equivalent → the act of granting the access through
           the auth flow (auditable)
         - expiration → `access.expires`
-        - right to revoke → `accesses.delete` + audit row at revocation
+        - right to revoke → `accesses.delete` + audit row at revocation;
+          for a cross-account (CMC) authorization, the individual's own
+          accept event also records the revocation, whichever party
+          ended it (`content.withdrawal`, open-pryv.io release after
+          2.0.0-rc.35) `[CN58]`, `[CN59]`, `[CN60]`
         - re-disclosure statement → `clientData.redisclosure_notice`
       Implementer responsibility: ensure the consent UX presents the
       §508(c) elements at the grant moment.

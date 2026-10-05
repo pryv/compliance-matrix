@@ -148,6 +148,16 @@ request). Shipped on open-pryv.io master in `91b06363`, `ef0a3f75`,
 `5943ca0b`, released in 2.0.0-rc.23 (2.0.0-rc.22 and earlier do not
 carry it).
 
+An app can also require the opposite, from the open-pryv.io release after
+2.0.0-rc.35 (expected 2.0.0-rc.36, `1420fe72`,
+https://github.com/pryv/open-pryv.io/issues/148): `actAsManagedOnly: true`,
+with `actAs: 'allow'` or a username, asks that the access be granted only for
+an account the user manages (refused with `400 invalid-parameters` with
+`actAs: 'deny'`, without `actAs`, or when not a boolean). The core stores it
+and echoes it on the 201 and the NEED_SIGNIN poll, and the outcome post cannot
+add or clear it, but the core does not enforce it: the authentication page
+does, and an older page behaves per `actAs` `[RAM01]`, `[RAM02]`, `[RAM03]`.
+
 **The lineage attribute.** Every access created through `accesses.create`
 while the caller is authenticated by a delegate token, or by an access itself
 granted that way, carries a server-stamped attribute

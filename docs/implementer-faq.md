@@ -1104,7 +1104,14 @@ decided by the implementer; the reference account app
 (app-web-user-account) ships a connected-apps page that calls it.
 Cross-account (CMC) relationships add the `consent/revoke-cmc`
 signal so the counterparty is told (see
-`context/cmc-consent-primitives.md`).
+`context/cmc-consent-primitives.md`). From the open-pryv.io release
+after 2.0.0-rc.35, the subject's own `consent/accept-cmc` event also
+records each withdrawal, whichever party and path ended it
+(`content.withdrawal = { at, by, accessId, revokeEventId? }`,
+server-owned, never overwritten,
+https://github.com/pryv/open-pryv.io/issues/146), so a consents page
+can show an ended consent as ended without reconstructing it from the
+revocation events.
 
 **Matrix encoding:** cited as "withdrawal API exists by default" in
 `context/privacy-by-design-and-default.md` (default 12) and on the
