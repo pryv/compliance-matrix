@@ -924,7 +924,7 @@ left unchanged so the added prose awaits the next review pass.
 
 | Scope | Ref | What changed | Tests added |
 |---|---|---|---|
-| gdpr | Art.7 | §3 teardown note: the withdrawal marker on every path (`by` values, server-owned, never overwritten, versioned, best-effort), failed revoke retried, `@pryv/cmc` lister default; §2 invites paragraph: `accessName` | `CN58`, `CN59`, `CN60`, `DH16`, `HR32`, `HR34`, `CD26`, `RCI10`, `RCI11` |
+| gdpr | Art.7 | §3 teardown note: the withdrawal marker on every path (`by` values, server-owned, never overwritten, history under forceKeepHistory only, best-effort), failed revoke retried, `@pryv/cmc` lister default; §2 invites paragraph: `accessName` | `CN58`, `CN59`, `CN60`, `DH16`, `HR32`, `HR34`, `CD26`, `DCH25`, `RCI10`, `RCI11` |
 | gdpr | Art.8 | "The parent consents to an app for the child": `actAsManagedOnly`, enforced by the authentication page | `RAM01`, `RAM02`, `RAM03` |
 | iso-27701 | A.7.3.4 | cross-account withdrawal recorded on the principal's own accept event | `CN58`, `CN59`, `CN60` |
 | hipaa-privacy | 164.508 | "right to revoke" mapping: the revocation recorded on the individual's accept event | `CN58`, `CN59`, `CN60` |

@@ -310,14 +310,18 @@ gate accepts the relationship's own data-grant access directly.
     the requester's record stays its request event and the revocation it
     wrote or received. It is written only once the grant is actually gone,
     never overwritten once set (the first teardown to record it wins), and
-    written as a versioned update, so the accept event's history still
-    shows the consent before it ended. After `accesses.delete` it lands
+    written as an ordinary event update (no history-skipping), so on a
+    deployment with `versioning.forceKeepHistory: true` the accept event's
+    history keeps the version before it ended (`events.getOne` with
+    `includeHistory=true`); without that setting an event update keeps no
+    history, and the audit trail is the record of when the consent was
+    given. After `accesses.delete` it lands
     shortly after the delete answers, and the person's socket clients are
     notified when it does. Recording it is best-effort: a teardown never
     fails because the marker could not be written, so where a marker is
     missing the events and audit trail above remain the record. A
-    `consent/revoke-cmc` whose delete of the grant fails on the writer's
-    own account no longer reads completed: the trigger ends `failed`
+    `consent/revoke-cmc` whose delete of the relationship access (on the
+    person's side, the data grant) fails no longer reads completed: the trigger ends `failed`
     (`cmc-revoke-delete-failed`, naming the accesses still in place) and
     is retried without delivering the revocation again to a peer the
     first attempt reached, and nothing is recorded as withdrawn until the
