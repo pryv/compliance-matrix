@@ -1166,6 +1166,25 @@ is now validated by the CMC plugin, not by `data-types`), B.3, B.4, B.6, B.9,
 B.10: none. B.11: no new config key, header, platform DB or backup change;
 the integrity rows it lists were walked here.
 
+**Correction made in the same pass: event history is opt-in.** Rows said or
+implied that an event update always keeps the prior value. In open-pryv.io
+both built-in stores keep event history only with
+`versioning.forceKeepHistory: true`, and the default configuration ships
+`false` (accesses are always versioned; that part was right). The audit log
+records who changed which event and when (for an update, the event key and
+the integrity hash as written), never the prior value. New context note
+`context/event-history.md`. Reworded, no tier change: `gdpr.Art.5`
+(overview, §1(d)), `gdpr.Art.7` (overview), `gdpr.Art.12`, `gdpr.Art.13`,
+`gdpr.Art.16`, `ccpa.1798.106`, `pipeda.Principle.4.6`,
+`swiss-nlpd.Art.6`, `swiss-nlpd.Art.19`, `hds.Activity.6`,
+`hipaa-privacy.164.508`, `164.526`, `164.530(i)`,
+`hipaa-security.164.312(c)(2)` (now cites the integrity hash in the audit
+row, `[WNWM]`), `164.316(b)(1)`, `164.316(b)(2)(iii)`, `iso-13485.4.2.4`, `iso-13485.7.3.10`, `iso-27701.A.7.2.4`,
+`A.7.4.3`, `soc2.PI1.3`, `PI1.5`, `P5.2`, `P7.1`; context notes
+`cmc-consent-primitives.md`, `data-accuracy-structural-vs-semantic.md`;
+`docs/pryv-primitives.md` (event), `docs/facilitation-typology.md`, FAQ
+accuracy entry.
+
 ### B.9: OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
 
 New in `open-pryv.io 2.0.0-rc.8` (squash `8abb86a4`): a standards-based

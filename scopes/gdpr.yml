@@ -206,7 +206,10 @@ requirements:
       Several Art.5 principles are technically enforced for you by Pryv
       rather than left to policy: purpose limitation (per-stream
       permissions), accountability (audit chain to the consent state),
-      accuracy (event versioning). Lawfulness, fairness and transparency
+      accuracy (schema validation at ingest; the prior value of a
+      corrected event is kept when you turn on event history with
+      `versioning.forceKeepHistory: true`, off by default). Lawfulness,
+      fairness and transparency
       stay on your shoulders; Pryv stores the notice/consent text you
       present but doesn't generate it for you.
     detail: |
@@ -238,9 +241,15 @@ requirements:
         right for THIS patient?", is out of scope by design;
         the implementer's app layer carries the clinical /
         domain context Pryv intentionally doesn't see.
-        `events.update` rectifies events (Art.16); event
-        versioning + `GET /events/:id?includeHistory=true`
-        preserves the prior value for traceability. Full split
+        `events.update` rectifies events (Art.16). The prior
+        value is kept, and returned by `GET
+        /events/:id?includeHistory=true`, only on a deployment
+        with `versioning.forceKeepHistory: true` (default
+        `false`: the update overwrites it); set it if your
+        accuracy trail must show the value before correction.
+        The audit log records who rectified which event and when
+        either way, not the prior value (see
+        `context/event-history.md`). Full split
         in `context/data-accuracy-structural-vs-semantic.md`.
       - Storage limitation (§1(e)), VOLUNTARILY MISSING +
         OPERATOR-OWNED at the retention-enforcement layer +
@@ -404,8 +413,12 @@ requirements:
       durable consent record, versioned permissions + clientData
       together prove what was authorised, with what text, at what time.
       Withdrawal is a single API call. For cross-account sharing, the
-      `consent/*` events carry the negotiation state transitions. Both
-      records are immutable per their primitive's semantics.
+      `consent/*` events carry the negotiation state transitions. The
+      access keeps every previous version; an event keeps its previous
+      versions only on a deployment with
+      `versioning.forceKeepHistory: true` (off by default), and the
+      server-written parts of the accept event (who approved, the
+      withdrawal) cannot be changed by any client.
     detail: |
       Demonstrability (§1), `accesses.get ?includeHistory=true` returns
       the full version chain; each version preserves the `permissions`
@@ -941,16 +954,22 @@ requirements:
     pryv_primitives: [access, clientData, event]
     docs: [guides/consent.md, customer-resources/audit-setup.md]
     overview: |
-      Pryv preserves whatever
-      notice / consent text you presented to the subject, immutably,
-      versioned, retrievable later. The response operations
+      Pryv keeps the
+      notice / consent text you presented to the subject, retrievable
+      later: versioned on every change when it lives on the access,
+      and on an event only with `versioning.forceKeepHistory: true`. The response operations
       (Art.15-22) execute in sub-second; the 1-month rule is your
       process target, not a software limit.
     detail: |
       Information artefacts (notice, consent text, lawful-basis
       explanation) can live in `access.clientData` and/or in
-      `consent/request-cmc` events. Both are immutable / versioned, so
-      the subject sees the same text that was originally presented,
+      `consent/request-cmc` events. The access keeps every previous
+      version of its `clientData`; a `consent/request-cmc` event keeps
+      its previous versions only on a deployment with
+      `versioning.forceKeepHistory: true` (off by default), so if your
+      app may edit the request after it is sent, turn it on or never
+      edit it. That way the subject can be shown the text that was
+      originally presented,
       addressing the "concise, transparent, intelligible" requirement
       at the artefact level. Whether the artefact itself is concise +
       intelligible is your editorial responsibility.
@@ -982,9 +1001,11 @@ requirements:
         `context/client-data-conventions.md`,
         `lawful_basis`, `purpose`, `transfer_basis`, `retention`,
         `consent`, `consent_event_id`, etc. (or a
-        `consent/request-cmc` event when using CMC). Pryv preserves
-        them immutably with version chain (`?includeHistory=true`);
-        your app surfaces them at the right moment.
+        `consent/request-cmc` event when using CMC). Pryv keeps them
+        with their version chain (`?includeHistory=true`): every
+        version on an access, and on an event only with
+        `versioning.forceKeepHistory: true`; your app surfaces them
+        at the right moment.
 
   - ref: Art.14
     title: Information to be provided where data have not been obtained from the data subject
@@ -1080,14 +1101,19 @@ requirements:
     functional_specs: [EVENT.BASE]
     tests: [PTU1]
     overview: |
-      `events.update` rectifies an event; event versioning preserves the
-      prior (inaccurate) value for traceability, addressing the
-      Art.5(1)(d) accuracy principle without losing the audit trail.
+      `events.update` rectifies an event, and the audit log records who
+      rectified which event and when. The prior (inaccurate) value is
+      kept for traceability only if your deployment sets
+      `versioning.forceKeepHistory: true`; by default the update
+      overwrites it. Set it if you must be able to show what was
+      corrected.
     detail: |
       Rectification mechanics:
 
       - **API**: `events.update` (PUT /events/:id) writes the new
-        value AND emits a new event version. The route validates
+        value; with `versioning.forceKeepHistory: true` it first keeps
+        the previous version as a history row (both built-in stores,
+        PostgreSQL and SQLite; default `false`). The route validates
         the updated payload through the same ajv-draft-04 pipeline
         as `events.create` (`components/api-server/src/methods/
         events.ts:564` middleware chain), so a "rectification"
@@ -1095,17 +1121,24 @@ requirements:
         can't replace one inaccurate value with another that
         violates the type's structural constraints.
       - **History retrieval**: `GET /events/:id?includeHistory=true`
-        returns the full version chain. The history is queried via
-        `mall.events.getHistory(userId, eventId)` (same file
-        line 185) and exposed at the implementer's API surface
-        when requested.
+        returns the version chain the store kept: the prior versions
+        on a deployment with `versioning.forceKeepHistory: true`, an
+        empty `history` otherwise. The history is queried via
+        `mall.events.getHistory(userId, eventId)` and exposed at the
+        implementer's API surface when requested.
       - **Audit trail**: every `events.update` call is in the
         audited methods set (`components/audit/src/ApiMethods.ts`).
-        The audit log records method + access ref + timestamp;
-        per the audit-minimality posture (Q9), the request body
-        is NOT captured, the history chain on the event itself
-        is the durable record of the prior value, not the audit
-        log.
+        The audit row records the access, the time and the method,
+        plus the event's key (id and new modification time) and the
+        integrity hash of the event as written; per the
+        audit-minimality posture (Q9), the request body is NOT
+        captured. So who rectified which event and when is on
+        record on every deployment, but the prior value exists only
+        in the event history, which is opt-in. Where the value
+        before correction must be demonstrable, set
+        `versioning.forceKeepHistory: true`, or have your app record
+        the correction as a new event that references the old one.
+        See `context/event-history.md`.
       - **Detection of inaccuracy**: out of scope at the platform
         layer. Pryv enforces structural validity at ingest (ajv
         schema validation); semantic inaccuracy detection is the

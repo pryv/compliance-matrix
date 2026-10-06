@@ -90,10 +90,15 @@ The atomic data record.
   attachments, `clientData`.
 - **Type validation**: `class/format` validated against the data-types
   repo schemas (`https://raw.github.com/pryv/data-types/master/dist/event-types.json`).
-- **Versioned**: `events.update` snapshots prior state into event history
-  (similar to access versioning).
+- **Versioned on request**: with `versioning.forceKeepHistory: true`,
+  `events.update` snapshots prior state into event history (similar to
+  access versioning, which is always on). The default is `false`: an
+  update overwrites the event, and the audit log records who changed
+  which event and when, not the prior value. See
+  `../context/event-history.md`.
 - **Immutability when needed**: write the event once; never update.
-  History-only events are append-only, useful for audit / consent /
+  Pryv does not enforce this for ordinary events: it is an app
+  convention (append-only streams), useful for audit / consent /
   attestation.
 - **Compliance role**: where the data subject's actual data lives;
   also the carrier for `consent/*` state-transition events

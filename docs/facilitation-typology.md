@@ -67,7 +67,8 @@ isolation on dedicated stream subtrees), `iso-27001.A.5.3`
 ### `evidence`
 
 Pryv generates structured data (audit log, access version chain,
-event version history) that the implementer **uses as proof** for a
+event version history when `versioning.forceKeepHistory` is on) that
+the implementer **uses as proof** for a
 regulatory artefact they produce, a Art.30 register, a breach
 report, a §164.528 accounting of disclosures, an ISMS internal-audit
 deliverable.

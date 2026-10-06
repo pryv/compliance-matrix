@@ -142,9 +142,11 @@ requirements:
     functional_specs: [EVENT.BASE]
     tests: [PTU1]
     overview: |
-      `events.update` rectifies events with version history preserved
-      (matching GDPR Art. 16). The "necessary for the purposes"
-      determination is editorial.
+      `events.update` rectifies events (matching GDPR Art. 16); the
+      prior value is kept only on a deployment with
+      `versioning.forceKeepHistory: true` (off by default), while the
+      audit log records who rectified which event and when either way.
+      The "necessary for the purposes" determination is editorial.
 
   - ref: Principle.4.7
     title: Schedule 1, Principle 7, Safeguards

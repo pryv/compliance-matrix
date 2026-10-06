@@ -140,8 +140,11 @@ requirements:
     pryv_primitives: [event, stream, backup-restore]
     overview: |
       Pryv stores events with
-      retained `class/format` semantics (data-types schemas) and
-      per-event version history. For long-term archival, the operator
+      retained `class/format` semantics (data-types schemas), and keeps
+      per-event version history when you set
+      `versioning.forceKeepHistory: true` (off by default; with
+      `versioning.deletionMode: keep-nothing`, the default, a deleted
+      event's history is removed with it). For long-term archival, the operator
       typically combines Pryv's event store with an external archival
       system (WORM storage, blockchain-anchored hashes etc.), Pryv
       is not an archival product itself but feeds it. Integrity

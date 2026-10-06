@@ -726,6 +726,7 @@ requirements:
     facilitation_mode: evidence
     draft: true
     pryv_primitives: [event, audit]
+    tests: [WNWM]
     planned:
       - kind: feature
         summary: "Chained / signed audit log authenticates audit data (row moves F:Evidence|Low → F:Evidence|Med)"
@@ -734,11 +735,17 @@ requirements:
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467766&issue=pryv%7Copen-pryv.io%7C74
         impact: medium
     overview: |
-      Event versioning preserves
-      the prior content on every update, so "is this the original?"
-      is a tractable question, compare against the history. The
-      audit row references the access that performed the update,
-      anchoring the change to an authenticated actor. Tamper
+      Every event carries an integrity hash (SHA-256, on by default),
+      and the audit row of each create or update records that hash
+      with the event's key and the access that performed the write,
+      anchoring the change to an authenticated actor `[WNWM]`: an
+      event whose stored state no longer hashes to the value its last
+      audited write recorded was changed since by something other
+      than an audited API call (a server-internal stamp, or an
+      alteration at the storage layer). "What was
+      the original?" needs the prior versions, which Pryv keeps only
+      when you set `versioning.forceKeepHistory: true` (off by
+      default; see `context/event-history.md`). Tamper
       detection beyond this (e.g., end-to-end content hashing under
       a customer-held key) is on the implementer or an extension.
     detail: |
@@ -1149,7 +1156,10 @@ requirements:
       is operational (activity logs, assessment outputs), Pryv events
       on a designated `compliance/*` stream carry the documentation
       alongside the audit log's automatic operational record. Event
-      versioning preserves the change history of policies-as-data;
+      versioning preserves the change history of policies-as-data
+      once you set `versioning.forceKeepHistory: true` (off by
+      default, in which case an update overwrites the previous
+      revision: keep each revision as its own event instead);
       backup-restore preserves them across the §164.316(b)(2)
       retention window.
 
@@ -1231,9 +1241,10 @@ requirements:
       Periodic review cadence is
       the operator's procedure. Pryv's contribution: when policies-
       as-data are stored as events on a `compliance/policies/*`
-      stream, the event-version chain shows when each policy was
-      last reviewed and what changed; audit log shows who-reviewed-
-      what.
+      stream, the audit log shows who updated which policy event and
+      when, and, on a deployment with
+      `versioning.forceKeepHistory: true` (off by default), the
+      event-version chain also shows what changed.
 
   - ref: 164.308(a)(2)
     title: Assigned security responsibility, standard

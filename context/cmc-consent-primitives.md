@@ -51,8 +51,13 @@ request:
   expiresAt:    <unix-seconds>
 ```
 
-This event lives on the requester's own account, immutable per Pryv event
-semantics. It records what was *asked*. Open-link invites may carry
+This event lives on the requester's own account. It records what was
+*asked*. Pryv does not lock it: if the requester's app updates it, the
+previous version is kept only on a deployment with
+`versioning.forceKeepHistory: true` (off by default, see
+`event-history.md`), so treat a sent request as write-once. The copy a
+capability serves to accepters is server-stamped into the capability's
+internal offer stream (`components/cmc/README.md`). Open-link invites may carry
 `expiresAt: null` (no expiry); the link is then ended by
 `consent/invalidate-link-cmc`, and the consent record of each participant is
 unaffected by the link's lifetime.

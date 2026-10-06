@@ -234,9 +234,12 @@ requirements:
     derives_from: [gdpr.Art.5, gdpr.Art.16]
     tests: [PTU1]
     overview: |
-      `events.update` rectifies events with version-history preservation
-      (matching GDPR Art.16 mechanics). For "throughout the lifecycle"
-      proof, the event version chain is the artefact. The accuracy
+      `events.update` rectifies events (matching GDPR Art.16 mechanics),
+      and the audit log records who rectified which event and when. For
+      "throughout the lifecycle" proof of the values themselves, the
+      event version chain is the artefact, and it exists only on a
+      deployment with `versioning.forceKeepHistory: true` (off by
+      default; see `context/event-history.md`). The accuracy
       determination + correction workflow is the controller's.
 
   - ref: A.7.4.5
@@ -399,9 +402,12 @@ requirements:
     overview: |
       Consent recording = `accesses.create` with permissions +
       clientData carrying the consent text; cross-account consent =
-      `consent/request-cmc` events. Both are immutable per their
-      primitive semantics, the §7 demonstrability requirement is
-      structural. Since open-pryv.io 2.0.0-rc.38 the principal's
+      `consent/request-cmc` events. The access keeps every previous
+      version; an event keeps its previous versions only with
+      `versioning.forceKeepHistory: true` (off by default), so the §7
+      demonstrability requirement is structural for the access and,
+      for the request event, holds as long as your app does not edit
+      it or history is on. Since open-pryv.io 2.0.0-rc.38 the principal's
       cross-account accept records the channels the relationship got
       (`features`, resolved from the offer, which the accept may only
       narrow) `[HA43]`, `[CD28]`, an account cannot record a consent to
