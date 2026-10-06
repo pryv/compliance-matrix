@@ -108,8 +108,8 @@ requirements:
         - right to revoke → `accesses.delete` + audit row at revocation;
           for a cross-account (CMC) authorization, the individual's own
           accept event also records the revocation, whichever party
-          ended it (`content.withdrawal`, open-pryv.io release after
-          2.0.0-rc.35) `[CN58]`, `[CN59]`, `[CN60]`
+          ended it (`content.withdrawal`, open-pryv.io
+          2.0.0-rc.36) `[CN58]`, `[CN59]`, `[CN60]`
         - re-disclosure statement → `clientData.redisclosure_notice`
       Implementer responsibility: ensure the consent UX presents the
       §508(c) elements at the grant moment.

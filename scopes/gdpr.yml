@@ -398,7 +398,7 @@ requirements:
     reviewed_at: "2026-07-18"
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md]
-    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27]
+    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13]
     overview: |
       The access Pryv mints when your user grants permission IS your
       durable consent record, versioned permissions + clientData
@@ -430,8 +430,7 @@ requirements:
       data grant deleted through the API) `[CN58]`, `[DH16]`,
       `'revoke-cmc'` (the person wrote a `consent/revoke-cmc`) `[CN59]`,
       `[HR32]` or `'peer-revoke'` (the requester withdrew) `[CN60]`, in
-      the open-pryv.io release after 2.0.0-rc.35 (expected
-      2.0.0-rc.36, `1420fe72`,
+      open-pryv.io 2.0.0-rc.36 (`1420fe72`,
       https://github.com/pryv/open-pryv.io/issues/146); a delegation
       detach has recorded `by: 'delegation-detach'` since 2.0.0-rc.31
       (see below). The marker is server-owned, written only once the
@@ -447,8 +446,35 @@ requirements:
       peer twice, and nothing is recorded as withdrawn until the delete
       succeeds `[HR34]`, `[CD26]`. If your app lists a person's
       consents, treat an accept event carrying `withdrawal` as ended;
-      the `@pryv/cmc` client does so by default from its next release.
+      the `@pryv/cmc` client does so by default since 3.18.0.
+      Since open-pryv.io 2.0.0-rc.38 (merge `461f3c4c`) these
+      server-written records also survive a concurrent client write: a
+      client updating or trashing the accept event while the server
+      stamps it no longer erases the stamp, because the update is
+      applied onto the event as stored at write time `[ESR1]`,
+      `[ESR4]`, and a CMC event's dispatch `status` and `failure` are
+      server-owned, so a client cannot make a failed delivery read
+      completed `[ESR5]`, `[APB13]`.
       See `context/cmc-consent-primitives.md`.
+
+      What a cross-account consent covers, and between whom (§1,
+      open-pryv.io 2.0.0-rc.38, merge `7aab1e85`): the channels a
+      relationship opens between the two parties (`features.chat`,
+      `features.systemMessaging`) are resolved by Pryv from the
+      requester's offer, which the person's accept may only narrow, and
+      the resolved pair is recorded on the person's accept event and on
+      both relationship accesses `[HA43]`, `[HA44]`, `[CD28]`; an
+      update keeps it `[APB16]`, and an accept claiming more than the
+      offer is cut back on the requester's side too `[IA18]`, `[IA22]`
+      (https://github.com/pryv/open-pryv.io/issues/149). An account can
+      no longer accept its own offer: the accept fails with
+      `cmc-self-accept-forbidden` before any stream or access is created
+      `[HA46]`, `[HA48]`, `[CN67]`, so every recorded consent is given
+      by one account to another; a self-relationship created earlier
+      records its withdrawal when its access is deleted `[CN69]`,
+      `[DH23]` (https://github.com/pryv/open-pryv.io/issues/150). If
+      your consent text describes chat or system messages, keep it
+      consistent with the `features` your offer sets.
 
       Intelligible form (§2): you write the UX (app-web-auth3 template
       is a starting point). Pryv enforces the technical contract; your
@@ -492,8 +518,8 @@ requirements:
       normalised and echoes it on the 201 answer and on the poll the
       authentication page reads `[RCI1]`, `[RCI2]`, `[RCI6]`. An invite
       may also name the data grant the person mints by accepting it
-      (`accessName`, 1 to 256 characters, open-pryv.io release after
-      2.0.0-rc.35, https://github.com/pryv/open-pryv.io/issues/147), so
+      (`accessName`, 1 to 256 characters, open-pryv.io 2.0.0-rc.36,
+      https://github.com/pryv/open-pryv.io/issues/147), so
       each consent carries a name you choose among the person's
       accesses; the authentication page passes it to the accept
       `[RCI10]`, `[RCI11]`. The
@@ -792,7 +818,7 @@ requirements:
       only ever hold the child's data) can require that the access be
       granted for an account the user manages, never for the user's own
       (`actAsManagedOnly: true` on the auth request, open-pryv.io
-      release after 2.0.0-rc.35,
+      2.0.0-rc.36,
       https://github.com/pryv/open-pryv.io/issues/148). Pryv validates,
       stores and echoes the field `[RAM01]`, `[RAM02]`, `[RAM03]`, but
       the authentication page enforces it, not the core: a deployment
@@ -1555,7 +1581,15 @@ requirements:
       9. **Audit-minimal logger** (Q23, `inspectAndHide`
          credential redaction invariant, `[BIH1-6]` tests).
       10. **CMC requires explicit subject consent**
-          (`consent/accept-cmc` blocking).
+          (`consent/accept-cmc` blocking). Since open-pryv.io
+          2.0.0-rc.38 the channels it opens are bounded by that
+          consent too: the person's accept may narrow the offer's
+          `features` but never widen them, and a relationship without
+          chat gets no chat stream or chat permission on either side
+          `[HA43]`, `[HA44]`, `[CN62]`, `[CN63]`. Chat and system
+          messaging are on unless your offer turns them off, so
+          leaving out a channel your purpose does not need is your
+          offer-design choice.
       11. **PlatformDB encrypted secrets** (LE + observability
           patterns).
       12. **Withdrawal API exists by default** (Q19,
@@ -1794,7 +1828,7 @@ requirements:
     draft: true
     pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation]
     config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs]
-    tests: [HSHT, ACTY, BKSR]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -1857,7 +1891,25 @@ requirements:
           and authentication refuses a never-expiring shared access once
           its app access has expired, `5d609bfa`), and a webhook stops
           firing and becomes `inactive` once its access has expired
-          (`3394b95f`), both in open-pryv.io 2.0.0-rc.23.
+          (`3394b95f`), both in open-pryv.io 2.0.0-rc.23. A
+          cross-account (CMC) relationship whose consent excludes chat
+          gives neither side a chat stream or chat permission, and a
+          counterparty writing a chat (or, without system messaging, an
+          alert) directly with its relationship token is refused `403`
+          (`cmc-chat-disabled`, `cmc-system-messaging-disabled`)
+          (open-pryv.io 2.0.0-rc.38, merge `7aab1e85`) `[CN63]`,
+          `[CN65]`, `[CH07]`, `[CH10]`.
+        - Integrity of stored records: IMPLEMENTED for the built-in
+          stores, an `events.update`, a trash or an attachment deletion
+          is applied onto the event as stored at write time (atomically
+          on the PostgreSQL and SQLite stores), so a concurrent client
+          write no longer erases a top-level field written meanwhile, by
+          the server or another client, that the request did not change
+          (a request that sends `content` replaces it whole, CMC
+          server-owned content fields excepted)
+          (open-pryv.io 2.0.0-rc.38, merge `461f3c4c`) `[ESR1]`,
+          `[ESR4]`, `[ESR6A]`, `[UEA1]`. A custom data store that does
+          not implement the atomic merge gets a read then an update.
         - Authentication strength: IMPLEMENTED, `mfa.*` API methods,
           opt-in per `services.mfa.mode`.
         - Delegated-app authorization: IMPLEMENTED, the OAuth2

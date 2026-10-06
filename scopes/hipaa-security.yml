@@ -382,7 +382,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation]
-    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27]
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10]
     overview: |
       Per-stream permissions are enforced at every API call; an access
       can read or write only the streams its `permissions[]` lists, at
@@ -459,6 +459,18 @@ requirements:
       record the lineage (OAuth2 consent, publishing a CMC offer,
       widening a CMC grant) refuse a delegation-derived token
       `[DCH17]`, `[OE27]`.
+
+      **Cross-account relationship accesses are bounded by the
+      negotiated channels.** Since open-pryv.io 2.0.0-rc.38 (merge
+      `7aab1e85`) a cross-account (CMC) relationship whose consent
+      excludes chat gives neither relationship access a chat permission
+      and creates no chat stream `[CN62]`, `[CN63]`, and the
+      counterparty's access is refused (`403`, `cmc-chat-disabled`) if
+      it writes a chat directly; alerts are refused the same way when
+      system messaging is off (`cmc-system-messaging-disabled`)
+      `[CN65]`, `[CH07]`, `[CH10]`. Relationships accepted earlier keep
+      their chat stream; the refusal applies to them when their recorded
+      features exclude chat.
 
   - ref: 164.312(a)(2)(i)
     title: Unique user identification, Required
@@ -668,6 +680,7 @@ requirements:
     facilitation_mode: primitive
     draft: true
     pryv_primitives: [event, audit, permissions, backup-restore]
+    tests: [ESR1, ESR2, ESR3, ESR4, ESR6A]
     planned:
       - kind: feature
         summary: "Chained / signed audit log enforces log integrity at the primitive layer"
@@ -678,11 +691,27 @@ requirements:
     overview: |
       Integrity is multi-
       layered: write authorization gated by `permissions`, event
-      versioning preserves the prior value on every update, audit
+      versioning preserves the prior value on every update (on a
+      deployment with `versioning.forceKeepHistory: true`; the default
+      keeps no event history), audit
       pins the (who, when, via which access) attribution, and
       `bin/backup.js` provides the recovery path if a destruction
       event needs to be reversed. The standard's overall programmatic
       obligation is yours; the technical substrate is Pryv's.
+    detail: |
+      Concurrent writes (open-pryv.io 2.0.0-rc.38, merge `461f3c4c`):
+      an `events.update`, a trash (`events.delete`) or an attachment
+      deletion is applied onto the event as stored at write time, so a
+      top-level field written meanwhile (by the server or another
+      client) that the request did not change is kept rather than
+      silently overwritten with the copy the request read; `clientData`
+      keys merge onto the stored map. The built-in PostgreSQL and SQLite
+      stores do the read-merge-write atomically `[ESR1]`..`[ESR4]`,
+      `[ESR6A]`, `[UEA1]`; a custom data store that does not implement
+      it gets a read then an update. A request that sends `content`
+      still replaces the content whole: two clients editing the same
+      event's content concurrently is last-writer-wins, which your app
+      resolves if it matters.
 
   - ref: 164.312(c)(2)
     title: Mechanism to authenticate ePHI, Addressable

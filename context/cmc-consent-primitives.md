@@ -47,7 +47,7 @@ request:
   description:  { en: "...", fr: "..." }    # localized text
   consent:      { en: "...", fr: "..." }    # THE consent assertion shown to user
   permissions:  [{streamId, level}, ...]    # what's being granted
-  features:     { chat, systemMessaging }
+  features:     { chat, systemMessaging }   # each true unless set to false
   expiresAt:    <unix-seconds>
 ```
 
@@ -65,6 +65,79 @@ On `accept-cmc`, the plugin transactionally:
 
 The access pair is the **durable contract**. The events are the **messages
 that established it**.
+
+## Relationship features: which channels the consent covers
+
+Since open-pryv.io 2.0.0-rc.38 (merge `7aab1e85`, tag commit `37819f45`,
+https://github.com/pryv/open-pryv.io/issues/149; code
+`components/cmc/src/features.ts`, `handleAccept.ts`,
+`handleIncomingAccept.ts`) a relationship's `features` (`chat`,
+`systemMessaging`) are part of what the consent records and enforces, not a
+client-side hint:
+
+- **Resolved by the server from the offer.** Each feature is granted unless
+  the offer's `content.request.features` sets it to `false`; the accept's
+  `content.features` may only narrow that (a `false` turns a feature off, a
+  `true` against an offer that turned it off is ignored, no error)
+  `[FE01]`..`[FE06]`, `[HA43]`, `[HA44]`, `[HA45]`. Each side resolves
+  against its own copy of the offer, so a delivered accept claiming more than
+  the requester offered is cut back on the requester's side `[IA18]`,
+  `[IA19]`, `[IA21]`; an accept that does not arrive through the capability
+  (posted on the inbox with a back-channel token) can only narrow the
+  relationship the requester already holds, never widen it `[IA22]`,
+  `[IA23]`, `[CN68]`. If the requester's copy of the offer cannot be read,
+  the delivered value is used, which can still only narrow, and a warning is
+  logged `[IA20]`. Malformed `features` on an accept are refused (`400`,
+  `cmc-invalid-event-content`) `[VA04]`, `[VA05]`.
+- **Recorded on both sides.** The resolved pair is stamped on the person's
+  `consent/accept-cmc` trigger when it completes, on both relationship
+  accesses (`clientData.cmc.features`) and on the requester's inbox mirror
+  `[CD28]`, `[IA02F]`, `[HA01G]`; an `events.update` of the accept keeps the
+  stored value `[APB16]`. Before rc.38 the value was taken from the accept as
+  written, so an accept without `features` recorded `null` and an accepter
+  could record chat against an offer that excluded it.
+- **No channel the consent did not cover.** With `chat` resolved false,
+  neither side gets a per-peer chat stream (`<scope>:chats:<peer>`) nor a chat
+  permission on the relationship access; the `<scope>:chats` parent and the
+  collectors stream still exist `[CN62]`, `[CN63]`, `[AN05]`, and an app
+  writing a chat there gets `unknown-referenced-resource` `[CN66]`. Alerts
+  still travel when `systemMessaging` is on `[CN64]`.
+- **Inbound guard.** A counterparty writing `message/chat-cmc` directly with
+  its relationship token (create, edit, or retyping another event to it) is
+  refused with `403 forbidden`, `error.data.id: 'cmc-chat-disabled'`, when the
+  relationship's `features.chat` is false; likewise `notification/alert-cmc`
+  / `notification/ack-cmc` with `systemMessaging: false`
+  (`cmc-system-messaging-disabled`). Scope requests and scope updates are
+  never gated `[CH07]`..`[CH11]`, `[CN65]`.
+- **Relationships accepted before rc.38 are not re-provisioned.** They keep
+  their chat stream and chat permission; the inbound guard still refuses a
+  counterparty's chat write when their recorded `features.chat` is false, and
+  a relationship recording no features at all stays permissive `[CH09]`. An
+  app deciding whether to offer chat must read `features` (on the accept
+  event, or `listAcceptedRelationships` in `@pryv/cmc`), not the existence of
+  the chat stream.
+
+What this gives the implementer: the communication channels between the two
+parties are bounded by what the person accepted, and recorded where the
+consent is recorded. Whether to offer chat or system messaging in a given
+offer (and what your consent text says about it) stays your decision.
+
+## An account cannot consent to itself
+
+Since open-pryv.io 2.0.0-rc.38 (merge `7aab1e85`,
+https://github.com/pryv/open-pryv.io/issues/150) a `consent/accept-cmc`
+whose offer was made by the accepting account itself (an open link opened
+while signed in as the requester) fails with `failure.reason:
+'cmc-self-accept-forbidden'` before any stream or access is created. The
+check runs twice: the capability token is one of the account's own accesses
+(checked before the offer is read), or the offer's requester identity is the
+accepting account `[HA46]`, `[HA48]`, `[CN67]`; the same username on another
+platform is another account `[HA47]`. Before rc.38 such an accept produced a
+relationship of the account with itself. A self-relationship created earlier
+is a single relationship access; deleting it with `accesses.delete` records
+`content.withdrawal` on the accept event that created it and attempts no
+delivery to a peer `[CN69]`, `[DH23]`, `[DH24]`. The `@pryv/cmc` client
+(3.19.0) exposes the id as `errorIds.SELF_ACCEPT_FORBIDDEN`.
 
 ## What the access carries (as consent record)
 
@@ -149,7 +222,7 @@ keep their previous behaviour exactly, including the opaque-token contract.
 `'target'` for an account the user manages through delegation), validated at
 creation (`400 invalid-parameters` otherwise), stored normalised and echoed on
 the 201 answer and the NEED_SIGNIN poll `[RCI1]`, `[RCI2]`, `[RCI6]`. From
-the open-pryv.io release after 2.0.0-rc.35 (expected 2.0.0-rc.36, `1420fe72`,
+open-pryv.io 2.0.0-rc.36 (`1420fe72`,
 https://github.com/pryv/open-pryv.io/issues/147) an entry may also carry
 `accessName` (1 to 256 characters): the name of the data grant the person
 mints by accepting that invite, so the requester chooses how the consent is
@@ -274,6 +347,12 @@ gate accepts the relationship's own data-grant access directly.
     written, not merely that an app authorized for stream-write performed
     the write. This strengthens the demonstrability claim: the access pair
     + history chain is backed by an auditable user-authentication event.
+  - **Two distinct parties, and what the consent covers**: since
+    open-pryv.io 2.0.0-rc.38 an account cannot accept its own offer
+    (`cmc-self-accept-forbidden`, see "An account cannot consent to itself"
+    above), and the accept event records the channels the relationship
+    actually got (`features`, resolved from the offer, narrow-only, see
+    "Relationship features" above).
   - Withdrawability: `accesses.delete` (full revoke) or `accesses.update`
     (scope-down), both versioned when called through the API route (the
     delete marks the access deleted and keeps it, the update snapshots the
@@ -295,9 +374,9 @@ gate accepts the relationship's own data-grant access directly.
     **The withdrawal on the person's own accept event.** Since open-pryv.io
     2.0.0-rc.31 (`b77320df`) a consent ended by a detach carries its end on
     the accept event itself: `content.withdrawal = { at, by:
-    'delegation-detach', relId }` `[DCH22]`, `[DDK07]`. From the
-    open-pryv.io release after 2.0.0-rc.35 (expected 2.0.0-rc.36,
-    `1420fe72`, https://github.com/pryv/open-pryv.io/issues/146) every
+    'delegation-detach', relId }` `[DCH22]`, `[DDK07]`. Since
+    open-pryv.io 2.0.0-rc.36 (`1420fe72`,
+    https://github.com/pryv/open-pryv.io/issues/146) every
     other teardown path records it too: the `consent/accept-cmc` event in
     the person's `:_cmc:apps:<app>` scope carries `content.withdrawal = {
     at, by, accessId, revokeEventId? }` (`at` in seconds), with `by:
@@ -328,7 +407,7 @@ gate accepts the relationship's own data-grant access directly.
     delete succeeds `[HR34]`, `[CD26]`. Apps listing a person's consents
     should treat an accept event carrying `withdrawal` as ended: the
     `@pryv/cmc` client's `listAcceptedRelationships` leaves those out by
-    default from its next release (expected 3.18.0; `includeWithdrawn:
+    default since 3.18.0 (`includeWithdrawn:
     true` lists them), and against a core without the marker an ended
     relationship still looks active there. A consent the
     account holder keeps at detach (`keepAccessIds`, nothing kept by
@@ -339,6 +418,29 @@ gate accepts the relationship's own data-grant access directly.
     `ownerConfirmedAt` and `withdrawal` are server-owned: no token can
     write, change or erase them through the API `[DCH24]`,
     `[APB08]`..`[APB12]`, `[CN58]`.
+    **Server-written fields survive a concurrent client update** (since
+    open-pryv.io 2.0.0-rc.38, merge `461f3c4c`). Before, a field the server
+    wrote on an event (the withdrawal marker, the owner's confirmation, a
+    CMC dispatch status) could be lost when a client updated or trashed the
+    same event at that moment, because the client's write was built from the
+    copy it had read just before. `events.update`, `events.delete` (trash)
+    and `events.deleteAttachment` now apply the client's change onto the
+    event as stored at write time: the fields the request changes win, a
+    field sent back with the value the request read does not overwrite a
+    newer stored value, and `clientData` keys merge onto the stored map
+    `[ESR1]`..`[ESR8]`, `[UEA1]`..`[UEA3]`. The built-in PostgreSQL and
+    SQLite stores do this read-merge-write atomically (a row lock, a
+    transaction); a custom data store that does not implement it gets a
+    read then an update, which narrows the window without closing it. The
+    merge is per top-level field: a client that sends `content` replaces
+    the content as a whole, except the server-owned fields below. On every
+    CMC event type `content.status` and `content.failure` are now
+    server-owned too (an update keeps the stored values and ignores
+    client-sent ones), as are the resolved `features` on an accept, and an
+    update sending non-object content on a CMC event is refused
+    `[APB13]`..`[APB16]`. So a withdrawal stamped while the person's app is
+    editing the accept event stays recorded, and a client cannot reset a
+    dispatch outcome to make a failed delivery read completed.
     Revoke is access-permission-gated (`AccessLogic.canDeleteAccess`,
     honours `selfRevoke`), so the relationship's own data-grant access
     can self-revoke without an auth-page bounce, preserving the
@@ -355,8 +457,8 @@ gate accepts the relationship's own data-grant access directly.
 
 - **GDPR Art.7(3) (Right to withdraw)**: `implemented` via
   `accesses.delete` + (cross-account) `consent/revoke-cmc`; CMC bidirectionality
-  ensures the counterparty is notified. From the open-pryv.io release after
-  2.0.0-rc.35 (expected 2.0.0-rc.36, `1420fe72`), the person's own accept
+  ensures the counterparty is notified. Since open-pryv.io
+  2.0.0-rc.36 (`1420fe72`), the person's own accept
   event records each withdrawal, whichever party and path ended it
   (`content.withdrawal`, see the Art.7 withdrawability paragraph above)
   `[CN58]`, `[CN59]`, `[CN60]`, and a revoke whose local delete failed is
@@ -423,6 +525,15 @@ gate accepts the relationship's own data-grant access directly.
 - `components/cmc/INTERNALS.md`: plugin-side flow diagrams.
 - `components/cmc/src/accessesUpdateHook.ts`: post-hook that fires when
   `accesses.update` runs (links scope changes to outbound notification).
+- `components/cmc/src/features.ts`: resolution of a relationship's
+  `features` from the offer (narrow-only); `hooks.ts`
+  `createCounterpartyFeatureGateHook`: the inbound chat / system-messaging
+  guard.
+- `components/cmc/src/acceptServerOwnedFieldsHook.ts`: server-owned content
+  fields (`approvedBy`, `ownerConfirmedAt`, `withdrawal`, the resolved
+  `features` on an accept; `status`, `failure` on every CMC type);
+  `components/api-server/src/methods/events.ts` `mergeOntoStored`: the
+  write-time merge of a client update onto the stored event.
 - `data-types/src/consent.json`: the 8 `consent/*` formats.
 - `data-types/dist/event-types.json`: built artefact consumed at runtime
   via `service.eventTypes` config.

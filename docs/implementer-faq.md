@@ -1104,8 +1104,8 @@ decided by the implementer; the reference account app
 (app-web-user-account) ships a connected-apps page that calls it.
 Cross-account (CMC) relationships add the `consent/revoke-cmc`
 signal so the counterparty is told (see
-`context/cmc-consent-primitives.md`). From the open-pryv.io release
-after 2.0.0-rc.35, the subject's own `consent/accept-cmc` event also
+`context/cmc-consent-primitives.md`). Since open-pryv.io
+2.0.0-rc.36, the subject's own `consent/accept-cmc` event also
 records each withdrawal, whichever party and path ended it
 (`content.withdrawal = { at, by, accessId, revokeEventId? }`,
 server-owned, never overwritten,

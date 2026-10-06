@@ -118,8 +118,8 @@ requirements:
       with new permissions / clientData. Both are versioned and
       auditable; the prior consent state is preserved for §7
       demonstrability. Cross-account (CMC) consent withdrawal uses
-      `consent/revoke-cmc` for symmetric teardown, and from the
-      open-pryv.io release after 2.0.0-rc.35 the principal's own
+      `consent/revoke-cmc` for symmetric teardown, and since
+      open-pryv.io 2.0.0-rc.36 the principal's own
       accept event records each withdrawal, whichever party and path
       ended it (`content.withdrawal`, server-owned, never overwritten)
       `[CN58]`, `[CN59]`, `[CN60]`. See
@@ -395,13 +395,19 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, clientData, CMC, event]
     derives_from: [gdpr.Art.7, iso-27701.A.7.3.4]
-    tests: [AA01, ACCP]
+    tests: [AA01, ACCP, HA43, CD28, HA46, CN67, ESR1]
     overview: |
       Consent recording = `accesses.create` with permissions +
       clientData carrying the consent text; cross-account consent =
       `consent/request-cmc` events. Both are immutable per their
       primitive semantics, the §7 demonstrability requirement is
-      structural.
+      structural. Since open-pryv.io 2.0.0-rc.38 the principal's
+      cross-account accept records the channels the relationship got
+      (`features`, resolved from the offer, which the accept may only
+      narrow) `[HA43]`, `[CD28]`, an account cannot record a consent to
+      its own offer (`cmc-self-accept-forbidden`) `[HA46]`, `[CN67]`,
+      and the server-written parts of the record survive a concurrent
+      client update `[ESR1]`. See `context/cmc-consent-primitives.md`.
 
   - ref: A.7.2.5
     title: A.7.2.5 Privacy impact assessment
