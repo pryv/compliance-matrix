@@ -740,9 +740,11 @@ requirements:
       with the event's key and the access that performed the write,
       anchoring the change to an authenticated actor `[WNWM]`: an
       event whose stored state no longer hashes to the value its last
-      audited write recorded was changed since by something other
-      than an audited API call (a server-internal stamp, or an
-      alteration at the storage layer). "What was
+      audited create or update recorded was changed since by
+      something other than an audited create or update: a trash or an
+      attachment deletion (audited, but the row records no new hash),
+      a server-internal stamp, or an alteration at the storage layer.
+      "What was
       the original?" needs the prior versions, which Pryv keeps only
       when you set `versioning.forceKeepHistory: true` (off by
       default; see `context/event-history.md`). Tamper

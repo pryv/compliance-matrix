@@ -1162,7 +1162,8 @@ code references). Release names corrected in the same pass: the work walked on
 `iso-27701.A.7.3.4`, `hipaa-privacy.164.508`,
 `context/cmc-consent-primitives.md`, `context/delegation-model.md` and FAQ
 Q19. B.2 (no new event-type format; `consent/accept-cmc` `content.features`
-is now validated by the CMC plugin, not by `data-types`), B.3, B.4, B.6, B.9,
+is now validated by the CMC plugin; data-types 1.1.3 declares it on
+`consent/accept-cmc`, the runtime check stays the plugin's), B.3, B.4, B.6, B.9,
 B.10: none. B.11: no new config key, header, platform DB or backup change;
 the integrity rows it lists were walked here.
 
@@ -1173,11 +1174,15 @@ both built-in stores keep event history only with
 `false` (accesses are always versioned; that part was right). The audit log
 records who changed which event and when (for an update, the event key and
 the integrity hash as written), never the prior value. New context note
-`context/event-history.md`. Reworded, no tier change: `gdpr.Art.5`
+`context/event-history.md`. Tier change: `hipaa-privacy.164.526` `implemented`
+to `configurable` (effort `high`, one setting, config key
+`versioning.forceKeepHistory`), because §164.526(c)(1) asks for the
+amendment to be appended to or linked from the amended record, which the
+default configuration does not keep. Reworded, no tier change: `gdpr.Art.5`
 (overview, §1(d)), `gdpr.Art.7` (overview), `gdpr.Art.12`, `gdpr.Art.13`,
 `gdpr.Art.16`, `ccpa.1798.106`, `pipeda.Principle.4.6`,
 `swiss-nlpd.Art.6`, `swiss-nlpd.Art.19`, `hds.Activity.6`,
-`hipaa-privacy.164.508`, `164.526`, `164.530(i)`,
+`hipaa-privacy.164.508`, `164.530(i)`,
 `hipaa-security.164.312(c)(2)` (now cites the integrity hash in the audit
 row, `[WNWM]`), `164.316(b)(1)`, `164.316(b)(2)(iii)`, `iso-13485.4.2.4`, `iso-13485.7.3.10`, `iso-27701.A.7.2.4`,
 `A.7.4.3`, `soc2.PI1.3`, `PI1.5`, `P5.2`, `P7.1`; context notes

@@ -318,10 +318,11 @@ requirements:
     text: |
       Individual has a right to have a covered entity amend PHI or a
       record about the individual in a designated record set.
-    coverage: implemented
+    coverage: configurable
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [event]
+    config_keys: [versioning.forceKeepHistory]
     functional_specs: [EVENT.BASE]
     tests: [PTU1]
     overview: |
@@ -330,8 +331,13 @@ requirements:
       kept, so the amendment trail shows what changed, only on a
       deployment with `versioning.forceKeepHistory: true` (off by
       default; see `context/event-history.md`): set it, or record each
-      amendment as a new event linked to the one it amends. The §164.526
-      process (request → decision → action → notice) is yours to run.
+      amendment as a new event linked to the one it amends. Configurable
+      rather than implemented: §164.526(c)(1) asks you to append the
+      amendment to, or link it from, the record it amends, and on the
+      default configuration an update overwrites that record; one
+      setting (or that modelling convention) gives you the trail. The
+      §164.526 process (request → decision → action → notice) is yours
+      to run.
     detail: |
       For denied amendments where the individual files a statement of
       disagreement (§526(d)), store the statement as a separate event

@@ -1071,7 +1071,8 @@ requirements:
     tests: [ESR1, ESR4, ESR5, ESR6A]
     overview: |
       Pryv's processing model is deterministic + attributable: the
-      audit log is append-only by its write path, an access keeps
+      audit log is append-only by convention of its write path (no
+      hash chain, see `proposals/audit-log-chaining.md`), an access keeps
       every previous version, events.update snapshots the prior state
       of an event into version history only with
       `versioning.forceKeepHistory: true` (the default keeps no event

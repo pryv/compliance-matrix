@@ -30,13 +30,17 @@ after 2.0.0-rc.38 directly: `config/default-config.yml`,
 Both built-in user-data stores, PostgreSQL and SQLite, behave the same way.
 With `forceKeepHistory: true`, the store writes a copy of the event as it was
 (linked to the event by `headId`) before each update, each trash, each
-attachment change written through an update, and before the final deletion.
+attachment change, and before the final deletion. For an attachment added or
+deleted, the copy is taken after the attachment list has changed (the merge
+that follows the attachment write), so the previous version already shows
+the new list: history does not recover a removed attachment reference.
 With `false` (the default) they write none. A custom data store keeps
 whatever history it implements, if any.
 
 Some server writes never keep history, whatever the setting: the CMC plugin's
 dispatch status stamps on a trigger event (one of them removes a credential,
-which a history row would preserve) and the shared-secrets payload scrub.
+which a history row would preserve), the shared-secrets payload scrub, and
+the trash of a shared-secret event by its user (a compare-and-set).
 
 `versioning.deletionMode` decides what survives the **final** deletion of an
 event (the second `events.delete`, on an event already trashed):
@@ -67,11 +71,14 @@ the URL query parameters; never the request body. In addition:
   the create case;
 - an `events.delete` row (trash or final deletion) records who and when, but
   carries no record of which event: the event id is in the URL path, which is
-  not recorded.
+  not recorded (from a code read; no test pins this). The same holds for
+  `events.deleteAttachment`.
 
 What this gives you without event history: who changed an event and when,
 and a hash with which you can check that the event as stored now is the one
-the last audited write produced. What it does not give you: the previous
+the last audited create or update produced (a mismatch can also come from an
+audited trash or attachment deletion, whose row records no new hash). What it
+does not give you: the previous
 value, or the content of the change. A rectification or amendment trail that
 must show the value before the correction needs `forceKeepHistory: true`, or
 your app writes the correction as a new event that references the old one
