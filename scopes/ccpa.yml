@@ -72,11 +72,14 @@ requirements:
     functional_specs: [EVENT.BASE]
     tests: [PTU1]
     overview: |
-      `events.update` is the correction primitive; event versioning
-      preserves the prior (inaccurate) value for traceability. The
-      §1798.106 process (consumer request → reasonable efforts →
-      action) is yours to run; the technical correction + history is
-      shipped.
+      `events.update` is the correction primitive, and the audit log
+      records who corrected which event and when. The prior
+      (inaccurate) value is kept for traceability only if your
+      deployment sets `versioning.forceKeepHistory: true` (off by
+      default; see `context/event-history.md`). The §1798.106 process
+      (consumer request → reasonable efforts → action) is yours to run;
+      the technical correction is shipped, and keeping the history is
+      your configuration choice.
 
   - ref: "1798.110"
     title: Right to know, categories and specific pieces

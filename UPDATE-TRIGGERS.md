@@ -895,7 +895,7 @@ Common touchpoints when API surface changes:
   `soc2.P6.2` (record of disclosures, audit).
 
 **Walked 2026-10-05 for open-pryv.io master `0ebed334`** (the release after
-2.0.0-rc.35, expected 2.0.0-rc.36). No new API method, no tier shift, no
+2.0.0-rc.35, shipped as 2.0.0-rc.36). No new API method, no tier shift, no
 `planned:` chips involved (none was queued on the rows below); `reviewed_at`
 left unchanged so the added prose awaits the next review pass.
 - **New values of an existing server-owned accept-event field**
@@ -908,7 +908,7 @@ left unchanged so the added prose awaits the next review pass.
   `cmc-revoke-delete-failed`: a `consent/revoke-cmc` whose local delete fails
   ends `failed` and is retried instead of reading completed. Client side:
   `@pryv/cmc` `listAcceptedRelationships` leaves withdrawn relationships out by
-  default from its next release (new `includeWithdrawn` parameter). Tests
+  default since 3.18.0 (new `includeWithdrawn` parameter). Tests
   `[CN58]`, `[CN59]`, `[CN60]`, `[DH16]`, `[HR32]`, `[HR34]`, `[CD26]`.
 - **New `/reg/access` request field `cmcInvites[].accessName`**
   (https://github.com/pryv/open-pryv.io/issues/147): names the data grant per
@@ -1089,6 +1089,106 @@ CMC personal-token gate. Rows refreshed: `gdpr.Art.7`, `gdpr.Art.8`,
 `gdpr.Art.32`, `hipaa-security.164.312(a)(1)`, `iso-27001.A.5.15`;
 `context/cmc-consent-primitives.md` gates section;
 `context/delegation-model.md`. See `CARER-CONSENT-LINEAGE` in Section A.
+
+**Walked 2026-10-06 for open-pryv.io 2.0.0-rc.38** (tag commit `37819f45`;
+merges `7aab1e85` for the CMC changes and `461f3c4c` for the concurrent-update
+fix). No token-class change, but two new refusals on consent-bearing writes
+and new server-owned fields, so the B.8 rows were walked. No new API method
+(B.1), no tier shift, no `planned:` chips involved (none was queued on these
+rows); `reviewed_at` left unchanged so the added prose awaits the next review
+pass.
+- **Relationship `features` resolved by the server**
+  (https://github.com/pryv/open-pryv.io/issues/149): `chat` /
+  `systemMessaging` come from the offer (each true unless set to `false`),
+  the accept may only narrow them, the resolved pair is stamped on the
+  accept trigger, both relationship accesses and the requester's inbox
+  mirror, and kept on update. With chat off: no per-peer chat stream and no
+  chat permission on either side. An accept that does not arrive through the
+  capability can only narrow an existing relationship. Tests `[FE01]` to
+  `[FE06]`, `[HA43]`, `[HA44]`, `[HA45]`, `[IA18]` to `[IA23]`, `[CD28]`,
+  `[APB16]`, `[CN62]`, `[CN63]`, `[CN64]`, `[CN66]`, `[CN68]`, `[AN05]`,
+  `[VA04]`, `[VA05]`.
+- **Counterparty feature gate** (new refusal): a counterparty's direct write
+  of `message/chat-cmc` (create, edit, retype) answers `403 forbidden`,
+  `cmc-chat-disabled`, when the relationship's `features.chat` is false;
+  alerts / acks likewise (`cmc-system-messaging-disabled`). Relationships
+  accepted earlier keep their chat stream; one recording no features stays
+  permissive. Tests `[CH07]` to `[CH11]`, `[CN65]`.
+- **Self-accept refused** (new refusal,
+  https://github.com/pryv/open-pryv.io/issues/150): an accept of the
+  account's own offer fails with `cmc-self-accept-forbidden` before anything
+  is provisioned; deleting a legacy self-relationship records the withdrawal
+  on its accept event and delivers nothing. Tests `[HA46]`, `[HA47]`,
+  `[HA48]`, `[CN67]`, `[CN69]`, `[DH23]` (`[DH24]`: an ordinary relationship
+  is not mistaken for one).
+- **Server-written event fields survive a concurrent client update**
+  (`461f3c4c`): `events.update`, trash and attachment deletion merge onto the
+  event as stored at write time (a shared-secret trash excepted, which is a
+  compare-and-set; atomic on the built-in PostgreSQL and SQLite
+  stores, a read then an update on a custom data store without the merge);
+  CMC `status` / `failure` server-owned on every CMC type; non-object content
+  on a CMC event refused. Tests `[ESR1]` to `[ESR8]`, `[ESR6A]` to `[ESR6C]`,
+  `[UEA1]` to `[UEA3]` (SQLite store), `[APB13]` to `[APB15]`.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.7 | §3 note: server-written records survive a concurrent write; new §1 paragraph: features resolved from the offer and recorded, self-accept refused | `HA43`, `HA44`, `IA18`, `IA22`, `CD28`, `APB16`, `HA46`, `HA48`, `CN67`, `CN69`, `DH23`, `ESR1`, `ESR4`, `ESR5`, `APB13` |
+| gdpr | Art.25 | default 10: channels bounded by the consent (narrow-only, no chat stream without chat); chat on unless the offer turns it off | none (prose cites `HA43`, `HA44`, `CN62`, `CN63`) |
+| gdpr | Art.32 | access-control bullet: counterparty feature gate; new integrity-of-stored-records bullet | `CN63`, `CN65`, `CH07`, `CH10`, `ESR1`, `ESR4`, `ESR6A` |
+| hipaa-security | 164.312(a)(1) | relationship accesses bounded by the negotiated channels | `CN62`, `CN63`, `CN65`, `CH07`, `CH10` |
+| hipaa-security | 164.312(c)(1) | new detail: concurrent-write merge and its limits; overview: event history only with `versioning.forceKeepHistory: true` | `ESR1`, `ESR2`, `ESR3`, `ESR4`, `ESR6A` |
+| soc2 | PI1.3 | concurrent writes do not drop data; event history only with `versioning.forceKeepHistory: true` | `ESR1`, `ESR4`, `ESR5`, `ESR6A` |
+| iso-27701 | A.7.2.4 | the accept records the resolved features; no consent to one's own offer; record survives concurrent update | `HA43`, `CD28`, `HA46`, `CN67`, `ESR1` |
+
+Walked without change: `gdpr.Art.5` (purpose limitation and minimisation are
+stated per stream permission; features are one more instance, no claim
+shifts), `iso-27701.A.7.3.4` and `hipaa-privacy.164.508` (withdrawal mapping
+unchanged; the self-relationship deletion path is a legacy edge),
+`iso-27701.A.7.4.2` and `soc2.P3.1` (the permission-shaped limit already
+stated covers the chat permission), `soc2.CC6.1` / `CC6.3` and
+`iso-27001.A.5.15` (no token-class change, the gate is CMC-internal and
+cited on the HIPAA access-control row), `hipaa-security.164.312(c)(2)`,
+`soc2.PI1.5` (the fix is a lost-update guard, not a tamper-detection
+mechanism or stored-information completeness), `iso-27001.A.8.26` (no new
+application-security requirement surface), `gdpr.Art.26` (two distinct
+accounts is already the premise). Context note updated:
+`context/cmc-consent-primitives.md` (offer `features` comment; new sections
+"Relationship features" and "An account cannot consent to itself"; Art.7
+demonstrability bullet; server-owned fields and the concurrent-update merge;
+code references). Release names corrected in the same pass: the work walked on
+2026-10-05 (B.1 above) shipped as open-pryv.io 2.0.0-rc.36 and `@pryv/cmc`
+3.18.0, so "the release after 2.0.0-rc.35 (expected ...)" now reads
+2.0.0-rc.36 in `gdpr.Art.7`, `gdpr.Art.8`, `iso-27001.A.8.26`,
+`iso-27701.A.7.3.4`, `hipaa-privacy.164.508`,
+`context/cmc-consent-primitives.md`, `context/delegation-model.md` and FAQ
+Q19. B.2 (no new event-type format; `consent/accept-cmc` `content.features`
+is now validated by the CMC plugin; data-types 1.1.3 declares it on
+`consent/accept-cmc`, the runtime check stays the plugin's), B.3, B.4, B.6, B.9,
+B.10: none. B.11: no new config key, header, platform DB or backup change;
+the integrity rows it lists were walked here.
+
+**Correction made in the same pass: event history is opt-in.** Rows said or
+implied that an event update always keeps the prior value. In open-pryv.io
+both built-in stores keep event history only with
+`versioning.forceKeepHistory: true`, and the default configuration ships
+`false` (accesses are always versioned; that part was right). The audit log
+records who changed which event and when (for an update, the event key and
+the integrity hash as written), never the prior value. New context note
+`context/event-history.md`. Tier change: `hipaa-privacy.164.526` `implemented`
+to `configurable` (effort `high`, one setting, config key
+`versioning.forceKeepHistory`), because §164.526(c)(1) asks for the
+amendment to be appended to or linked from the amended record, which the
+default configuration does not keep. Reworded, no tier change: `gdpr.Art.5`
+(overview, §1(d)), `gdpr.Art.7` (overview), `gdpr.Art.12`, `gdpr.Art.13`,
+`gdpr.Art.16`, `ccpa.1798.106`, `pipeda.Principle.4.6`,
+`swiss-nlpd.Art.6`, `swiss-nlpd.Art.19`, `hds.Activity.6`,
+`hipaa-privacy.164.508`, `164.530(i)`,
+`hipaa-security.164.312(c)(2)` (now cites the integrity hash in the audit
+row, `[WNWM]`), `164.316(b)(1)`, `164.316(b)(2)(iii)`, `iso-13485.4.2.4`, `iso-13485.7.3.10`, `iso-27701.A.7.2.4`,
+`A.7.4.3`, `soc2.PI1.3`, `PI1.5`, `P5.2`, `P7.1`; context notes
+`cmc-consent-primitives.md`, `data-accuracy-structural-vs-semantic.md`;
+`docs/pryv-primitives.md` (event), `docs/facilitation-typology.md`, FAQ
+accuracy entry.
 
 ### B.9: OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
 
@@ -1331,6 +1431,12 @@ did not support):
 - **Malware rows re-tiered** `out-of-scope` to `facilitated | low |
   infrastructure` (attachment sandbox): `iso-27001.A.8.7`,
   `hipaa-security.164.308(a)(5)(ii)(B)`.
+
+**Walked 2026-10-06 for open-pryv.io 2.0.0-rc.38**: no new config key,
+response header, platform DB or backup behaviour. Its event-update integrity
+fix (server-written fields survive a concurrent client update, merge
+`461f3c4c`) is recorded with the CMC changes under B.8 (`gdpr.Art.32`,
+`hipaa-security.164.312(c)(1)`, `soc2.PI1.3`).
 
 ## Section C: Maintenance reminders
 

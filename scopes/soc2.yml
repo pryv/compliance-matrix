@@ -1068,12 +1068,23 @@ requirements:
     facilitation_mode: primitive
     draft: true
     pryv_primitives: [event, audit, permissions]
+    tests: [ESR1, ESR4, ESR5, ESR6A]
     overview: |
-      Pryv's processing model is deterministic + attributable: events
-      are immutable-when-written (history-only append for
-      audit/consent/attestation), events.update snapshots prior state
-      into version history, and every mutation is authorised by the
-      permission model and recorded in the audit log. The
+      Pryv's processing model is deterministic + attributable: the
+      audit log is append-only by convention of its write path (no
+      hash chain, see `proposals/audit-log-chaining.md`), an access keeps
+      every previous version, events.update snapshots the prior state
+      of an event into version history only with
+      `versioning.forceKeepHistory: true` (the default keeps no event
+      history; see `context/event-history.md`), and every mutation is
+      authorised by the permission model and recorded in the audit log.
+      Concurrent writes do not silently drop data: since open-pryv.io
+      2.0.0-rc.38 (merge `461f3c4c`) an update, a trash (a
+      shared-secret event excepted) or an attachment deletion is applied onto the event as stored at write time
+      (atomically on the built-in PostgreSQL and SQLite stores), so a
+      top-level field written meanwhile and not changed by the request
+      is kept, server-written processing status included `[ESR1]`,
+      `[ESR4]`, `[ESR5]`, `[ESR6A]`. The
       business-logic processing your application performs on top is your
       control responsibility.
 
@@ -1113,8 +1124,10 @@ requirements:
     derives_from: [hipaa-security.164.312(c)(1)]
     tests: [BKSR, BKEV]
     overview: |
-      Storage integrity: event version history preserves prior states,
-      the audit log can carry a per-event integrity checksum, and
+      Storage integrity: event version history preserves prior states
+      on a deployment with `versioning.forceKeepHistory: true` (off by
+      default), the audit log carries the integrity hash of each event
+      as created or updated (integrity is on by default), and
       backup-restore provides a recoverable copy. Together these give an
       accuracy + completeness signal for stored data. Tamper-evidence on
       the audit log itself (hash chaining) is a future primitive, see
@@ -1320,9 +1333,12 @@ requirements:
     tests: [PTU1]
     derives_from: [gdpr.Art.16, hipaa-privacy.164.526, iso-27701.A.7.3.6]
     overview: |
-      Correction is events.update (which snapshots the prior value into
-      version history, preserving the amendment trail) and account.update
-      for profile fields; the audit log records who amended what, when.
+      Correction is events.update and account.update for profile
+      fields; the audit log records who amended which event, when (not
+      the prior value). events.update keeps the prior value in version
+      history, preserving the amendment trail, only on a deployment
+      with `versioning.forceKeepHistory: true` (off by default; see
+      `context/event-history.md`).
       Propagation to third parties who hold a shared/CMC access can use
       webhooks to signal the change. Judging the correctness of a
       correction request is your process.
@@ -1485,8 +1501,9 @@ requirements:
     overview: |
       Structural data quality is enforced at ingest by event-type schema
       validation (HTTP 400 on malformed input); subjects keep their data
-      up-to-date via events.update / account.update (with version
-      history). "Relevant", collecting no more than the purpose needs,
+      up-to-date via events.update / account.update (prior event values
+      kept only with `versioning.forceKeepHistory: true`, off by
+      default). "Relevant", collecting no more than the purpose needs,
       is bounded by the permission scope you grant. Judging semantic
       accuracy of a specific value is your application's responsibility.
 

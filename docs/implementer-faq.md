@@ -1104,8 +1104,8 @@ decided by the implementer; the reference account app
 (app-web-user-account) ships a connected-apps page that calls it.
 Cross-account (CMC) relationships add the `consent/revoke-cmc`
 signal so the counterparty is told (see
-`context/cmc-consent-primitives.md`). From the open-pryv.io release
-after 2.0.0-rc.35, the subject's own `consent/accept-cmc` event also
+`context/cmc-consent-primitives.md`). Since open-pryv.io
+2.0.0-rc.36, the subject's own `consent/accept-cmc` event also
 records each withdrawal, whichever party and path ended it
 (`content.withdrawal = { at, by, accessId, revokeEventId? }`,
 server-owned, never overwritten,
@@ -1148,8 +1148,11 @@ declares them); **semantic** accuracy (is THIS medication right
 for THIS patient?) is implementer-owned by design. The
 built-in catalogue uses bounds sparingly; operators tighten
 structural guarantees by extending via `service.eventTypes`
-URL (Q14 pattern). Rectification is auditable via
-`events.update` + `?includeHistory=true`.
+URL (Q14 pattern). Rectification is audited (who corrected which
+event, when) on every deployment; the prior value is kept, and
+returned by `?includeHistory=true`, only once you set
+`versioning.forceKeepHistory: true` (off by default, see
+`context/event-history.md`).
 
 **Sub-question matrix:**
 
@@ -1159,8 +1162,8 @@ URL (Q14 pattern). Rectification is auditable via
 | Are numerical bounds expressible in event-types? | Yes, `minimum` / `maximum` / `exclusiveMinimum` / `exclusiveMaximum` / `minLength` / `maxLength` all enforced | JSON Schema draft-04 spec |
 | Do the **built-in** event-types use bounds? | Sparingly: only `mood/rating` (0..1) and `note/*` (4 MB `maxLength`). Physical-measurement types (`temperature/c`, `mass/kg`, `frequency/bpm`, …) ship as `"type": "number"` with no bounds | `components/business/src/types/event-types.default.json` (5 bound directives total across ~4750 lines) |
 | Can implementers add bounds via custom catalogue? | Yes, the Q14 extension model (`service.eventTypes` URL → `deepMerge` over defaults) | `components/business/src/types.ts:143-186` (`TypeRepository.tryUpdate`); HDS exemplar at `hds.com/data-model` declares 28 `minimum` + 23 `maximum` + 7 `pattern` constraints |
-| Does `events.update` preserve the prior (inaccurate) value? | Yes, event versioning; `GET /events/:id?includeHistory=true` returns the chain via `mall.events.getHistory()` | `components/api-server/src/methods/events.ts:178-200` |
-| Is the rectification itself audited? | Yes, `events.update` is in `AUDITED_METHODS`; audit captures method + access ref + timestamp (not the request body, per Q9 audit-minimality) | `components/audit/src/ApiMethods.ts` |
+| Does `events.update` preserve the prior (inaccurate) value? | Only if you turn it on: with `versioning.forceKeepHistory: true` (default `false`) both built-in stores keep each prior version and `GET /events/:id?includeHistory=true` returns the chain via `mall.events.getHistory()`; on the default the update overwrites the value and `history` is empty | `config/default-config.yml` (`versioning`); `storages/engines/postgresql/src/dataStore/localUserEventsPG.ts`, `storages/engines/sqlite/src/dataStore/localUserEventsSQLite.ts` (`_generateVersionIfNeeded`) |
+| Is the rectification itself audited? | Yes, on every deployment: `events.update` is in `AUDITED_METHODS`; the audit row captures method + access ref + timestamp + the event's key and integrity hash as written (not the request body or the prior value, per Q9 audit-minimality) | `components/audit/src/ApiMethods.ts`, `components/audit/src/Audit.ts` |
 | Does Pryv detect semantic inaccuracy? | **No, by design**: the platform lacks the patient's clinical record, drug-interaction context, device calibration state, treatment plan; implementer's app layer carries that context | — |
 
 **Why this is the right split**: the regulator-relevance test:
@@ -1177,9 +1180,10 @@ impossible value"), the implementer can defensibly say:
 3. Semantic checks are the implementer's responsibility and run
    at the app layer before `events.create`; provide the specific
    service / rule responsible.
-4. When inaccuracy was detected, `events.update` corrected it
-   and the prior value is preserved + the rectification is
-   audited.
+4. When inaccuracy was detected, `events.update` corrected it,
+   the rectification is audited, and the prior value is preserved
+   if the deployment runs with `versioning.forceKeepHistory: true`
+   (set it if you need to show the value before correction).
 
 If the platform attempted to enforce semantic accuracy, it would
 require seeing clinical context, drug-interaction databases,

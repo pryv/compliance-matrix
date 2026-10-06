@@ -93,6 +93,10 @@ requirements:
       the §164.508 authorization record, versioned, immutable per
       version, with the granted scope (permissions) and the authorization
       text (clientData or a `consent/request-cmc` event) inseparable.
+      The access keeps every previous version; a request event keeps
+      its previous versions only with `versioning.forceKeepHistory:
+      true` (off by default), so do not edit it after sending unless
+      that is on.
       Withdrawal is a single API call. For cross-account / cross-entity
       authorizations, the CMC plugin carries the negotiation state.
     detail: |
@@ -108,8 +112,8 @@ requirements:
         - right to revoke → `accesses.delete` + audit row at revocation;
           for a cross-account (CMC) authorization, the individual's own
           accept event also records the revocation, whichever party
-          ended it (`content.withdrawal`, open-pryv.io release after
-          2.0.0-rc.35) `[CN58]`, `[CN59]`, `[CN60]`
+          ended it (`content.withdrawal`, open-pryv.io
+          2.0.0-rc.36) `[CN58]`, `[CN59]`, `[CN60]`
         - re-disclosure statement → `clientData.redisclosure_notice`
       Implementer responsibility: ensure the consent UX presents the
       §508(c) elements at the grant moment.
@@ -314,17 +318,26 @@ requirements:
     text: |
       Individual has a right to have a covered entity amend PHI or a
       record about the individual in a designated record set.
-    coverage: implemented
+    coverage: configurable
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [event]
+    config_keys: [versioning.forceKeepHistory]
     functional_specs: [EVENT.BASE]
     tests: [PTU1]
     overview: |
-      `events.update` is the amendment primitive; event versioning
-      preserves the prior content so the amendment trail is auditable.
-      The §164.526 process (request → decision → action → notice) is
-      yours to run; the technical record-keeping is shipped.
+      `events.update` is the amendment primitive, and the audit log
+      records who amended which event and when. The prior content is
+      kept, so the amendment trail shows what changed, only on a
+      deployment with `versioning.forceKeepHistory: true` (off by
+      default; see `context/event-history.md`): set it, or record each
+      amendment as a new event linked to the one it amends. Configurable
+      rather than implemented: §164.526(c)(1) asks you to append the
+      amendment to, or link it from, the record it amends, and on the
+      default configuration an update overwrites that record; one
+      setting (or that modelling convention) gives you the trail. The
+      §164.526 process (request → decision → action → notice) is yours
+      to run.
     detail: |
       For denied amendments where the individual files a statement of
       disagreement (§526(d)), store the statement as a separate event
@@ -556,8 +569,9 @@ requirements:
     overview: |
       Same pattern as HIPAA-
       Security §164.316(a): policies-as-data on a
-      `compliance/policies/*` stream get versioning + retention +
-      audit. The drafting + approval + review-cycle procedure is the
+      `compliance/policies/*` stream get retention + audit, and
+      versioning once `versioning.forceKeepHistory: true` is set (off by
+      default). The drafting + approval + review-cycle procedure is the
       privacy officer's. Cross-link to §164.316(a) preserves the
       Security Rule's parallel obligation.
 

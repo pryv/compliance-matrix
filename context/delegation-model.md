@@ -148,8 +148,8 @@ request). Shipped on open-pryv.io master in `91b06363`, `ef0a3f75`,
 `5943ca0b`, released in 2.0.0-rc.23 (2.0.0-rc.22 and earlier do not
 carry it).
 
-An app can also require the opposite, from the open-pryv.io release after
-2.0.0-rc.35 (expected 2.0.0-rc.36, `1420fe72`,
+An app can also require the opposite, since open-pryv.io 2.0.0-rc.36
+(`1420fe72`,
 https://github.com/pryv/open-pryv.io/issues/148): `actAsManagedOnly: true`,
 with `actAs: 'allow'` or a username, asks that the access be granted only for
 an account the user manages (refused with `400 invalid-parameters` with

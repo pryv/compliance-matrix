@@ -1368,7 +1368,7 @@ requirements:
 
       A second example, in the sign-in flow: an authorisation request
       (`POST /reg/access`) no longer has a `REDIRECTED` outcome
-      (open-pryv.io release after 2.0.0-rc.35, `62ab4f7e`, merged in
+      (open-pryv.io 2.0.0-rc.36, `62ab4f7e`, merged in
       `1aa22e1a`). That status let anyone holding a request key store an
       unvalidated URL that was then served to the authentication page
       under a field such pages follow. It is now refused (`400
