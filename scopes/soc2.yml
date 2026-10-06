@@ -1077,8 +1077,8 @@ requirements:
       the default keeps no event history), and every mutation is
       authorised by the permission model and recorded in the audit log.
       Concurrent writes do not silently drop data: since open-pryv.io
-      2.0.0-rc.38 (merge `461f3c4c`) an update, a trash or an attachment
-      deletion is applied onto the event as stored at write time
+      2.0.0-rc.38 (merge `461f3c4c`) an update, a trash (a
+      shared-secret event excepted) or an attachment deletion is applied onto the event as stored at write time
       (atomically on the built-in PostgreSQL and SQLite stores), so a
       top-level field written meanwhile and not changed by the request
       is kept, server-written processing status included `[ESR1]`,

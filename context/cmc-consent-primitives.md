@@ -75,7 +75,7 @@ https://github.com/pryv/open-pryv.io/issues/149; code
 `systemMessaging`) are part of what the consent records and enforces, not a
 client-side hint:
 
-- **Resolved by the server from the offer.** Each feature is granted unless
+- **Your offer sets the ceiling; Pryv resolves it.** Each feature is granted unless
   the offer's `content.request.features` sets it to `false`; the accept's
   `content.features` may only narrow that (a `false` turns a feature off, a
   `true` against an offer that turned it off is ignored, no error)
@@ -136,7 +136,8 @@ platform is another account `[HA47]`. Before rc.38 such an accept produced a
 relationship of the account with itself. A self-relationship created earlier
 is a single relationship access; deleting it with `accesses.delete` records
 `content.withdrawal` on the accept event that created it and attempts no
-delivery to a peer `[CN69]`, `[DH23]`, `[DH24]`. The `@pryv/cmc` client
+delivery to a peer `[CN69]`, `[DH23]`; an ordinary relationship is not
+mistaken for one `[DH24]`. The `@pryv/cmc` client
 (3.19.0) exposes the id as `errorIds.SELF_ACCEPT_FORBIDDEN`.
 
 ## What the access carries (as consent record)
@@ -423,14 +424,17 @@ gate accepts the relationship's own data-grant access directly.
     wrote on an event (the withdrawal marker, the owner's confirmation, a
     CMC dispatch status) could be lost when a client updated or trashed the
     same event at that moment, because the client's write was built from the
-    copy it had read just before. `events.update`, `events.delete` (trash)
-    and `events.deleteAttachment` now apply the client's change onto the
+    copy it had read just before. `events.update`, `events.delete` (trash;
+    an event in the shared-secrets namespace is trashed by compare-and-set
+    instead, and is never a consent record) and `events.deleteAttachment`
+    now apply the client's change onto the
     event as stored at write time: the fields the request changes win, a
     field sent back with the value the request read does not overwrite a
     newer stored value, and `clientData` keys merge onto the stored map
-    `[ESR1]`..`[ESR8]`, `[UEA1]`..`[UEA3]`. The built-in PostgreSQL and
-    SQLite stores do this read-merge-write atomically (a row lock, a
-    transaction); a custom data store that does not implement it gets a
+    `[ESR1]`..`[ESR8]`. The built-in PostgreSQL and SQLite stores do this
+    read-merge-write atomically (a `SELECT ... FOR UPDATE` row lock on
+    PostgreSQL; an immediate transaction on SQLite, whose lock-wait is
+    tested `[UEA1]`..`[UEA3]`); a custom data store that does not implement it gets a
     read then an update, which narrows the window without closing it. The
     merge is per top-level field: a client that sends `content` replaces
     the content as a whole, except the server-owned fields below. On every

@@ -1900,15 +1900,18 @@ requirements:
           (open-pryv.io 2.0.0-rc.38, merge `7aab1e85`) `[CN63]`,
           `[CN65]`, `[CH07]`, `[CH10]`.
         - Integrity of stored records: IMPLEMENTED for the built-in
-          stores, an `events.update`, a trash or an attachment deletion
-          is applied onto the event as stored at write time (atomically
-          on the PostgreSQL and SQLite stores), so a concurrent client
+          stores, an `events.update`, a trash (a shared-secret event
+          excepted, trashed by compare-and-set) or an attachment
+          deletion is applied onto the event as stored at write time
+          (atomically on the PostgreSQL and SQLite stores: a row lock
+          on PostgreSQL, an immediate transaction on SQLite, its
+          lock-wait pinned by `[UEA1]`), so a concurrent client
           write no longer erases a top-level field written meanwhile, by
           the server or another client, that the request did not change
           (a request that sends `content` replaces it whole, CMC
           server-owned content fields excepted)
           (open-pryv.io 2.0.0-rc.38, merge `461f3c4c`) `[ESR1]`,
-          `[ESR4]`, `[ESR6A]`, `[UEA1]`. A custom data store that does
+          `[ESR4]`, `[ESR6A]`. A custom data store that does
           not implement the atomic merge gets a read then an update.
         - Authentication strength: IMPLEMENTED, `mfa.*` API methods,
           opt-in per `services.mfa.mode`.

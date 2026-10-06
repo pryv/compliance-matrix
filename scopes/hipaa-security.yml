@@ -700,14 +700,17 @@ requirements:
       obligation is yours; the technical substrate is Pryv's.
     detail: |
       Concurrent writes (open-pryv.io 2.0.0-rc.38, merge `461f3c4c`):
-      an `events.update`, a trash (`events.delete`) or an attachment
+      an `events.update`, a trash (`events.delete`; a shared-secret event
+      is trashed by compare-and-set instead) or an attachment
       deletion is applied onto the event as stored at write time, so a
       top-level field written meanwhile (by the server or another
       client) that the request did not change is kept rather than
       silently overwritten with the copy the request read; `clientData`
-      keys merge onto the stored map. The built-in PostgreSQL and SQLite
-      stores do the read-merge-write atomically `[ESR1]`..`[ESR4]`,
-      `[ESR6A]`, `[UEA1]`; a custom data store that does not implement
+      keys merge onto the stored map `[ESR1]`..`[ESR4]`, `[ESR6A]`. The
+      built-in PostgreSQL and SQLite stores do the read-merge-write
+      atomically: a row lock (`SELECT ... FOR UPDATE`) on PostgreSQL, an
+      immediate transaction on SQLite, whose lock-wait is pinned by a
+      test `[UEA1]`; a custom data store that does not implement
       it gets a read then an update. A request that sends `content`
       still replaces the content whole: two clients editing the same
       event's content concurrently is last-writer-wins, which your app

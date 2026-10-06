@@ -908,7 +908,7 @@ left unchanged so the added prose awaits the next review pass.
   `cmc-revoke-delete-failed`: a `consent/revoke-cmc` whose local delete fails
   ends `failed` and is retried instead of reading completed. Client side:
   `@pryv/cmc` `listAcceptedRelationships` leaves withdrawn relationships out by
-  default from its next release (new `includeWithdrawn` parameter). Tests
+  default since 3.18.0 (new `includeWithdrawn` parameter). Tests
   `[CN58]`, `[CN59]`, `[CN60]`, `[DH16]`, `[HR32]`, `[HR34]`, `[CD26]`.
 - **New `/reg/access` request field `cmcInvites[].accessName`**
   (https://github.com/pryv/open-pryv.io/issues/147): names the data grant per
@@ -1119,14 +1119,16 @@ pass.
   account's own offer fails with `cmc-self-accept-forbidden` before anything
   is provisioned; deleting a legacy self-relationship records the withdrawal
   on its accept event and delivers nothing. Tests `[HA46]`, `[HA47]`,
-  `[HA48]`, `[CN67]`, `[CN69]`, `[DH23]`, `[DH24]`.
+  `[HA48]`, `[CN67]`, `[CN69]`, `[DH23]` (`[DH24]`: an ordinary relationship
+  is not mistaken for one).
 - **Server-written event fields survive a concurrent client update**
   (`461f3c4c`): `events.update`, trash and attachment deletion merge onto the
-  event as stored at write time (atomic on the built-in PostgreSQL and SQLite
+  event as stored at write time (a shared-secret trash excepted, which is a
+  compare-and-set; atomic on the built-in PostgreSQL and SQLite
   stores, a read then an update on a custom data store without the merge);
   CMC `status` / `failure` server-owned on every CMC type; non-object content
   on a CMC event refused. Tests `[ESR1]` to `[ESR8]`, `[ESR6A]` to `[ESR6C]`,
-  `[UEA1]` to `[UEA3]`, `[APB13]` to `[APB15]`.
+  `[UEA1]` to `[UEA3]` (SQLite store), `[APB13]` to `[APB15]`.
 
 | Scope | Ref | What changed | Tests added |
 |---|---|---|---|
