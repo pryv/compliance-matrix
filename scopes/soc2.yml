@@ -1367,11 +1367,11 @@ requirements:
       A grant is a set of streams, and what a stream carries can grow
       with a Pryv release. Since the open-pryv.io release after
       2.0.0-rc.43, a grant that reads the account email stream
-      (`:system:email`, shown as "Read Email") also discloses a
-      read-only, server-derived `verification/email` event: whether
-      ownership of the primary address was proved, how, and when.
-      Apps granted it earlier receive it without new consent; other
-      addresses of the account are never disclosed. If your consent
+      (`:system:email`, shown as "Read Email") can also request, by
+      type, a read-only, server-derived `verification/email` event:
+      whether ownership of the primary address was proved, how, and
+      when. Apps granted it earlier can request it without new consent;
+      other addresses of the account are never disclosed. If your consent
       text should say so, rename the field's `name` in
       `custom.systemStreams`.
 

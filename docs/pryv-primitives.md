@@ -173,10 +173,11 @@ A privileged stream namespace managed by the core (not user-creatable).
 - **Account fields read as events**: since the open-pryv.io release
   after 2.0.0-rc.43 they carry the time their value was set (not the
   read time), so `modifiedSince` and time filters apply and their
-  integrity hash is stable across reads. The email stream
-  (`:system:email`) also returns a read-only, server-derived
+  integrity hash is stable across reads. On request by type, the email
+  stream (`:system:email`) also returns a read-only, server-derived
   `verification/email` event (`verified`, `method`, `verifiedAt`) for
-  the primary address, to every access that can read that stream.
+  the primary address, to every access that can read that stream; a
+  read without that type returns the address only.
 - **Compliance role**: technical isolation of privileged data (e.g.,
   authentication state) from ordinary user content. Auditable
   independently.

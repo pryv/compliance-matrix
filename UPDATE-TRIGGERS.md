@@ -954,12 +954,13 @@ the email gets the proof state; one without the grant, star included, gets
 neither), gdpr.Art.20 + [ATM03, SIB08, SIB10] (account-event times, type-filtered
 reads, the derived event cannot be written). What changed in the API:
 - **Disclosure change on an existing grant**: an access that can read
-  `:system:email` ("Read Email", or a personal token) also receives, in that
+  `:system:email` ("Read Email", or a personal token) can request by type
+  (`types: ['verification/email']`; a read without it is unchanged), in that
   stream, a read-only, server-derived event `:system:emailVerification` of type
   `verification/email`, content `{ verified, method, verifiedAt }` (`verified`
   true only for `email-link`, `email-code`, `operator`; `registration` and
   `legacy` read false). Never stored, cannot be written, no history. Apps
-  granted "Read Email" before the release learn the proof state of the primary
+  granted "Read Email" before the release can request the proof state of the primary
   address without new consent; other addresses are never exposed; operators can
   rename the field's `name` in `custom.systemStreams` so the consent text says
   so. Tests `[SIB01]`..`[SIB08]`, `[SIB12]`, `[SIB13]` (what a reader sees),
@@ -976,9 +977,9 @@ reads, the derived event cannot be written). What changed in the API:
 
 | Scope | Ref | What changed | Tests added |
 |---|---|---|---|
-| soc2 | P6.1 | overview: a grant is a set of streams whose content can grow with a release; "Read Email" now also discloses the primary address's proof state, earlier grants included, rename hint | none yet (see above) |
-| gdpr | Art.7 | detail (§1 demonstrability): what a grant on `:system:email` returns since this release, without new consent; rename hint | none yet |
-| gdpr | Art.20 | detail: account fields export as typed events; the derived `verification/email` event is skipped on import; account event times make incremental exports exact (B.2 row) | none yet |
+| soc2 | P6.1 | overview: a grant is a set of streams whose content can grow with a release; "Read Email" can now also request the primary address proof state by type, earlier grants included, rename hint | SIB01, SIB11 |
+| gdpr | Art.7 | detail (§1 demonstrability): what a grant on `:system:email` returns since this release (on request by type), without new consent; rename hint | SIB01, SIB11 |
+| gdpr | Art.20 | detail: account fields export as typed events; the derived `verification/email` event (on request by type) is not portable, a write of it is refused; account event times make incremental exports exact (B.2 row) | ATM03, SIB08, SIB10 |
 
 Also updated: `docs/pryv-primitives.md` `system-streams` entry (account events
 carry the time of their value; the derived verification event on
@@ -998,8 +999,8 @@ Walked without change:
   `hipaa-privacy.164.528`, `164.528(b)`): every read is still an audited
   `events.get` against an attributable access. Note for the matrix owner, not
   written into the rows: an accounting that describes a disclosure at API-shape
-  level ("`events.get` on `:system:email`") now covers the address AND its
-  proof state from this release on.
+  level ("`events.get` on `:system:email` with `types: verification/email`") covers the primary
+  address's proof state from this release on.
 - **Minimum necessary** (`hipaa-privacy.164.514(d)`, `164.502(b)`): the bound
   is the granted stream, unchanged; the stream's content grew (see P6.1).
 - **Access control** (`hipaa-security.164.312(a)(1)`, `soc2.CC6.1`,

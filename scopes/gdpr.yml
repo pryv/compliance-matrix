@@ -429,11 +429,12 @@ requirements:
 
       What a grant covers is a set of streams, and a release can widen
       what a stream carries. Since the open-pryv.io release after
-      2.0.0-rc.43, a grant on the account email stream (`:system:email`,
-      "Read Email") also returns a read-only, server-derived
-      `verification/email` event (whether the primary address was
-      proved, by which method, and when), including to apps granted it
-      before that release, without new consent. Other addresses of the
+      2.0.0-rc.43, an access holding a grant on the account email
+      stream (`:system:email`, "Read Email") can also request, by type,
+      a read-only, server-derived `verification/email` event (whether
+      the primary address was proved, by which method, and when),
+      including apps granted it before that release, without new consent. A read
+      without that type returns the address only, as before. Other addresses of the
       account are never returned. If the consent text you present should
       name this, rename the email field's `name` in
       `custom.systemStreams`.
@@ -1307,9 +1308,9 @@ requirements:
 
       Account fields export as typed events too. Since the open-pryv.io
       release after 2.0.0-rc.43 the account email stream returns the
-      address as `email/string` and, beside it, a read-only
-      `verification/email` event that the server derives at read time
-      (never stored, cannot be written). The latter is not portable: a
+      address as `email/string` and, when requested by type, a
+      read-only `verification/email` event that the server derives at
+      read time (never stored, cannot be written). The latter is not portable: a
       write of it is refused, and the receiving deployment derives its
       own from how the address is proved there. Account events also carry the time their value was
       set (they carried the read time), so an incremental export with
