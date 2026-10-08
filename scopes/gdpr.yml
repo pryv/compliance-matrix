@@ -407,7 +407,7 @@ requirements:
     reviewed_at: "2026-07-18"
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md]
-    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13]
+    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11]
     overview: |
       The access Pryv mints when your user grants permission IS your
       durable consent record, versioned permissions + clientData
@@ -1292,7 +1292,7 @@ requirements:
     draft: true
     pryv_primitives: [event, stream, data-types, account-backup-tool]
     functional_specs: [EVENT.BASE, STREAM.BASE]
-    tests: [EGSQ]
+    tests: [EGSQ, ATM03, SIB08, SIB10]
     overview: |
       `events.get` + `streams.get` return canonical JSON validated against
       the data-types schemas, structured, commonly used, machine-readable.

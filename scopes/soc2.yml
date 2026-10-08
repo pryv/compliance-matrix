@@ -1354,6 +1354,7 @@ requirements:
     facilitation_mode: primitive
     draft: true
     pryv_primitives: [access, permissions, CMC, clientData]
+    tests: [SIB01, SIB11]
     derives_from: [gdpr.Art.6, hipaa-privacy.164.502, iso-27701.A.7.3.4]
     overview: |
       Third-party disclosure happens by issuing a scoped shared / CMC

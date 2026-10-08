@@ -948,9 +948,11 @@ B.11: none.
 (unreleased)**, targeting the release after 2.0.0-rc.43. No new API method, no
 new config key, no new audit method id, no tier shift, no `planned:` chips
 involved; `reviewed_at` left unchanged so the added prose awaits the next review
-pass. Row `tests:` are NOT extended yet: the new test codes exist only on the
-unreleased branch, and the validator resolves codes against the open-pryv.io
-checkout; cite them when the release lands. What changed in the API:
+pass. Row `tests:` extended on 2026-10-08 once the code reached open-pryv.io
+master (`22f7369a`): gdpr.Art.7 and soc2.P6.1 + [SIB01, SIB11] (an access reading
+the email gets the proof state; one without the grant, star included, gets
+neither), gdpr.Art.20 + [ATM03, SIB08, SIB10] (account-event times, type-filtered
+reads, the derived event cannot be written). What changed in the API:
 - **Disclosure change on an existing grant**: an access that can read
   `:system:email` ("Read Email", or a personal token) also receives, in that
   stream, a read-only, server-derived event `:system:emailVerification` of type
