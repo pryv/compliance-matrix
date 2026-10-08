@@ -427,6 +427,17 @@ requirements:
       `consent/request-cmc` event on the requester's account holds the
       localised consent text presented.
 
+      What a grant covers is a set of streams, and a release can widen
+      what a stream carries. Since the open-pryv.io release after
+      2.0.0-rc.43, a grant on the account email stream (`:system:email`,
+      "Read Email") also returns a read-only, server-derived
+      `verification/email` event (whether the primary address was
+      proved, by which method, and when), including to apps granted it
+      before that release, without new consent. Other addresses of the
+      account are never returned. If the consent text you present should
+      name this, rename the email field's `name` in
+      `custom.systemStreams`.
+
       Withdrawal (§3), `accesses.delete` (full revoke) or `accesses.update`
       with narrower `permissions` (scope-down). Both bump the access
       serial + snapshot the pre-mutation state. Cross-account:
@@ -1293,6 +1304,16 @@ requirements:
       app) would see at any time via the API. You can wrap this in a
       "download my data" UI; the underlying primitive needs no special
       export endpoint.
+
+      Account fields export as typed events too. Since the open-pryv.io
+      release after 2.0.0-rc.43 the account email stream returns the
+      address as `email/string` and, beside it, a read-only
+      `verification/email` event that the server derives at read time
+      (never stored, cannot be written). The latter is not portable: a
+      write of it is refused, and the receiving deployment derives its
+      own from how the address is proved there. Account events also carry the time their value was
+      set (they carried the read time), so an incremental export with
+      `modifiedSince` fetches them only when they changed.
 
       Direct controller-to-controller transmission (§2) is supported via
       the CMC capability flow: a single-event-scoped capability access

@@ -944,6 +944,79 @@ B.2 (no new event-type format: `consent/accept-cmc` gains values of an
 existing content field), B.3, B.4, B.6, B.8 (no token-class change), B.9, B.10,
 B.11: none.
 
+**Walked 2026-10-08 for open-pryv.io branch feat/email-verification-sibling-event
+(unreleased)**, targeting the release after 2.0.0-rc.43. No new API method, no
+new config key, no new audit method id, no tier shift, no `planned:` chips
+involved; `reviewed_at` left unchanged so the added prose awaits the next review
+pass. Row `tests:` are NOT extended yet: the new test codes exist only on the
+unreleased branch, and the validator resolves codes against the open-pryv.io
+checkout; cite them when the release lands. What changed in the API:
+- **Disclosure change on an existing grant**: an access that can read
+  `:system:email` ("Read Email", or a personal token) also receives, in that
+  stream, a read-only, server-derived event `:system:emailVerification` of type
+  `verification/email`, content `{ verified, method, verifiedAt }` (`verified`
+  true only for `email-link`, `email-code`, `operator`; `registration` and
+  `legacy` read false). Never stored, cannot be written, no history. Apps
+  granted "Read Email" before the release learn the proof state of the primary
+  address without new consent; other addresses are never exposed; operators can
+  rename the field's `name` in `custom.systemStreams` so the consent text says
+  so. Tests `[SIB01]`..`[SIB08]`, `[SIB12]`, `[SIB13]` (what a reader sees),
+  `[SIB09]`, `[SIB10]` (no history, not writable), `[SIB11]` (no email
+  permission: neither event), `[SIB17]`..`[SIB19]` (internal readers
+  unaffected).
+- **Account events carry the time their value was set** (they carried the read
+  time): `modifiedSince` and time filters apply to them, their integrity hash is
+  stable across reads. Tests `[ATM01]`..`[ATM07]`, `[SIB2A]` / `[SIB15]`,
+  `[SIB16]`, `[SIB20]`, `[SIB21]`.
+- **`events.get` `skip` / `limit`** now apply to account-stream-only queries.
+- **`eventsChanged` notifications** (socket.io) on `account.verifyEmail`,
+  `emails.setPrimary` and account-field updates. Test `[SIB14]`.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| soc2 | P6.1 | overview: a grant is a set of streams whose content can grow with a release; "Read Email" now also discloses the primary address's proof state, earlier grants included, rename hint | none yet (see above) |
+| gdpr | Art.7 | detail (§1 demonstrability): what a grant on `:system:email` returns since this release, without new consent; rename hint | none yet |
+| gdpr | Art.20 | detail: account fields export as typed events; the derived `verification/email` event is skipped on import; account event times make incremental exports exact (B.2 row) | none yet |
+
+Also updated: `docs/pryv-primitives.md` `system-streams` entry (account events
+carry the time of their value; the derived verification event on
+`:system:email`).
+
+Walked without change:
+- **DSAR / subject access** (`gdpr.Art.15`, `soc2.P5.1`,
+  `hipaa-privacy.164.524`, `pipeda.Principle.4.9`, `ccpa.1798.110`,
+  `swiss-nlpd.Art.25`): the subject's personal token now also reads the proof
+  state; "reads everything via the standard API" still holds. The Art.15
+  incremental-export claim (`modifiedSince`) now also holds for account events,
+  which were re-fetched on every call before (over-fetch, not a gap).
+- **Transparency** (`gdpr.Art.12`, `Art.13`, `Art.14`): the information
+  artefacts are the implementer's; the disclosure change is encoded on the
+  consent row (Art.7) and P6.1.
+- **Accounting of disclosures** (`soc2.P6.2`, `soc2.P6.7`,
+  `hipaa-privacy.164.528`, `164.528(b)`): every read is still an audited
+  `events.get` against an attributable access. Note for the matrix owner, not
+  written into the rows: an accounting that describes a disclosure at API-shape
+  level ("`events.get` on `:system:email`") now covers the address AND its
+  proof state from this release on.
+- **Minimum necessary** (`hipaa-privacy.164.514(d)`, `164.502(b)`): the bound
+  is the granted stream, unchanged; the stream's content grew (see P6.1).
+- **Access control** (`hipaa-security.164.312(a)(1)`, `soc2.CC6.1`,
+  `soc2.CC6.3`): the derived event inherits the email stream's read permission
+  and cannot be written; no new grant path.
+- **Inbox-proved email for federated sign-in** (`soc2.CC6.1`,
+  `hipaa-security.164.308(a)(5)(ii)(D)`, `iso-27001.A.5.17`): the proof check moved into
+  a shared helper used by both features; behaviour unchanged.
+- **Rectification** (`gdpr.Art.16`, `gdpr.Art.19`, `soc2.P5.2`): account-field
+  updates now also notify `eventsChanged`; the prose (update methods, webhook
+  signal, out-of-band notice to recipients) still holds.
+- **Consent rows** (`iso-27701.A.7.3.4`, `hipaa-privacy.164.508`,
+  `pipeda.Principle.4.3`): withdrawal and recording unchanged.
+- **Integrity** (`hipaa-security.164.312(c)(2)`, `soc2.PI1.3`): account events'
+  hash is now stable across reads; the rows' claim (hash anchored by audited
+  creates and updates) is unchanged.
+B.3, B.4, B.6, B.8 (no token-class change), B.9, B.10, B.11 (no new config key,
+header, platform DB or backup behaviour): none.
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
@@ -960,6 +1033,24 @@ portability to the iCalendar (RFC 5545) standard via the calendar
 adapter, which is also advertised in the new `/service/info`
 `adapters` field (a thin list of adapter base URLs; each adapter
 serves its own `manifest.json`).
+
+**Walked 2026-10-08 for open-pryv.io branch feat/email-verification-sibling-event
+(unreleased)**, with data-types branch `feat/verification-email-type`
+(dictionary version 1.2.0): new types `verification/email` (the read-only,
+server-derived proof state of the primary account address, `{ verified,
+method, verifiedAt }`) and `email/string` (the account address). No tier
+shift, no `planned:` chips involved. Full change list and the disclosure
+note under B.1 (same date).
+- `gdpr.Art.20`: detail extended (account fields export as typed events; the
+  derived event is skipped on import, the receiving deployment derives its
+  own; account event times make `modifiedSince` exports exact). Already cites
+  `data-types`.
+- Walked without change: `iso-13485` excluded items (no device class),
+  `hipaa-privacy.164.514(a)` (neither type is a de-identification format;
+  `email/string` types an identifier the account already held),
+  `soc2.PI1.1` (the catalogue gains two definitions; prose is generic),
+  `soc2.PI1.2` and `soc2.P7.1` (ingest validation: `verification/email` is
+  never written by a client, so it is not an input).
 
 ### B.3: New storage engine (`storages/engines/<new>/`)
 
