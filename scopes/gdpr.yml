@@ -428,8 +428,8 @@ requirements:
       localised consent text presented.
 
       What a grant covers is a set of streams, and a release can widen
-      what a stream carries. Since the open-pryv.io release after
-      2.0.0-rc.43, an access holding a grant on the account email
+      what a stream carries. Since open-pryv.io 2.0.0-rc.44, an
+      access holding a grant on the account email
       stream (`:system:email`, "Read Email") can also request, by type,
       a read-only, server-derived `verification/email` event (whether
       the primary address was proved, by which method, and when),
@@ -1306,8 +1306,8 @@ requirements:
       "download my data" UI; the underlying primitive needs no special
       export endpoint.
 
-      Account fields export as typed events too. Since the open-pryv.io
-      release after 2.0.0-rc.43 the account email stream returns the
+      Account fields export as typed events too. Since open-pryv.io
+      2.0.0-rc.44 the account email stream returns the
       address as `email/string` and, when requested by type, a
       read-only `verification/email` event that the server derives at
       read time (never stored, cannot be written). The latter is not portable: a

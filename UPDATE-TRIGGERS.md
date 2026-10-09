@@ -945,7 +945,7 @@ existing content field), B.3, B.4, B.6, B.8 (no token-class change), B.9, B.10,
 B.11: none.
 
 **Walked 2026-10-08 for open-pryv.io branch feat/email-verification-sibling-event
-(unreleased)**, targeting the release after 2.0.0-rc.43. No new API method, no
+(unreleased at the walk; released in open-pryv.io 2.0.0-rc.44)**. No new API method, no
 new config key, no new audit method id, no tier shift, no `planned:` chips
 involved; `reviewed_at` left unchanged so the added prose awaits the next review
 pass. Row `tests:` extended on 2026-10-08 once the code reached open-pryv.io
@@ -1038,7 +1038,7 @@ adapter, which is also advertised in the new `/service/info`
 serves its own `manifest.json`).
 
 **Walked 2026-10-08 for open-pryv.io branch feat/email-verification-sibling-event
-(unreleased)**, with data-types branch `feat/verification-email-type`
+(unreleased at the walk; released in open-pryv.io 2.0.0-rc.44)**, with data-types branch `feat/verification-email-type`
 (dictionary version 1.2.0): new types `verification/email` (the read-only,
 server-derived proof state of the primary account address, `{ verified,
 method, verifiedAt }`) and `email/string` (the account address). No tier

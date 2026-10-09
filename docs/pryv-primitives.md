@@ -170,8 +170,8 @@ A privileged stream namespace managed by the core (not user-creatable).
   state (password, MFA), etc.
 - **Special permissions**: access requires explicit grant of system
   stream permissions (different from regular streams).
-- **Account fields read as events**: since the open-pryv.io release
-  after 2.0.0-rc.43 they carry the time their value was set (not the
+- **Account fields read as events**: since open-pryv.io 2.0.0-rc.44
+  they carry the time their value was set (not the
   read time), so `modifiedSince` and time filters apply and their
   integrity hash is stable across reads. On request by type, the email
   stream (`:system:email`) also returns a read-only, server-derived
