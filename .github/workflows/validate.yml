@@ -22,6 +22,12 @@ jobs:
           repository: pryv/dev-site
           path: dev-site
 
+      - name: Checkout dev-site2 (for docs path resolution)
+        uses: actions/checkout@v4
+        with:
+          repository: pryv/dev-site2
+          path: dev-site2
+
       - name: Checkout open-pryv.io (for test-code resolution)
         uses: actions/checkout@v4
         with:
@@ -34,6 +40,7 @@ jobs:
           mkdir -p workspace
           mv compliance-matrix workspace/
           mv dev-site workspace/
+          mv dev-site2 workspace/
           mv open-pryv.io workspace/
 
       - name: Setup Node
