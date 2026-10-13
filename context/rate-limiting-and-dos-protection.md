@@ -63,10 +63,12 @@ Standard operator-side protections that compose with Pryv:
 - **WAF rules**: OWASP CRS, custom rules blocking known abuse
   signatures (e.g., paths Pryv doesn't expose; user-agent
   blocklist).
-- **Account-lockout policies**: `fail2ban` watching audit logs +
-  banning IPs that exceed N auth failures in T minutes. Pryv's
-  audit log feeds this (every failed `auth.login` is a row);
-  fail2ban is the trigger + banner.
+- **Account-lockout policies**: `fail2ban` watching the reverse
+  proxy's access log + banning IPs that exceed N auth failures in
+  T minutes (the published recipe's jails read the nginx log, not
+  Pryv's audit log). fail2ban is the trigger + banner; Pryv's own
+  per-account and per-address password budgets (since rc.47) apply
+  behind it.
 - **DDoS scrubbing**: Cloudflare, AWS Shield, etc., at the edge
   CDN layer.
 - **Burst / cost protection**: request size limits, max-events-
@@ -84,8 +86,9 @@ posture is in the **detection layer**, not the enforcement layer:
 
 - **Audit log of every API call.** Per-user SQLite audit row per
   API method invocation includes timestamp, access reference,
-  method, key request fields. `fail2ban` and SIEM tools consume
-  this to drive policy.
+  method, key request fields. SIEM tools consume this to drive
+  policy (fail2ban, in the published recipe, reads the proxy log
+  instead).
 - **Observability emitter** (when configured). Per-core, per-method
   request rate + latency + error rate metrics feed
   capacity-management dashboards + anomaly-detection rules.
@@ -113,7 +116,9 @@ Rows whose `detail` should call out the operator-side responsibility
 ## What is in Pryv-side scope today
 
 - HTTPS body size limits (Express body-parser defaults).
-- Connection timeouts at the Node.js HTTP server layer.
+- Connection timeouts at the Node.js HTTP server layer: Node's
+  defaults, not tuned by Pryv (set slow-client timeouts at the
+  proxy).
 - The Lets-Encrypt + bootstrap-bundle layers don't expose
   unauthenticated mutation endpoints; the public surface is small.
 - **Per-account MFA backoff** (open-pryv.io 2.0.0-rc.27, `6231a37c`,
