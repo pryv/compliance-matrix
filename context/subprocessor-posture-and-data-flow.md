@@ -309,7 +309,13 @@ consume it directly.
 - **Cloud provider** (AWS / Azure / Hetzner / on-prem hardware
   vendor / etc.). Pryv is opaque to the operator's hosting
   choice; their cloud provider's DPA is operator-to-provider, no
-  Pryv-side artefact contributes.
+  Pryv-side artefact contributes. The same applies to the
+  destination of your off-host backups (an S3-compatible bucket,
+  a backup service): a storage relationship under your provider
+  agreement, even when the backups are encrypted with a key the
+  provider never holds. Pryv ships the encryption
+  (`backup-payload-encryption`); you name the destination in your
+  register.
 - **CDN / reverse-proxy** sitting in front of the core
   (nginx / HAProxy / Cloudflare). Pryv doesn't ship one; the
   operator's deployment topology choice (see the

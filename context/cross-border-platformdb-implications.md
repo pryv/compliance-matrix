@@ -13,8 +13,8 @@ PlatformDB is the rqlite-backed key-value store replicated
 single-region cluster, replication stays inside one jurisdiction
 and the cross-border question doesn't arise. In a multi-region
 cluster (e.g., the production pryv.me topology with `core-use1`
-in Virginia + `core-euc1` in Frankfurt), **every PlatformDB
-row lives on both cores**.
+in Virginia (US) and `core-euc1` in Geneva (Switzerland)),
+**every PlatformDB row lives on both cores**.
 
 Verified contents (read from `storages/interfaces/platformStorage/
 PlatformDB.ts:120-244`):
@@ -78,7 +78,11 @@ breach. Runtime + replication path unchanged.
 
 **Legal status**: same as today, Art.46 mechanism still required
 for the live replication of personal data. Doesn't change the
-classification.
+classification. The same holds for an off-host backup: an
+encrypted copy stored in another jurisdiction is still personal
+data under the controller's control; encryption changes the
+security posture (breach notification, what the storage provider
+can read), not the classification.
 
 **Value**: real defence-in-depth against passive forfeiture
 scenarios. Cheap (~1 day).
