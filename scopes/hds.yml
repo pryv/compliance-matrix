@@ -77,7 +77,13 @@ requirements:
       CHANGELOG-v2-back (change control evidence); audit-log per-user
       SQLite (forensic evidence); observability metrics (operational
       monitoring evidence); release tags + Docker image SHAs
-      (configuration management evidence).
+      (configuration management evidence). For vulnerability
+      management on the software side: the 2026 code-level security
+      review of open-pryv.io and its fix releases (2.0.0-rc.40 to
+      2.0.0-rc.50; public report `SECURITY-AUDIT.md` forthcoming;
+      `context/code-security-review-2026.md`). Running a release that
+      carries the fixes, and the vulnerability management of your own
+      hosting, stay yours.
 
   - ref: Activity.4
     title: Activity 4, Sysadmin and operations of the information system

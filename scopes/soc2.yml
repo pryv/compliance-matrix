@@ -249,6 +249,16 @@ requirements:
       actually blocks out-of-scope reads), observability evidences
       operational health. You define the evaluation cadence and the
       sampling method.
+    detail: |
+      **A separate evaluation of the platform code.** The open-pryv.io
+      maintainers ran a code-level security review of the source in 2026
+      (2026-06 to 2026-10); its confirmed findings were fixed with
+      regression tests in open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.50, each
+      described in the release notes. A public report, `SECURITY-AUDIT.md`
+      in the open-pryv.io repository, is forthcoming. Cite it as a supplier
+      evaluation of the software component; it does not evaluate your
+      deployment's controls, and it was not performed by an independent
+      party. See `context/code-security-review-2026.md`.
 
   - ref: CC4.2
     title: CC4.2 Evaluates and communicates deficiencies
@@ -715,8 +725,20 @@ requirements:
       configuration at master start round this out; observability
       + audit surface runtime anomalies. Base-image OS-level CVEs
       remain visible to the scanners (a slimmer-base migration is
-      a tracked follow-up). Your own scanning cadence for the
-      layers you add sits on top.
+      a tracked follow-up); the image installs the Debian security
+      updates available at build time and no longer ships `curl`
+      (2.0.0-rc.42) nor `npm` / `npx` (2.0.0-rc.50). Your own
+      scanning cadence for the layers you add sits on top.
+    detail: |
+      **Vulnerabilities in Pryv's own code.** The dependency feed above
+      does not see defects in open-pryv.io itself. Those were the subject
+      of a code-level security review by the maintainers in 2026 (2026-06
+      to 2026-10), fixed in open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.50 (most
+      of those release notes say "upgrade promptly" and list operator
+      steps); public report `SECURITY-AUDIT.md` forthcoming. Your
+      susceptibility depends on the release you run: track the release
+      notes and `SECURITY.md` advisories and upgrade. See
+      `context/code-security-review-2026.md`.
 
   - ref: CC7.2
     title: CC7.2 Monitoring for anomalies indicative of security events

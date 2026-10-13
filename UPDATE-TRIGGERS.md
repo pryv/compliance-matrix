@@ -336,6 +336,12 @@ Cloudflare / Traefik / Caddy snippets remain a backlog item with no chips: they
 would add no row shift. When the client-IP attribution changes (trusted-proxy list),
 refresh the page's "How Pryv reads the client IP" paragraph.
 
+**Trigger fired (2026-10-13):** open-pryv.io 2.0.0-rc.47 introduced in-code
+budgets keyed on the client address read through `http.trustedProxies` only,
+so the page's client-IP paragraph needs that refresh (developer-site work,
+outside this repo). The matrix rows were updated under `SECURITY-REVIEW-2026`;
+no chip involved.
+
 **Where the work lives**: the developer site (`dev-site2`, customer resources).
 Q6 outcome, voluntarily missing at Pryv layer; ship reference configs.
 
@@ -866,6 +872,171 @@ sign-in). Config keys: `account.emailVerification.*`,
 No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so it
 carries no `planned:` chips.
 
+### `SECURITY-REVIEW-2026` (code-level security review of open-pryv.io; fixes SHIPPED in 2.0.0-rc.40 to 2.0.0-rc.50; rows walked 2026-10-13)
+
+**What it is**: a systematic code-level security review of the open-pryv.io
+source by its maintainers (2026-06 to 2026-10), each finding confirmed by a
+second review and fixed with regression tests. The fixes shipped in
+open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.50 (2026-10-07 to 2026-10-13); the
+public record is each release's `CHANGELOG-v2.md` section. Context note:
+`context/code-security-review-2026.md` (methodology, scope, fix areas, what
+it gives the implementer and what stays theirs). No `planned:` chips, no
+proposal mirror: shipped work, and no backlog slug of Section A was
+discharged by it (see "Backlog slugs checked" below).
+
+⚑ **Pending: public report.** The report will be published as
+`SECURITY-AUDIT.md` in the open-pryv.io repository. Every row below that says
+"forthcoming" must then cite it by URL
+(`https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md`):
+`hipaa-security.164.308(a)(8)`, `gdpr.Art.32`, `iso-27001.A.8.8`, `A.8.28`,
+`A.8.29`, `9.2`, `soc2.CC4.1`, `CC7.1`, `diga.A1.2.7`, `hds.Activity.3`, and
+the context note's header. `grep -rn "SECURITY-AUDIT.md" scopes context`
+lists them.
+
+**Periodic-evaluation evidence (rows walked, no tier shift)**:
+
+| Scope | Ref | What changed |
+|---|---|---|
+| hipaa-security | 164.308(a)(8) | overview names the review; new detail: the review as a technical-evaluation input, what stays the implementer's (running the fixed release, evaluating the deployment, independence) |
+| gdpr | Art.32 | §1(d) evidence list gains "Code-level security review" |
+| iso-27001 | A.8.8 | new detail: vulnerabilities in Pryv's own code, the implementer's upgrade duty, image hygiene (no `curl` since rc.42, no `npm` / `npx` since rc.50) |
+| iso-27001 | A.8.28 | overview cites the review as secure-coding evidence |
+| iso-27001 | A.8.29 | new detail: security testing of the platform code; independent testing stays the implementer's |
+| iso-27001 | 9.2 | review listed among artefacts an internal auditor reviews |
+| soc2 | CC4.1 | new detail: a separate evaluation of the software component |
+| soc2 | CC7.1 | overview: image hygiene; new detail: code-level vulnerabilities and the release the implementer runs |
+| diga | A1.2.7 | new detail: the review does NOT satisfy the independent penetration test; how it helps the test |
+| hds | Activity.3 | detail cites the review as vulnerability-management evidence |
+
+Walked without change: `iso-27001.A.8.25` (SDLC transparency already
+claimed; A.8.28 / A.8.29 carry the review), `iso-27001.A.8.34` (the review
+read source code, no operational system was tested), `soc2.CC4.2`
+(deficiency communication is the implementer's procedure). The matrix has no
+`iso-27001.A.5.35` (independent review) row; the review would not be evidence
+for it anyway (performed by the maintainers).
+
+**Section B walks for 2.0.0-rc.46 to 2.0.0-rc.50** (each release's
+`CHANGELOG-v2.md` entry read in full). No tier shift; `reviewed_at` left
+unchanged so the added prose awaits the next review pass.
+
+- **B.11, rate and resource limits** (rc.47, rc.50; new config keys
+  `auth.passwordAttempts.*`, `http.trustedProxies` as the client-address
+  source, `access.maxLiveRequestsPerIp`, `access.unopenedRequestTtl`,
+  `services.mfa.sessions.maxPendingPerUser`, `limits.batch.maxTotalItems`,
+  `uploads.maxFiles`, `socketIO.maxMessageBytes`,
+  `eventFiles.previewsMaxInputPixels`, `eventFiles.previewsRenderConcurrency`,
+  `services.mfa.methods.sms.sendLimits.perCorePerHour`; rc.46
+  `dns.tcpMaxConnections`). **Correction**: `hipaa-security.164.308(a)(5)(ii)(C)`
+  said Pryv does not throttle password logins in-process; since rc.47 it
+  delays failed passwords per account and budgets them per client address
+  across all cores. Rewritten: `context/rate-limiting-and-dos-protection.md`
+  (stance is now "edge for general shaping, targeted in-code budgets"),
+  FAQ Q6 (dated update), `docs/pryv-primitives.md` open item.
+
+  | Scope | Ref | What changed | Tests added |
+  |---|---|---|---|
+  | hipaa-security | 164.308(a)(5)(ii)(C) | password-guessing paragraph corrected; config keys added | `CEPB1`, `CEPI1`, `CEPI2`, `CEDB1` |
+  | hipaa-security | 164.312(d) | new paragraph: password delay, per-address budget, non-batchable credential methods, per-hash salt | `CEPB1`, `CEPI1`, `CEDB1`, `PWSL1` |
+  | iso-27001 | A.8.5 | new paragraph: passwords, SMS send budgets (per core since rc.50), pending MFA sessions per account | `CEPB1`, `CEPI1`, `CEDB1`, `PWSL1`, `MSSL1`, `MSSL11`, `MCPU1` |
+  | iso-27001 | A.8.21 | "deliberately operator-side" paragraph rewritten: edge for general shaping, in-code budgets listed, `http.trustedProxies`, embedded DNS hardening | `CEPB1`, `CEPI1`, `CEPI2`, `CEDB1`, `CEDB5`, `RAI1`, `EGLV1`, `MPLM3`, `SION4`, `IVCK1`, `WHTT1`, `PVPX1`, `DNR01` |
+  | iso-27001 | A.8.6 | new detail: resource bounds inside the core | `CEDB5`, `CEDB6`, `EGLV1`, `EGLC1`, `MPLM3`, `MPLD1`, `SION1`, `SION4`, `PVPX1`, `PVRQ1`, `WRBO1` |
+  | diga | A1.4.3 | new detail: resource bounds and worker restart backoff for availability | (none) |
+
+- **B.11, logging** (rc.47, rc.49, rc.50: credential masking extended to
+  `Error` objects and debug output, more credential names, URL user info,
+  authorization-code values, validation errors without the rejected value;
+  log files `0640`; keyed admin-key fingerprint in the boot log;
+  `unexpected-error` answered with a reference). `iso-27001.A.8.15` gains a
+  "server logs" paragraph and `config_keys: [logs.file, logs.fileSync]`;
+  tests `BLGM1`..`BLGM4`, `RDL5`, `RDL8`, `RDLA`, `RAL1`, `UNXR1`, `PLFP1`,
+  `BLFM1`. Walked without change: `hipaa-security.164.312(b)` and
+  `soc2.P6.2` (they describe the audit log, which these changes do not
+  touch), `iso-27001.A.8.12` (its claim is about credentials kept out of URLs,
+  still true and now reinforced; left for the next review pass).
+- **B.11, integrity** (rc.50: `integrity.algorithm` limited to `sha256` /
+  `sha512`; the values are unkeyed checksums). `hipaa-security.164.312(c)(2)`:
+  overview qualifies the hash, new detail paragraph on what it proves,
+  `config_keys: [integrity.algorithm]`, test `CVIA1`. Walked without change:
+  `hipaa-security.164.312(c)(1)`, `soc2.PI1.5` (they cite the hash as an
+  accuracy signal, not as tamper-proof).
+- **B.11, response headers** (rc.49: `Cache-Control: no-store` and
+  `Vary: Origin` on JSON answers) and request parsing (rc.50: hosted-site
+  proxy paths, query-string keys): `iso-27001.A.8.26` gains a third example,
+  tests `HTC1`, `HSPE1`, `QPR2`. Walked without change: `soc2.CC6.8`,
+  `gdpr.Art.32` (no claim about caching or parsing).
+- **B.11, backup and restore** (rc.47 plaintext refusal when a secret is
+  given, `--allow-plaintext` / `--require-encrypted`; rc.49 restore refusals of
+  unsafe names and symbolic links, files `0600` / directories `0700`; rc.50
+  plaintext warning, `--passphrase-file`, refusal of reserved names and of a
+  username now held by another account). **Correction**: recipient-key backup
+  encryption was described as detecting tampering; the rc.47 note states it
+  gives confidentiality, not authenticity. Updated:
+  `hipaa-security.164.308(a)(7)(ii)(A)`, `iso-27001.A.8.13` (tests `BKPW1`,
+  `BKPF1`, `BKRE1`, `BKRE4`, `BKRS1`, `BKRS4`, `BKRN1`, `RSOW1`), the
+  `backup-restore` and `backup-payload-encryption` primitives,
+  `context/operator-backup-coverage.md`. Also: the `bin/breach-scope.js
+  --output` report is written `0600` (rc.49), cited on `gdpr.Art.33`
+  (`BRSC6`). Walked without change: `hds.Activity.5`, `soc2.A1.2`,
+  `soc2.PI1.5`, `hipaa-security.164.308(a)(7)(ii)(B)` (no claim about restore
+  input checks or file modes).
+- **B.1, erasure family** (rc.46 SQLite audit `keep`; rc.47 deletion ends
+  delegation and CMC relationships, erases series under every name, destroys
+  reset requests; rc.50 webhooks stop, late series dropped, refusal while the
+  account is the delegate of an account without email; new routes
+  `POST /<username>/delegations/controlled-side/release` (rc.47) and
+  `.../controlled-side/status` (rc.50), both control-access only).
+  **Correction**: `gdpr.Art.17` and `hipaa-security.164.316(b)(2)(i)` carried
+  the "SQLite `keep` caveat", fixed in rc.46. Updated: `gdpr.Art.17` (new
+  "What an account deletion reaches" list; tests `DKP1`, `DLN1`, `DLN4`,
+  `DLLW1`, `DADL02`, `CN82`, `DLWH1`, `RPLC13`, `DADL08`),
+  `hipaa-security.164.316(b)(2)(i)` (`DKP1`), `iso-27001.A.8.10` (`DLN1`,
+  `DLN4`, `DLLW1`), `proposals/audit-on-user-delete.md` (follow-up note).
+  Walked without change: `ccpa.1798.105`, `pipeda.Principle.4.5`,
+  `swiss-nlpd.Art.32`, `soc2.CC6.5`, `soc2.P4.3`, `soc2.C1.2` (they cite the
+  erasure call and engine semantics, not the residues fixed here). The DSAR,
+  rectification and restriction families cite none of the changed surfaces.
+- **B.8**: no change to the token classes of consent-bearing methods. The
+  credential methods refused inside batches and over socket.io (rc.47) are
+  credential entry points, recorded under the rate-limit rows above; deletion
+  records restricted to accesses reading the whole store and the account root
+  stream not grantable for writing (rc.50) tighten
+  `hipaa-security.164.312(a)(1)` / `soc2.CC6.1` claims that already hold.
+- **B.9**: PKCE values must have the RFC 7636 form (rc.50, `PKCF1`, `PKCV1`),
+  signed `state` with a non-ASCII signature refused (rc.47, `OE29`); the rows
+  already claim mandatory S256 PKCE, no change.
+- **B.2, B.3, B.4, B.5, B.6, B.10**: none (no event-type format, engine,
+  primitive, major version or scope; no change to the observability schema).
+  **B.7**: a join now writes `bootstrap-config.yml` instead of replacing
+  `override-config.yml` (rc.50), and one API worker runs the webhooks service
+  (rc.50); no row cites either.
+
+**Not yet walked: 2.0.0-rc.40 to 2.0.0-rc.45.** Their changes are cited above
+only as review evidence; the Section B walk of the behaviour they changed is
+still to do. Candidates, from their release notes: B.11 config keys
+(`caching.accessMaxAgeSeconds`, `webhooks.allowedPrivateHosts`,
+`webhooks.requestTimeoutMs`, `services.mfa.methods.sms.*` code and send
+limits, `services.mfa.allowLoginWhenMethodInactive`,
+`storages.engines.rqlite.httpBindAddr`, `auth.trustedApps` origin matching,
+boot refusal of placeholder secrets, a multi-core node without Raft TLS
+refusing to start, the image running as a non-root user, `pryv-config.yml`
+written `0600`); B.8 / access control (delegated tokens no longer see the
+owner's tokens, MFA changes need a genuine login and a step-up, the
+`webhooks` feature permission, single-event reads applying the `events.get`
+exclusions); password reset hashing, single use and session revocation
+(rc.43). Likely rows: `iso-27001.A.8.5` / `A.5.17` / `A.8.20` / `A.8.21`,
+`hipaa-security.164.312(d)` / `164.312(a)(1)` / `164.312(e)(1)`,
+`soc2.CC6.1` / `CC6.6`, `gdpr.Art.32`, `context/webhooks-signal-only.md`.
+
+**Backlog slugs checked, no chip changed**: `AUDIT-LOG-CHAINING` (the only one
+of the review-adjacent slugs still carrying chips; nothing shipped toward a
+chain), `RATE-LIMITING-RECIPES`, `BREACH-SCOPE-TOOL`, `PLATFORMDB-PII-HASHING`,
+`PLATFORMDB-AT-REST-ENCRYPTION`, `VULNERABILITY-DISCLOSURE-PROGRAM` (all
+already shipped or superseded, chips discharged earlier). Two follow-ups for
+the `RATE-LIMITING-RECIPES` page on the developer site: its "How Pryv reads
+the client IP" paragraph must now cover `http.trustedProxies` (the per-address
+budgets ignore `X-Forwarded-For` from an unlisted proxy), and its route table
+can note the in-code budgets the proxy limits now sit in front of.
+
 ## Section B: Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued
@@ -1019,6 +1190,12 @@ Walked without change:
   creates and updates) is unchanged.
 B.3, B.4, B.6, B.8 (no token-class change), B.9, B.10, B.11 (no new config key,
 header, platform DB or backup behaviour): none.
+
+**Walked 2026-10-13 for open-pryv.io 2.0.0-rc.46 to 2.0.0-rc.50**: the
+erasure family (account deletion now ends relationships, erases series under
+every name, stops webhooks; SQLite audit `keep` honoured) and two new
+control-access-only routes (`delegations/controlled-side/release`, `/status`).
+Rows and tests under `SECURITY-REVIEW-2026` in Section A.
 
 ### B.2: New event-type formats (`data-types` repo)
 
@@ -1284,6 +1461,12 @@ row, `[WNWM]`), `164.316(b)(1)`, `164.316(b)(2)(iii)`, `iso-13485.4.2.4`, `iso-1
 `docs/pryv-primitives.md` (event), `docs/facilitation-typology.md`, FAQ
 accuracy entry.
 
+**Walked 2026-10-13 for open-pryv.io 2.0.0-rc.46 to 2.0.0-rc.50**: no change
+to the token classes of consent-bearing methods. The credential methods
+refused inside batch calls and over socket.io (rc.47) are credential entry
+points, recorded on the authentication / rate-limit rows. See
+`SECURITY-REVIEW-2026` in Section A.
+
 ### B.9: OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
 
 New in `open-pryv.io 2.0.0-rc.8` (squash `8abb86a4`): a standards-based
@@ -1372,6 +1555,12 @@ minted, `[OE27]`), since the OAuth access carries no delegation lineage and
 would outlive the delegation. Rows refreshed: `gdpr.Art.7`,
 `hipaa-security.164.312(a)(1)`, `iso-27001.A.5.15` (with the B.8 entry of the
 same date). Released in open-pryv.io 2.0.0-rc.23.
+
+**Walked 2026-10-13 for open-pryv.io 2.0.0-rc.46 to 2.0.0-rc.50**: PKCE values
+must have the RFC 7636 form (rc.50, `[PKCF1]`, `[PKCV1]`) and a signed `state`
+with a non-ASCII signature is refused (rc.47, `[OE29]`); no row change (the
+rows already claim mandatory S256 PKCE). See `SECURITY-REVIEW-2026` in
+Section A.
 
 ### B.10 Observability emitted-surface changes
 
@@ -1531,6 +1720,14 @@ response header, platform DB or backup behaviour. Its event-update integrity
 fix (server-written fields survive a concurrent client update, merge
 `461f3c4c`) is recorded with the CMC changes under B.8 (`gdpr.Art.32`,
 `hipaa-security.164.312(c)(1)`, `soc2.PI1.3`).
+
+**Walked 2026-10-13 for open-pryv.io 2.0.0-rc.46 to 2.0.0-rc.50** (the
+security-review releases): rate and resource limits, logging, integrity,
+response headers, backup and restore. Recorded with the rows and test codes
+under `SECURITY-REVIEW-2026` in Section A, including two corrections
+(password logins are throttled in-process since rc.47; recipient-key backup
+encryption gives confidentiality, not authenticity). Releases 2.0.0-rc.40 to
+2.0.0-rc.45 are not walked yet (see "Not yet walked" in that entry).
 
 ## Section C: Maintenance reminders
 

@@ -233,6 +233,16 @@ requirements:
       test commissioning + remediation cycle is the manufacturer's.
       For repeat customers, Pryv-side findings already remediated
       upstream reduce repeat test scope.
+    detail: |
+      The 2026 code-level security review of open-pryv.io (fixes in
+      2.0.0-rc.40 to 2.0.0-rc.50; public report `SECURITY-AUDIT.md`
+      forthcoming; `context/code-security-review-2026.md`) does **not**
+      satisfy this requirement: it was performed by the maintainers of the
+      code, not by an independent third party, and it reviewed source code,
+      not your running application. It helps your penetration test: run a
+      release that carries the fixes before the test, and hand the tester
+      the report and release notes so known, fixed platform findings are
+      not re-reported against your listing.
 
   - ref: A1.3.1
     title: Annex 1.3, Interoperability, FHIR R4 export of treatment-relevant data
@@ -388,6 +398,15 @@ requirements:
       application-layer continuity procedures (offline mode,
       degraded-service messaging, support channels) are
       manufacturer-side.
+    detail: |
+      Since open-pryv.io 2.0.0-rc.47 and 2.0.0-rc.50 the core also
+      bounds what one client can consume (batch, paging, upload,
+      socket.io and preview limits; per-address budgets on the
+      unauthenticated entry points) and replaces a crashing worker after
+      a growing delay instead of in a tight loop, so a single misbehaving
+      client is less likely to make the service unavailable for others.
+      See `context/rate-limiting-and-dos-protection.md` and iso-27001
+      A.8.6. An edge layer in front of the cores remains your part.
 
   - ref: A1.5.1
     title: Annex 1.5, Consumer protection, clear pricing + contractual conditions

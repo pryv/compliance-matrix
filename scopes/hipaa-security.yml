@@ -223,7 +223,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [backup-restore, backup-payload-encryption]
-    tests: [BKSR, BKEV, BKVR]
+    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1]
     overview: |
       `bin/backup.js` produces per-user backup files (account data,
       streams, accesses, profile, webhooks, events, attachments, audit,
@@ -264,6 +264,26 @@ requirements:
       encryption (LUKS, S3 SSE-KMS, ...) if you add it on top.
       Document the chosen key model in your backup-plan SOP for
       §164.308(a)(7)(ii)(A).
+
+      **Backup handling hardened (open-pryv.io 2.0.0-rc.47 to
+      2.0.0-rc.50).** A backup written without a key model prints a
+      warning that it is plaintext (it holds every account's data, access
+      tokens included) `[BKPW1]`; `--passphrase-file` reads the passphrase
+      from a file, so it shows neither in the process list nor in shell
+      history `[BKPF1]`; backups are written with directories `0700` and
+      files `0600` (2.0.0-rc.49). A restore refuses, before writing
+      anything: a plaintext backup when a decryption secret was given
+      (`--allow-plaintext` overrides, `--require-encrypted` refuses
+      plaintext even without a secret) `[BKRE1]`, `[BKRE4]`; user ids or
+      usernames that are not one safe file name, symbolic links where the
+      backup keeps its data `[BKRS1]`, `[BKRS4]`; names the platform
+      routes itself `[BKRN1]`; and a single-user restore onto a username
+      another account now holds, even with `--overwrite` `[RSOW1]`.
+      Authenticity bound: recipient-key (hybrid) encryption gives
+      confidentiality, not authenticity; whoever holds the public key and
+      can write to your backup destination can produce a backup that
+      restores. Protect write access to the destination, and prefer
+      `--require-encrypted` on restore.
     technical: |
       Backup chunking + integrity restored (see
       `open-pryv.io/CHANGELOG-v2-back.md`). Series namespace shared by
@@ -726,7 +746,8 @@ requirements:
     facilitation_mode: evidence
     draft: true
     pryv_primitives: [event, audit]
-    tests: [WNWM]
+    config_keys: [integrity.algorithm]
+    tests: [WNWM, CVIA1]
     planned:
       - kind: feature
         summary: "Chained / signed audit log authenticates audit data (row moves F:Evidence|Low → F:Evidence|Med)"
@@ -735,7 +756,8 @@ requirements:
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467766&issue=pryv%7Copen-pryv.io%7C74
         impact: medium
     overview: |
-      Every event carries an integrity hash (SHA-256, on by default),
+      Every event carries an integrity hash (SHA-256 by default,
+      SHA-512 optional, on by default; an unkeyed checksum, see detail),
       and the audit row of each create or update records that hash
       with the event's key and the access that performed the write,
       anchoring the change to an authenticated actor `[WNWM]`: an
@@ -751,6 +773,18 @@ requirements:
       detection beyond this (e.g., end-to-end content hashing under
       a customer-held key) is on the implementer or an extension.
     detail: |
+      **What the integrity value proves (open-pryv.io 2.0.0-rc.50).** It
+      is an unkeyed checksum, not a signature: it detects corruption, and
+      a change made outside the API is visible only by comparing against
+      the hash the audit row recorded, which itself sits in storage a
+      sufficiently privileged party can also rewrite. The release notes now
+      call it a "checksum" for that reason. `integrity.algorithm` accepts
+      `sha256` (default) and `sha512` only: `md5` and `sha1` refuse the boot
+      and `bin/check-config.js` reports them `[CVIA1]`. Switching a core
+      away from `md5` / `sha1` leaves the events and accesses written
+      before with values that no longer match (`bin/integrity-check.js`
+      reports them).
+
       Audit-log tamper resistance itself is **voluntarily missing
       today**: rows are append-only by convention in the audit-write
       code path, but there is no software-side hash chain or
@@ -773,8 +807,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams, delegation]
-    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds]
-    tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11]
+    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds]
+    tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1]
     planned:
       - kind: enhancement
         summary: "Reference MFA plugins (TOTP / WebAuthn) + primitive-catalogue doc surface the pluggability"
@@ -838,6 +872,16 @@ requirements:
       (`attempts.perAccount`, `attempts.lockoutSeconds`) are no longer
       read; a boot warning names them. Tests: `[MA12A]`-`[MA12K]`,
       `[MBKF1]`-`[MBKF3]`, `[PCS1]`, `[MCHK1]`.
+
+      **Password guessing is slowed the same way (open-pryv.io
+      2.0.0-rc.47).** Failed passwords on sign-in, password change, the
+      MFA step-up and `mfa.recover` share a per-account delay
+      (`auth.passwordAttempts`, never a lockout) and a per-client-address
+      budget counted across all cores (`auth.passwordAttempts.perIp`);
+      the methods that take a password are refused inside batch calls and
+      over socket.io, and every password hash carries its own salt. Tests
+      `[CEPB1]`, `[CEPI1]`, `[CEDB1]`, `[PWSL1]`. See §164.308(a)(5)(ii)(C)
+      for the monitoring side.
 
       **A second authentication path, OAuth2.** Beyond the token +
       MFA stack above, Pryv can authenticate delegated apps through a
@@ -1176,6 +1220,8 @@ requirements:
     facilitation_mode: storage
     draft: true
     pryv_primitives: [backup-restore, audit]
+    config_keys: [audit.onUserDelete]
+    tests: [DKP1]
     overview: |
       Six-year is a **minimum** retention period, not a maximum
       (the statute says "retain … for 6 years"; covered entities
@@ -1221,12 +1267,14 @@ requirements:
       (SQLite + PostgreSQL, open-pryv.io `891090d` + `853e1cb`):
       with `audit.onUserDelete: erase` (default), both engines
       reach zero audit rows for the deleted subject. With
-      `keep`, the PG path retains rows as designed; the SQLite
-      path still has the parent `deleteAuditData` filesystem-wipe
-      step running afterwards (known caveat, operators wanting
-      `keep` on SQLite need either a PG audit migration or a
-      follow-up teaching `deleteAuditData` to skip when
-      `mode === 'keep'`).
+      `keep`, both engines retain the audit since open-pryv.io
+      2.0.0-rc.46: the PostgreSQL rows survive, and on SQLite the
+      per-user audit database file stays at its path in the user
+      directory, readable by user id, while everything else there is
+      removed `[DKP1]`. Before 2.0.0-rc.46 the SQLite directory wipe
+      erased it, so `keep` behaved like `erase` on SQLite: if you
+      relied on `keep` there, audit of accounts deleted earlier is
+      gone.
 
   - ref: 164.316(b)(2)(iii)
     title: Documentation, updates, Required
@@ -1308,8 +1356,8 @@ requirements:
     draft: true
     pryv_primitives: [audit, observability-provider, MFA]
     derives_from: [iso-27001.A.8.15]
-    config_keys: [services.mfa.attempts.backoff]
-    tests: [AT01, AT02, AT51, MA12A, MBKF1]
+    config_keys: [services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, http.trustedProxies]
+    tests: [AT01, AT02, AT51, MA12A, MBKF1, CEPB1, CEPI1, CEPI2, CEDB1]
     docs: [customer-resources/rate-limiting.md#fail2ban]
     overview: |
       Login + authentication-
@@ -1318,25 +1366,37 @@ requirements:
       signals. The discrepancy-reporting cadence + threshold tuning
       are operator-side procedure.
     detail: |
-      **Pryv surfaces the events; you choose the lockout
-      policy for passwords.** Pryv does not in-process rate-limit
-      password logins or lock accounts after N failures by itself
-      (deliberate; multi-core deployments make in-process counters
-      mis-fire + lockout sensitivity is workload-specific). Operator
-      pattern: `fail2ban` watching the audit log + banning IPs that
-      exceed N auth failures in T minutes; reverse-proxy
-      `limit_req_zone` for per-IP rate caps on `/auth/login`.
+      **Pryv surfaces the events and slows password guessing; you
+      choose the lockout policy.** Since open-pryv.io 2.0.0-rc.47 Pryv
+      delays failed passwords itself, never locking an account:
+      sign-in, `account.changePassword`, the MFA step-up by password
+      and `mfa.recover` share a per-account tally (after
+      `auth.passwordAttempts.freeFailures`, default 5, within 900 s,
+      the next attempt waits from 2 s doubling up to 300 s, answered
+      429 `too-many-attempts` with `Retry-After`) `[CEPB1]`, and a
+      per-client-address budget counted across all cores
+      (`auth.passwordAttempts.perIp.maxFailures`, default 30 per
+      900 s, an IPv6 /64 counting as one address) `[CEPI1]`. The
+      credential methods are refused inside batch calls and over
+      socket.io, so every guess is one HTTP request your edge sees
+      `[CEDB1]`. Behind a reverse proxy, list it in
+      `http.trustedProxies`, or every client shares the proxy's
+      address budget `[CEPI2]`. Locking accounts after N failures, and
+      reporting discrepancies, stay your policy: operator pattern
+      `fail2ban` watching the audit log and banning addresses that
+      exceed N auth failures in T minutes, plus reverse-proxy
+      `limit_req_zone` per-IP caps on `/auth/login`. (Before 2.0.0-rc.47
+      Pryv did not throttle passwords in-process.)
 
-      **Exception: the second factor.** Since open-pryv.io 2.0.0-rc.27
-      Pryv enforces a per-account backoff on failed MFA attempts
-      (open-pryv.io `6231a37c`, `aa445c43`; `services.mfa.attempts.backoff`,
-      default: after 3 failures within 15 minutes, delays doubling from
-      2 s up to 5 minutes, answered 429 `too-many-attempts` with
-      `Retry-After`). It is a delay, never a lockout: a success clears
-      it and the real user waits at most `maxSeconds`. The counter lives
-      on the account's home core, so the multi-core objection above does
-      not apply. Tests `[MA12A]`-`[MA12K]`, `[MBKF1]`-`[MBKF3]`. See
-      §164.312(d).
+      **The second factor has its own tally.** Since open-pryv.io
+      2.0.0-rc.27 Pryv enforces a per-account backoff on failed MFA
+      attempts (open-pryv.io `6231a37c`, `aa445c43`;
+      `services.mfa.attempts.backoff`, default: after 3 failures within
+      15 minutes, delays doubling from 2 s up to 5 minutes, answered 429
+      `too-many-attempts` with `Retry-After`). It is a delay, never a
+      lockout: a success clears it and the real user waits at most
+      `maxSeconds`. The counter lives on the account's home core. Tests
+      `[MA12A]`-`[MA12K]`, `[MBKF1]`-`[MBKF3]`. See §164.312(d).
 
       Full operator-side rate-limiting framing:
       `context/rate-limiting-and-dos-protection.md`. Enforcement
@@ -1438,7 +1498,31 @@ requirements:
       disclosure program + GHSA advisory history (coordinated
       disclosure policy published in `SECURITY.md`; private
       vulnerability reporting enabled on the published
-      repositories). The assessment write-up is operator-side.
+      repositories), and the code-level security review of
+      open-pryv.io (2026-06 to 2026-10, fixes in 2.0.0-rc.40 to
+      2.0.0-rc.50). The assessment write-up is operator-side.
+    detail: |
+      **The 2026 security review is a technical-evaluation input you can
+      cite for the platform layer.** The open-pryv.io maintainers ran a
+      systematic code-level security review of the source (authentication
+      and sessions, authorisation and tenant isolation, input handling,
+      cryptography and secrets in logs, the admin / multi-core plane, the
+      network-facing daemons, resource limits, deletion semantics), each
+      finding confirmed by a second review before it was accepted and fixed
+      with regression tests. The fixes shipped in open-pryv.io 2.0.0-rc.40
+      to 2.0.0-rc.50 (October 2026); each release note lists what changed
+      and the operator steps it needs. A public report, `SECURITY-AUDIT.md`
+      in the open-pryv.io repository, is forthcoming; until it is published
+      the release notes are the public record. Methodology, scope and the
+      fix areas: `context/code-security-review-2026.md`.
+
+      What stays yours under §164.308(a)(8): running a release that carries
+      the fixes (2.0.0-rc.50 or later, with the operator steps of each
+      release in between), and the evaluation itself. The review covered
+      the code, not your deployment: your configuration, network exposure,
+      added applications and procedures, and the "in response to
+      environmental or operational changes" trigger, are evaluated by you.
+      It was performed by the maintainers, not an independent assessor.
 
   - ref: "164.310(a)(1)"
     title: Facility access controls, standard

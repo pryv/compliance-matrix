@@ -188,7 +188,22 @@ gateway, already deployed by the operator for TLS / geo-routing /
 WebSocket upgrades, purpose-built for traffic shaping, and tunable
 per actual workload.
 
-**What Pryv contributes:** detection layer, not enforcement.
+**Update (2026-10-13): targeted in-code budgets since open-pryv.io
+2.0.0-rc.47.** General traffic shaping stays at the edge, but Pryv
+now enforces budgets on the abuse paths it can count correctly:
+failed passwords per account (a delay, never a lockout) and per
+client address across all cores (`auth.passwordAttempts`),
+credential methods refused inside batches and over socket.io, live
+`/reg/access` requests per address, pending MFA sessions per
+account, batch / paging / upload / socket.io message bounds; and in
+2.0.0-rc.50 an invitation-check budget, a `webhooks.test` interval,
+preview limits, a per-core SMS cost cap and a restart backoff for
+crashing workers. Per-address budgets read the client address
+through `http.trustedProxies` only. Detail and test codes:
+`context/rate-limiting-and-dos-protection.md`.
+
+**What Pryv contributes:** detection layer, plus the targeted
+budgets above.
 - Audit log captures every API call (fail2ban watches it for
   auth-failure patterns; SIEM consumes for anomaly detection).
 - Observability adapter surfaces per-core request-rate + latency +

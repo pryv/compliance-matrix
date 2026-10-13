@@ -332,6 +332,13 @@ from a backup file.
   (InfluxDB series backups could not be restored before 2.0.0-rc.34).
   The manifest's `coreVersion` reports the core's release. Tests:
   `[BKSR]`, `[BKEV]`, `[BKVR]`.
+- **Restore safety** (open-pryv.io 2.0.0-rc.49, 2.0.0-rc.50): a restore
+  refuses, before writing anything, user ids or usernames that are not
+  one safe file name, symbolic links where the backup keeps its data,
+  names the platform routes itself, and a single-user restore onto a
+  username another account now holds. Backups are written with
+  directories `0700` and files `0600`. Tests: `[BKRS1]`, `[BKRS4]`,
+  `[BKRN1]`, `[RSOW1]`.
 - **Compliance role**: data restorability (GDPR Art.32 §1(c)) +
   per-user erasure path for SQLite engine.
 
@@ -357,6 +364,16 @@ as before.
   depending on it.
 - **DR caveat**: key/passphrase loss makes the backup unrecoverable,
   key management is the operator's responsibility.
+- **Authenticity bound**: the per-chunk GCM tags detect alteration of
+  an existing encrypted backup, but recipient-key (hybrid) encryption
+  gives confidentiality, not authenticity: whoever holds the public key
+  and can write to the backup destination can produce a backup that
+  restores. Since open-pryv.io 2.0.0-rc.47 a restore given a decryption
+  secret refuses a plaintext backup (`--require-encrypted` refuses one
+  even without a secret); since 2.0.0-rc.50 a plaintext backup is
+  announced on stderr and `--passphrase-file` keeps the passphrase out
+  of the process list. Tests: `[BKRE1]`, `[BKRE4]`, `[BKPW1]`,
+  `[BKPF1]`.
 
 ### `account-backup-tool`
 
@@ -728,4 +745,7 @@ in this document.
 - `streams.delete` + `mergeEventsWithParent` semantics.
 - `system.users.delete` end-to-end erasure flow incl. backups.
 - Rate-limiting + throttling primitives (relevant to denial-of-service
-  controls in ISO 27001 A.8.6).
+  controls in ISO 27001 A.8.6). The targeted in-code budgets of
+  open-pryv.io 2.0.0-rc.47 and 2.0.0-rc.50 are described in
+  `context/rate-limiting-and-dos-protection.md`; not yet a catalogue
+  entry.

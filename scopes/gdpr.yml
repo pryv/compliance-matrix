@@ -1168,8 +1168,8 @@ requirements:
     pryv_effort_saved: medium
     draft: true
     pryv_primitives: [event, stream, backup-restore]
-    config_keys: [storages.userAccountStorage.engine, user-account.delete]
-    tests: [USAD]
+    config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete]
+    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08]
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -1235,13 +1235,44 @@ requirements:
           audit records while preserving forensic value) is still the
           outstanding piece before this mode can be enabled.
 
-      SQLite-audit + `keep` mode known caveat: the parent
-      `deleteAuditData` filesystem-wipe step still runs after
-      `deleteAuditDataStorage` returns from `keep`, so the per-user
-      `.sqlite` audit file is removed regardless. PG-audit deployments
-      get `keep` semantics as designed (rows survive). Operators
-      wanting `keep` on SQLite need a PG audit migration or a follow-
-      up teaching `deleteAuditData` to skip when `mode === 'keep'`.
+      `keep` holds on both audit engines since open-pryv.io 2.0.0-rc.46:
+      on the SQLite audit engine the per-user audit database file stays
+      at its path in the user directory, readable by user id, and
+      everything else in the directory is removed `[DKP1]` (before
+      2.0.0-rc.46 the directory wipe erased it, so `keep` behaved like
+      `erase` there; open-pryv.io#154).
+
+      What an account deletion reaches, as of open-pryv.io 2.0.0-rc.50
+      (fixes from the 2026 code-level security review,
+      `context/code-security-review-2026.md`):
+        - **High-frequency series under every name of the account**: its
+          username, each alias and every former username (a username
+          change keeps the former name as an alias), whichever name the
+          deletion is addressed by (2.0.0-rc.47) `[DLN1]`, `[DLN4]`; the
+          series are dropped again as the last step, so points written
+          during the deletion do not survive it (2.0.0-rc.50) `[DLLW1]`.
+          Before 2.0.0-rc.47 a deletion addressed by an alias, or made
+          after a username change, left series behind.
+        - **Relationships with other accounts** (2.0.0-rc.47): as a
+          delegate, its tokens, control accesses and what it granted
+          through the delegation are removed on each controlled account
+          `[DADL02]`; each CMC counterparty receives the revocation a
+          consent withdrawal sends and deletes the access it held
+          `[CN82]`. Best-effort and never holding the deletion; an
+          account on another core needs that core to run 2.0.0-rc.47 or
+          later.
+        - **Webhooks stop at once** (2.0.0-rc.50) `[DLWH1]`, and pending
+          password-reset requests of every name are destroyed
+          (2.0.0-rc.47) `[RPLC13]`.
+        - **One refusal** (2.0.0-rc.50): `DELETE /users/:username` with
+          the account's personal token is refused while the account is
+          the delegate of an account that has no email (that account
+          would be left with no way in); setting an email on it lifts
+          the refusal, and a deletion with the admin key goes through
+          and is logged `[DADL08]`.
+      If you erased accounts on earlier releases after a username
+      change or through an alias, check the series storage for
+      leftovers under the former names.
     technical: |
       Tested via `[USAD]`
       (`open-pryv.io/components/api-server/test/deletion-seq.test.js`,
@@ -2099,6 +2130,21 @@ requirements:
               reporting is enabled on the published repositories,
               so operators can cite Pryv's VDP + GHSA advisory
               history as part of their Art.32(1)(d) evidence file.
+            - **Code-level security review** (2026-06 to
+              2026-10): a systematic review of the open-pryv.io
+              source by its maintainers (authentication,
+              authorisation and isolation, input handling, secrets
+              in logs, the admin / multi-core plane, the network
+              daemons, resource limits, deletion), each finding
+              confirmed by a second review and fixed with
+              regression tests; the fixes shipped in open-pryv.io
+              2.0.0-rc.40 to 2.0.0-rc.50, described in each
+              release note. Public report (`SECURITY-AUDIT.md` in
+              the open-pryv.io repository) forthcoming. It
+              evaluates the code, not your deployment: run a
+              release carrying the fixes and keep testing your
+              own configuration and integrations. See
+              `context/code-security-review-2026.md`.
 
   - ref: Art.33
     title: Notification of personal data breach to the supervisory authority
@@ -2111,6 +2157,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, encryption-at-rest-secrets]
     docs: [customer-resources/audit-setup.md]
+    tests: [BRSC6]
     overview: |
       Pryv ships a breach-scoping toolchain: `bin/breach-scope.js`
       turns a compromised accessId + time window into an Art.33
@@ -2138,7 +2185,11 @@ requirements:
           [--until <iso8601>]` walks the audit window on the subject's
           home core and renders the scoping report (JSON or Markdown):
           methods histogram, streams in scope, read/mutated/destroyed
-          record counts, time window, integrity hashes.
+          record counts, time window, integrity hashes. Since
+          open-pryv.io 2.0.0-rc.49 an `--output` report file is written
+          readable by its owner only (`0600`) `[BRSC6]`: it names
+          the subject and the streams in scope, so keep it with your
+          incident records, not on a shared volume.
         - access version chain → consent state at the moment of access
           (was processing within authorised scope?).
         - encryption-at-rest → if the leaked artefact is encrypted

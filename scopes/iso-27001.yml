@@ -221,8 +221,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams]
-    config_keys: [services.mfa.mode, services.mfa.attempts.backoff]
-    tests: [MA01, MA02, MA03, MA04, MA05, MA12A, MBKF1, PCS1, MCHK1]
+    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, services.mfa.methods.sms.sendLimits, services.mfa.sessions.maxPendingPerUser]
+    tests: [MA01, MA02, MA03, MA04, MA05, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1]
     planned:
       - kind: enhancement
         summary: "Reference TOTP / WebAuthn plugins + AAL-tier mapping doc strengthen the A.8.5 evidence chain"
@@ -251,6 +251,22 @@ requirements:
       clears the tally. The `attempts` block is platform-wide policy
       (same values on every core); `backoff.maxSeconds: 0` disables it.
 
+      **Failed passwords are delayed too (open-pryv.io 2.0.0-rc.47).**
+      Sign-in, `account.changePassword`, the MFA step-up by password and
+      `mfa.recover` share a per-account tally
+      (`auth.passwordAttempts`: after 5 failures within 900 s, delays
+      from 2 s doubling up to 300 s, 429 with `Retry-After`, never a
+      lockout) `[CEPB1]`, plus a budget per client address counted across
+      all cores (`auth.passwordAttempts.perIp`, 30 failures per 900 s)
+      `[CEPI1]`; these methods answer `400` inside a batch call or over
+      socket.io `[CEDB1]`. Each password hash gets its own salt (bcrypt,
+      cost 10) `[PWSL1]`. SMS second factors carry send budgets per
+      session, per user, per destination across the platform and, since
+      2.0.0-rc.50, per core (`services.mfa.methods.sms.sendLimits`,
+      against toll fraud) `[MSSL1]`, `[MSSL11]`, and an account holds at
+      most `services.mfa.sessions.maxPendingPerUser` pending MFA logins
+      `[MCPU1]`.
+
       **Single-use codes and safe configuration.** A TOTP code is
       consumed with a storage compare-and-set (open-pryv.io `43293101`,
       `6231a37c`), so concurrent verifies of one code release exactly
@@ -272,7 +288,7 @@ requirements:
     draft: true
     pryv_primitives: [event, stream, backup-restore]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
-    tests: [USAD]
+    tests: [USAD, DLN1, DLN4, DLLW1]
     overview: |
       Per-user erasure: `system.users.delete` removes the user's data
       from the live store. Engine-dependent backup behaviour (SQLite
@@ -280,7 +296,11 @@ requirements:
       determines whether erasure extends to backups, same notes as
       GDPR Art. 17 + HIPAA-Security §164.310(d) media-controls. Event-
       level and stream-level deletion live alongside for per-record
-      deletion needs.
+      deletion needs. Since open-pryv.io 2.0.0-rc.47 the deletion also
+      erases the high-frequency series kept under the account's former
+      usernames and aliases (earlier releases could leave them), and
+      since 2.0.0-rc.50 points written during the deletion do not
+      survive it; see GDPR Art.17 for the full list.
 
   - ref: A.8.13
     title: A.8.13 Information backup
@@ -293,7 +313,7 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [backup-restore, backup-payload-encryption, multi-core-mTLS]
-    tests: [BKSR, BKEV, BKVR]
+    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1]
     overview: |
       `bin/backup.js`
       produces per-user backup files, the only copy of user data Pryv
@@ -331,6 +351,17 @@ requirements:
       choice and the key custody (a lost key or passphrase makes the
       backup unrecoverable) in your backup-policy SOP.
 
+      **Since open-pryv.io 2.0.0-rc.47 to 2.0.0-rc.50**: a plaintext
+      backup is announced on stderr `[BKPW1]`; `--passphrase-file` keeps
+      the passphrase out of the process list `[BKPF1]`; backups are
+      written owner-only (`0700` / `0600`); a restore refuses an
+      unexpectedly plaintext backup `[BKRE1]` (`--require-encrypted` makes
+      that the rule `[BKRE4]`), unsafe names and symbolic links `[BKRS1]`,
+      `[BKRS4]`, reserved names `[BKRN1]` and a username another account
+      now holds `[RSOW1]`. Recipient-key encryption gives confidentiality,
+      not authenticity: protect write access to the backup destination.
+      See `context/operator-backup-coverage.md`.
+
   - ref: A.8.15
     title: A.8.15 Logging
     text: |
@@ -341,7 +372,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream]
-    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07]
+    config_keys: [logs.file, logs.fileSync]
+    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1]
     planned:
       - kind: feature
         summary: "Chained / signed audit log adds the software-side tamper-resistance signal A.8.15 expects"
@@ -389,6 +421,29 @@ requirements:
       `context/content-query-audit-semantics.md`. See
       `docs/pryv-primitives.md` audit entry for the full capture
       catalogue.
+
+      **Server logs are protected from carrying credentials (open-pryv.io
+      2.0.0-rc.43 to 2.0.0-rc.50).** The operational logs (`logs.file`,
+      `logs.fileSync`, console, `DEBUG=pryv:*`) are separate from the audit
+      log, and they are what a log shipper or a support engineer reads.
+      Credential values are masked wherever they are logged, including
+      inside a logged `Error` (message, stack, cause) and the debug output;
+      the masked names cover access and refresh tokens, passphrases, the
+      admin key and the platform secrets; URL user info, access-request
+      keys, `readToken`, `key` / `poll` and authorization-code `code` /
+      `state` values are hidden; a parameter validation error is logged
+      without the rejected value; the request trace prints no Basic-auth
+      user name `[BLGM1]`, `[BLGM2]`, `[BLGM3]`, `[BLGM4]`, `[RDL5]`,
+      `[RDL8]`, `[RDLA]`, `[RAL1]`. A server-side fault is answered to the
+      client as `Unexpected error (ref <8 hex>)`, its detail logged under
+      the same reference `[UNXR1]`. The boot log identifies the admin key
+      by a keyed fingerprint, not a hash a log reader could test
+      candidate keys against `[PLFP1]`. Log files are created `0640`, and
+      the log directories the core creates `0750` (2.0.0-rc.50; existing
+      files and directories keep their modes)
+      `[BLFM1]`. Check the retention of logs written by releases before
+      2.0.0-rc.43, which may hold credential values; log shipping,
+      retention and access to the log host stay yours.
 
       **Long-running deployment tiering**: for the "logs … stored,
       protected, analysed" portion of A.8.15 at multi-year scales,
@@ -693,6 +748,27 @@ requirements:
       SHA. The operator's vulnerability-management cadence (when to
       upgrade, how to verify) sits on top. Observability data feeds
       incident-correlated vulnerability hunting.
+    detail: |
+      **Vulnerabilities found in Pryv's own code.** Beyond dependency
+      advisories, the open-pryv.io maintainers ran a code-level security
+      review of the source in 2026 (2026-06 to 2026-10): findings were
+      confirmed by a second review, classified by severity and fixed with
+      regression tests, critical and high ones first. The fixes shipped in
+      open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.50; most of those release notes
+      open with "upgrade promptly" and name the operator steps (a
+      configuration check before restarting, a one-off repair tool). A
+      public report, `SECURITY-AUDIT.md` in the open-pryv.io repository, is
+      forthcoming. See `context/code-security-review-2026.md`.
+
+      Your part of A.8.8: watch the release notes and `SECURITY.md`
+      advisories, assess your exposure (which release you run, which
+      features you enabled), and upgrade on your own schedule, running each
+      release's operator steps. Image hygiene moved in the same releases:
+      the image installs the Debian security updates available at build
+      time and no longer ships `curl` (2.0.0-rc.42) nor `npm` / `npx`
+      (2.0.0-rc.50), which removes the scan findings those tools carried;
+      OS-level findings of the pinned base image remain visible to the
+      scanners.
 
   - ref: A.8.9
     title: A.8.9 Configuration management
@@ -829,7 +905,11 @@ requirements:
       pre-commit hooks, dependency-audit pipeline. The implementer's
       own application-layer secure-coding programme remains their
       ISMS artefact, drawing on the public Pryv-side practice as
-      supplier evidence.
+      supplier evidence. The 2026 code-level security review of
+      open-pryv.io (fixes in 2.0.0-rc.40 to 2.0.0-rc.50, each with
+      regression tests; public report `SECURITY-AUDIT.md`
+      forthcoming) is part of that evidence, see
+      `context/code-security-review-2026.md`.
 
   - ref: A.8.30
     title: A.8.30 Outsourced development
@@ -1172,6 +1252,8 @@ requirements:
     draft: true
     pryv_primitives: [observability-provider, multi-core-mTLS]
     docs: [customer-resources/rate-limiting.md]
+    config_keys: [limits.batch.maxTotalItems, uploads.maxFiles, socketIO.maxMessageBytes, eventFiles.previewsMaxInputPixels, eventFiles.previewsRenderConcurrency]
+    tests: [CEDB5, CEDB6, EGLV1, EGLC1, MPLM3, MPLD1, SION1, SION4, PVPX1, PVRQ1, WRBO1]
     overview: |
       Pryv-side capacity
       surfaces: per-core observability metrics (memory, CPU, latency,
@@ -1179,6 +1261,24 @@ requirements:
       cluster (each handles its bound users + shared rqlite control
       plane). Operator's capacity-planning cadence + provisioning
       automation sit on top.
+    detail: |
+      **Resource bounds inside the core (open-pryv.io 2.0.0-rc.47 and
+      2.0.0-rc.50).** One client can no longer exhaust a core's capacity
+      through a single call shape: a batch holds at most 1000 calls with
+      its results bounded together (`limits.batch.maxTotalItems`)
+      `[CEDB5]`, `[CEDB6]`; `events.get` paging is bounded and PostgreSQL
+      results are streamed through a cursor instead of loaded whole
+      `[EGLV1]`, `[EGLC1]`; uploads are limited in parts, files
+      (`uploads.maxFiles`) and size by default `[MPLM3]`, `[MPLD1]`;
+      socket.io namespaces exist only for user names and messages are
+      bounded (`socketIO.maxMessageBytes`) `[SION1]`, `[SION4]`;
+      previews refuse images declaring more than
+      `eventFiles.previewsMaxInputPixels` and render at most
+      `eventFiles.previewsRenderConcurrency` at once `[PVPX1]`,
+      `[PVRQ1]`; a crashing worker is replaced after a growing delay
+      `[WRBO1]`. These protect capacity; sizing the cores, watching the
+      metrics and scaling stay yours. See
+      `context/rate-limiting-and-dos-protection.md`.
 
   - ref: A.8.14
     title: A.8.14 Redundancy of information processing facilities
@@ -1310,6 +1410,8 @@ requirements:
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, observability-provider]
     derives_from: [iso-27001.A.8.20]
     docs: [customer-resources/rate-limiting.md]
+    config_keys: [auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections]
+    tests: [CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01]
     overview: |
       Pryv's external
       network surface is the TLS-terminating HTTPS API + the embedded
@@ -1318,17 +1420,32 @@ requirements:
       operator's broader network-service portfolio (LB, WAF, VPN)
       sits outside Pryv.
     detail: |
-      **Rate limiting / DoS protection is deliberately operator-side**
-      (reverse proxy / WAF / API gateway). In-process throttling
-      inside Pryv was considered + rejected because (1) multi-core
-      load distribution makes per-core counters mis-fire and
-      (2) abuse signatures are operator-specific. Pryv contributes
-      the **detection layer** (audit log + observability metrics +
-      `accesses.delete` revocation); enforcement happens at the edge.
-      One narrow exception: failed MFA second factors are throttled
-      in-process by a per-account backoff (open-pryv.io 2.0.0-rc.27,
-      `services.mfa.attempts.backoff`), counted on the account's home
-      core, see A.8.5. Full rationale + operator mitigation patterns:
+      **General rate limiting / DoS protection stays operator-side**
+      (reverse proxy / WAF / API gateway): general in-process
+      throttling was rejected because (1) multi-core load distribution
+      makes per-core counters mis-fire and (2) abuse signatures are
+      operator-specific. Pryv contributes the **detection layer**
+      (audit log + observability metrics + `accesses.delete`
+      revocation) and, since open-pryv.io 2.0.0-rc.47, **targeted
+      in-code budgets** on the paths it can count correctly: failed
+      passwords per account and per client address across all cores
+      (`auth.passwordAttempts`) `[CEPB1]`, `[CEPI1]`; credential
+      methods refused inside batches and over socket.io `[CEDB1]`;
+      live `/reg/access` requests per address
+      (`access.maxLiveRequestsPerIp`) `[RAI1]`; batch, paging, upload
+      and socket.io message bounds `[CEDB5]`, `[EGLV1]`, `[MPLM3]`,
+      `[SION4]`; and in 2.0.0-rc.50 an invitation-check budget
+      `[IVCK1]`, a `webhooks.test` interval `[WHTT1]` and preview
+      limits `[PVPX1]`. Failed MFA second factors have had a
+      per-account backoff since 2.0.0-rc.27
+      (`services.mfa.attempts.backoff`), see A.8.5. The per-address
+      budgets read the client address through `http.trustedProxies`
+      only: behind your reverse proxy, list it there `[CEPI2]`. The
+      embedded DNS server validates requests and bounds its TCP
+      connections (`dns.tcpMaxConnections`, 2.0.0-rc.46) `[DNR01]`.
+      These budgets do not replace an edge layer for volumetric
+      traffic, per-token request rates and WAF rules. Full rationale +
+      operator mitigation patterns:
       `context/rate-limiting-and-dos-protection.md`. Reference nginx +
       fail2ban configuration, verified against a running core (per-IP
       and per-token limits on the routes that matter, ban jails, limits
@@ -1346,7 +1463,7 @@ requirements:
     draft: true
     pryv_primitives: [audit]
     derives_from: [iso-27001.A.8.25]
-    tests: [ACTY, MC04D]
+    tests: [ACTY, MC04D, HTC1, HSPE1, QPR2]
     overview: |
       For the operator running
       Pryv as one of its applications, this compliance matrix IS the
@@ -1378,6 +1495,16 @@ requirements:
       (a request stays on the core that created it, and an account on
       another core is served through the shared-secret hand-off
       between cores).
+
+      Further examples from the 2026 security review (open-pryv.io
+      2.0.0-rc.49 and 2.0.0-rc.50; `context/code-security-review-2026.md`):
+      every JSON answer of the API carries `Cache-Control: no-store` and
+      `Vary: Origin`, so neither a browser nor a shared cache keeps API
+      answers `[HTC1]`; a hosted proxy site refuses a path holding an
+      encoded separator or a dot segment before it reaches the upstream
+      `[HSPE1]`; query strings are parsed without letting a key shadow a
+      built-in object property `[QPR2]`. If you put a cache or CDN in front
+      of the API, keep it honouring these directives.
 
   - ref: A.8.27
     title: A.8.27 Secure system architecture and engineering principles
@@ -1416,6 +1543,18 @@ requirements:
       integration tests).
       Operator's own application-layer security testing (SAST, DAST,
       pen-test before release) is layered on top.
+    detail: |
+      **Security review of the platform code.** In 2026 (2026-06 to
+      2026-10) the open-pryv.io maintainers reviewed the source surface by
+      surface for security defects; each finding was confirmed by a second
+      review, fixed with a regression test that now runs in the CI matrix,
+      and each fix release was reviewed before merge. The fixes shipped in
+      open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.50. A public report,
+      `SECURITY-AUDIT.md` in the open-pryv.io repository, is forthcoming.
+      Methodology and the fix areas: `context/code-security-review-2026.md`.
+      This is security testing of Pryv's code, done by its maintainers; the
+      testing of your own applications, integrations and deployment (and any
+      independent penetration test your programme requires) remains yours.
 
   - ref: A.8.33
     title: A.8.33 Test information
@@ -1560,7 +1699,11 @@ requirements:
       typically review: the audit log itself (control-effectiveness
       sample), this compliance matrix (control inventory),
       open-pryv.io release-process evidence (CHANGELOGs, tagged
-      releases, test matrix).
+      releases, test matrix), and the 2026 code-level security
+      review of open-pryv.io with its fix releases (2.0.0-rc.40 to
+      2.0.0-rc.50; public report `SECURITY-AUDIT.md` forthcoming;
+      `context/code-security-review-2026.md`), which documents an
+      evaluation of the platform layer, not of your ISMS.
 
   - ref: "10.1"
     title: Clause 10.1, Continual improvement
