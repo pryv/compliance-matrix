@@ -1739,10 +1739,10 @@ encryption gives confidentiality, not authenticity). Releases 2.0.0-rc.40 to
 - **At each gap-probing sweep close**: full review of this file
   against the current matrix state, confirm every Section A entry
   is still accurate + every shipped item has been removed.
-- **At each new gap-probing Q close** (per
-  [[feedback-implementer-perspective-gap-probing]]): if the Q
-  produced a new backlog slug, add a Section A entry alongside the
-  proposal mirror + planned chips.
+- **At each new gap-probing Q close** (an implementer-perspective
+  question answered against the matrix): if the Q produced a new
+  backlog slug, add a Section A entry alongside the proposal mirror
+  + planned chips.
 
 ### Temporary "Known gap" clauses (remove when the fix ships)
 
