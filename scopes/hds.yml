@@ -80,7 +80,9 @@ requirements:
       (configuration management evidence). For vulnerability
       management on the software side: the 2026 code-level security
       review of open-pryv.io and its fix releases (2.0.0-rc.40 to
-      2.0.0-rc.50; public report `SECURITY-AUDIT.md` forthcoming;
+      2.0.0-rc.51; public report `SECURITY-AUDIT.md`, published
+      2026-10-14,
+      https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md;
       `context/code-security-review-2026.md`). Running a release that
       carries the fixes, and the vulnerability management of your own
       hosting, stay yours.
@@ -132,7 +134,20 @@ requirements:
       manifest's `coreVersion` reports the core's release, which you
       can record in your backup register. Backup and restore round
       trips are tested in open-pryv.io (`[BKSR]`, `[BKEV]`, `[BKVR]`).
-    tests: [BKSR, BKEV, BKVR]
+
+      **Incremental backups (open-pryv.io 2.0.0-rc.51).** Before
+      2.0.0-rc.51 an `--incremental` run overwrote the full backup it
+      continued, leaving a directory that restores only the last delta;
+      `node bin/backup.js --inspect <dir>` reports such a directory
+      `DAMAGED` and a restore refuses it `[BKIC2]`: remove it from your
+      backup register and take a new full backup. Since 2.0.0-rc.51 each
+      run is written next to the full backup (`incrementals/<runId>/`,
+      indexed by `chain.json`), each encrypted run with its own envelope
+      and decrypt script, and a restore replays the chain, or stops at a
+      given run with `--through-run` `[BKC1]`, `[BKC2]`, `[BKC5]`,
+      `[BKIC1]`. Your retention schedule applies per chain: a run is only
+      restorable with the full backup and every run before it.
+    tests: [BKSR, BKEV, BKVR, BKC1, BKC2, BKC5, BKIC1, BKIC2]
 
   - ref: Activity.6
     title: Activity 6, Archival of health data

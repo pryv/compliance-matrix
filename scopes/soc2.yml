@@ -253,9 +253,12 @@ requirements:
       **A separate evaluation of the platform code.** The open-pryv.io
       maintainers ran a code-level security review of the source in 2026
       (2026-06 to 2026-10); its confirmed findings were fixed with
-      regression tests in open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.50, each
-      described in the release notes. A public report, `SECURITY-AUDIT.md`
-      in the open-pryv.io repository, is forthcoming. Cite it as a supplier
+      regression tests in open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.51, each
+      described in the release notes. The public report,
+      `SECURITY-AUDIT.md`
+      (https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md,
+      published 2026-10-14), lists each finding with its severity and fix
+      release and the known residual risks. Cite it as a supplier
       evaluation of the software component; it does not evaluate your
       deployment's controls, and it was not performed by an independent
       party. See `context/code-security-review-2026.md`.
@@ -733,9 +736,11 @@ requirements:
       **Vulnerabilities in Pryv's own code.** The dependency feed above
       does not see defects in open-pryv.io itself. Those were the subject
       of a code-level security review by the maintainers in 2026 (2026-06
-      to 2026-10), fixed in open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.50 (most
+      to 2026-10), fixed in open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.51 (most
       of those release notes say "upgrade promptly" and list operator
-      steps); public report `SECURITY-AUDIT.md` forthcoming. Your
+      steps); public report `SECURITY-AUDIT.md`, published 2026-10-14
+      (https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md).
+      Your
       susceptibility depends on the release you run: track the release
       notes and `SECURITY.md` advisories and upgrade. See
       `context/code-security-review-2026.md`.
@@ -965,6 +970,15 @@ requirements:
       (`open-pryv.io/INSTALL.md`, "Upgrading the bundled rqlite (9.x to
       10.x)").
 
+      One open-pryv.io 2.0.0-rc.51 change to plan for: before that
+      release, `bin/backup.js --incremental` overwrote the full backup it
+      continued, so a directory that received incrementals restores only
+      the last delta. `--inspect <dir>` reports it `DAMAGED` and a restore
+      refuses it; take a new full backup into a new directory. Since
+      2.0.0-rc.51 the incrementals form a chain next to the full backup,
+      restorable as of any run (`--through-run`); see
+      `iso-27001.A.8.13`.
+
   - ref: A1.3
     title: A1.3, Recovery plan testing
     text: |
@@ -1144,7 +1158,7 @@ requirements:
     draft: true
     pryv_primitives: [event, audit, backup-restore]
     derives_from: [hipaa-security.164.312(c)(1)]
-    tests: [BKSR, BKEV]
+    tests: [BKSR, BKEV, BKC1, BKC2, BKC3]
     overview: |
       Storage integrity: event version history preserves prior states
       on a deployment with `versioning.forceKeepHistory: true` (off by
@@ -1156,7 +1170,12 @@ requirements:
       the CC7.4 chain proposal. The recoverable copy is complete for
       high-frequency series only from open-pryv.io 2.0.0-rc.34 (earlier
       operator backups held no series data); the backup and restore
-      round trip is tested (`[BKSR]`, `[BKEV]`).
+      round trip is tested (`[BKSR]`, `[BKEV]`). Incremental backups are
+      complete from 2.0.0-rc.51: before it an incremental run overwrote
+      the full backup it continued and missed changes made while the
+      previous run was in progress; since then each run is kept next to
+      the full backup and the restore replays the whole chain `[BKC1]`,
+      `[BKC2]`, `[BKC3]`.
 
   # ───────────────────────────────────────────────────────────────
   # P1-P8, Privacy (additional category)

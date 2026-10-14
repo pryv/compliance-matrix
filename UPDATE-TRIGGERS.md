@@ -872,26 +872,33 @@ sign-in). Config keys: `account.emailVerification.*`,
 No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so it
 carries no `planned:` chips.
 
-### `SECURITY-REVIEW-2026` (code-level security review of open-pryv.io; fixes SHIPPED in 2.0.0-rc.40 to 2.0.0-rc.50; rows walked 2026-10-13)
+### `SECURITY-REVIEW-2026` (code-level security review of open-pryv.io; fixes SHIPPED in 2.0.0-rc.40 to 2.0.0-rc.51; public report published 2026-10-14; rows walked 2026-10-13 and 2026-10-14): DISCHARGED
 
 **What it is**: a systematic code-level security review of the open-pryv.io
 source by its maintainers (2026-06 to 2026-10), each finding confirmed by a
 second review and fixed with regression tests. The fixes shipped in
-open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.50 (2026-10-07 to 2026-10-13); the
-public record is each release's `CHANGELOG-v2.md` section. Context note:
+open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.51 (2026-10-07 to 2026-10-14, all
+deployed on pryv.me by 2026-10-14); the public record is each release's
+`CHANGELOG-v2.md` section and the public report. Context note:
 `context/code-security-review-2026.md` (methodology, scope, fix areas, what
 it gives the implementer and what stays theirs). No `planned:` chips, no
 proposal mirror: shipped work, and no backlog slug of Section A was
 discharged by it (see "Backlog slugs checked" below).
 
-⚑ **Pending: public report.** The report will be published as
-`SECURITY-AUDIT.md` in the open-pryv.io repository. Every row below that says
-"forthcoming" must then cite it by URL
-(`https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md`):
-`hipaa-security.164.308(a)(8)`, `gdpr.Art.32`, `iso-27001.A.8.8`, `A.8.28`,
-`A.8.29`, `9.2`, `soc2.CC4.1`, `CC7.1`, `diga.A1.2.7`, `hds.Activity.3`, and
-the context note's header. `grep -rn "SECURITY-AUDIT.md" scopes context`
-lists them.
+**Public report: published 2026-10-14** as `SECURITY-AUDIT.md` in the
+open-pryv.io repository
+(https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md),
+revision 1, covering 2.0.0-rc.40 to 2.0.0-rc.51. On 2026-10-14 every row that
+said "forthcoming" was switched to the published report (URL and date), and
+its fix range extended to 2.0.0-rc.51: `hipaa-security.164.308(a)(8)`
+(overview and detail; "run 2.0.0-rc.51 or later"), `gdpr.Art.32`,
+`iso-27001.A.8.8`, `A.8.28`, `A.8.29`, `9.2`, `soc2.CC4.1`, `CC7.1`,
+`diga.A1.2.7`, `hds.Activity.3`, and the context note (header, fix areas,
+counts at revision 1). `grep -rn "SECURITY-AUDIT.md" scopes context` lists
+them. The slug is discharged: nothing is pending on the matrix side. The
+report is revised with every release that carries a security fix; a new
+revision is a Section B walk of that release, and the rows need a change only
+if the cited release range or the report's claims change materially.
 
 **Periodic-evaluation evidence (rows walked, no tier shift)**:
 
@@ -1009,6 +1016,59 @@ unchanged so the added prose awaits the next review pass.
   **B.7**: a join now writes `bootstrap-config.yml` instead of replacing
   `override-config.yml` (rc.50), and one API worker runs the webhooks service
   (rc.50); no row cites either.
+
+**Section B walk for 2.0.0-rc.51** (deployed 2026-10-14; `CHANGELOG-v2.md`
+`## 2.0.0-rc.51` read in full). No tier shift; `reviewed_at` unchanged.
+
+- **B.11, backup and restore** (incremental backups form a chain:
+  `incrementals/<runId>/`, `chain.json`, `--through-run`,
+  `--allow-incomplete`, `--inspect`; per-run encryption envelope and decrypt
+  script; a directory damaged by an earlier release's incremental run is
+  refused on restore; on SQLite a running core follows a replaced account
+  file). The pre-rc.51 incremental behaviour is an operator step (inspect,
+  take a new full backup) recorded on the rows. Updated:
+  `hipaa-security.164.308(a)(7)(ii)(A)` (overview operator step; detail
+  "Incremental backups form a chain"), `hipaa-security.164.308(a)(7)(ii)(B)`
+  (restore point per run, refusals, SQLite file follow), `iso-27001.A.8.13`
+  (overview operator step; detail "Incremental chain"), `hds.Activity.5`,
+  `soc2.A1.2` (detail), `soc2.PI1.5` (completeness of incrementals), the
+  `backup-restore` and `backup-payload-encryption` primitives,
+  `context/operator-backup-coverage.md` (new section). Tests added: `BKC1`
+  to `BKC7`, `BKCC1`, `BKCS1`, `BKCU1`, `BKCE2`, `BKIC1` to `BKIC4`,
+  `UASF1`, `UASF2` (per row). `BKC8` and `BKCS2` (decrypt script over a
+  chain) live in `open-pryv.io/storages/test/`, outside the validator's test
+  glob, so they are cited in prose only where needed and not in `tests:`.
+  Walked without change: `gdpr.Art.32` (§1(c) restorability claim holds and
+  is now stronger; the backup key models are unchanged).
+- **B.1, erasure family** (a restore no longer re-creates an account deleted
+  between whole-core runs of a chain; the earlier runs still hold it until
+  retired). Updated: `gdpr.Art.17` (backup-chain paragraph; `BKCU1`,
+  `BKIC4`). Walked without change: `iso-27001.A.8.10` (defers to Art.17's
+  backup notes), `ccpa.1798.105`, `pipeda.Principle.4.5`, `soc2.CC6.5`,
+  `soc2.P4.3`, `soc2.C1.2` (they cite engine semantics and backup rotation,
+  which still hold: chain retention is part of rotation).
+- **B.11, config keys** (`custom.systemStreams.other` with any entry refused
+  at boot and by `bin/check-config.js`; tests `ESOT1`, `ESOT2`, `ESOT3`). No
+  row cites the `other` section, so no row changed. **Correction** made in
+  the same pass: four places named the account-field schema
+  `customExtensions.systemStreams`, a key that does not exist (the key is
+  `custom.systemStreams.account`, the only custom system streams a core now
+  accepts): `docs/implementer-faq.md` Q29,
+  `context/client-data-conventions.md`,
+  `context/cross-border-platformdb-implications.md`,
+  `context/special-categories-operator-facilitated.md` (the last one also no
+  longer suggests baking the data stream tree into system streams).
+- **MFA** (a login refused after its MFA session opened ends that session;
+  two concurrent failed activations keep the enrolment pending before them).
+  Updated: `iso-27001.A.8.5` (the pending-session cap paragraph and the
+  enrolment paragraph; `MLSX1`, `MACC2`). Walked without change:
+  `hipaa-security.164.312(d)` (no claim about pending MFA sessions or failed
+  activations).
+- **Not row-relevant**: SQLite audit and event reads walk the time index
+  (issue #156: a large audit read no longer stalls the API worker; results
+  unchanged; an availability fix no row claimed against); Docker Hub
+  `latest` follows release tags (`iso-27001.A.8.32` cites image
+  SHA-pinning, unaffected); `bin/backup.js --help`.
 
 **Not yet walked: 2.0.0-rc.40 to 2.0.0-rc.45.** Their changes are cited above
 only as review evidence; the Section B walk of the behaviour they changed is
@@ -1728,6 +1788,13 @@ under `SECURITY-REVIEW-2026` in Section A, including two corrections
 (password logins are throttled in-process since rc.47; recipient-key backup
 encryption gives confidentiality, not authenticity). Releases 2.0.0-rc.40 to
 2.0.0-rc.45 are not walked yet (see "Not yet walked" in that entry).
+
+**Walked 2026-10-14 for open-pryv.io 2.0.0-rc.51**: incremental backup chain
+(`incrementals/<runId>/`, `chain.json`, `--through-run`, `--allow-incomplete`,
+`--inspect`, per-run envelope and decrypt script, erased accounts dropped on
+restore) and `custom.systemStreams.other` refused at boot. Recorded with the
+rows and test codes under `SECURITY-REVIEW-2026` in Section A ("Section B walk
+for 2.0.0-rc.51").
 
 ## Section C: Maintenance reminders
 

@@ -39,7 +39,7 @@ layer **without Pryv shipping one for them**.
 | | Vertically-integrated operator | Open Pryv platform |
 |---|---|---|
 | Who runs the core | The same org that ships the user-facing app | Operator runs the platform; third-party app developers register |
-| Who designs the stream tree | Operator (often baked into `customExtensions.systemStreams`) | Operator + each third-party app contributes scopes |
+| Who designs the stream tree | Operator (its own apps create the tree through the API; account fields go under `custom.systemStreams.account`, the only kind of custom system stream a core accepts since open-pryv.io 2.0.0-rc.51) | Operator + each third-party app contributes scopes |
 | Who controls the clients writing data | Operator (`app-web-auth3` rebrand + their mobile/web apps) | Mix, operator's UI + third-party apps the operator doesn't author |
 | Who curates the event-type catalogue | Operator (`service.eventTypes` URL → operator-maintained data-model repo) | Built-in catalogue + maybe operator-extended |
 | Pryv-facilitation strength for Art.9 | **High**, operator composes every lever below | **Medium**, operator can enforce at the boundary, third-party app code is opaque |

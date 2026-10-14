@@ -235,8 +235,10 @@ requirements:
       upstream reduce repeat test scope.
     detail: |
       The 2026 code-level security review of open-pryv.io (fixes in
-      2.0.0-rc.40 to 2.0.0-rc.50; public report `SECURITY-AUDIT.md`
-      forthcoming; `context/code-security-review-2026.md`) does **not**
+      2.0.0-rc.40 to 2.0.0-rc.51; public report `SECURITY-AUDIT.md`,
+      published 2026-10-14,
+      https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md;
+      `context/code-security-review-2026.md`) does **not**
       satisfy this requirement: it was performed by the maintainers of the
       code, not by an independent third party, and it reviewed source code,
       not your running application. It helps your penetration test: run a

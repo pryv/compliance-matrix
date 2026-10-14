@@ -222,7 +222,7 @@ requirements:
     draft: true
     pryv_primitives: [access, MFA, system-streams]
     config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, services.mfa.methods.sms.sendLimits, services.mfa.sessions.maxPendingPerUser]
-    tests: [MA01, MA02, MA03, MA04, MA05, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1]
+    tests: [MA01, MA02, MA03, MA04, MA05, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1, MLSX1, MACC2]
     planned:
       - kind: enhancement
         summary: "Reference TOTP / WebAuthn plugins + AAL-tier mapping doc strengthen the A.8.5 evidence chain"
@@ -265,7 +265,9 @@ requirements:
       2.0.0-rc.50, per core (`services.mfa.methods.sms.sendLimits`,
       against toll fraud) `[MSSL1]`, `[MSSL11]`, and an account holds at
       most `services.mfa.sessions.maxPendingPerUser` pending MFA logins
-      `[MCPU1]`.
+      `[MCPU1]`; since 2.0.0-rc.51 a login refused after its MFA session
+      opened ends that session, so a failed login no longer holds one of
+      those places until it expires `[MLSX1]`.
 
       **Single-use codes and safe configuration.** A TOTP code is
       consumed with a storage compare-and-set (open-pryv.io `43293101`,
@@ -276,7 +278,9 @@ requirements:
       enrolment without its secrets and refuses writes to it
       (`25239783`, `7ce9ea6f`); recovery codes are stored hashed
       (`ef66853e`). Tests `[MA12A]`-`[MA12K]`, `[MBKF1]`-`[MBKF3]`,
-      `[PCS1]`, `[MCHK1]`.
+      `[PCS1]`, `[MCHK1]`. Since 2.0.0-rc.51 two concurrent activations
+      that both fail at the provider keep the enrolment that was pending
+      before them `[MACC2]`.
 
   - ref: A.8.10
     title: A.8.10 Information deletion
@@ -313,7 +317,7 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [backup-restore, backup-payload-encryption, multi-core-mTLS]
-    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1]
+    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4]
     overview: |
       `bin/backup.js`
       produces per-user backup files, the only copy of user data Pryv
@@ -334,6 +338,14 @@ requirements:
       warning, and series backed up from InfluxDB could not be
       restored. Since 2.0.0-rc.34 the series are exported and restored
       and move between any two series engines.
+
+      **Check every directory that received `bin/backup.js
+      --incremental` before open-pryv.io 2.0.0-rc.51.** Such a run
+      overwrote the full backup it continued; the directory holds only
+      the last delta and cannot be repaired. `--inspect <dir>` reports it
+      `DAMAGED` and `--restore` refuses it `[BKIC2]`, `[BKC6]`: take a
+      new full backup into a new directory. Since 2.0.0-rc.51 the
+      incrementals form a chain next to the full backup (detail below).
     detail: |
       **Backup encryption is built in, opt-in** (open-pryv.io
       2.0.0-rc.5 onward). Without flags `bin/backup.js` writes
@@ -361,6 +373,24 @@ requirements:
       now holds `[RSOW1]`. Recipient-key encryption gives confidentiality,
       not authenticity: protect write access to the backup destination.
       See `context/operator-backup-coverage.md`.
+
+      **Incremental chain (open-pryv.io 2.0.0-rc.51).** Each
+      `--incremental` run writes its own `incrementals/<runId>/`
+      directory, listed in `chain.json`, and rewrites no earlier file
+      `[BKC1]`; a restore applies the full backup then each run in order,
+      deletions included `[BKC2]`, `[BKIC1]`, and `--through-run <runId>`
+      restores as of a given run `[BKC7]`. Runs no longer miss changes
+      made while the previous run was in progress `[BKC3]` and carry the
+      deletion of streams, accesses and webhooks `[BKC4]`. Each run of an
+      encrypted backup has its own envelope and key under the chain's key
+      model, plus its own decrypt script `[BKC5]`, `[BKCS1]`. Overlapping
+      runs into one directory keep the first and set the second aside
+      `[BKCC1]`. A whole-core run records the accounts it covers, so a
+      restore does not re-create an account deleted between runs
+      `[BKCU1]`, `[BKIC4]`. The A.8.13 "regularly tested" drill should
+      include a chain restore and `--inspect` of the chain you rely on.
+      The chain index and run manifests are checked for consistency, not
+      signed.
 
   - ref: A.8.15
     title: A.8.15 Logging
@@ -754,11 +784,15 @@ requirements:
       review of the source in 2026 (2026-06 to 2026-10): findings were
       confirmed by a second review, classified by severity and fixed with
       regression tests, critical and high ones first. The fixes shipped in
-      open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.50; most of those release notes
+      open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.51; most of those release notes
       open with "upgrade promptly" and name the operator steps (a
-      configuration check before restarting, a one-off repair tool). A
-      public report, `SECURITY-AUDIT.md` in the open-pryv.io repository, is
-      forthcoming. See `context/code-security-review-2026.md`.
+      configuration check before restarting, a one-off repair tool). The
+      public report, `SECURITY-AUDIT.md`
+      (https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md,
+      published 2026-10-14), lists each finding with its severity, the
+      release that fixed it and the operator action, plus the known
+      residual risks; it is revised with every release that carries a
+      security fix. See `context/code-security-review-2026.md`.
 
       Your part of A.8.8: watch the release notes and `SECURITY.md`
       advisories, assess your exposure (which release you run, which
@@ -906,9 +940,11 @@ requirements:
       own application-layer secure-coding programme remains their
       ISMS artefact, drawing on the public Pryv-side practice as
       supplier evidence. The 2026 code-level security review of
-      open-pryv.io (fixes in 2.0.0-rc.40 to 2.0.0-rc.50, each with
-      regression tests; public report `SECURITY-AUDIT.md`
-      forthcoming) is part of that evidence, see
+      open-pryv.io (fixes in 2.0.0-rc.40 to 2.0.0-rc.51, each with
+      regression tests; public report `SECURITY-AUDIT.md`, published
+      2026-10-14,
+      https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md)
+      is part of that evidence, see
       `context/code-security-review-2026.md`.
 
   - ref: A.8.30
@@ -1549,8 +1585,11 @@ requirements:
       surface for security defects; each finding was confirmed by a second
       review, fixed with a regression test that now runs in the CI matrix,
       and each fix release was reviewed before merge. The fixes shipped in
-      open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.50. A public report,
-      `SECURITY-AUDIT.md` in the open-pryv.io repository, is forthcoming.
+      open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.51. The public report,
+      `SECURITY-AUDIT.md`
+      (https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md,
+      published 2026-10-14), describes the method, the surface inventory,
+      the areas reviewed without a finding, and each finding with its fix.
       Methodology and the fix areas: `context/code-security-review-2026.md`.
       This is security testing of Pryv's code, done by its maintainers; the
       testing of your own applications, integrations and deployment (and any
@@ -1701,7 +1740,9 @@ requirements:
       open-pryv.io release-process evidence (CHANGELOGs, tagged
       releases, test matrix), and the 2026 code-level security
       review of open-pryv.io with its fix releases (2.0.0-rc.40 to
-      2.0.0-rc.50; public report `SECURITY-AUDIT.md` forthcoming;
+      2.0.0-rc.51; public report `SECURITY-AUDIT.md`, published
+      2026-10-14,
+      https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md;
       `context/code-security-review-2026.md`), which documents an
       evaluation of the platform layer, not of your ISMS.
 

@@ -4,12 +4,25 @@ Source-of-truth for every matrix claim that cites the 2026 security review of
 the open-pryv.io source as periodic-evaluation, security-testing or
 vulnerability-management evidence. Everything said here about individual fixes
 comes from the public release notes (`open-pryv.io/CHANGELOG-v2.md`,
-sections `2.0.0-rc.40` to `2.0.0-rc.50`).
+sections `2.0.0-rc.40` to `2.0.0-rc.51`) and from the public report.
 
-**Public report: forthcoming.** The maintainers will publish the review's
-report as `SECURITY-AUDIT.md` in the open-pryv.io repository, next to
-`SECURITY.md`, once the fixes it describes are deployed on the platforms Pryv
-operates. Until then, the release notes are the public record.
+**Public report: published 2026-10-14.**
+`SECURITY-AUDIT.md` in the open-pryv.io repository, next to `SECURITY.md`:
+https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md. Revision 1
+covers open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.51, all deployed on the platforms
+Pryv operates (pryv.me included) by 2026-10-14. It gives the scope and method,
+the surface inventory, the areas reviewed with no defect found, each finding
+with its severity, the release that fixed it and the operator action, and the
+known residual risks and planned work. The report states its own publication
+rule: a defect with practical impact is described only once its fix is
+released and deployed on those platforms; until then the release note carries
+the operator instructions. It is revised with every release that carries a
+security fix, so cite it by URL and note the revision you relied on.
+
+At revision 1 the report records 47 findings rated Low or above (6 Critical,
+19 High, 21 Medium, 1 Low), every one fixed, released and deployed, plus about
+150 lower-severity observations triaged separately; a few lower-severity
+defects remain open and are listed as tracked in its residual-risk section.
 
 ## What was reviewed, and how
 
@@ -37,8 +50,8 @@ operates. Until then, the release notes are the public record.
 
 ## Where the fixes are
 
-The fixes shipped in open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.50 (2026-10-07 to
-2026-10-13). Most of these releases open with "Security release: upgrade
+The fixes shipped in open-pryv.io 2.0.0-rc.40 to 2.0.0-rc.51 (2026-10-07 to
+2026-10-14 by deployment date). Most of these releases open with "Security release: upgrade
 promptly" or "Upgrade promptly", and list the operator steps each fix needs (a configuration check before restarting,
 a one-off repair tool, a changed default). By area, as the release notes
 describe them:
@@ -52,7 +65,9 @@ describe them:
   methods refused inside batch calls and over socket.io, failed passwords
   delayed per account and budgeted per client address across all cores,
   passwords hashed with a fresh salt each time (rc.47); a session extended only
-  by a call that passed every check (rc.50).
+  by a call that passed every check (rc.50); a login refused after its MFA
+  session opened ends that session, and concurrent failed MFA activations keep
+  the enrolment pending before them (rc.51).
 - **Authorisation and isolation**: delegated and shared tokens kept within
   their grant (rc.41, rc.43); webhook targets restricted to public addresses by
   default and a `webhooks` feature permission (rc.44, rc.45); internal plugin streams never
@@ -84,12 +99,19 @@ describe them:
   when a decryption secret was given (rc.47); restore refuses unsafe paths,
   symbolic links and reserved names (rc.49, rc.50), backups are written
   owner-only (rc.49); a plaintext backup is announced, and `--passphrase-file` keeps the
-  passphrase out of the process list (rc.50).
+  passphrase out of the process list (rc.50); incremental backups no longer
+  overwrite the full backup they continue but form a chain, a directory damaged
+  by an earlier release is refused on restore, and a restore no longer
+  re-creates an account deleted between runs (rc.51); on SQLite a running core
+  follows an account file a restore replaced (rc.51).
 - **Deletion and erasure**: the SQLite audit `keep` setting honoured (rc.46);
   account deletion ends the account's delegation and cross-account (CMC)
   relationships and erases high-frequency series under every name of the
   account (rc.47); its webhooks stop at once and late series writes do not
   survive it (rc.50).
+- **Configuration**: a config declaring `custom.systemStreams.other` streams,
+  which had no storage, is refused at boot and by `bin/check-config.js`
+  (rc.51).
 
 ## What this gives you, and what stays yours
 
@@ -102,7 +124,7 @@ security-testing records, and your SOC 2 evaluation evidence.
 
 **It does not do your part**:
 
-- **Run a release that carries the fixes** (2.0.0-rc.50 or later) and follow
+- **Run a release that carries the fixes** (2.0.0-rc.51 or later) and follow
   the operator steps of every release between your version and it. A fix you
   have not deployed protects nobody.
 - **Your periodic evaluation remains yours.** The review looked at the code,
@@ -122,7 +144,7 @@ security-testing records, and your SOC 2 evaluation evidence.
 |---|---|---|
 | hipaa-security | 164.308(a)(8) | supplier-side technical evaluation input |
 | gdpr | Art.32 | §1(d) regular testing evidence |
-| gdpr | Art.17 | the erasure fixes of 2.0.0-rc.46 to 2.0.0-rc.50 |
+| gdpr | Art.17 | the erasure fixes of 2.0.0-rc.46 to 2.0.0-rc.50; erased accounts in backup chains (rc.51) |
 | iso-27001 | A.8.26 | application-security examples (cache directives, proxy paths, query parsing) |
 | iso-27001 | A.8.8 | vulnerability identification and remediation upstream |
 | iso-27001 | A.8.28 | secure-coding practice: review findings fixed with regression tests |

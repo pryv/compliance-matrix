@@ -2140,7 +2140,7 @@ bases.
 `clientData` convention for the recording trail.** Pryv is
 age-blind by design, the default account schema ships only
 `email`; no `birthDate` / `dateOfBirth` / `minor` field. The
-operator extends `customExtensions.systemStreams` to add an age
+operator extends `custom.systemStreams.account` to add an age
 field and records the verification trail on `clientData`.
 
 **Four sub-questions verified in code:**

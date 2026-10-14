@@ -1176,7 +1176,7 @@ requirements:
     draft: true
     pryv_primitives: [event, stream, backup-restore]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete]
-    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08]
+    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4]
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -1216,6 +1216,17 @@ requirements:
       `bin/backup.js` supports per-user backup files alongside DB-engine
       backups; using per-user backups improves erasure semantics
       regardless of engine.
+
+      Incremental `bin/backup.js` chains (open-pryv.io 2.0.0-rc.51): a run
+      made without `--user` records that it covers the whole core, and a
+      restore drops any account such a run no longer lists, so an account
+      erased between two runs is not re-created by restoring the chain
+      (the dropped names are logged) `[BKCU1]`, `[BKIC4]`. The earlier
+      runs still hold its data: `--through-run <runId>` of a run that held
+      it restores it as of then, and `--inspect` lists the accounts deleted
+      along the chain. Erasure reaches the chain only when you retire the
+      runs that hold the account, so put chain retention in the same
+      rotation policy as the rest of your backups.
 
       Audit-log erasure converges across engines (since 2026-05-27,
       open-pryv.io master `891090d` + `853e1cb`). `auth.delete` now
@@ -2146,9 +2157,11 @@ requirements:
               daemons, resource limits, deletion), each finding
               confirmed by a second review and fixed with
               regression tests; the fixes shipped in open-pryv.io
-              2.0.0-rc.40 to 2.0.0-rc.50, described in each
-              release note. Public report (`SECURITY-AUDIT.md` in
-              the open-pryv.io repository) forthcoming. It
+              2.0.0-rc.40 to 2.0.0-rc.51, described in each
+              release note. Public report: `SECURITY-AUDIT.md`
+              (https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md),
+              published 2026-10-14, revised with every release
+              that carries a security fix. It
               evaluates the code, not your deployment: run a
               release carrying the fixes and keep testing your
               own configuration and integrations. See

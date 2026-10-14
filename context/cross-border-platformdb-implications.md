@@ -22,7 +22,7 @@ PlatformDB.ts:120-244`):
 | Keyspace | Contents | Personal-data class |
 |---|---|---|
 | `user-core/<username>` | username → coreId mapping (residency anchor, Q12) | **PII** (username identifies a person) |
-| User unique fields (`setUserUniqueField`) | system-stream-driven uniqueness check: typically **username**, **email**, optionally phone / employee-id / SSN-equivalent per `customExtensions.systemStreams` config | **PII**, possibly sensitive |
+| User unique fields (`setUserUniqueField`) | system-stream-driven uniqueness check: typically **username**, **email**, optionally phone / employee-id / SSN-equivalent per `custom.systemStreams.account` config | **PII**, possibly sensitive |
 | User indexed fields (`setUserIndexedField`) | deployment-configured non-unique fields (country code, language, etc.) | typically PII |
 | `dns/<subdomain>` | per-user subdomain → core address mapping (subdomain == username in standard deployments) | **PII** |
 | `access-state/<key>` | short-lived OAuth2 rows: authorization codes (10 min) and refresh-token chains (up to 90 days), keyed by the SHA-256 of the code or token, never the credential itself, and carrying no access token; also email-verification challenge counters (hashed keys) | PII (the OAuth rows carry the username and user id) |

@@ -223,7 +223,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [backup-restore, backup-payload-encryption]
-    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1]
+    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCE2, BKIC1, BKIC2, BKIC3]
     overview: |
       `bin/backup.js` produces per-user backup files (account data,
       streams, accesses, profile, webhooks, events, attachments, audit,
@@ -239,6 +239,17 @@ requirements:
       exported and restored, series move between any two series engines
       (InfluxDB backups could not be restored before), and the backup
       manifest's `coreVersion` reports the core's release.
+
+      **If you ever ran `bin/backup.js --incremental` before
+      open-pryv.io 2.0.0-rc.51, check those backup directories.** An
+      incremental run overwrote the full backup it continued, and a
+      restore of such a directory reported success while restoring only
+      the last delta: it is not a retrievable exact copy and cannot be
+      repaired. `node bin/backup.js --inspect <dir>` reports it
+      `DAMAGED` and `--restore` now refuses it `[BKIC2]`, `[BKC6]`.
+      Take a new full backup into a new directory and continue the
+      incrementals from there. Full backups written by earlier releases
+      are not affected.
     detail: |
       Per-user backup files are advantageous for HIPAA's "exact copies"
       language because the backup unit matches the natural protected-
@@ -284,6 +295,30 @@ requirements:
       can write to your backup destination can produce a backup that
       restores. Protect write access to the destination, and prefer
       `--require-encrypted` on restore.
+
+      **Incremental backups form a chain (open-pryv.io 2.0.0-rc.51).** A
+      `--incremental` run writes only its own `incrementals/<runId>/`
+      directory and the run index `chain.json`; no file of an earlier run
+      is rewritten `[BKC1]`. A restore applies the full backup, then every
+      run in order, newer versions and deletions replacing older ones
+      `[BKC2]`, `[BKIC1]`; `--through-run <runId>` restores the chain as
+      of a given run, a chain with a missing or reordered run is refused
+      `[BKC7]`, and two overlapping runs into the same directory leave the
+      first in the chain and the second aside `[BKCC1]`. A run's window
+      starts at the previous run's snapshot time, so changes made while
+      that run was in progress are no longer lost `[BKC3]`, and the
+      deletion of streams, accesses and webhooks is carried `[BKC4]`.
+      Each run of an encrypted backup has its own envelope and key, keeps
+      the chain's key model (a wrong secret is refused before anything is
+      written) and carries the current `decrypt-backup.mjs` and
+      `RESTORE-README.md` `[BKC5]`, `[BKCS1]`; with a recipient public key
+      the backup host still needs no private key to continue the chain
+      `[BKIC3]`. Series emptied after a run stay empty on restore
+      `[BKCE2]`. `--inspect <dir>` lists the runs and says whether the
+      directory is sound. The chain index and run manifests are checked
+      for consistency but not signed (the authenticity bound above
+      applies). Your backup-plan SOP should name the chain you restore
+      from and how long its runs are kept.
     technical: |
       Backup chunking + integrity restored (see
       `open-pryv.io/CHANGELOG-v2-back.md`). Series namespace shared by
@@ -310,7 +345,7 @@ requirements:
     draft: true
     pryv_primitives: [backup-restore, multi-core-mTLS, letsEncrypt-integration]
     config_keys: [cluster.discoveryEnabled, letsEncrypt.certRenewer]
-    tests: [BKSR, BUNDLEENC]
+    tests: [BKSR, BUNDLEENC, BKIC1, BKIC2, BKC7, UASF1, UASF2]
     overview: |
       Two layers Pryv gives you, covering different data: (1) cold
       restore from `bin/backup.js --restore`, the only recovery path
@@ -349,6 +384,18 @@ requirements:
       open-pryv.io 2.0.0-rc.34 carry no high-frequency series data, so
       a restore from them loses every series point; take a new backup
       after upgrading (see 164.308(a)(7)(ii)(A)).
+
+      **Restore from an incremental chain (open-pryv.io 2.0.0-rc.51).**
+      `--restore` rebuilds user data as of the latest run of a
+      `bin/backup.js` chain, or as of an earlier run with
+      `--through-run <runId>`, which gives your recovery plan a restore
+      point per run `[BKIC1]`, `[BKC7]`. A chain is refused when a run is
+      missing or reordered, and a directory damaged by an incremental run
+      of an earlier release is refused unless you pass
+      `--allow-incomplete` `[BKIC2]`. On SQLite, a core running while a
+      restore replaces an account's file now reads the restored file
+      `[UASF1]`, `[UASF2]`. Your drill should restore from a chain, not
+      only from a full backup.
 
   # ───────────────────────────────────────────────────────────────
   # §164.310 Physical Safeguards (framing only)
@@ -1508,7 +1555,8 @@ requirements:
       vulnerability reporting enabled on the published
       repositories), and the code-level security review of
       open-pryv.io (2026-06 to 2026-10, fixes in 2.0.0-rc.40 to
-      2.0.0-rc.50). The assessment write-up is operator-side.
+      2.0.0-rc.51, public report `SECURITY-AUDIT.md` published
+      2026-10-14). The assessment write-up is operator-side.
     detail: |
       **The 2026 security review is a technical-evaluation input you can
       cite for the platform layer.** The open-pryv.io maintainers ran a
@@ -1518,14 +1566,18 @@ requirements:
       network-facing daemons, resource limits, deletion semantics), each
       finding confirmed by a second review before it was accepted and fixed
       with regression tests. The fixes shipped in open-pryv.io 2.0.0-rc.40
-      to 2.0.0-rc.50 (October 2026); each release note lists what changed
-      and the operator steps it needs. A public report, `SECURITY-AUDIT.md`
-      in the open-pryv.io repository, is forthcoming; until it is published
-      the release notes are the public record. Methodology, scope and the
-      fix areas: `context/code-security-review-2026.md`.
+      to 2.0.0-rc.51 (October 2026); each release note lists what changed
+      and the operator steps it needs. The public report,
+      `SECURITY-AUDIT.md`
+      (https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md,
+      published 2026-10-14), gathers the method, each finding with its
+      severity, fix release and operator action, and the known residual
+      risks; it is revised with every release that carries a security fix.
+      Methodology, scope and the fix areas:
+      `context/code-security-review-2026.md`.
 
       What stays yours under §164.308(a)(8): running a release that carries
-      the fixes (2.0.0-rc.50 or later, with the operator steps of each
+      the fixes (2.0.0-rc.51 or later, with the operator steps of each
       release in between), and the evaluation itself. The review covered
       the code, not your deployment: your configuration, network exposure,
       added applications and procedures, and the "in response to

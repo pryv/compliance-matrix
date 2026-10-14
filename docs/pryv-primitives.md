@@ -339,6 +339,19 @@ from a backup file.
   username another account now holds. Backups are written with
   directories `0700` and files `0600`. Tests: `[BKRS1]`, `[BKRS4]`,
   `[BKRN1]`, `[RSOW1]`.
+- **Incremental chain** (open-pryv.io 2.0.0-rc.51): `--incremental`
+  runs are written next to the full backup (`incrementals/<runId>/`,
+  indexed by `chain.json`) and never rewrite an earlier file; a restore
+  replays the chain, deletions included, or stops at a run with
+  `--through-run`; `--inspect` lists a directory and says whether it is
+  sound. Before 2.0.0-rc.51 an incremental run overwrote the full
+  backup it continued: such a directory restores only its last delta
+  and a restore refuses it (`--allow-incomplete` overrides). A
+  whole-core run records the accounts it covers, so a restore does not
+  re-create an account deleted between runs. On SQLite, a running core
+  reads an account file a restore replaced. Tests: `[BKC1]`-`[BKC7]`,
+  `[BKCC1]`, `[BKCU1]`, `[BKCE2]`, `[BKIC1]`-`[BKIC4]`, `[UASF1]`,
+  `[UASF2]`.
 - **Compliance role**: data restorability (GDPR Art.32 §1(c)) +
   per-user erasure path for SQLite engine.
 
@@ -374,6 +387,14 @@ as before.
   announced on stderr and `--passphrase-file` keeps the passphrase out
   of the process list. Tests: `[BKRE1]`, `[BKRE4]`, `[BKPW1]`,
   `[BKPF1]`.
+- **Incremental runs** (open-pryv.io 2.0.0-rc.51): each run of an
+  encrypted chain carries its own `encryption.json` envelope and key,
+  plus the current `decrypt-backup.mjs` and `RESTORE-README.md`; the
+  chain keeps its key model (a wrong passphrase or another public key
+  is refused before anything is written), and a recipient-key chain is
+  continued with the public key alone. The chain index and run
+  manifests are checked for consistency, not signed. Tests: `[BKC5]`,
+  `[BKCS1]`, `[BKIC3]`.
 
 ### `account-backup-tool`
 
