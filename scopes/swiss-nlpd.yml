@@ -96,6 +96,10 @@ requirements:
       stays on the implementer is the per-deployment default
       configuration (token scopes minted, retention chosen, notice
       shown at registration).
+    detail: |
+      Same principle as GDPR Art.25, which this row derives from. The
+      architectural commitments and the catalogue of Pryv defaults are
+      in `context/privacy-by-design-and-default.md`.
 
   - ref: Art.8
     title: Data security

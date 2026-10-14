@@ -449,6 +449,13 @@ requirements:
       withdrawals the record you demonstrate is the `consent/*` events
       (the accept on the subject's account, the request on the
       requester's) plus the audit trail, not the access version chain.
+      Known gap (open-pryv.io 2.0.0-rc.51): when the offer made the
+      grant delegable (`request.accessType: 'app'`), these CMC paths
+      delete the data grant but not the accesses the requester derived
+      from it, which stay valid until their own expiry; only
+      `accesses.delete` of the grant removes them with it. A fix is in
+      progress; until it ships, a requester using delegable grants must
+      remove its derived accesses itself on withdrawal.
       The person's own accept event also records the end itself,
       whatever ended the consent: `content.withdrawal = { at, by,
       accessId, revokeEventId? }`, with `by: 'accesses.delete'` (the
@@ -1627,8 +1634,9 @@ requirements:
     detail: |
       Pryv's architecture is privacy-by-design **by founding
       pattern**, not retrofitted. Canonical treatment + the
-      12-default catalogue: `context/privacy-by-design-and-
-      default.md` (matrix-internal); customer-facing surface
+      12-default catalogue:
+      `context/privacy-by-design-and-default.md` (matrix-internal);
+      customer-facing surface
       [`pryv.github.io/guides/privacy-by-design.html`](https://pryv.github.io/guides/privacy-by-design.html).
 
       **Architectural commitment (§1)**: the topology:

@@ -1743,3 +1743,14 @@ encryption gives confidentiality, not authenticity). Releases 2.0.0-rc.40 to
   [[feedback-implementer-perspective-gap-probing]]): if the Q
   produced a new backlog slug, add a Section A entry alongside the
   proposal mirror + planned chips.
+
+### Temporary "Known gap" clauses (remove when the fix ships)
+
+Clauses that disclose a shipped behaviour expected to change with a
+fix. Each one must be removed (or rewritten as the fixed behaviour,
+with the release name and test codes) in the walk of the release that
+ships the fix.
+
+| Added | Where | Gap | Remove when |
+|---|---|---|---|
+| 2026-10-14 | `gdpr.Art.7` detail (§3 withdrawal, after "not the access version chain"); `hipaa-security.164.312(a)(1)` detail ("Apps granted access through a delegation", after `[DCH18]`) | The CMC withdrawal paths (`consent/revoke-cmc`, the reference account app, the requester withdrawing, a delegation detach, account deletion) delete a delegable (`request.accessType: 'app'`) data grant but not the accesses the requester derived from it; those stay valid until their own expiry. Only `accesses.delete` of the grant cascades. Observed on open-pryv.io 2.0.0-rc.51. | An open-pryv.io release makes every CMC teardown path delete the grant's derived accesses with it. Also clear the same "Known gap" wording wherever else it was added (search the repo for "Known gap"). |

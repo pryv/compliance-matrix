@@ -468,7 +468,15 @@ requirements:
       accept event records the approving delegate, server-stamped and
       not client-settable `[DCH16]`, and the detach deletes the grant
       before it answers, the requester being notified by
-      `consent/revoke-cmc` `[DCH18]`. The one exception is explicit:
+      `consent/revoke-cmc` `[DCH18]`. Known gap (open-pryv.io
+      2.0.0-rc.51): when such a data grant is delegable
+      (`request.accessType: 'app'`), the accesses the requester derived
+      from it are not part of the lineage; the detach, like every other
+      CMC withdrawal path (`consent/revoke-cmc`, the reference account
+      app, the requester withdrawing, account deletion), deletes the
+      grant but not those derived accesses, which stay valid until
+      their own expiry. Only `accesses.delete` of the grant removes them
+      with it. A fix is in progress. The one exception is explicit:
       since open-pryv.io 2.0.0-rc.31 the individual, detaching the
       delegate through a genuine login, may keep named CMC data grants
       that delegate gave (`keepAccessIds`); a kept grant loses the
