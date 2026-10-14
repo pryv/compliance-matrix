@@ -23,11 +23,12 @@ server of our own?"*
 | Control | Status | Anchor |
 |---|---|---|
 | A CMC offer can make the grant the person accepts delegable (`request.accessType: 'app'`) | ✅ since 2.0.0-rc.9 | `components/cmc/src/acceptOrchestration.ts` `accessTypeFromOffer` |
-| An `app` access derives `shared` children, bounded by its permissions and expiry; `accesses.delete` of the parent deletes them | ✅ | `components/api-server/src/methods/accesses.ts`, `components/business/src/accesses/AccessLogic.ts` |
+| An `app` access derives `shared` children, bounded by its permissions and expiry; `accesses.delete` of the parent (the API route) deletes them | ✅ | `components/api-server/src/methods/accesses.ts`, `components/business/src/accesses/AccessLogic.ts` |
 | Per-member accesses on a patient account, derived from the group's grant | ⚠️ only in the implementer's own backend, which must hold the grant token | workforce Pattern 2 across accounts |
 | The member named on the patient's account | ⚠️ in the access name or a forwarded `callerId` only (labels the implementer's code chooses) | `context/workforce-access-patterns.md` Pattern 1 |
 | A member leaving ends their accesses on every patient account | ❌ the implementer's backend must find and delete them | none |
 | Group membership as a recorded, two-sided consent | ❌ no notion of membership; group membership is external | none |
+| The person's cross-account withdrawal (`consent/revoke-cmc`, the reference account app, a delegation detach, account deletion) ends the accesses derived from the grant | ❌ today those paths remove the grant only; derived accesses live until their own expiry. Fix scheduled ahead of this release | `components/cmc/src/mallAccessesAdapter.ts` `delete` (single row), `handleRevoke.ts`, `handleIncomingRevoke.ts` |
 
 ## After shipping (as designed; wire shapes may change until release)
 
@@ -83,7 +84,7 @@ server of our own?"*
 | iso-27001 | A.5.18 | Implemented, High | feature | low | provision / review / modify / remove of member rights |
 | iso-27001 | A.6.5 | Facilitated, Medium, primitive | feature | low | post-termination technical removal swept by the platform |
 | gdpr | Art.7 | Implemented, High | feature | low | consent to a delegable grant, stated to the patient; withdrawal ends member accesses |
-| gdpr | Art.29 | Facilitated, High, primitive | feature | low | each member's processing scoped and attributed under the controller's grant |
+| gdpr | Art.29 | Facilitated, High, primitive | feature | low | each member's processing scoped and attributed under the grant the controller (or its processor) holds from the data subject |
 | gdpr | Art.32 | Facilitated, High, infrastructure | feature | low | access-control bullet: member accesses short-lived, scoped, swept |
 | soc2 | CC6.2 | Implemented, High | feature | low | member credentials issued after approval, removed with the membership |
 | soc2 | CC6.3 | Implemented, High | feature | low | least privilege: per-patient, short-lived member accesses |

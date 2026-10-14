@@ -118,7 +118,16 @@ open-pryv.io 2.0.0-rc.9, default `'shared'`) makes the grant the
 person accepts delegable, so the requester can derive per-member
 sub-accesses on the person's account from it. Today that derivation
 runs in the requester's own backend, which holds the grant token;
-Pattern 3 (planned) moves it to the group's Pryv core.
+Pattern 3 (planned) moves it to the group's Pryv core. **Known gap
+(open-pryv.io 2.0.0-rc.51):** only `accesses.delete` of the grant
+removes the sub-accesses with it. The cross-account withdrawal paths
+(`consent/revoke-cmc`, the reference account app's consent page, the
+requester withdrawing, a delegation detach, account deletion) remove
+the grant and leave the sub-accesses derived from it alive until
+their own expiry. Until the fix ships (scheduled ahead of the
+group-accounts release), give every sub-access a short expiry and
+have your backend delete them itself when it learns of the
+withdrawal (`consent/revoke-cmc` in its inbox).
 
 **Compliance benefit:** clean §164.308(a)(3)(ii)(C) termination,
 individual sub-access deleted, others untouched, audit row
@@ -130,7 +139,7 @@ operations.
 
 **Status.** Designed, not released. Tracked at
 https://github.com/pryv/open-pryv.io/issues/158 (v2 board card
-https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458).
+https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158).
 Nothing in this section is a control you can cite today; the names
 below are the planned wire shapes and may still change before the
 release. Matrix rows that this pattern would change carry a

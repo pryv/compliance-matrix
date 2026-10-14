@@ -403,7 +403,10 @@ Pattern 3. What it means for the consent record, as designed:
 
 Until the release, a requester that wants per-member accesses on a
 patient account derives them from a delegable grant in its own backend
-(workforce Pattern 2 across accounts).
+(workforce Pattern 2 across accounts), and must remove them itself when
+the patient withdraws: today only `accesses.delete` of the grant takes
+derived accesses with it, the cross-account withdrawal paths do not (see
+Pattern 2, "Known gap").
 
 ## Consequences for compliance claims (consent-related)
 

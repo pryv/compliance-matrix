@@ -690,7 +690,15 @@ requirements:
       offer may already make the grant delegable
       (`request.accessType: 'app'`, open-pryv.io 2.0.0-rc.9), so the
       requester can derive further accesses on the person's account
-      from it. With group accounts, a team sharing one account is
+      from it. Today (2.0.0-rc.51) the person's withdrawal through
+      `consent/revoke-cmc` or the reference account app removes the
+      grant but not the accesses the requester derived from it, which
+      live until their own expiry; only `accesses.delete` of the grant
+      removes them with it. A fix is scheduled ahead of the
+      group-accounts release; until then a requester using delegable
+      grants must remove its derived accesses itself on withdrawal, and
+      your consent text should not promise more. With group accounts, a
+      team sharing one account is
       designed to have its core derive one short-lived access per
       member from that grant. As designed: the reference consent page
       states in one line that the grant is delegable; each member

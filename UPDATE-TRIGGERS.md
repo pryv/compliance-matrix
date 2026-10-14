@@ -1108,8 +1108,8 @@ account app (consent notice, audit attribution, memberships view) and a
 reference static member app. Delivered by a scheduled open-pryv.io release,
 not a backlog file, so the chips carry no `backlog:` key. Public issue:
 https://github.com/pryv/open-pryv.io/issues/158. Tracking card:
-https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458 (the
-`tracking_url` of every chip). Falls under **B.1** (new response field on
+https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+(the `tracking_url` of every chip). Falls under **B.1** (new response field on
 `events.create`, new error ids, new config keys), **B.2** (two new
 `consent/*` formats, a new `request.membership` field) and **B.8** (a new
 consent-bearing trigger with its own token-class gate, a new access role);
@@ -1143,7 +1143,7 @@ has shipped; `reviewed_at` unchanged):
 | iso-27001 | A.5.18 | feature | low | rights follow the membership (new `detail`) |
 | iso-27001 | A.6.5 | feature | low | technical removal at departure (new `detail`) |
 | gdpr | Art.7 | feature | low | delegable grant stated to the patient; member accesses under the grant; withdrawal ends them |
-| gdpr | Art.29 | feature | low | per-member processing under the controller's grant (new `detail` also states Pattern 1, shipped) |
+| gdpr | Art.29 | feature | low | each member's processing scoped and attributed under the grant the controller (or its processor) holds from the data subject (new `detail` also states Pattern 1, shipped) |
 | gdpr | Art.32 | feature | low | access-control bullet |
 | soc2 | CC6.2 | feature | low | issue after approval, remove with the membership |
 | soc2 | CC6.3 | feature | low | least privilege per member and patient, still no roles |
