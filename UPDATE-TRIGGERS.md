@@ -1097,6 +1097,72 @@ the client IP" paragraph must now cover `http.trustedProxies` (the per-address
 budgets ignore `X-Forwarded-For` from an unlisted proxy), and its route table
 can note the in-code budgets the proxy limits now sit in front of.
 
+### `GROUP-ACCOUNTS-CMC` (PLANNED: designed, not released; chips added 2026-10-14)
+
+**Where the work will live**: `open-pryv.io/components/cmc/` (membership
+role and offer constraints, the member-access mint, the offboarding sweep and
+its ledger, the patient-side stamp on child accesses), the `events.create`
+response, `components/delegation/` (detach ends the memberships a delegate
+approved), data-types `consent/*` formats, `@pryv/cmc`, the reference
+account app (consent notice, audit attribution, memberships view) and a
+reference static member app. Delivered by a scheduled open-pryv.io release,
+not a backlog file, so the chips carry no `backlog:` key. Public issue:
+https://github.com/pryv/open-pryv.io/issues/158. Tracking card:
+https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458 (the
+`tracking_url` of every chip). Falls under **B.1** (new response field on
+`events.create`, new error ids, new config keys), **B.2** (two new
+`consent/*` formats, a new `request.membership` field) and **B.8** (a new
+consent-bearing trigger with its own token-class gate, a new access role);
+the pre-release walks are recorded under each category below.
+
+A team sharing one Pryv account (practice, research team, bridge) reaches
+patient data through CMC without an implementer backend: members are their
+own accounts and join through a membership request the group accepts; the
+group's core mints a short-lived, server-stamped access per member on the
+patient's core from the patient's delegable grant, and sweeps those accesses
+when the membership ends. Context: `context/workforce-access-patterns.md`
+Pattern 3, `context/cmc-consent-primitives.md` "Group accounts",
+`context/delegation-model.md` (delegates as membership administrators),
+implementer-FAQ Q5 (planned third mechanism). Proposal:
+`proposals/group-accounts-cmc.md`.
+
+**Chips added 2026-10-14** (detail paragraphs marked "Planned, not yet
+released"; no tier shift; no `tests:` or `config_keys:` added, since nothing
+has shipped; `reviewed_at` unchanged):
+
+| Scope | Ref | Kind | Impact | What will change |
+|---|---|---|---|---|
+| hipaa-security | 164.308(a)(3)(ii)(C) | feature | medium | member termination swept by the platform on every patient account |
+| hipaa-security | 164.308(a)(4)(ii)(B) | feature | low | membership accept as the recorded authorization act |
+| hipaa-security | 164.308(a)(4)(ii)(C) | feature | low | establish / narrow / remove through the membership; review from the group account |
+| hipaa-security | 164.312(a)(1) | feature | low | new derived access path and its three bounds |
+| hipaa-security | 164.312(a)(2)(i) | feature | medium | member identified by their own account, server-stamped (new `detail` also states Pattern 1's `callerId` caveat, shipped) |
+| hipaa-security | 164.312(b) | feature | low | per-member attribution on both trails |
+| iso-27001 | A.5.15 | feature | low | access-control rule for member accesses |
+| iso-27001 | A.5.16 | feature | low | member identity lifecycle |
+| iso-27001 | A.5.18 | feature | low | rights follow the membership (new `detail`) |
+| iso-27001 | A.6.5 | feature | low | technical removal at departure (new `detail`) |
+| gdpr | Art.7 | feature | low | delegable grant stated to the patient; member accesses under the grant; withdrawal ends them |
+| gdpr | Art.29 | feature | low | per-member processing under the controller's grant (new `detail` also states Pattern 1, shipped) |
+| gdpr | Art.32 | feature | low | access-control bullet |
+| soc2 | CC6.2 | feature | low | issue after approval, remove with the membership |
+| soc2 | CC6.3 | feature | low | least privilege per member and patient, still no roles |
+
+**At release**: discharge every chip above; rewrite each "Planned" paragraph
+as shipped with the release name, commit and `[CODE]` test codes; add
+`cmc.memberAccess.*` and `cmc.retryLoop.enabled` to `config_keys:` where the
+row cites behaviour they govern (164.308(a)(3)(ii)(C), 164.312(a)(1)); walk
+the rows listed in the proposal under "Rows to walk at release without a
+chip"; turn the "PLANNED" headings of the three context notes into shipped
+text; turn the planned paragraph under implementer-FAQ Q5 into shipped
+text. Consistency with
+`ACCOUNT-DELEGATION` and `CARER-CONSENT-LINEAGE`: this work uses the
+delegate accept they shipped (a delegate may accept a membership, which
+carries the lineage and ends at detach unless kept) and does not lift the
+owner-only refusal on `consent/request-cmc` (members, not delegates, publish
+the group's patient invites); neither entry needs a change unless the
+release alters those rules.
+
 ## Section B: Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued
@@ -1257,6 +1323,46 @@ every name, stops webhooks; SQLite audit `keep` honoured) and two new
 control-access-only routes (`delegations/controlled-side/release`, `/status`).
 Rows and tests under `SECURITY-REVIEW-2026` in Section A.
 
+**Pre-release walk 2026-10-14 for group accounts over CMC (designed, NOT
+released; `GROUP-ACCOUNTS-CMC` in Section A)**. No new method name: the
+surface is CMC triggers written through `events.create`. What the release is
+designed to add: a `memberAccess` field on the `events.create` response for a
+`consent/member-access-cmc` write (`{ apiEndpoint, accessId, name, expires,
+attribution }`, returned once, never stored), new error ids
+(`cmc-member-access-*`, `cmc-membership-permissions-invalid`,
+`cmc-member-stamp-invalid`, `cmc-member-revoke-residual`,
+`cmc-member-channel-not-supported`), a new access role
+(`clientData.cmc.role: 'member'`), a server-written `clientData.cmc` stamp on
+child accesses of a CMC grant, and config keys `cmc.memberAccess.*`. Rows of
+the B.1 families walked:
+- **Access control** (`hipaa-security.164.312(a)(1)`, `soc2.CC6.1`,
+  `soc2.CC6.3`): 164.312(a)(1) and CC6.3 get a chip (new derived access
+  path, least privilege per member); CC6.1 walked without change (no new
+  authentication path, the member accesses ride the same per-stream
+  enforcement).
+- **Audit** (`hipaa-security.164.312(b)`, `iso-27001.A.8.15`, `soc2.P6.2`):
+  164.312(b) gets a chip (per-member attribution); A.8.15 and P6.2 walked
+  without change (every member read is an audited call under an
+  attributable access, which they already state).
+- **DSAR / subject access** (`gdpr.Art.15`, `soc2.P5.1`, `soc2.P6.7`,
+  `hipaa-privacy.164.524`, `pipeda.Principle.4.9`, `ccpa.1798.110`,
+  `swiss-nlpd.Art.25`) and **accounting of disclosures**
+  (`hipaa-privacy.164.528`): walked without change; the subject's personal
+  token lists member accesses like any access, and each disclosure to a
+  member is an audited read under the member's own access.
+- **Rectification** (`gdpr.Art.16`, `ccpa.1798.106`,
+  `pipeda.Principle.4.6`, `soc2.P5.2`) and **restriction** (`gdpr.Art.18`):
+  not touched.
+- **Erasure** (`gdpr.Art.17`, `ccpa.1798.105`, `pipeda.Principle.4.5`,
+  `swiss-nlpd.Art.32`, `soc2.CC6.5`, `soc2.P4.3`, `soc2.C1.2`): walked
+  without change; account deletion is designed to sweep member accesses as
+  well, a completeness detail of the existing "deletion ends relationships"
+  claim. Re-walk at release.
+Plus the workforce rows of `context/workforce-access-patterns.md` (chips
+listed in Section A). B.3, B.4 (no new primitive: the work extends `CMC`,
+`access`, `delegation`), B.5, B.6, B.9, B.10: none. B.11: the new config keys
+are walked at release.
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
@@ -1291,6 +1397,21 @@ note under B.1 (same date).
   `soc2.PI1.1` (the catalogue gains two definitions; prose is generic),
   `soc2.PI1.2` and `soc2.P7.1` (ingest validation: `verification/email` is
   never written by a client, so it is not an input).
+
+**Pre-release walk 2026-10-14 for group accounts over CMC (designed, NOT
+released; data-types work in progress)**: new formats
+`consent/member-access-cmc` (a member's request for an access on a patient
+account; server-owned outcome fields) and `consent/member-revoke-cmc`
+(server-written offboarding sweep; client writes refused), and
+`request.membership` (boolean) on `consent/request-cmc`. Walked without
+change: `gdpr.Art.20` (protocol records on the group account, not subject
+data to port; they export with the account like any event),
+`iso-13485` excluded items (no device class), `hipaa-privacy.164.514(a)` (no
+de-identification format), `soc2.PI1.1`, `PI1.2`, `P7.1` (the formats are
+validated by the CMC plugin on write, as the other `consent/*` formats). The
+consent-record rows these formats feed are walked under B.8.
+`context/cmc-consent-primitives.md` notes the two planned formats beside the
+eight shipped ones. Re-walk at release, when data-types publishes them.
 
 ### B.3: New storage engine (`storages/engines/<new>/`)
 
@@ -1526,6 +1647,34 @@ to the token classes of consent-bearing methods. The credential methods
 refused inside batch calls and over socket.io (rc.47) are credential entry
 points, recorded on the authentication / rate-limit rows. See
 `SECURITY-REVIEW-2026` in Section A.
+
+**Pre-release walk 2026-10-14 for group accounts over CMC (designed, NOT
+released; `GROUP-ACCOUNTS-CMC` in Section A)**. A new consent-bearing trigger
+with its own gate, and a new access role:
+- `consent/member-access-cmc` (mints an access on a patient account through
+  the group's grant) may be written only by a membership access
+  (`clientData.cmc.role: 'member'`) or the group's personal token
+  (`cmc-member-access-not-member` otherwise), within the membership's team
+  streams, with permissions inside the patient's offer, bounded expiry, a
+  rate limit and one mint in flight per membership.
+- The membership access is NOT exempt from the personal-token gate:
+  `consent/accept-cmc` and `consent/scope-update-cmc` on the group account
+  stay owner / delegate only, so a member cannot accept patient invites or
+  widen grants on the group's behalf.
+- Membership offers (`request.membership: true`) are constrained at write
+  and at accept (team streams only, `read` / `contribute`, no feature
+  permissions, never delegable, never `:_cmc:inbox`).
+- Delegation rules unchanged: a delegate token may accept a membership
+  (lineage, ends at detach unless kept), and stays refused on
+  `consent/request-cmc` / `consent/scope-update-cmc`.
+Rows: `gdpr.Art.7` and `gdpr.Art.32`, `hipaa-security.164.312(a)(1)`,
+`soc2.CC6.2`, `soc2.CC6.3`, `iso-27001.A.5.15`, `iso-27001.A.5.16` get a
+chip (Section A); `hipaa-security.164.312(d)` and `soc2.CC6.1` walked
+without change (members authenticate as their own accounts through the
+existing sign-in; no new authentication mechanism). Context notes:
+`context/cmc-consent-primitives.md` (new sections "Who can read the grants an
+account received" and "Group accounts"), `context/delegation-model.md`.
+Re-walk at release.
 
 ### B.9: OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
 

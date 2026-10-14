@@ -408,6 +408,12 @@ requirements:
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md]
     tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: the patient is told when the grant they accept is delegable to the group's members; each member access is recorded under the grant and ends when the patient withdraws"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       The access Pryv mints when your user grants permission IS your
       durable consent record, versioned permissions + clientData
@@ -678,6 +684,22 @@ requirements:
       `delegation-grant-requires-owner` `[DCH17]`, and OAuth2 consent
       answers `403 access_denied` `[OE27]`. Whether a given delegate may
       consent for the account it manages remains your determination.
+
+      Planned, not yet released: consent to a group account (§1, §3,
+      https://github.com/pryv/open-pryv.io/issues/158). A cross-account
+      offer may already make the grant delegable
+      (`request.accessType: 'app'`, open-pryv.io 2.0.0-rc.9), so the
+      requester can derive further accesses on the person's account
+      from it. With group accounts, a team sharing one account is
+      designed to have its core derive one short-lived access per
+      member from that grant. As designed: the reference consent page
+      states in one line that the grant is delegable; each member
+      access sits on the person's account as a child of the grant,
+      naming the member and the group (server-stamped), within the
+      offer's permissions; and withdrawing the consent, on any path,
+      removes every access derived from the grant. Whether your
+      consent text names the members' access is yours to write. See
+      `context/cmc-consent-primitives.md`, "Group accounts".
     technical: |
       - Snapshot semantics: `context/access-versioning.md` (full head
         clone into history row per update).
@@ -1616,6 +1638,12 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, audit]
     derives_from: [gdpr.Art.28]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: each member of a shared account processes a patient's data under an access of their own, scoped by the membership and named on the patient's record"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       "Only on instructions" is
       enforced operationally through the access primitive, workforce
@@ -1623,6 +1651,22 @@ requirements:
       levels per the controller's instructions, and the audit log
       proves what was actually done. Violations show as out-of-scope
       access attempts or unauthorized method calls in the audit data.
+    detail: |
+      Where a workforce shares one access, the audit log ties an action
+      to a person through the `callerId` your app forwards; see
+      `context/workforce-access-patterns.md`, Pattern 1.
+
+      **Planned, not yet released: group accounts over CMC**
+      (https://github.com/pryv/open-pryv.io/issues/158). For a team
+      sharing one account (the controller's or its processor's) that
+      reaches data subjects through cross-account consent, each member
+      is designed to process a subject's data under an access of their
+      own: issued only under a membership the group's administrator
+      approved, limited to the member's team streams and to the
+      subject's consent, named on the subject's account and audited
+      under its own id. The instructions themselves (who may join,
+      which teams they get) stay the controller's. See
+      `context/workforce-access-patterns.md`, Pattern 3.
 
   - ref: Art.25
     title: Data protection by design and by default
@@ -1946,6 +1990,11 @@ requirements:
         proposal: proposals/config-effective-exposure.md
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705795&issue=pryv%7Copen-pryv.io%7C118
         impact: low
+      - kind: feature
+        summary: "Group accounts over CMC: member accesses on patient accounts are short-lived, bounded by membership, offer and grant, stamped with the member's identity and swept at offboarding"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       Multi-aspect article,
       Pryv implements several aspects for you (access control,
@@ -2003,7 +2052,13 @@ requirements:
           alert) directly with its relationship token is refused `403`
           (`cmc-chat-disabled`, `cmc-system-messaging-disabled`)
           (open-pryv.io 2.0.0-rc.38, merge `7aab1e85`) `[CN63]`,
-          `[CN65]`, `[CH07]`, `[CH10]`.
+          `[CN65]`, `[CH07]`, `[CH10]`. Planned, not yet released
+          (https://github.com/pryv/open-pryv.io/issues/158): members of
+          a group account get, from the group's core, their own
+          short-lived access on a patient account, bounded by their
+          membership, the patient's offer and the grant, stamped with
+          their identity, and swept when the membership ends (see
+          `context/workforce-access-patterns.md`, Pattern 3).
         - Integrity of stored records: IMPLEMENTED for the built-in
           stores, an `events.update`, a trash (a shared-secret event
           excepted, trashed by compare-and-set) or an attachment

@@ -296,6 +296,18 @@ delegation are refused on them, and only the account holder can grant there:
   with `delegation-grant-requires-owner` `[DCH14]`, `[DCH17]`, `[DDG01-03]`.
   `consent/accept-cmc` left this list in open-pryv.io 2.0.0-rc.30 (above).
 
+**Planned, not yet released: delegates as administrators of a group
+account** (https://github.com/pryv/open-pryv.io/issues/158; see
+`context/workforce-access-patterns.md`, Pattern 3). A member joins a group
+account through a CMC membership request that the group accepts; a delegate
+of the group account may accept it, since that is a `consent/accept-cmc`, and
+the membership then carries the delegation lineage like any grant a delegate
+accepts. As designed, detaching that delegate ends the memberships it
+approved unless the account holder keeps them, and each membership that ends
+removes the member's accesses on patient accounts. The rules above are
+unchanged: a delegate still cannot publish an invite (`consent/request-cmc`),
+so the group's patient invites are written by its members.
+
 What stays on your plate: the auth page that offers "who is this for?" is the
 platform's reference auth UI; a deployment using its own auth UI decides
 whether to offer it. The age of the subject, and whether a given delegate may

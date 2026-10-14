@@ -84,6 +84,12 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, audit]
     tests: [AA02, ACCP, LG20]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: ending a member's membership sweeps that member's accesses on every patient account, done by the platform instead of your code"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: medium
     overview: |
       Workforce access to ePHI is mediated by Pryv accesses. Termination
       is a single API call (`accesses.delete`) which immediately revokes
@@ -124,6 +130,20 @@ requirements:
       Roles + groups are deliberately outside Pryv; the external IdP
       is the source of truth.
 
+      **Planned, not yet released: group accounts over CMC**
+      (https://github.com/pryv/open-pryv.io/issues/158). For a team
+      that shares one account and reaches patient data through
+      cross-account consent, each member is designed to hold a
+      membership on the group account and short-lived accesses of
+      their own on each patient account, minted by the group's core.
+      Ending the membership (revoked, left, deleted, expired, or the
+      approving administrator detached) makes the group's core delete
+      those accesses on every patient account, confirm, and
+      record any residual, which the access's own expiry (24 h by
+      default, 7 d at most) then bounds. Until the release, terminating
+      such a member is your code's job (Pattern 2 across accounts). See
+      `context/workforce-access-patterns.md`, Pattern 3.
+
   - ref: 164.308(a)(4)(ii)(B)
     title: Access authorization, Addressable
     text: |
@@ -135,6 +155,12 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, clientData, stream]
     tests: [AA01, ACCP]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: a group administrator's accept of a member's membership request becomes the recorded authorization act behind that member's accesses to patient data"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       Granting access to ePHI in Pryv means minting an access with
       explicit per-stream permissions. The technical authorization
@@ -150,6 +176,20 @@ requirements:
       satisfying both the technical control and the documentation
       half of the standard.
 
+      **Planned, not yet released: group accounts over CMC**
+      (https://github.com/pryv/open-pryv.io/issues/158). A member of a
+      team sharing one account is designed to be authorized by a
+      consent act: the member requests membership from their own
+      account, and an administrator of the group (the owner, or a
+      delegate of the group account) accepts it and chooses the team
+      streams. The resulting membership access records who approved
+      it and what was asked (`clientData.cmc.membership`), and the
+      server limits what a membership may ask for (team streams only,
+      `read` or `contribute`, never delegable). Each access the member
+      then gets on a patient account is issued only under that
+      membership and within the patient's consent. See
+      `context/workforce-access-patterns.md`, Pattern 3.
+
   - ref: 164.308(a)(4)(ii)(C)
     title: Access establishment and modification, Addressable
     text: |
@@ -162,6 +202,12 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, audit]
     tests: [AA01, AA02, ACCP, GF33]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: membership establishment, narrowing and removal drive the member's accesses on patient accounts, with the sweep recorded on the group account"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       The access lifecycle (create / read / update / delete) is first-
       class in Pryv. `accesses.update` writes a tamper-evident snapshot
@@ -176,6 +222,17 @@ requirements:
         - `accesses.delete`: termination (see (a)(3)(ii)(C)).
       Every step appears in the audit log, with the timestamp and
       acting administrator's identity preserved.
+
+      **Planned, not yet released: group accounts over CMC**
+      (https://github.com/pryv/open-pryv.io/issues/158). For a team
+      sharing one account, a member's right of access is designed to be
+      established by a membership the group's administrator accepts,
+      modified by updating that membership access (narrowing it removes
+      the member's patient accesses that fall outside it), and reviewed
+      from the group account: the membership accesses, the mint events
+      and the sweep events (`consent/member-revoke-cmc`, outcome and
+      residuals) each name the member. See
+      `context/workforce-access-patterns.md`, Pattern 3.
 
   - ref: 164.308(a)(5)(ii)(D)
     title: Password management, Addressable
@@ -450,6 +507,12 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation]
     tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: a new derived access path (member accesses minted by the group's core on patient accounts), bounded by the membership, the patient's offer and the grant"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       Per-stream permissions are enforced at every API call; an access
       can read or write only the streams its `permissions[]` lists, at
@@ -547,6 +610,20 @@ requirements:
       their chat stream; the refusal applies to them when their recorded
       features exclude chat.
 
+      **Planned, not yet released: member accesses of a group account**
+      (https://github.com/pryv/open-pryv.io/issues/158). A team sharing
+      one account is designed to let each member obtain, from the
+      group's core, a short-lived `shared` access on a patient account,
+      derived from the patient's delegable grant. Three bounds apply:
+      the group's core issues it only to a membership access whose team
+      streams cover the patient relationship, with stream permissions
+      that are a subset of the patient's offer; the patient's core
+      refuses anything beyond the grant; and the access cannot manage
+      accesses, cannot outlive the grant and expires (24 h by default,
+      7 d at most). A membership access is not exempt from the
+      personal-token gate, so it cannot accept consents on the group's
+      behalf. See `context/workforce-access-patterns.md`, Pattern 3.
+
   - ref: 164.312(a)(2)(i)
     title: Unique user identification, Required
     text: |
@@ -557,11 +634,33 @@ requirements:
     draft: true
     pryv_primitives: [access, audit, system-streams]
     tests: [AA01, UZEV]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: each member of a shared account acts under their own account, and the patient-side access names that member, stamped by the server (not a label forwarded by your app)"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: medium
     overview: |
       Every Pryv account has a unique username + cuid; every access
       derived from it carries a unique access id (cuid) and version
       serial. Audit records cite the (accessId, accessSerial) tuple,
       so each tracked action ties back to a unique identity.
+    detail: |
+      Where several people share one access (a group token), the
+      per-person identifier is the `callerId` your app forwards with
+      each call, a label Pryv records but does not authenticate; see
+      `context/workforce-access-patterns.md`, Pattern 1.
+
+      **Planned, not yet released: group accounts over CMC**
+      (https://github.com/pryv/open-pryv.io/issues/158). For a team
+      sharing one account that reaches patient data through
+      cross-account consent, each member is designed to sign in to
+      their own Pryv account and to read a patient's data under an
+      access of their own, whose `clientData.cmc` names the member and
+      the group, stamped by the patient's core from the authenticated
+      grant. The patient's audit then identifies the member by a
+      unique access tied to a unique account, without a forwarded
+      label. See `context/workforce-access-patterns.md`, Pattern 3.
     technical: |
       Account model: see `open-pryv.io/components/business/src/users/`.
       Access ids are cuids; composite ids `<cuid>:<serial>` appear once
@@ -691,6 +790,11 @@ requirements:
         backlog: AUDIT-LOG-CHAINING
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467766&issue=pryv%7Copen-pryv.io%7C74
         impact: low
+      - kind: feature
+        summary: "Group accounts over CMC: per-member attribution on the patient's trail (member access via the group's grant) and on the group's trail (mint and sweep events naming the member)"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       Pryv's per-user audit log records every API method invocation,
       timestamp, user, access reference, method, success / error. The
@@ -744,6 +848,18 @@ requirements:
       an app acting for a controlled account is traceable on that
       account's trail to the person who authorized it `[DCH05]` (the
       app-grant case is in open-pryv.io 2.0.0-rc.23; see `context/delegation-model.md`).
+
+      **Planned, not yet released: group accounts over CMC**
+      (https://github.com/pryv/open-pryv.io/issues/158). When a member
+      of a team sharing one account reads a patient's data, the
+      patient's trail is designed to record the member's own access id,
+      an access whose creator is the group's grant and whose stamped
+      `clientData.cmc` names the member and the group; the reference
+      account app is planned to show it as "<member access> via <grant
+      name>", deleted accesses included. On the group's trail, each
+      member access issued and each sweep at offboarding is an event
+      naming the member. See `context/workforce-access-patterns.md`,
+      Pattern 3.
 
   - ref: 164.312(c)(1)
     title: Integrity, standard

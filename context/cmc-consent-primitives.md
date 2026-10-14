@@ -37,6 +37,13 @@ Eight state-transition formats on the cross-account consent state machine:
 
 These are **typed events validated server-side by the CMC plugin**.
 
+**Planned, not yet released:** group accounts add two formats,
+`consent/member-access-cmc` (a member asks the group's core for an
+access of their own on a patient's account) and
+`consent/member-revoke-cmc` (server-written: the sweep that removes
+a departing member's accesses), and a `request.membership` flag on
+`consent/request-cmc`. See "Group accounts" below.
+
 ## Where the consent text actually lives
 
 `consent/request-cmc` `.request` field:
@@ -342,6 +349,62 @@ client-side), so a compromised or malicious app cannot fake what the user
 is consenting to. **Revoke needs no hand-off**, the access-permission
 gate accepts the relationship's own data-grant access directly.
 
+## Who can read the grants an account received (trust boundary, shipped)
+
+When a person accepts your invite, the requester's account records the
+accept in its `:_cmc:inbox` stream, and that record keeps the endpoint
+of the data grant (`content.grantedAccess.apiEndpoint`, token included)
+on purpose: it is how a requester app (`waitForAccept` in `@pryv/cmc`)
+opens its connection to the person's data. So an access holding `read`
+on `:_cmc:inbox` holds the token of every data grant the account has
+received. Grant that permission only to apps you would trust with all
+of them; a narrow `:_cmc:apps:<app>` permission does not reach the
+inbox. (`components/cmc/src/handleIncomingAccept.ts` inbox mirror,
+`credentialStashHook.ts`, which scrubs other credentials but
+deliberately leaves this one.)
+
+## Group accounts: members acting under a patient's grant (PLANNED, not yet released)
+
+Designed, not released; tracked at
+https://github.com/pryv/open-pryv.io/issues/158. The workforce side
+(membership, mint, sweep, trust model) is described in
+[`workforce-access-patterns.md`](./workforce-access-patterns.md),
+Pattern 3. What it means for the consent record, as designed:
+
+- **The patient consents to the group, and the grant is delegable.**
+  The invite sets `request.accessType: 'app'` (shipped since
+  open-pryv.io 2.0.0-rc.9), so members of the group can each be given
+  a short-lived access derived from the patient's grant. The reference
+  consent page is planned to say so in one line when an offer is
+  delegable. The patient's record stays the accept event and the
+  grant, as for any CMC consent.
+- **Each member access is visible on the patient's account.** It is a
+  child of the grant (`createdBy` = the grant), named by the server,
+  and its `clientData.cmc` names the member and the group, stamped by
+  the patient's core from the authenticated grant; as designed, no
+  client can write `clientData.cmc` on an access, nor change or remove
+  it afterwards. Every call it makes is audited under its own id.
+- **Withdrawal ends the member accesses.** A patient who withdraws, on
+  any teardown path (`accesses.delete`, `consent/revoke-cmc`, the
+  reference account app), removes the grant and every access derived
+  from it.
+- **Membership is itself a consent relationship**, between the
+  member's account (requester, `request.membership: true`) and the
+  group's account (accepter, by the owner's or an administrator
+  delegate's token). The membership access never carries a feature
+  permission, is never delegable and never reaches the group's
+  `:_cmc:inbox`, which the server enforces at write and at accept.
+- **Gate.** `consent/member-access-cmc` may be written by a
+  membership access or the group's personal token only; the minted
+  permissions must be a subset of the patient's offer, and the
+  patient's core re-checks them against the grant. A membership
+  access is not exempt from the personal-token gate: it cannot accept
+  patient invites on the group's behalf.
+
+Until the release, a requester that wants per-member accesses on a
+patient account derives them from a delegable grant in its own backend
+(workforce Pattern 2 across accounts).
+
 ## Consequences for compliance claims (consent-related)
 
 - **GDPR Art.7 (Conditions for consent, demonstrability + withdrawability)**
@@ -543,7 +606,8 @@ gate accepts the relationship's own data-grant access directly.
   `features` on an accept; `status`, `failure` on every CMC type);
   `components/api-server/src/methods/events.ts` `mergeOntoStored`: the
   write-time merge of a client update onto the stored event.
-- `data-types/src/consent.json`: the 8 `consent/*` formats.
+- `data-types/src/consent.json`: the 8 `consent/*` formats (two more
+  planned with group accounts, see above).
 - `data-types/dist/event-types.json`: built artefact consumed at runtime
   via `service.eventTypes` config.
 

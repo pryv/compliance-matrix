@@ -438,6 +438,12 @@ requirements:
     pryv_primitives: [access, system-streams, audit, delegation]
     tests: [AA01, AA02, ACCP, UZEV, DCH01, DCH12]
     derives_from: [iso-27001.A.5.16, iso-27001.A.5.18, hipaa-security.164.308(a)(3)(ii)(C)]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: a member's credentials on patient accounts are issued only after an administrator approves the membership, and removed by the platform when it ends"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       The full credential lifecycle is Pryv primitives: registration
       mints an account; accesses.create issues a scoped credential;
@@ -484,6 +490,18 @@ requirements:
       issued under a delegate's authority do not survive the end of
       that authority. In open-pryv.io 2.0.0-rc.23.
 
+      **Planned, not yet released: group accounts over CMC**
+      (https://github.com/pryv/open-pryv.io/issues/158). For a team
+      sharing one account, a member is designed to be registered and
+      authorized before any credential reaches them: the member's
+      membership request is accepted by an administrator of the group,
+      and only then can the member obtain, per patient and per
+      session, a short-lived credential minted by the group's core and
+      returned once, never stored. When the membership ends, the
+      group's core removes those credentials on every patient account
+      and records the outcome. See
+      `context/workforce-access-patterns.md`, Pattern 3.
+
   - ref: CC6.3
     title: CC6.3 Role-based access, least privilege, segregation of duties
     text: |
@@ -498,6 +516,12 @@ requirements:
     pryv_primitives: [access, permissions, system-streams, audit, delegation]
     tests: [AA01, AA02, ACCP, DCH06, DCH08, DCH09, DCH12]
     derives_from: [iso-27001.A.5.15, iso-27001.A.5.18, iso-27001.A.5.3]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: least privilege for members of a shared account (one short-lived access per member and patient, within the team streams and the patient's offer), still without roles inside Pryv"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       Least privilege is native: an access carries only the
       stream+level tuples it needs (none / create-only / read /
@@ -515,7 +539,14 @@ requirements:
       suffix; seed access + sub-access derivation) are documented in
       context/workforce-access-patterns.md. The IdP stays the source of
       truth for identity; Pryv records the access state + per-individual
-      audit trail.
+      audit trail. A third pattern is planned, not yet released
+      (https://github.com/pryv/open-pryv.io/issues/158): members of a
+      team sharing one account each get, per patient, a short-lived
+      access minted by the group's core, limited to their team streams
+      and to the patient's offer, unable to manage accesses, and removed
+      when their membership ends. Teams are streams and memberships are
+      consent relationships; there is still no role, role-to-permission
+      mapping or hierarchy inside Pryv (Pattern 3 of the same note).
 
       **OAuth2 revoke + refresh-chain teardown.** For delegated apps,
       the durable consent behind an OAuth2 grant is a cross-account CMC

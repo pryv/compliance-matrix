@@ -163,6 +163,18 @@ provide the right hooks for either audit-trail-preserving group
 exercise (mechanism 1) or independently-revocable per-member
 provisioning (mechanism 2).
 
+**Planned third mechanism (added 2026-10-14, not yet released):**
+group accounts over CMC (https://github.com/pryv/open-pryv.io/issues/158).
+A team sharing one Pryv account that reaches patient data through
+cross-account consent: members are their own accounts and join
+through a membership request the group's administrator accepts; the
+group's core mints each member a short-lived access on a patient's
+account from the patient's delegable grant, stamped with the member's
+identity, and sweeps those accesses when the membership ends. No
+implementer backend, and still no roles inside Pryv. Rows it would
+change carry a `planned:` chip (`proposals/group-accounts-cmc.md`);
+see `context/workforce-access-patterns.md`, Pattern 3.
+
 **Matrix encoding:**
 - `context/workforce-access-patterns.md`: full breakdown of both
   patterns + when to use each + trust models + matrix-row mapping.

@@ -77,6 +77,12 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation]
     tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: access-control rule for member accesses minted by the group's core on patient accounts (bounded by membership, offer and grant; short-lived; swept at offboarding)"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       Logical access control is enforced at the API surface by the
       access + permissions primitives; every read/write request is
@@ -127,6 +133,18 @@ requirements:
       Grant paths that still cannot record the
       mark (OAuth2 consent, publishing a CMC offer, widening a CMC
       grant) refuse delegation-derived tokens `[DCH17]`, `[OE27]`.
+
+      **Planned, not yet released: member accesses of a group account**
+      (https://github.com/pryv/open-pryv.io/issues/158). For a team
+      sharing one account, the designed rule is: a member obtains an
+      access on a patient account only through a membership the group's
+      administrator approved, only for patient relationships under the
+      member's team streams, only with stream permissions within the
+      patient's offer (the patient's core re-checks them against the
+      grant), and only for a bounded time (24 h by default, 7 d at
+      most); the access cannot manage accesses and is removed when the
+      membership ends or the patient withdraws. See
+      `context/workforce-access-patterns.md`, Pattern 3.
 
   - ref: A.5.34
     title: A.5.34 Privacy and protection of personal information
@@ -1035,6 +1053,12 @@ requirements:
     pryv_primitives: [access, system-streams, audit, delegation]
     derives_from: [iso-27001.A.5.15, hipaa-security.164.308(a)(4)(ii)(C)]
     tests: [AA01, AA02, ACCP, UZEV, DCH02, DCH12]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: member identity lifecycle (join by approved request, act under own account, leave or be removed with a platform sweep) inside Pryv for teams sharing one account"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       Pryv's account + access primitives implement the full identity
       lifecycle: create (registration), enable (login + access mint),
@@ -1050,7 +1074,17 @@ requirements:
       derivation. **Roles + groups themselves are deliberately
       outside Pryv;** the IdP is the source of truth for identity
       lifecycle, and Pryv records the resulting access state +
-      per-individual audit trail.
+      per-individual audit trail. A third pattern is planned, not yet
+      released (https://github.com/pryv/open-pryv.io/issues/158): for a
+      team sharing one account that reaches patient data through
+      cross-account consent, each member is designed to be their own
+      Pryv account, to join through a membership request an
+      administrator of the group approves, to act on patient accounts
+      under accesses the group's core issues and stamps with their
+      identity, and to leave (or be removed) with those accesses swept
+      by the platform. Roles stay outside Pryv in that pattern too: a
+      team is a stream, a membership is a consent relationship. See
+      `context/workforce-access-patterns.md`, Pattern 3.
 
       **Delegated-app identity via OAuth2.** For app identities, Pryv
       ships an OAuth2 authorization-code + PKCE flow
@@ -1159,6 +1193,12 @@ requirements:
     pryv_primitives: [access, permissions, audit]
     derives_from: [iso-27001.A.5.15, iso-27001.A.5.16, hipaa-security.164.308(a)(3)(ii)(C)]
     tests: [AA01, AA02, ACCP]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: provisioning, review, modification and removal of a member's rights on patient accounts driven by the membership, with the removal swept by the platform"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       Same primitive surface as A.5.15 + A.5.16, accesses.create /
       .update / .delete cover the lifecycle stages; access version
@@ -1171,6 +1211,16 @@ requirements:
       access once its app access has expired, `5d609bfa`), and a webhook
       stops firing and becomes `inactive` once its access has expired
       (`3394b95f`), both in open-pryv.io 2.0.0-rc.23.
+    detail: |
+      **Planned, not yet released: group accounts over CMC**
+      (https://github.com/pryv/open-pryv.io/issues/158). For a team
+      sharing one account, a member's rights on patient accounts are
+      designed to follow their membership: provisioned only under an
+      approved membership, reviewable from the group account (each
+      issue and each removal is an event naming the member), narrowed
+      with it, and removed on every patient account when it ends, with
+      residuals recorded and bounded by the access's own expiry. See
+      `context/workforce-access-patterns.md`, Pattern 3.
 
   - ref: A.5.19
     title: A.5.19 Information security in supplier relationships
@@ -1245,11 +1295,26 @@ requirements:
     draft: true
     pryv_primitives: [access, audit]
     derives_from: [iso-27001.A.5.16, iso-27001.A.5.18, hipaa-security.164.308(a)(3)(ii)(C)]
+    planned:
+      - kind: feature
+        summary: "Group accounts over CMC: technical removal of a departing member's accesses on every patient account is swept and recorded by the platform"
+        proposal: proposals/group-accounts-cmc.md
+        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
+        impact: low
     overview: |
       Technical termination is
       `accesses.delete` (full revoke) + audit-log timestamp. The
       post-termination obligations (confidentiality, IP, NDA
       enforcement window) are contractual.
+    detail: |
+      **Planned, not yet released: group accounts over CMC**
+      (https://github.com/pryv/open-pryv.io/issues/158). When a member
+      leaves a team sharing one account, ending the membership is
+      designed to remove that member's accesses on every patient
+      account and to record the outcome (`consent/member-revoke-cmc`,
+      with any residual). What the departing person may still owe
+      (confidentiality of what they read) stays contractual. See
+      `context/workforce-access-patterns.md`, Pattern 3.
 
   - ref: A.8.1
     title: A.8.1 User end-point devices
