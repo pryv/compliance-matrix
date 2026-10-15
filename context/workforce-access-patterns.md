@@ -15,12 +15,12 @@ An implementer evaluating Pryv for a workforce-oriented deployment
 staff, etc.) will ask how Pryv handles **role / group abstractions**
 on top of the per-access model. Pryv does not ship roles + groups
 *inside* the platform, group membership is deliberately external,
-but provides **two composable patterns** (shipped) that cover the
-realistic workforce-control needs. A **third pattern is planned**
-(Pattern 3 below, not yet released): a group that shares one Pryv
-account reaches patient data through cross-account consent, each
-member under an access of their own minted by the group's core, so
-the implementer needs no backend of their own.
+but provides **two composable patterns** that cover the realistic
+workforce-control needs. A **third pattern** (Pattern 3 below,
+open-pryv.io 2.0.0-rc.53): a group that shares one Pryv account
+reaches patient data through cross-account consent, each member
+under an access of their own minted by the group's core, so the
+implementer needs no backend of their own.
 
 ## Pattern 1: Group access + per-caller audit
 
@@ -116,18 +116,17 @@ group members), but full per-individual control.
 grant: an offer that sets `request.accessType: 'app'` (since
 open-pryv.io 2.0.0-rc.9, default `'shared'`) makes the grant the
 person accepts delegable, so the requester can derive per-member
-sub-accesses on the person's account from it. Today that derivation
-runs in the requester's own backend, which holds the grant token;
-Pattern 3 (planned) moves it to the group's Pryv core. **Known gap
-(open-pryv.io 2.0.0-rc.51):** only `accesses.delete` of the grant
-removes the sub-accesses with it. The cross-account withdrawal paths
-(`consent/revoke-cmc`, the reference account app's consent page, the
-requester withdrawing, a delegation detach, account deletion) remove
-the grant and leave the sub-accesses derived from it alive until
-their own expiry. Until the fix ships (scheduled ahead of the
-group-accounts release), give every sub-access a short expiry and
-have your backend delete them itself when it learns of the
-withdrawal (`consent/revoke-cmc` in its inbox).
+sub-accesses on the person's account from it. In this pattern that
+derivation runs in the requester's own backend, which holds the
+grant token; Pattern 3 moves it to the group's Pryv core. Every
+cross-account withdrawal path (`accesses.delete` of the grant,
+`consent/revoke-cmc`, the reference account app's consent page, the
+requester withdrawing, a delegation detach, account deletion) deletes
+the sub-accesses derived from the grant with it, since open-pryv.io
+2.0.0-rc.52 (`96af58ad`; tests `[MAAC]`, `[CMCHS-APPGRANT]`). On
+earlier releases only `accesses.delete` of the grant did;
+`bin/access-scope-audit.js` (read-only) lists sub-accesses an earlier
+withdrawal left behind, for review and deletion.
 
 **Compliance benefit:** clean §164.308(a)(3)(ii)(C) termination,
 individual sub-access deleted, others untouched, audit row
@@ -135,15 +134,18 @@ records the revocation timestamp. ISO 27001 A.5.18 access-rights
 lifecycle is per-individual + the seed allows efficient bulk
 operations.
 
-## Pattern 3: Group account over CMC, server-minted member accesses (PLANNED, not yet released)
+## Pattern 3: Group account over CMC, server-minted member accesses
 
-**Status.** Designed, not released. Tracked at
+**Status.** Shipped in open-pryv.io 2.0.0-rc.53 (release commit
+`61fb28dd`, 2026-10-15). Tracked at
 https://github.com/pryv/open-pryv.io/issues/158 (v2 board card
 https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158).
-Nothing in this section is a control you can cite today; the names
-below are the planned wire shapes and may still change before the
-release. Matrix rows that this pattern would change carry a
-`planned:` chip pointing at `proposals/group-accounts-cmc.md`.
+Wire reference: `open-pryv.io/components/cmc/IMPLEMENTERS-GUIDE.md`
+and the release notes (`CHANGELOG-v2.md`, 2.0.0-rc.53). Integration
+tests `[CMCGA]` (`components/api-server/test/cmc-group-accounts.test.js`);
+unit tests `[CMCMB]` (member role and membership offer), `[CMCMA]`
+(member access mint), `[CMCMR]` (offboarding) in
+`components/cmc/test/`.
 
 **The case.** A practice, a research team or a bridge shares one
 Pryv account (the *group account*) and reaches patient data through
@@ -152,77 +154,143 @@ researcher) has their own Pryv account and works from a static web
 app: no implementer backend holds the group's grants or mints
 anything.
 
-**Mechanism (as designed):**
+**Mechanism:**
 
 1. **Patients consent to the group.** A member publishes the invite
    on the group account, on a team stream they hold `contribute` on
    (`:_cmc:apps:<app>[:<team>]`), with `request.accessType: 'app'`,
-   so the grant each patient accepts is delegable (shipped since
+   so the grant each patient accepts is delegable (since
    open-pryv.io 2.0.0-rc.9). The invite's `createdBy` on the group
-   account names the member who wrote it. The reference consent
-   page is planned to tell the patient, in one line, that the grant
-   is delegable to members of the group.
+   account names the member who wrote it. A membership that a
+   delegate administrator approved is not treated as a delegate
+   token for these invites: the delegation guard does not apply to
+   `consent/request-cmc` written through a membership `[DDG04]`. The
+   reference account app's consent page tells the patient, in one
+   line, that the grant is delegable to members of the group, from
+   its first release after 0.21.0 (app-web-user-account).
 2. **Members join through consent, not a role table.** The member
    writes a `consent/request-cmc` with `request.membership: true` on
    their own account and hands its capability URL (link or QR) to an
    administrator of the group (the account owner, or a delegate of
    the group account), who accepts it with a personal or delegate
-   token and chooses the teams. The grant minted on the group
-   account is the *membership access* (`clientData.cmc.role:
-   'member'`, `clientData.cmc.membership = { approvedBy,
-   requestedScopes }`): a two-sided consent record, withdrawable by
-   either party. The server constrains what a membership offer may
-   ask for, at write and again at accept: stream permissions on
-   `:_cmc:apps:*` team streams only, `read` or `contribute` at most,
-   no feature permissions, never delegable, never the group's
-   `:_cmc:inbox` (refused with `cmc-membership-permissions-invalid`).
+   token and picks the teams (`request.allowUserChoice` is forced to
+   `true`). The grant minted on the group account is the *membership
+   access*, a `shared` access named
+   `cmc-member:<appId>:<username>@<host>` with
+   `clientData.cmc.role: 'member'` and `clientData.cmc.membership =
+   { approvedBy, requestedScopes }` (`approvedBy` names the delegate
+   and the delegation, or is `null` when the owner accepted)
+   `[GA01]`, `[MB30]`, `[MB32]`: a two-sided consent record,
+   withdrawable by either party. The server constrains what a
+   membership offer may ask for, at write and again at accept:
+   stream permissions on the group's user-creatable
+   `:_cmc:apps:<app>[:<path>]` streams only (not the chat or
+   collector streams, not `:_cmc:inbox`, not `*`), `read` or
+   `contribute` at most, no feature permissions, never delegable
+   (refused with `cmc-membership-permissions-invalid`) `[GA02]`,
+   `[MB01]`..`[MB03]`, `[MB31]`; no chat channel is provisioned, and a
+   chat or alert written through a membership is refused
+   (`cmc-member-channel-not-supported`) `[MB21]`. A delegate
+   administrator cannot approve a membership requested from their own
+   account `[MB34]`.
 3. **The group's core mints a per-member access on the patient's
    core.** The member writes `consent/member-access-cmc` (`{
-   counterparty, scopeStreamId?, permissions?, expireAfter? }`) on
-   the group account. The group's core checks that the writer is a
-   membership access (or the owner), that the patient relationship
-   sits under the member's team streams, that the requested stream
-   permissions are a subset of the patient's offer, the expiry
-   bounds, a rate limit and one mint in flight per membership; then,
-   through the patient's grant, it creates on the patient's core a
-   `shared` child access with a server-derived name
-   (`cmc-member--<member>--<hash>`), at most 24 h by default (60 s
-   to 7 d, per-core config, never beyond the grant). The patient's
-   core stamps the child's `clientData.cmc` with the member and the
-   group, taken from the authenticated grant, never from the
-   request. The child's token is returned once, in the response to
-   the member's write; it is never stored on the trigger, logged,
-   or retried from a snapshot.
+   counterparty, scopeStreamId?, permissions?, expireAfter? }`) on a
+   team stream of the group account. At write, the group's core
+   checks that the writer is a membership access (personal and
+   delegate tokens are refused too: `cmc-member-access-not-member`),
+   that a patient relationship with a completed handshake sits under
+   the member's team streams, that the requested stream permissions
+   name data streams within what the patient's offer granted (never
+   `*`, never a `:_cmc:` stream), the lifetime bounds
+   (`cmc.memberAccess.minTtl` / `maxTtl`, default 60 s and 7 d; the
+   default lifetime `defaultTtl` is 24 h), a rate limit
+   (`ratePerMinute`, 30 per membership per minute) and one mint in
+   flight per membership and patient (`maxInFlightPerMembership`);
+   the rate limit and the in-flight lock are per worker process
+   `[GA12]`, `[GA15]`, `[CMCMA]`. Then, through the patient's grant,
+   it creates on the patient's core a `shared` child access with a
+   server-derived name (`cmc-member--<member>--<hash>`) that never
+   outlives the membership's own expiry `[GA14]`. The patient's core
+   completes the child's `clientData.cmc` stamp with the group, the
+   grant id, the scope and the app code, taken from the authenticated
+   grant, never from the request; from a delegable grant it accepts
+   only the exact member stamp (`cmc-member-stamp-invalid`
+   otherwise) `[MB10]`..`[MB12]`. The child's endpoint (with its
+   token) is returned once, in the synchronous `events.create`
+   answer to the member's write; it is never stored on the trigger,
+   logged, or retried `[GA10]`, `[MA50]`. Asking again for the same
+   patient with the same permissions returns the same child while it
+   has more than five minutes left; other permissions replace it
+   `[GA11]`. The group's core keeps a hidden ledger of the children
+   it minted (`:_cmc:_internal:members`), so the sweep below never
+   depends on names.
 4. **The member reads the patient's data directly** from the
    patient's core with that child access. A `shared` child cannot
    call `accesses.*`, cannot exceed the grant (the patient's core
-   re-checks the bound), and cannot outlive it.
+   re-checks the bound; a refusal there is reported as
+   `cmc-member-access-permissions-not-subset`), and cannot outlive it.
 5. **Offboarding is a sweep.** Whenever a membership ends (the
    group revokes it, the member leaves, the membership access is
    deleted or expires, the delegate who approved it is detached and
-   the owner does not keep it, the group account is deleted), the
-   group's core deletes each child it minted for that member through
-   the patient grants (when the membership access is only narrowed,
-   the children that fall outside it), reads back to confirm, and
-   records residuals on a server-written `consent/member-revoke-cmc`
-   event. Failed sweeps are retried (this needs
-   `cmc.retryLoop.enabled: true`) and re-run periodically; a
-   residual on an unreachable patient core lives at most until the
-   child's own expiry.
+   the owner does not keep it, the membership vanishes), the group's
+   core deletes each child it minted for that member through the
+   patient grants, reads each one back, and records the outcome per
+   patient (`deleted`, `absent` or `residual`) on a server-written
+   `consent/member-revoke-cmc` event on the membership's team stream,
+   with the `reason` (`revoke`, `accesses.delete`, `expired`,
+   `detach`, `vanished`, `narrowed`) `[GA20]`..`[GA23]`,
+   `[MR20]`, `[MR30]`..`[MR33]`. When the membership access is only
+   narrowed (an `accesses.update` removing teams, or a team stream
+   deleted for good), only the children outside what it still covers
+   are deleted (`narrowed`, the deleted stream named in
+   `content.uncovered`) `[GA41]`, `[MR27]`, `[MR34]`. A residual (a
+   patient core unreachable or refusing) fails the record with
+   `cmc-member-revoke-residual`; the retry loop re-sweeps it (six
+   attempts over about 30 minutes), then the periodic ledger pass
+   (`cmc.memberAccess.sweepIntervalMs`, every minute by default, at
+   most fifty residuals per pass) `[MR25]`, `[MR40]`; the child's own
+   expiry bounds what a core that stays down keeps. Retries and the
+   periodic pass need `cmc.retryLoop.enabled`, `true` by default since
+   2.0.0-rc.53; with `false` a warning is logged at boot and a
+   residual stays until the child expires `[MR42]`. When the group
+   account itself is deleted, its children are deleted through the
+   grants before the erasure, and no record is kept (the account is
+   erased) `[GA40]`, `[MR28]`. A patient relationship the group ends
+   has its member children deleted through the grant before the
+   revoke is delivered.
 6. **A patient's withdrawal ends every member access** derived from
-   their grant, on every teardown path.
+   their grant, on every teardown path, since the cascade of
+   open-pryv.io 2.0.0-rc.52 (`96af58ad`); the patient's core needs
+   2.0.0-rc.52 or later `[GA24]`. Every such deletion is the
+   `accesses.delete` deletion since 2.0.0-rc.53, so it leaves a
+   deletion record readable with `includeDeletions` `[GA22]`,
+   `[GA30]`.
 
-**Audit and attribution (as designed).** Patient side: every call
-by a member carries the child access id; the child's `createdBy` is
-the group's grant and its stamped `clientData.cmc` names the member
-and the group, so the reference account app can show "<member
-access> via <grant name>", deleted accesses included. Group side:
-each mint and each sweep is a `consent/*` event naming the member,
-written by the member's membership access or by the server. A
-patient core on an older release refuses the stamp; for one release
-cycle the group's core then mints with the name only and reports
-`attribution: 'name-only'` (`cmc.memberAccess.allowNameOnly`), later
-it refuses.
+**Audit and attribution.** Patient side: every call by a member
+carries the child access id; the child's `createdBy` is the group's
+grant and its stamped `clientData.cmc` names the member and the
+group, so an account app can show "<member access> via <grant
+name>", deleted accesses included (the reference account app does,
+from its first release after 0.21.0). Group side: each mint is a
+`consent/member-access-cmc` event written through the member's own
+membership access, with the server-owned outcome (`member`,
+`relationshipAccessId`, `memberAccess` without the endpoint,
+`status`), and each sweep a server-written
+`consent/member-revoke-cmc` naming the member; a member cannot change
+or delete these records, the owner can `[GA42]`. A patient core on a
+release earlier than 2.0.0-rc.53 refuses the stamp; the group's core
+then mints the child with the member in its name only and reports
+`attribution: 'name-only'` while `cmc.memberAccess.allowNameOnly` is
+`true` (the default for now, expected to become `false` in a later
+release) `[GA13]`.
+
+**Versions.** The group's core and the member's core need
+2.0.0-rc.53 (the member's core checks the membership request at write
+and marks the accept in the member's inbox). A patient core on an
+earlier release gets name-only attribution (above); the deletion of
+member accesses when a patient withdraws needs 2.0.0-rc.52 or later
+on the patient's core.
 
 **Trust model.** Pryv attributes each action to a member's own
 account credential, authenticated by that member's own sign-in (and
@@ -235,8 +303,8 @@ anchor: protect them with MFA, and grant `read` on the group's
 `:_cmc:inbox` only to apps you would trust with every grant (the
 inbox records each accepted invite with the grant's endpoint, by
 design, so that access equals holding every grant token; this is
-true of any CMC account today, not specific to Pattern 3). Members
-sharing a team stream see each other's invites and mint events; use
+true of any CMC account, not specific to Pattern 3). Members sharing
+a team stream see each other's invites and mint events; use
 per-member sub-streams (`<team>:<member>`) where that matters.
 
 **When to use this pattern:**
@@ -247,12 +315,12 @@ per-member sub-streams (`<team>:<member>`) where that matters.
   patient's account, and leaving the group must end that access on
   every patient account.
 
-**Compliance benefit (once released):** per-member authorization by
-a recorded consent act (the membership accept), per-member
-attribution stamped by the server on both accounts, per-member
-termination swept by the platform instead of by the implementer's
-code, and a patient-side record that shows which member acted under
-which grant.
+**Compliance benefit:** per-member authorization by a recorded
+consent act (the membership accept), per-member attribution stamped
+by the server on the patient's account and recorded on the group's,
+per-member termination swept by the platform instead of by the
+implementer's code, and a patient-side record that shows which member
+acted under which grant.
 
 ## When to combine
 
@@ -263,8 +331,8 @@ The patterns are complementary:
 | Large transient group with external IdP | 1 (group token + caller id) |
 | Small stable team with strict per-person revocation | 2 (seed + sub-accesses) |
 | Large group with both, group-level rev + per-person audit + occasional per-person revocation | 1 + 2 (seed access used by the IdP to provision sub-accesses on first access; per-call `callerId` adds the audit detail) |
-| Practice / research team sharing one account, reaching patients through CMC, no implementer backend | 3 (planned: membership by consent, member accesses minted and swept by the group's core) |
-| Same, with the implementer running its own backend today | 2 across accounts (delegable CMC grant, sub-accesses derived by the backend) + 1 if the backend acts for several people |
+| Practice / research team sharing one account, reaching patients through CMC, no implementer backend | 3 (membership by consent, member accesses minted and swept by the group's core; open-pryv.io 2.0.0-rc.53) |
+| Same, with the implementer running its own backend (or a core older than 2.0.0-rc.53) | 2 across accounts (delegable CMC grant, sub-accesses derived by the backend) + 1 if the backend acts for several people |
 
 ## What this is not
 
@@ -296,42 +364,43 @@ The patterns are complementary:
 
 | Scope | Row | Pattern leveraged |
 |---|---|---|
-| hipaa-security | 164.308(a)(3)(ii)(C) Termination | 1 (drop from IdP) + 2 (delete sub-access); 3 planned (membership end sweeps member accesses) |
-| hipaa-security | 164.308(a)(4)(ii)(B) Access Authorization | 2 (mint sub-access per individual); 3 planned (membership accept is the authorization act) |
-| hipaa-security | 164.308(a)(4)(ii)(C) Establishment + Modification | 2 (seed manages children); 3 planned (narrowing a membership sweeps what falls outside) |
-| hipaa-security | 164.312(a)(1) Access control | 3 planned (member accesses bounded by membership, offer and grant) |
-| hipaa-security | 164.312(a)(2)(i) Unique user identification | 1 (callerId IS the per-person identifier on a group token); 3 planned (member stamped by the server) |
-| hipaa-security | 164.312(b) Audit controls | 3 planned (per-member attribution on the patient's and the group's trail) |
-| iso-27001 | A.5.15 Access control | 3 planned |
-| iso-27001 | A.5.16 Identity management | 1 (external IdP) + 2 (Pryv-side per-individual access); 3 planned (member accounts) |
-| iso-27001 | A.5.18 Access rights | 1 + 2; 3 planned |
-| iso-27001 | A.6.5 Post-termination responsibilities | 1 (IdP removes) + 2 (seed deletes); 3 planned (sweep) |
-| gdpr | Art.7 Conditions for consent | 3 planned (the patient consents to a delegable grant; withdrawal ends member accesses) |
-| gdpr | Art.29 Processing under the authority | 1 (caller id ties action to a workforce member); 3 planned (member access names the member) |
-| gdpr | Art.32 Security of processing | 3 planned (access-control bullet) |
-| soc2 | CC6.2 Credential issuance + de-provisioning | 3 planned (approved before issued, swept on removal) |
-| soc2 | CC6.3 Least privilege | 2; 3 planned (short-lived per-patient member accesses) |
+| hipaa-security | 164.308(a)(3)(ii)(C) Termination | 1 (drop from IdP) + 2 (delete sub-access); 3 (membership end sweeps member accesses) |
+| hipaa-security | 164.308(a)(4)(ii)(B) Access Authorization | 2 (mint sub-access per individual); 3 (membership accept is the authorization act) |
+| hipaa-security | 164.308(a)(4)(ii)(C) Establishment + Modification | 2 (seed manages children); 3 (narrowing a membership sweeps what falls outside) |
+| hipaa-security | 164.312(a)(1) Access control | 3 (member accesses bounded by membership, offer and grant) |
+| hipaa-security | 164.312(a)(2)(i) Unique user identification | 1 (callerId IS the per-person identifier on a group token); 3 (member stamped by the server) |
+| hipaa-security | 164.312(b) Audit controls | 3 (per-member attribution on the patient's and the group's trail) |
+| iso-27001 | A.5.15 Access control | 3 (member accesses bounded by membership, offer and grant) |
+| iso-27001 | A.5.16 Identity management | 1 (external IdP) + 2 (Pryv-side per-individual access); 3 (member accounts) |
+| iso-27001 | A.5.18 Access rights | 1 + 2; 3 (rights follow the membership) |
+| iso-27001 | A.6.5 Post-termination responsibilities | 1 (IdP removes) + 2 (seed deletes); 3 (sweep) |
+| gdpr | Art.7 Conditions for consent | 3 (the patient consents to a delegable grant; withdrawal ends member accesses) |
+| gdpr | Art.29 Processing under the authority | 1 (caller id ties action to a workforce member); 3 (member access names the member) |
+| gdpr | Art.32 Security of processing | 3 (access-control bullet) |
+| soc2 | CC6.2 Credential issuance + de-provisioning | 3 (approved before issued, swept on removal) |
+| soc2 | CC6.3 Least privilege | 2; 3 (short-lived per-patient member accesses) |
 | iso-27701 | A.7.4.7 Records of PII processing | 1 (callerId on audit row enriches the register) |
 
 These rows should reference this document via their `detail` block
 when an implementer is likely to ask the workforce-control
-question explicitly. The rows marked "3 planned" carry a `planned:`
-chip until the release; their claims today rest on patterns 1 and
-2 only.
+question explicitly. The rows citing Pattern 3 carried a `planned:`
+chip until open-pryv.io 2.0.0-rc.53 shipped it; their Pattern 3
+claims hold for a group's core, member's core and patient's core on
+that release (see "Versions" under Pattern 3).
 
 ## Related primitives
 
 - `access`: the unit of authorization; pattern 1 shares one across
-  a group, pattern 2 derives many from a seed, pattern 3 (planned)
+  a group, pattern 2 derives many from a seed, pattern 3
   has the group's core derive them from patient grants.
 - `audit`: captures both `accessId` and `callerId` per call.
 - `permissions`: per-stream + per-level scope carried by every
   access (seed or shared).
 - `CMC`: the cross-account consent the group's patient grants and
-  (planned) its memberships are made of. See
+  its memberships are made of. See
   [`cmc-consent-primitives.md`](./cmc-consent-primitives.md).
 - `delegation`: delegates of a group account can act as
-  membership administrators (planned); see
+  membership administrators; see
   [`delegation-model.md`](./delegation-model.md).
 - `system-streams`: for sensitive workforce metadata (role labels,
   IdP-side group memberships) the implementer can keep on a

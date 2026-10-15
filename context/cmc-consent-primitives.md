@@ -22,7 +22,8 @@ state transitions that establish, modify, or tear down that record.**
 
 ## What `consent/*` formats are
 
-Eight state-transition formats on the cross-account consent state machine:
+Ten formats on the cross-account consent state machine (event-type
+catalogue 1.3.0, bundled with open-pryv.io 2.0.0-rc.53):
 
 | Format | State transition | Who writes it |
 |---|---|---|
@@ -33,16 +34,14 @@ Eight state-transition formats on the cross-account consent state machine:
 | `consent/revoke-cmc` | Tear down established consent | Either party's app |
 | `consent/scope-request-cmc` | Propose scope change | Collector app |
 | `consent/scope-update-cmc` | Apply scope change | User-side app or plugin |
-| `consent/invalidate-link-cmc` | Invalidate open-link capability | Requester app |
+| `consent/invalidate-link-cmc` | Invalidate open-link capability | Requester app (on the invite's own scope or an ancestor, since 2.0.0-rc.53) |
+| `consent/member-access-cmc` | A group member asks the group's core for an access of their own on a patient's account | Member app, through its membership access (group accounts, 2.0.0-rc.53) |
+| `consent/member-revoke-cmc` | Record of the sweep that deletes a departing member's accesses | Group's plugin only; a client write is refused (group accounts, 2.0.0-rc.53) |
 
 These are **typed events validated server-side by the CMC plugin**.
-
-**Planned, not yet released:** group accounts add two formats,
-`consent/member-access-cmc` (a member asks the group's core for an
-access of their own on a patient's account) and
-`consent/member-revoke-cmc` (server-written: the sweep that removes
-a departing member's accesses), and a `request.membership` flag on
-`consent/request-cmc`. See "Group accounts" below.
+Group accounts (open-pryv.io 2.0.0-rc.53) also add a
+`request.membership` flag on `consent/request-cmc`. See "Group
+accounts" below.
 
 ## Where the consent text actually lives
 
@@ -363,50 +362,81 @@ inbox. (`components/cmc/src/handleIncomingAccept.ts` inbox mirror,
 `credentialStashHook.ts`, which scrubs other credentials but
 deliberately leaves this one.)
 
-## Group accounts: members acting under a patient's grant (PLANNED, not yet released)
+Since open-pryv.io 2.0.0-rc.53 an offer cannot ask for that inbox: a
+`consent/request-cmc` whose `request.permissions` names the accepter's
+`:_cmc:inbox`, the `:_cmc:_internal` subtree, a chats or collectors
+stream or the `:_cmc:apps` root is refused at write
+(`cmc-invalid-event-content`) and again by the accepter's core at
+accept (`cmc-offer-stream-not-offerable`) `[CN71]`, `[MB35]`, `[VC09]`.
+`*` and the accepter's own `:_cmc:apps:<app>[:<path>]` streams stay
+offerable; `*` never reaches the inbox nor the internal subtree.
 
-Designed, not released; tracked at
-https://github.com/pryv/open-pryv.io/issues/158. The workforce side
-(membership, mint, sweep, trust model) is described in
+## Group accounts: members acting under a patient's grant
+
+Shipped in open-pryv.io 2.0.0-rc.53 (release commit `61fb28dd`);
+tracked at https://github.com/pryv/open-pryv.io/issues/158. The
+workforce side (membership, mint, sweep, trust model, versions) is
+described in
 [`workforce-access-patterns.md`](./workforce-access-patterns.md),
-Pattern 3. What it means for the consent record, as designed:
+Pattern 3. What it means for the consent record:
 
 - **The patient consents to the group, and the grant is delegable.**
-  The invite sets `request.accessType: 'app'` (shipped since
-  open-pryv.io 2.0.0-rc.9), so members of the group can each be given
-  a short-lived access derived from the patient's grant. The reference
-  consent page is planned to say so in one line when an offer is
-  delegable. The patient's record stays the accept event and the
-  grant, as for any CMC consent.
+  The invite sets `request.accessType: 'app'` (since open-pryv.io
+  2.0.0-rc.9), so members of the group can each be given a
+  short-lived access derived from the patient's grant. The reference
+  account app's consent page says so in one line when an offer is
+  delegable, from its first release after 0.21.0
+  (app-web-user-account); a deployment with its own consent UI writes
+  that notice itself. The patient's record stays the accept event and
+  the grant, as for any CMC consent.
 - **Each member access is visible on the patient's account.** It is a
   child of the grant (`createdBy` = the grant), named by the server,
-  and its `clientData.cmc` names the member and the group, stamped by
-  the patient's core from the authenticated grant; as designed, no
-  client can write `clientData.cmc` on an access, nor change or remove
-  it afterwards. Every call it makes is audited under its own id.
+  and its `clientData.cmc` names the member and the group: the
+  group's core sends only the member, and the patient's core adds the
+  group, the grant id, the scope and the app code from the
+  authenticated grant `[GA10]`, `[MB10]`. No client can write any
+  other `clientData.cmc` on an access (`cmc-member-stamp-invalid`,
+  `cmc-clientdata-cmc-forbidden`), and no update can remove it
+  (since 2.0.0-rc.53 `clientData: null` or a `cmc` key in an update
+  is refused) `[MB11]`..`[MB13]`. Every call it makes is audited
+  under its own id.
 - **Withdrawal ends the member accesses.** A patient who withdraws, on
   any teardown path (`accesses.delete`, `consent/revoke-cmc`, the
-  reference account app), removes the grant and every access derived
-  from it.
+  reference account app, the group's revoke), removes the grant and
+  every access derived from it (the cascade of 2.0.0-rc.52, which the
+  patient's core needs) `[GA24]`.
 - **Membership is itself a consent relationship**, between the
   member's account (requester, `request.membership: true`) and the
   group's account (accepter, by the owner's or an administrator
-  delegate's token). The membership access never carries a feature
-  permission, is never delegable and never reaches the group's
-  `:_cmc:inbox`, which the server enforces at write and at accept.
-- **Gate.** `consent/member-access-cmc` may be written by a
-  membership access or the group's personal token only; the minted
-  permissions must be a subset of the patient's offer, and the
-  patient's core re-checks them against the grant. A membership
-  access is not exempt from the personal-token gate: it cannot accept
-  patient invites on the group's behalf.
+  delegate's token; a delegate cannot approve their own membership).
+  The membership access never carries a feature permission, is never
+  delegable and never reaches the group's `:_cmc:inbox`, which the
+  server enforces at write and at accept
+  (`cmc-membership-permissions-invalid`) `[GA02]`, `[MB31]`. It
+  records who approved it and what was asked
+  (`clientData.cmc.membership = { approvedBy, requestedScopes }`)
+  `[GA01]`, `[MB32]`.
+- **Gate.** `consent/member-access-cmc` may be written through a
+  membership access only (the group's personal and delegate tokens
+  are refused too, `cmc-member-access-not-member`); the minted
+  permissions must name data streams within the patient's offer, and
+  the patient's core re-checks them against the grant `[GA12]`,
+  `[GA15]`. A membership access is not exempt from the personal-token
+  gate: it cannot accept patient invites nor widen grants on the
+  group's behalf `[GA01]`. A membership a delegate approved is not a
+  delegate token for the patient invites the member publishes
+  `[DDG04]`.
+- **The group's records are the owner's.** An app or shared access, a
+  membership included, cannot update or delete a
+  `consent/member-access-cmc` or `consent/member-revoke-cmc` event,
+  nor delete an inbox or internal event (`cmc-protected-event-write`)
+  `[GA42]`, `[CHD1]`.
 
-Until the release, a requester that wants per-member accesses on a
-patient account derives them from a delegable grant in its own backend
-(workforce Pattern 2 across accounts), and must remove them itself when
-the patient withdraws: today only `accesses.delete` of the grant takes
-derived accesses with it, the cross-account withdrawal paths do not (see
-Pattern 2, "Known gap").
+On a core older than 2.0.0-rc.53, a requester that wants per-member
+accesses on a patient account derives them from a delegable grant in
+its own backend (workforce Pattern 2 across accounts); since
+2.0.0-rc.52 every withdrawal path deletes those derived accesses with
+the grant.
 
 ## Consequences for compliance claims (consent-related)
 
@@ -430,13 +460,26 @@ Pattern 2, "Known gap").
     delete marks the access deleted and keeps it, the update snapshots the
     previous version). For cross-account: `consent/revoke-cmc`
     event triggers the access revocation transactionally on both sides.
-    **Record shape of the CMC teardown paths:** a `consent/revoke-cmc`
-    revoke, an accept rolled back by the CMC handler, and a delegation
-    detach (which ends the consents a delegate gave) do not go through the
-    `accesses.delete` route; they remove the data grant outright (hard
-    delete: the access row is removed, not marked deleted), so the access
-    itself no longer shows the withdrawal and no version chain demonstrates
-    it. For those withdrawals the demonstrable record is the `consent/*`
+    **Record shape of the CMC teardown paths:** since open-pryv.io
+    2.0.0-rc.53 every CMC and delegation teardown (a `consent/revoke-cmc`
+    revoke by either side, a revocation received from the counterparty,
+    an accept rolled back by the CMC handler, a delegation detach, the
+    teardown at account deletion, a capability collected, a member
+    sweep) is the `accesses.delete` deletion
+    (`components/api-server/src/methods/helpers/accessDeletion.ts`):
+    the access is marked deleted and listed with `includeDeletions`
+    (name kept, never the token), its webhooks are deleted, its alias
+    released, the breach-scope index tombstoned, and the accesses it
+    manages deleted in the same pass `[GA22]`, `[GA30]`; a re-accept
+    mints a fresh access. The URL credentials a relationship access
+    kept in `clientData` are removed from its deletion record and
+    history rows (`[CMCHS-GUARD]` in
+    `components/api-server/test/cmc-handshake.test.js`). Before
+    2.0.0-rc.53 these paths
+    removed the data grant outright (the access row removed, not
+    marked deleted), so the access itself no longer showed the
+    withdrawal and no version chain demonstrated it. For withdrawals
+    made then the demonstrable record is the `consent/*`
     events: the accept event on the subject's account (with
     `dataGrantAccessId`, and `approvedBy` when a delegate gave the consent)
     and the `consent/request-cmc` event on the requester's account, the
@@ -556,10 +599,26 @@ Pattern 2, "Known gap").
   direction (the data subject withdraws, the requester loses read) was enforced
   throughout, since that is the local half on the subject's own account.
 
-  Residual, and deliberate: delivery of the notification is best-effort. A revoke
-  that never reaches the peer means the peer never runs its teardown, so the
-  withdrawing party's access on that account outlives the relationship until an
-  operator prunes it. The withdrawal is complete and effective on the withdrawing
+  **Delivery of the notification** (open-pryv.io 2.0.0-rc.53,
+  https://github.com/pryv/open-pryv.io/issues/157). A revoke notice the
+  counterparty could not take after the in-request attempts (network error,
+  timeout, 5xx) is queued, endpoint and body, in the account's hidden retry
+  stream and re-sent by the retry loop after 1, 5 and 25 minutes, about 2
+  hours, then every 6 hours: eight re-sends over about 27 hours, then marked
+  `failed-permanent` for the operator (the record keeps the host, never the
+  token); the trigger reports `content.deliveryQueued: true` `[HR25]`,
+  `[DH25]`, `[RQ20]`..`[RQ23]`. A raw `accesses.delete` of a relationship
+  access and a delegation detach queue their notices the same way. A 4xx is
+  the peer's answer and is not retried `[RQ24]`. A notice that lands after the
+  parties re-established the relationship under the same scope tears nothing
+  down: it names the accept it ends (`content.acceptEventId`, `revokedAt`) and
+  is marked `content.superseded` on arrival `[CIR26]`, `[CIR27]`.
+  Residual: the notices sent while an account is being deleted are not queued
+  (no account is left to hold them), and nothing is queued while
+  `cmc.retryLoop.enabled` is `false` `[HR26]`, `[DH26]`. A notice that never
+  reaches the peer means the peer never runs its teardown, so the withdrawing
+  party's access on that account outlives the relationship until it expires or
+  is deleted there. The withdrawal is complete and effective on the withdrawing
   account regardless, which is where the subject's data lives in the
   subject-withdrawal case.
 
@@ -609,8 +668,13 @@ Pattern 2, "Known gap").
   `features` on an accept; `status`, `failure` on every CMC type);
   `components/api-server/src/methods/events.ts` `mergeOntoStored`: the
   write-time merge of a client update onto the stored event.
-- `data-types/src/consent.json`: the 8 `consent/*` formats (two more
-  planned with group accounts, see above).
+- `components/cmc/src/handleMemberAccess.ts`, `memberAccessHooks.ts`,
+  `memberMintRegistry.ts`, `memberLedger.ts` (the member access mint and
+  its ledger), `memberSweep.ts`, `handleMemberRevoke.ts` (offboarding),
+  `retryQueue.ts`, `bootRetryLoop.ts` (the retry loop: trigger retries,
+  revoke-notice re-sends, the periodic ledger pass).
+- `data-types/src/consent.json`: the 10 `consent/*` formats (catalogue
+  1.3.0).
 - `data-types/dist/event-types.json`: built artefact consumed at runtime
   via `service.eventTypes` config.
 

@@ -241,11 +241,17 @@ consent is recorded on the subject's account:
   it.** Detach deletes the relationship's consent grants that the account
   holder did not keep (see the review below) together with its other
   `delegated-child` accesses,
-  synchronously, before it answers. The delete is a hard delete, as for every
-  CMC revoke (the access row is removed, not marked deleted). Each requester
-  then receives `consent/revoke-cmc`, as for a consent withdrawn with
-  `accesses.delete`; delivery is best-effort and never holds the detach
-  `[DCH18]`. A grant swept by a detach in the short window before the
+  synchronously, before it answers. Since open-pryv.io 2.0.0-rc.53 the delete
+  is the `accesses.delete` deletion, as for every CMC teardown (the access is
+  marked deleted and listed with `includeDeletions`, its webhooks and alias
+  released); earlier releases removed the row outright. When such a grant is
+  delegable, the accesses the requester derived from it are deleted with it
+  since 2.0.0-rc.52 `[MAAC]`. Each requester then receives
+  `consent/revoke-cmc`, as for a consent withdrawn with `accesses.delete`;
+  delivery never holds the detach `[DCH18]`, and since 2.0.0-rc.53 a notice
+  the requester could not take is queued and re-sent by the retry loop
+  (https://github.com/pryv/open-pryv.io/issues/157; see
+  `context/cmc-consent-primitives.md`). A grant swept by a detach in the short window before the
   requester's back channel is established is revoked without notice; the
   requester learns of it on first use of the token.
 - **The account holder reviews the delegate's consents at detach**
@@ -296,17 +302,24 @@ delegation are refused on them, and only the account holder can grant there:
   with `delegation-grant-requires-owner` `[DCH14]`, `[DCH17]`, `[DDG01-03]`.
   `consent/accept-cmc` left this list in open-pryv.io 2.0.0-rc.30 (above).
 
-**Planned, not yet released: delegates as administrators of a group
-account** (https://github.com/pryv/open-pryv.io/issues/158; see
+**Delegates as administrators of a group account** (open-pryv.io
+2.0.0-rc.53, release commit `61fb28dd`,
+https://github.com/pryv/open-pryv.io/issues/158; see
 `context/workforce-access-patterns.md`, Pattern 3). A member joins a group
 account through a CMC membership request that the group accepts; a delegate
 of the group account may accept it, since that is a `consent/accept-cmc`, and
 the membership then carries the delegation lineage like any grant a delegate
-accepts. As designed, detaching that delegate ends the memberships it
-approved unless the account holder keeps them, and each membership that ends
-removes the member's accesses on patient accounts. The rules above are
-unchanged: a delegate still cannot publish an invite (`consent/request-cmc`),
-so the group's patient invites are written by its members.
+accepts, with `clientData.cmc.membership.approvedBy` naming the delegate and
+the delegation `[MB32]`. Detaching that delegate ends the memberships it
+approved unless the account holder keeps them (`keepAccessIds`), tells each
+member, and deletes the member's accesses on patient accounts (sweep reason
+`detach`) `[GA23]`. A delegate cannot approve a membership requested from
+their own account `[MB34]`. The rules above are unchanged: a delegate still
+cannot publish an invite (`consent/request-cmc`), so the group's patient
+invites are written by its members; a membership a delegate approved is not
+a delegate token for those invites (the delegation grant guard exempts
+`consent/request-cmc` written through a membership, and nothing else)
+`[DDG04]`.
 
 What stays on your plate: the auth page that offers "who is this for?" is the
 platform's reference auth UI; a deployment using its own auth UI decides

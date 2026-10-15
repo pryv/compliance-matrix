@@ -1,8 +1,19 @@
 # Group accounts over CMC: member accesses without an implementer backend
 
-**Status:** planned, designed and under implementation; not released. Nothing below is a
-control a row may cite as shipped until the release, when the chips are discharged and the
-rows rewritten.
+**Status: shipped in 2.0.0-rc.53 (61fb28dd)**, open-pryv.io release of 2026-10-15
+(feature commits `0f21ea91`, `0c176116`, `96e6e07e`, `a9c2fd59`, `155367dd`, `196de2c5`,
+review rounds `6823813d`, `34de3219`, `fb9cc5db`, `c73d9847`, `ab48bb19`, `718a5dab`,
+`1fce65a5`). The withdrawal cascade it depends on shipped in 2.0.0-rc.52 (`96af58ad`,
+2026-10-14). All 15 chips discharged and the rows rewritten on 2026-10-15; see
+`UPDATE-TRIGGERS.md` Section A `GROUP-ACCOUNTS-CMC` for the per-row record. The text below
+is the proposal as filed (2026-10-14) and is kept as history: where the shipped behaviour
+differs (the mint is refused to the group's personal and delegate tokens, the in-flight
+limit is per membership and patient, a member asks for named data streams only, a member
+access never outlives its membership, every teardown leaves a deletion record), the rows,
+`context/workforce-access-patterns.md` Pattern 3 and the release notes are authoritative.
+Not yet released at that date: the reference account app's consent notice, memberships
+view and audit display (app-web-user-account, first release after 0.21.0), `@pryv/cmc`
+3.21.0 and the reference member app.
 **Delivery vehicle:** a scheduled open-pryv.io release (with data-types, `@pryv/cmc` and the
 reference account app), tracked by a public issue, not a backlog file. This mirror exists
 so the affected rows can carry `planned:` chips and a reader can see what will change.

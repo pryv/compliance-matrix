@@ -1097,9 +1097,9 @@ the client IP" paragraph must now cover `http.trustedProxies` (the per-address
 budgets ignore `X-Forwarded-For` from an unlisted proxy), and its route table
 can note the in-code budgets the proxy limits now sit in front of.
 
-### `GROUP-ACCOUNTS-CMC` (PLANNED: designed, not released; chips added 2026-10-14)
+### `GROUP-ACCOUNTS-CMC` (SHIPPED in open-pryv.io 2.0.0-rc.53 `61fb28dd`, 2026-10-15; all 15 chips discharged, rows walked 2026-10-15): DISCHARGED
 
-**Where the work will live**: `open-pryv.io/components/cmc/` (membership
+**Where the work lives**: `open-pryv.io/components/cmc/` (membership
 role and offer constraints, the member-access mint, the offboarding sweep and
 its ledger, the patient-side stamp on child accesses), the `events.create`
 response, `components/delegation/` (detach ends the memberships a delegate
@@ -1123,7 +1123,7 @@ patient's core from the patient's delegable grant, and sweeps those accesses
 when the membership ends. Context: `context/workforce-access-patterns.md`
 Pattern 3, `context/cmc-consent-primitives.md` "Group accounts",
 `context/delegation-model.md` (delegates as membership administrators),
-implementer-FAQ Q5 (planned third mechanism). Proposal:
+implementer-FAQ Q5 (third mechanism). Proposal:
 `proposals/group-accounts-cmc.md`.
 
 **Chips added 2026-10-14** (detail paragraphs marked "Planned, not yet
@@ -1162,6 +1162,91 @@ carries the lineage and ends at detach unless kept) and does not lift the
 owner-only refusal on `consent/request-cmc` (members, not delegates, publish
 the group's patient invites); neither entry needs a change unless the
 release alters those rules.
+
+**SHIPPED** in open-pryv.io 2.0.0-rc.53 (release commit `61fb28dd`,
+2026-10-15; feature commits `0f21ea91` member role and membership offer,
+`0c176116` member access mint, `96e6e07e` offboarding, `a9c2fd59` every
+access deletion through the route's deletion, `155367dd` integration suite,
+`196de2c5` docs; review rounds `6823813d`, `34de3219`, `fb9cc5db`,
+`c73d9847`, `ab48bb19`, `718a5dab`, `1fce65a5`). The withdrawal cascade it
+depends on shipped in 2.0.0-rc.52 (`96af58ad`, 2026-10-14). Tests: in-process
+integration `[CMCGA]` (`components/api-server/test/cmc-group-accounts.test.js`,
+`[GA01]`..`[GA42]`), unit `[CMCMB]` (`[MB*]`, member role and offer), `[CMCMA]`
+(`handleMemberAccess.test.js`; its `[MA*]` codes are shared with other
+suites, so rows cite `[CMCMA]` except the unique `[MA41]`, `[MA50]`),
+`[CMCMR]` (`[MR*]`, offboarding; rows cite `[CMCMR]` where a code is shared),
+the adapter cascade `[MAAC]`, revoke-notice queueing `[HR25]`, `[HR26]`,
+`[DH25]`, `[DH26]`, `[RQ20]`..`[RQ29]`, late-notice protection `[CIR26]`,
+`[CIR27]`, delegation guard exemption `[DDG04]`. Shipped differences from
+the design the chips described: the mint is refused to the group's personal
+and delegate tokens (membership accesses only); one mint in flight per
+membership and patient, per worker process; named data streams only; a
+member access never outlives its membership; every CMC and delegation
+teardown is now the `accesses.delete` deletion (deletion records). Not
+released at the walk, so the rows name them by release rather than as
+shipped: the reference account app's consent notice, memberships view and
+audit display (app-web-user-account, first release after 0.21.0), `@pryv/cmc`
+3.21.0, the reference member app.
+
+Rows walked 2026-10-15 (chips discharged, "Planned" paragraphs rewritten as
+shipped with the release, commit and test codes; `CMC` added to
+`pryv_primitives` where missing; no tier shift; `reviewed_at` left unchanged
+so the rewritten prose awaits the next review pass):
+
+| Scope | Ref | What changed | Tests added | Config keys added |
+|---|---|---|---|---|
+| hipaa-security | 164.308(a)(3)(ii)(C) | termination swept by the group's core on every patient account, residual retry and bound, group-account deletion | `CMCGA`, `CMCMR`, `GA20`..`GA23`, `GA40`, `GA41` | `cmc.retryLoop.enabled`, `cmc.memberAccess.maxTtl`, `cmc.memberAccess.sweepIntervalMs` |
+| hipaa-security | 164.308(a)(4)(ii)(B) | membership accept as the recorded authorization act; offer constraints; no self-approval | `CMCMB`, `GA01`, `GA02`, `MB30`..`MB32`, `MB34` | |
+| hipaa-security | 164.308(a)(4)(ii)(C) | establish / narrow (incl. team-stream deletion) / review from the group account; deletion record; records owner-only | `CMCMR`, `GA01`, `GA22`, `GA41`, `GA42`, `MR27`, `MR33` | |
+| hipaa-security | 164.312(a)(1) | member access path and its bounds as shipped; Known gap rewritten as fixed in 2.0.0-rc.52 | `MAAC`, `CMCGA`, `CMCMA`, `GA01`, `GA10`..`GA12`, `GA14`, `GA15`, `GA24`, `GA31`, `MB10`, `MB12`, `MB13` | `cmc.memberAccess.*` (six keys), `cmc.retryLoop.enabled` |
+| hipaa-security | 164.312(a)(2)(i) | server-stamped member identity; name-only fallback against older patient cores | `GA10`, `GA13`, `MB10`..`MB12` | `cmc.memberAccess.allowNameOnly` |
+| hipaa-security | 164.312(b) | per-member attribution on both trails; deletion records; account app display named by release | `GA10`, `GA20`, `GA22`, `GA30`, `MA41` | |
+| iso-27001 | A.5.15 | access-control rule for member accesses as shipped | `CMCGA`, `CMCMA`, `GA12`, `GA14`, `GA15`, `GA20`, `GA24`, `MB10` | `cmc.memberAccess.defaultTtl`, `minTtl`, `maxTtl` |
+| iso-27001 | A.5.16 | third pattern shipped | `CMCGA`, `GA01`, `GA10`, `GA20`, `GA21`, `GA23` | |
+| iso-27001 | A.5.18 | rights follow the membership | `CMCMR`, `GA01`, `GA10`, `GA20`, `GA22`, `GA41`, `MR25` | |
+| iso-27001 | A.6.5 | technical removal at departure, residual bound | `CMCMR`, `GA20`..`GA23` | `cmc.retryLoop.enabled`, `cmc.memberAccess.maxTtl` |
+| gdpr | Art.7 | group-account consent paragraph shipped (consent notice named by account-app release); §3 withdrawal: soft-delete teardowns since rc.53, Known gap rewritten as fixed in rc.52, revoke notices re-sent (issue 157), account-deletion notices not; ten formats | `MAAC`, `GA10`, `GA24`, `GA30`, `MB10`, `HR25`, `DH25`, `RQ20`..`RQ23`, `CIR26`, `CIR27` | `cmc.retryLoop.enabled` |
+| gdpr | Art.29 | member processing scoped and attributed under the subject's grant | `CMCGA`, `GA01`, `GA10`, `GA12`, `GA15`, `GA20` | |
+| gdpr | Art.32 | access-control bullet shipped; offers cannot ask the plugin-managed streams; invite closed from its own scope | `GA10`, `GA12`, `GA14`, `GA20`, `CN71`, `CN72`, `MB35`, `VC09` | |
+| soc2 | CC6.2 | credential issued after approval, returned once, removed with the membership | `CMCGA`, `GA01`, `GA10`..`GA12`, `GA20`, `GA22`, `GA23`, `MA50` | |
+| soc2 | CC6.3 | least privilege per member and patient; membership least privilege | `CMCMA`, `GA02`, `GA12`, `GA14`, `GA15`, `GA20`, `MB21`, `MB34` | |
+
+Rows walked without a chip (the proposal's list, plus the rows the
+teardown and notice changes touch):
+- `gdpr.Art.8`: two "hard delete" / "best-effort" statements on a
+  delegation detach rewritten (deletion record since rc.53; notice re-sent).
+- `gdpr.Art.17`: account deletion extended (a deleted group account's member
+  accesses deleted on the patient cores first; account-deletion notices sent
+  once, not re-sent); tests `GA40`, `MR28` added.
+- `hipaa-security.164.312(d)`, `soc2.CC6.1`: unchanged (members authenticate
+  as their own accounts through the existing sign-in).
+- `iso-27701.A.7.4.7`: unchanged (the new events are CMC records, already
+  covered).
+- DSAR and accounting-of-disclosures families (`gdpr.Art.15`, `soc2.P5.1`,
+  `P6.7`, `hipaa-privacy.164.524`, `164.528`, `pipeda.Principle.4.9`,
+  `ccpa.1798.110`, `swiss-nlpd.Art.25`): unchanged.
+- Erasure family other than `gdpr.Art.17` (`ccpa.1798.105`,
+  `pipeda.Principle.4.5`, `swiss-nlpd.Art.32`, `soc2.CC6.5`, `P4.3`,
+  `C1.2`): unchanged (their text does not detail relationship teardown).
+- B.2 rows (`gdpr.Art.20`, `hipaa-privacy.164.514`, `soc2.PI1.1`, `PI1.2`,
+  `P7.1`): unchanged.
+- `iso-27701.A.7.3.4` (consent withdrawal, "symmetric teardown"):
+  unchanged (no hard-delete or delivery claim).
+
+Context notes: `context/workforce-access-patterns.md` (Pattern 3 rewritten as
+shipped with the differences above and a "Versions" paragraph; Pattern 2's
+Known gap rewritten as fixed in rc.52; tables), `context/cmc-consent-primitives.md`
+(ten formats; offers cannot ask the plugin-managed streams; "Group accounts"
+as shipped; teardown record shape since rc.53; revoke-notice delivery, issue
+157; code references), `context/delegation-model.md` (delegates as membership
+administrators as shipped; detach deletion and notice). Implementer-FAQ Q5:
+third mechanism as shipped. Section B: release walks recorded under B.1, B.2,
+B.8 and B.11. Section C: the 2026-10-14 Known-gap clause discharged.
+Consistency with `ACCOUNT-DELEGATION` and `CARER-CONSENT-LINEAGE`: their
+rules hold; the one addition is the delegation grant guard's exemption for
+`consent/request-cmc` written through a delegate-approved membership
+`[DDG04]`, which does not let a delegate publish an offer; their entries'
+dated "hard delete" wording is history and stays.
 
 ## Section B: Trigger categories (no specific backlog slug yet)
 
@@ -1363,6 +1448,42 @@ listed in Section A). B.3, B.4 (no new primitive: the work extends `CMC`,
 `access`, `delegation`), B.5, B.6, B.9, B.10: none. B.11: the new config keys
 are walked at release.
 
+**Release walk 2026-10-15 for open-pryv.io 2.0.0-rc.53** (release commit
+`61fb28dd`; the cascade fix it builds on shipped in 2.0.0-rc.52, `96af58ad`).
+The pre-release walk above holds, with these shipped differences: the mint
+trigger is refused to every token but a membership access (the group's
+personal and delegate tokens included); the in-flight limit is one mint per
+membership and patient relationship, per worker process (the rate limit is
+per worker process too); a member asks for named data streams only (never
+`*` nor a `:_cmc:` stream); a member access never outlives its membership.
+Error ids as shipped: `cmc-member-access-not-member`,
+`-relationship-not-found`, `-scope-outside-membership`,
+`-permissions-not-subset`, `-expiry-out-of-range`, `-rate-limited`,
+`-in-flight` (at write), `-grant-not-delegable`, `-peer-rejected`,
+`-peer-unreachable`, `-membership-gone`, `-not-retryable` (on the trigger),
+`cmc-membership-permissions-invalid`, `cmc-member-stamp-invalid`,
+`cmc-member-revoke-residual`, `cmc-member-channel-not-supported`, and,
+outside group accounts, `cmc-offer-stream-not-offerable`,
+`cmc-invalidate-link-scope-mismatch`, the retry record reason
+`cmc-retry-stale`. Behaviour changes of existing methods, now stated by the
+rows: every CMC and delegation teardown is the `accesses.delete` deletion
+(deletion records with `includeDeletions`, webhooks deleted, alias
+released), replacing the "hard delete" wording in `gdpr.Art.7`,
+`gdpr.Art.8`, `context/cmc-consent-primitives.md`,
+`context/delegation-model.md`; an app token deletes only the `shared`
+accesses it created and no update removes `clientData.cmc`
+(`hipaa-security.164.312(a)(1)`); revoke notices are re-sent by the retry
+loop (https://github.com/pryv/open-pryv.io/issues/157), account-deletion
+notices are not (`gdpr.Art.7`, `gdpr.Art.8`, `gdpr.Art.17`, the two context
+notes). Families re-walked: access control and audit rows rewritten (table
+under `GROUP-ACCOUNTS-CMC` in Section A); DSAR and accounting of disclosures
+walked without change (a deletion record adds to what a subject's token
+lists, it removes nothing); erasure: `gdpr.Art.17` extended (a deleted group
+account's member accesses are deleted on the patient cores first `[GA40]`,
+`[MR28]`; account-deletion notices are sent once, not re-sent), the other
+erasure rows walked without change (their text does not detail relationship
+teardown); `soc2.CC6.1` walked without change.
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
@@ -1412,6 +1533,15 @@ validated by the CMC plugin on write, as the other `consent/*` formats). The
 consent-record rows these formats feed are walked under B.8.
 `context/cmc-consent-primitives.md` notes the two planned formats beside the
 eight shipped ones. Re-walk at release, when data-types publishes them.
+
+**Release walk 2026-10-15 for open-pryv.io 2.0.0-rc.53**: the server bundles
+event-type catalogue 1.3.0 with both formats and `request.membership`, plus
+the fields of the late-notice protection (`acceptEventId` and `revokedAt` on
+`consent/revoke-cmc`, `superseded` on its arrival, `deliveryQueued` on the
+trigger). The pre-release walk holds: `gdpr.Art.20`, `iso-13485`,
+`hipaa-privacy.164.514(a)`, `soc2.PI1.1`, `PI1.2`, `P7.1` walked without
+change. `context/cmc-consent-primitives.md` lists the ten formats; the
+`gdpr.Art.7` technical note says ten.
 
 ### B.3: New storage engine (`storages/engines/<new>/`)
 
@@ -1675,6 +1805,21 @@ existing sign-in; no new authentication mechanism). Context notes:
 `context/cmc-consent-primitives.md` (new sections "Who can read the grants an
 account received" and "Group accounts"), `context/delegation-model.md`.
 Re-walk at release.
+
+**Release walk 2026-10-15 for open-pryv.io 2.0.0-rc.53**: shipped as above,
+with three differences the rows now state. The mint gate admits a membership
+access only: the group's personal token is refused too
+(`cmc-member-access-not-member`), so the first bullet's "or the group's
+personal token" did not ship. The delegation grant guard exempts
+`consent/request-cmc` written through a membership a delegate approved, and
+nothing else, so members publish the group's patient invites `[DDG04]`; a
+delegate cannot approve a membership requested from their own account
+`[MB34]`. Offers of any kind (not only memberships) can no longer ask the
+streams the plugin manages on the accepter's account (`:_cmc:inbox`,
+`:_cmc:_internal`, chats / collectors, the `:_cmc:apps` root) `[CN71]`,
+`[MB35]`, `[VC09]`. Rows rewritten as listed under `GROUP-ACCOUNTS-CMC` in
+Section A; `hipaa-security.164.312(d)` and `soc2.CC6.1` walked again without
+change.
 
 ### B.9: OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
 
@@ -1945,6 +2090,21 @@ restore) and `custom.systemStreams.other` refused at boot. Recorded with the
 rows and test codes under `SECURITY-REVIEW-2026` in Section A ("Section B walk
 for 2.0.0-rc.51").
 
+**Walked 2026-10-15 for open-pryv.io 2.0.0-rc.53** (group accounts,
+`GROUP-ACCOUNTS-CMC` in Section A). New keys `cmc.memberAccess.defaultTtl`,
+`minTtl`, `maxTtl`, `ratePerMinute`, `maxInFlightPerMembership`,
+`allowNameOnly`, `sweepIntervalMs`; `cmc.retryLoop.*` now declared in
+`default-config.yml` with **`cmc.retryLoop.enabled` defaulting to `true`**
+(behaviour change: the loop that re-sends revoke notices, retries member
+sweeps and runs the periodic ledger pass runs on every core) and a new
+`cmc.retryLoop.startScheduler`. Added to `config_keys:` where a row cites
+the behaviour they govern: `hipaa-security.164.308(a)(3)(ii)(C)`,
+`164.312(a)(1)`, `164.312(a)(2)(i)` (`allowNameOnly`), `iso-27001.A.5.15`,
+`A.6.5`, `gdpr.Art.7` (`retryLoop.enabled`). Transport, header,
+application-security, platform DB and backup rows: not affected (a core that
+ran with the loop off retires its old retry records as `cmc-retry-stale`
+instead of replaying them; an operational note, no row claim).
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check
@@ -1969,4 +2129,14 @@ ships the fix.
 
 | Added | Where | Gap | Remove when |
 |---|---|---|---|
-| 2026-10-14 | `gdpr.Art.7` detail (§3 withdrawal, after "not the access version chain"); `hipaa-security.164.312(a)(1)` detail ("Apps granted access through a delegation", after `[DCH18]`) | The CMC withdrawal paths (`consent/revoke-cmc`, the reference account app, the requester withdrawing, a delegation detach, account deletion) delete a delegable (`request.accessType: 'app'`) data grant but not the accesses the requester derived from it; those stay valid until their own expiry. Only `accesses.delete` of the grant cascades. Observed on open-pryv.io 2.0.0-rc.51. | An open-pryv.io release makes every CMC teardown path delete the grant's derived accesses with it. Also clear the same "Known gap" wording wherever else it was added (search the repo for "Known gap"). |
+| (none open) | | | |
+
+Discharged: the 2026-10-14 clause on CMC withdrawal of delegable grants
+(derived accesses surviving every teardown path but `accesses.delete`,
+observed on open-pryv.io 2.0.0-rc.51; in `gdpr.Art.7`,
+`hipaa-security.164.312(a)(1)`, `context/workforce-access-patterns.md`
+Pattern 2 and `context/cmc-consent-primitives.md`). Fixed in 2.0.0-rc.52
+(`96af58ad`); each clause was rewritten on 2026-10-15 as the fixed
+behaviour, naming the release, `[MAAC]`, `[CMCHS-APPGRANT]`, `[GA24]` and
+`bin/access-scope-audit.js` for accesses an earlier withdrawal left behind
+(walk recorded under `GROUP-ACCOUNTS-CMC` in Section A).

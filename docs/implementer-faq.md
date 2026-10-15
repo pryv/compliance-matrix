@@ -129,7 +129,9 @@ atomic consumption of TOTP codes and a boot-time check of
 
 ### Q5: How do you handle workforce / role-based access control granularity (e.g., 100 nurses in a hospital deployment)?
 
-**Short answer:** **two composable patterns**.
+**Short answer:** **two composable patterns**, plus, since
+open-pryv.io 2.0.0-rc.53, a third for teams that share one account
+and reach patients through cross-account consent.
 
 **Mechanism 1, group-access with per-caller audit:** a single
 access token can be granted to a group (e.g., "nurses"). The group
@@ -163,21 +165,32 @@ provide the right hooks for either audit-trail-preserving group
 exercise (mechanism 1) or independently-revocable per-member
 provisioning (mechanism 2).
 
-**Planned third mechanism (added 2026-10-14, not yet released):**
-group accounts over CMC (https://github.com/pryv/open-pryv.io/issues/158).
-A team sharing one Pryv account that reaches patient data through
+**Mechanism 3, group accounts over CMC** (open-pryv.io 2.0.0-rc.53,
+release commit `61fb28dd`; added as planned 2026-10-14, shipped
+2026-10-15; https://github.com/pryv/open-pryv.io/issues/158). A team
+sharing one Pryv account that reaches patient data through
 cross-account consent: members are their own accounts and join
-through a membership request the group's administrator accepts; the
-group's core mints each member a short-lived access on a patient's
-account from the patient's delegable grant, stamped with the member's
-identity, and sweeps those accesses when the membership ends. No
-implementer backend, and still no roles inside Pryv. Rows it would
-change carry a `planned:` chip (`proposals/group-accounts-cmc.md`);
-see `context/workforce-access-patterns.md`, Pattern 3.
+through a membership request the group's administrator (the owner or
+a delegate of the group account) accepts; the group's core mints each
+member a short-lived access on a patient's account from the patient's
+delegable grant, which the patient's core stamps with the member's
+and the group's identity, and deletes those accesses on every patient
+account when the membership ends, recording the outcome. No
+implementer backend, and still no roles inside Pryv: a team is a
+stream, a membership is a consent relationship. The group's core, the
+member's core and (for the member stamp) the patient's core need
+2.0.0-rc.53. Tests `[CMCGA]`, `[CMCMB]`, `[CMCMA]`, `[CMCMR]`; see
+`context/workforce-access-patterns.md`, Pattern 3, and
+`proposals/group-accounts-cmc.md`.
 
 **Matrix encoding:**
-- `context/workforce-access-patterns.md`: full breakdown of both
+- `context/workforce-access-patterns.md`: full breakdown of the three
   patterns + when to use each + trust models + matrix-row mapping.
+- Group accounts (2026-10-15): the rows listed in
+  `proposals/group-accounts-cmc.md` cite Pattern 3 as shipped
+  (hipaa-security 164.308(a)(3)(ii)(C), (a)(4)(ii)(B), (a)(4)(ii)(C),
+  164.312(a)(1), (a)(2)(i), (b); iso-27001 A.5.15, A.5.16, A.5.18,
+  A.6.5; gdpr Art.7, Art.29, Art.32; soc2 CC6.2, CC6.3).
 - `hipaa-security.164.308(a)(3)(ii)(C)` (Termination procedures)
   `detail` extended with the two patterns for hospital-scale
   termination.

@@ -407,13 +407,8 @@ requirements:
     reviewed_at: "2026-07-18"
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md]
-    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11]
-    planned:
-      - kind: feature
-        summary: "Group accounts over CMC: the patient is told when the grant they accept is delegable to the group's members; each member access is recorded under the grant and ends when the patient withdraws"
-        proposal: proposals/group-accounts-cmc.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
-        impact: low
+    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11, MAAC, GA10, GA24, GA30, MB10, HR25, DH25, RQ20, RQ21, RQ22, RQ23, CIR26, CIR27]
+    config_keys: [cmc.retryLoop.enabled]
     overview: |
       The access Pryv mints when your user grants permission IS your
       durable consent record, versioned permissions + clientData
@@ -449,19 +444,33 @@ requirements:
       with narrower `permissions` (scope-down). Both bump the access
       serial + snapshot the pre-mutation state. Cross-account:
       `consent/revoke-cmc` triggers symmetric teardown on both sides
-      via the CMC plugin. The CMC teardown paths (a `consent/revoke-cmc`
-      revoke, an accept rolled back, a delegation detach) remove the
-      data grant outright rather than marking it deleted, so for those
-      withdrawals the record you demonstrate is the `consent/*` events
-      (the accept on the subject's account, the request on the
-      requester's) plus the audit trail, not the access version chain.
-      Known gap (open-pryv.io 2.0.0-rc.51): when the offer made the
-      grant delegable (`request.accessType: 'app'`), these CMC paths
-      delete the data grant but not the accesses the requester derived
-      from it, which stay valid until their own expiry; only
-      `accesses.delete` of the grant removes them with it. A fix is in
-      progress; until it ships, a requester using delegable grants must
-      remove its derived accesses itself on withdrawal.
+      via the CMC plugin. Since open-pryv.io 2.0.0-rc.53 every CMC and
+      delegation teardown (a `consent/revoke-cmc` revoke, a revocation
+      received from the counterparty, an accept rolled back, a
+      delegation detach, the teardown at account deletion) is the
+      `accesses.delete` deletion: the data grant is marked deleted and
+      stays readable by name (never by token) with `includeDeletions`,
+      its webhooks are deleted and its alias released `[GA30]`. Before
+      that release these paths removed the access row outright, so for
+      a withdrawal made then the record you demonstrate is the
+      `consent/*` events (the accept on the subject's account, the
+      request on the requester's) plus the audit trail, not the access
+      version chain. When the offer made the grant delegable
+      (`request.accessType: 'app'`), every withdrawal path also deletes
+      the accesses the requester derived from it, since open-pryv.io
+      2.0.0-rc.52 (`96af58ad`) `[MAAC]`, `[CMCHS-APPGRANT]`, `[GA24]`;
+      on earlier releases they stayed valid until their own expiry, and
+      `bin/access-scope-audit.js` lists any left behind. The
+      withdrawal is effective on the withdrawing account at once; the
+      notice to the counterparty, when it cannot be reached, is queued
+      and re-sent by the retry loop since open-pryv.io 2.0.0-rc.53
+      (eight re-sends over about 27 hours, then marked failed for the
+      operator, https://github.com/pryv/open-pryv.io/issues/157)
+      `[HR25]`, `[DH25]`, `[RQ20]`, `[RQ21]`, `[RQ22]`, `[RQ23]`, and a
+      late notice never tears down a relationship the parties
+      re-established meanwhile `[CIR26]`, `[CIR27]`. Not re-sent: the
+      notices of an account being deleted (no account is left to hold
+      them), and any notice while `cmc.retryLoop.enabled` is `false`.
       The person's own accept event also records the end itself,
       whatever ended the consent: `content.withdrawal = { at, by,
       accessId, revokeEventId? }`, with `by: 'accesses.delete'` (the
@@ -637,9 +646,12 @@ requirements:
       accept the account holder writes carries none `[DCH16]`. The
       consent ends with the delegation unless the account holder keeps
       it at detach (below): detaching the delegate deletes
-      the grant before the detach answers (a hard delete, as every CMC
-      revoke) and the requester receives `consent/revoke-cmc`
-      (best-effort, never holding the detach) `[DCH18]`. An accept
+      the grant before the detach answers (since open-pryv.io
+      2.0.0-rc.53 as the `accesses.delete` deletion, leaving a deletion
+      record; earlier releases removed the row outright) and the
+      requester receives `consent/revoke-cmc` (never holding the
+      detach; re-sent by the retry loop when the requester cannot be
+      reached, since rc.53) `[DCH18]`. An accept
       still in progress when the delegation ends mints no grant
       (`cmc-handler-delegation-ended`). After a detach, the subject-side
       record of such a consent is the accept event (`approvedBy`,
@@ -685,34 +697,34 @@ requirements:
       answers `403 access_denied` `[OE27]`. Whether a given delegate may
       consent for the account it manages remains your determination.
 
-      Planned, not yet released: consent to a group account (§1, §3,
+      Consent to a group account (§1, §3, open-pryv.io 2.0.0-rc.53,
+      release commit `61fb28dd`,
       https://github.com/pryv/open-pryv.io/issues/158). A cross-account
-      offer may already make the grant delegable
-      (`request.accessType: 'app'`, open-pryv.io 2.0.0-rc.9), so the
-      requester can derive further accesses on the person's account
-      from it. Today (2.0.0-rc.51) the person's withdrawal through
-      `consent/revoke-cmc` or the reference account app removes the
-      grant but not the accesses the requester derived from it, which
-      live until their own expiry; only `accesses.delete` of the grant
-      removes them with it. A fix is scheduled ahead of the
-      group-accounts release; until then a requester using delegable
-      grants must remove its derived accesses itself on withdrawal, and
-      your consent text should not promise more. With group accounts, a
-      team sharing one account is
-      designed to have its core derive one short-lived access per
-      member from that grant. As designed: the reference consent page
-      states in one line that the grant is delegable; each member
-      access sits on the person's account as a child of the grant,
-      naming the member and the group (server-stamped), within the
-      offer's permissions; and withdrawing the consent, on any path,
-      removes every access derived from the grant. Whether your
-      consent text names the members' access is yours to write. See
+      offer can make the grant delegable (`request.accessType: 'app'`,
+      open-pryv.io 2.0.0-rc.9), so the requester can derive further
+      accesses on the person's account from it. With group accounts, a
+      team sharing one account has its core derive one short-lived
+      access per member from that grant: each member access sits on the
+      person's account as a child of the grant, named by the server,
+      with the member and the group in its `clientData.cmc`, stamped by
+      the person's core from the authenticated grant, within the
+      offer's stream permissions `[GA10]`, `[MB10]`; and withdrawing
+      the consent, on any path, removes the grant and every access
+      derived from it (2.0.0-rc.52 or later on the person's core)
+      `[GA24]`. The reference account app's consent page tells the
+      person, in one line, when an offer's grant is delegable ("This
+      organisation can share this access with its team members. Each
+      member's actions are recorded on your account."), from its first
+      release after 0.21.0 (app-web-user-account); a deployment using
+      its own consent UI writes that notice itself. Whether your consent
+      text names the members' access is yours to write. See
       `context/cmc-consent-primitives.md`, "Group accounts".
     technical: |
       - Snapshot semantics: `context/access-versioning.md` (full head
         clone into history row per update).
       - CMC consent state machine: `context/cmc-consent-primitives.md`
-        (8 `consent/*` formats on `data-types` master).
+        (10 `consent/*` formats in the event-type catalogue 1.3.0
+        bundled with open-pryv.io 2.0.0-rc.53).
       - `accesses.update` composite-id wire format requires `lib-js@3.1.0+`.
 
   - ref: Art.9
@@ -913,7 +925,9 @@ requirements:
       removed and the accept event records `ownerConfirmedAt`, with
       `approvedBy` kept as history `[DCH21]`. Every other consent is
       deleted at once, the requester is told (`consent/revoke-cmc`,
-      best-effort) `[DCH18]`, `[DCH22]`, and its accept event records
+      re-sent by the retry loop when the requester cannot be reached,
+      since open-pryv.io 2.0.0-rc.53) `[DCH18]`, `[DCH22]`, and its
+      accept event records
       the withdrawal (`content.withdrawal`, naming the detach) `[DDK07]`.
       These markers are server-written and cannot be forged or erased
       through the API by the parent or anyone else `[DCH24]`. The accept
@@ -1206,7 +1220,7 @@ requirements:
     draft: true
     pryv_primitives: [event, stream, backup-restore]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete]
-    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4]
+    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28]
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -1306,9 +1320,18 @@ requirements:
           through the delegation are removed on each controlled account
           `[DADL02]`; each CMC counterparty receives the revocation a
           consent withdrawal sends and deletes the access it held
-          `[CN82]`. Best-effort and never holding the deletion; an
-          account on another core needs that core to run 2.0.0-rc.47 or
-          later.
+          `[CN82]`. Never holding the deletion; an account on another
+          core needs that core to run 2.0.0-rc.47 or later. Unlike a
+          consent withdrawal's notice, which the retry loop re-sends
+          since open-pryv.io 2.0.0-rc.53
+          (https://github.com/pryv/open-pryv.io/issues/157), these
+          notices are sent once and not queued (no account is left to
+          hold them): a counterparty that could not be reached keeps
+          the access it held (whose token the erased account held)
+          until it expires or is deleted there. A deleted group account
+          (group accounts over CMC, 2.0.0-rc.53) first has its members'
+          accesses on patient accounts deleted through the patients'
+          grants, with no record kept `[GA40]`, `[MR28]`.
         - **Webhooks stop at once** (2.0.0-rc.50) `[DLWH1]`, and pending
           password-reset requests of every name are destroyed
           (2.0.0-rc.47) `[RPLC13]`.
@@ -1644,14 +1667,9 @@ requirements:
     pryv_effort_saved: high
     facilitation_mode: primitive
     draft: true
-    pryv_primitives: [access, permissions, audit]
+    pryv_primitives: [access, permissions, audit, CMC]
     derives_from: [gdpr.Art.28]
-    planned:
-      - kind: feature
-        summary: "Group accounts over CMC: each member of a shared account processes a patient's data under an access of their own, scoped by the membership and named on the patient's record"
-        proposal: proposals/group-accounts-cmc.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
-        impact: low
+    tests: [CMCGA, GA01, GA10, GA12, GA15, GA20]
     overview: |
       "Only on instructions" is
       enforced operationally through the access primitive, workforce
@@ -1664,16 +1682,19 @@ requirements:
       to a person through the `callerId` your app forwards; see
       `context/workforce-access-patterns.md`, Pattern 1.
 
-      **Planned, not yet released: group accounts over CMC**
-      (https://github.com/pryv/open-pryv.io/issues/158). For a team
-      sharing one account (the controller's or its processor's) that
-      reaches data subjects through cross-account consent, each member
-      is designed to process a subject's data under an access of their
-      own: issued only under a membership the group's administrator
-      approved, limited to the member's team streams and to the
-      subject's consent, named on the subject's account and audited
-      under its own id. The instructions themselves (who may join,
-      which teams they get) stay the controller's. See
+      **Group accounts over CMC** (open-pryv.io 2.0.0-rc.53, release
+      commit `61fb28dd`, https://github.com/pryv/open-pryv.io/issues/158).
+      For a team sharing one account (the controller's or its
+      processor's) that reaches data subjects through cross-account
+      consent, each member processes a subject's data under an access
+      of their own: issued only through a membership the group's
+      administrator approved `[GA01]`, limited to the member's team
+      streams and to the stream permissions of the subject's consent
+      `[GA12]`, `[GA15]`, named on the subject's account (the member
+      and the group stamped by the subject's core) and audited under
+      its own id `[GA10]`, and deleted when the membership ends
+      `[GA20]`. The instructions themselves (who may join, which teams
+      they get) stay the controller's. See
       `context/workforce-access-patterns.md`, Pattern 3.
 
   - ref: Art.25
@@ -1983,9 +2004,9 @@ requirements:
     pryv_effort_saved: high
     facilitation_mode: infrastructure
     draft: true
-    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation]
+    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC]
     config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -1997,11 +2018,6 @@ requirements:
         summary: "Read-only effective-configuration endpoint strengthens the evidence narrative around operator-visible safeguards"
         proposal: proposals/config-effective-exposure.md
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705795&issue=pryv%7Copen-pryv.io%7C118
-        impact: low
-      - kind: feature
-        summary: "Group accounts over CMC: member accesses on patient accounts are short-lived, bounded by membership, offer and grant, stamped with the member's identity and swept at offboarding"
-        proposal: proposals/group-accounts-cmc.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=271216458&issue=pryv%7Copen-pryv.io%7C158
         impact: low
     overview: |
       Multi-aspect article,
@@ -2060,13 +2076,21 @@ requirements:
           alert) directly with its relationship token is refused `403`
           (`cmc-chat-disabled`, `cmc-system-messaging-disabled`)
           (open-pryv.io 2.0.0-rc.38, merge `7aab1e85`) `[CN63]`,
-          `[CN65]`, `[CH07]`, `[CH10]`. Planned, not yet released
-          (https://github.com/pryv/open-pryv.io/issues/158): members of
+          `[CN65]`, `[CH07]`, `[CH10]`. Since open-pryv.io 2.0.0-rc.53
+          (release commit `61fb28dd`,
+          https://github.com/pryv/open-pryv.io/issues/158), members of
           a group account get, from the group's core, their own
           short-lived access on a patient account, bounded by their
           membership, the patient's offer and the grant, stamped with
-          their identity, and swept when the membership ends (see
-          `context/workforce-access-patterns.md`, Pattern 3).
+          their identity by the patient's core, and deleted when the
+          membership ends `[GA10]`, `[GA12]`, `[GA14]`, `[GA20]` (see
+          `context/workforce-access-patterns.md`, Pattern 3). The same
+          release refuses a cross-account offer that asks a stream the
+          consent plugin manages on the accepter's account (its inbox,
+          which holds every grant endpoint the account received, or
+          its internal streams), at write and again at accept `[CN71]`,
+          `[MB35]`, `[VC09]`, and closes an invite link only from the
+          invite's own scope `[CN72]`.
         - Integrity of stored records: IMPLEMENTED for the built-in
           stores, an `events.update`, a trash (a shared-secret event
           excepted, trashed by compare-and-set) or an attachment
