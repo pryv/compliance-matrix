@@ -321,7 +321,7 @@ requirements:
     pryv_primitives: [access, MFA, system-streams]
     derives_from: [hipaa-security.164.312(d), iso-27001.A.8.5]
     config_keys: [services.mfa.mode]
-    tests: [MA01, MA02, MA03, MA04, MA05]
+    tests: [MA15A, MA15C, MA10A, MA11A, MA3A, MA12A]
     planned:
       - kind: enhancement
         summary: "Reference WebAuthn plugin meets the BfArM 'strong authentication for sensitive health data' bar without SMS-OTP weakness"

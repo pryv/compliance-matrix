@@ -239,7 +239,7 @@ requirements:
     draft: true
     pryv_primitives: [access, MFA, system-streams]
     config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, services.mfa.methods.sms.sendLimits, services.mfa.sessions.maxPendingPerUser]
-    tests: [MA01, MA02, MA03, MA04, MA05, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1, MLSX1, MACC2]
+    tests: [MFAA, MA15A, MA15C, MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1, MLSX1, MACC2]
     planned:
       - kind: enhancement
         summary: "Reference TOTP / WebAuthn plugins + AAL-tier mapping doc strengthen the A.8.5 evidence chain"
@@ -250,9 +250,10 @@ requirements:
     overview: |
       Token-based auth by default; multi-factor via `mfa.*` API methods,
       live by default since open-pryv.io 2.0.0-rc.14 (`services.mfa.active`;
-      TOTP built in, SMS providers pluggable). The MFA acceptance series
-      (`[MFAA]`) exercises activate / confirm / challenge / verify /
-      deactivate / recover. Authentication strength tier is the
+      TOTP built in, SMS providers pluggable) `[MA15A]`, `[MA15C]`. The MFA
+      acceptance series (`[MFAA]`) exercises activate `[MA3A]`,
+      `[MA10A]`, confirm `[MA4A]`, challenge `[MA5B]`, verify `[MA5A]`,
+      `[MA11A]`, deactivate `[MA6A]` and recover `[MA7A]`. Authentication strength tier is the
       operator's policy choice; technical primitives are shipped.
     detail: |
       **Failed second factors are throttled by Pryv (open-pryv.io

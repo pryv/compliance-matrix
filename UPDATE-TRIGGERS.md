@@ -1172,9 +1172,8 @@ access deletion through the route's deletion, `155367dd` integration suite,
 depends on shipped in 2.0.0-rc.52 (`96af58ad`, 2026-10-14). Tests: in-process
 integration `[CMCGA]` (`components/api-server/test/cmc-group-accounts.test.js`,
 `[GA01]`..`[GA42]`), unit `[CMCMB]` (`[MB*]`, member role and offer), `[CMCMA]`
-(`handleMemberAccess.test.js`; its `[MA*]` codes are shared with other
-suites, so rows cite `[CMCMA]` except the unique `[MA41]`, `[MA50]`),
-`[CMCMR]` (`[MR*]`, offboarding; rows cite `[CMCMR]` where a code is shared),
+(`handleMemberAccess.test.js`; rows cite `[CMCMA]` and its two codes that
+no other suite uses, `[MA41]`, `[MA50]`), `[CMCMR]` (`[MR*]`, offboarding),
 the adapter cascade `[MAAC]`, revoke-notice queueing `[HR25]`, `[HR26]`,
 `[DH25]`, `[DH26]`, `[RQ20]`..`[RQ29]`, late-notice protection `[CIR26]`,
 `[CIR27]`, delegation guard exemption `[DDG04]`. Shipped differences from

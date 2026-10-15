@@ -259,7 +259,7 @@ requirements:
     draft: true
     pryv_primitives: [system-streams, MFA, access]
     config_keys: [services.mfa.mode, auth.passwordRules, sso.enabled]
-    tests: [MA01, MA02, MA03]
+    tests: [MA15B, MA10A, MA3A, MA7A]
     planned:
       - kind: enhancement
         summary: "Reference TOTP / WebAuthn plugins reduce dependence on SMS-OTP for the second factor"
@@ -274,10 +274,10 @@ requirements:
       authentication strength beyond a password alone, see §164.312(d).
     detail: |
       Password is one possible factor; MFA via the `mfa.*` API methods
-      (authenticator-app TOTP by default since open-pryv.io 2.0.0-rc.14,
-      SMS supported) is the second factor when enabled. Recovery
-      flows live alongside (`mfa.recover`) so an account is not lost
-      when a device is. The implementer chooses whether MFA is required
+      (authenticator-app TOTP by default since open-pryv.io 2.0.0-rc.14
+      `[MA15B]`, `[MA10A]`, SMS supported `[MA3A]`) is the second factor
+      when enabled. Recovery flows live alongside (`mfa.recover`) so an
+      account is not lost when a device is `[MA7A]`. The implementer chooses whether MFA is required
       universally or per-role.
 
       An operator may also enable federated sign-in through an external
@@ -1018,7 +1018,7 @@ requirements:
     draft: true
     pryv_primitives: [access, MFA, system-streams, delegation]
     config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds]
-    tests: [MA01, MA02, MA03, MA04, MA05, MA06, MA07, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1]
+    tests: [MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1]
     planned:
       - kind: enhancement
         summary: "Reference MFA plugins (TOTP / WebAuthn) + primitive-catalogue doc surface the pluggability"
@@ -1056,9 +1056,11 @@ requirements:
       auth-stack modernisation arc subsumes this work.
 
       MFA is opt-in per operator; once enabled, it can be required
-      at login, at sensitive operations, or both. The MA test series
-      exercises activate / confirm / challenge / verify / deactivate
-      / recover paths.
+      at login, at sensitive operations, or both. The MFA tests
+      (`components/api-server/test/mfa.test.js`) exercise the activate
+      `[MA3A]`, `[MA10A]`, confirm `[MA4A]`, challenge `[MA5B]`, verify
+      `[MA5A]`, `[MA11A]`, deactivate `[MA6A]`, `[MA13B]` and recover
+      `[MA7A]` paths, for the SMS and the TOTP method.
 
       **Second-factor guessing is throttled by Pryv itself (open-pryv.io
       2.0.0-rc.27).** A per-account backoff, not a lockout (open-pryv.io
