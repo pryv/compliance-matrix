@@ -1086,6 +1086,13 @@ exclusions); password reset hashing, single use and session revocation
 (rc.43). Likely rows: `iso-27001.A.8.5` / `A.5.17` / `A.8.20` / `A.8.21`,
 `hipaa-security.164.312(d)` / `164.312(a)(1)` / `164.312(e)(1)`,
 `soc2.CC6.1` / `CC6.6`, `gdpr.Art.32`, `context/webhooks-signal-only.md`.
+Incidental coverage from the 2.0.0-rc.56 walk (2026-10-20, Section B.11):
+`webhooks.allowedPrivateHosts` is now named on `iso-27001.A.8.20`,
+`gdpr.Art.32` and `context/cmc-consent-primitives.md`, only as the grammar
+`cmc.allowedPrivateHosts` shares, and `iso-27001.A.8.20` states that webhook
+deliveries apply the same address rules. The webhook destination guard
+itself (its key in `config_keys:`, its tests, `context/webhooks-signal-only.md`)
+is still to walk with the rest of rc.40 to rc.45.
 
 **Backlog slugs checked, no chip changed**: `AUDIT-LOG-CHAINING` (the only one
 of the review-adjacent slugs still carrying chips; nothing shipped toward a
@@ -1542,6 +1549,22 @@ trigger). The pre-release walk holds: `gdpr.Art.20`, `iso-13485`,
 change. `context/cmc-consent-primitives.md` lists the ten formats; the
 `gdpr.Art.7` technical note says ten.
 
+**Walked 2026-10-20 for data-types 1.3.1 and 1.3.2** (description changes
+only; no new format, no schema change). 1.3.1: `consent/invalidate-link-cmc`
+also withdraws a single-use invite nobody accepted yet (server behaviour of
+open-pryv.io 2.0.0-rc.56, walked under B.8). 1.3.2: `consent/revoke-cmc`
+names the server-written fields of a delivered notice and says `superseded`
+is set by the receiving core only (server behaviour unreleased at this walk,
+open-pryv.io `d4fa7acc` on master). open-pryv.io 2.0.0-rc.56 still bundles
+catalogue 1.3.0; the bump to 1.3.1 / 1.3.2 lands in the next release. No row
+cites either description: `gdpr.Art.7` (technical note: ten formats in
+catalogue 1.3.0 bundled with 2.0.0-rc.53, still true),
+`context/cmc-consent-primitives.md` (format table updated under B.8 for the
+behaviour, not the description), `gdpr.Art.20`, `iso-13485`,
+`hipaa-privacy.164.514(a)`, `soc2.PI1.1`, `PI1.2`, `P7.1` walked without
+change. Re-walk the catalogue version cited in `gdpr.Art.7` and the context
+note at the release that bundles 1.3.2.
+
 ### B.3: New storage engine (`storages/engines/<new>/`)
 
 Affects:
@@ -1819,6 +1842,101 @@ streams the plugin manages on the accepter's account (`:_cmc:inbox`,
 `[MB35]`, `[VC09]`. Rows rewritten as listed under `GROUP-ACCOUNTS-CMC` in
 Section A; `hipaa-security.164.312(d)` and `soc2.CC6.1` walked again without
 change.
+
+**Walked 2026-10-20 for open-pryv.io 2.0.0-rc.56** (tag `2.0.0-rc.56`, commit
+`d8556b84`; merges `61a94e69` for the store-prefixed-id guards, `2975ead2` for
+the counterparty destination guard, `e5a6df0d` for stream moves, `0886dab5`
+for the deletion-record retention, `fb6da02d` for platform names). A security
+release. No token-class change on consent-bearing methods, but several guards
+the rows cite had a gap this release closes, so the access-control rows were
+walked; rows that stated a protection the gap contradicted now say, neutrally,
+from which release it holds. No tier shift, no `planned:` chips involved,
+`reviewed_at` left unchanged.
+- **Store-prefixed stream ids** (every guard judges the canonical spelling:
+  `:local:<id>` and the account store's prefix): plugin-managed regions of
+  `:_cmc:` and `:_delegation:*` closed to user writes for every token, the
+  owner's included, also as the parent of a created or moved stream, and
+  plugin-managed streams cannot be moved or trashed `[CNRP1]` to `[CNRP7]`,
+  `[CRPP1]`, `[CRPP2]`, `[DSC05]`, `[CSU01]`, `[CSU02]`, `[DSU01]`,
+  `[DSU02]`, `[CNM2A]`, `[CNM2C]`; account-field guards (primary email only
+  through `account.update`, non-editable and hidden fields, level caps on
+  account-stream permissions) on events and on access creation and update,
+  the creator's own permission check included `[ASA1]` to `[ASA7]`; the
+  capability re-read before an accept mints `[IA24]`, `[IA25]`.
+- **Retry worker processes only server-written records** (author, stream and
+  type checked; foreign records retired `cmc-retry-foreign-record`) `[RQ32]`,
+  `[CNM2B]`; a retried accept the server authored is refused `[RQ30]`,
+  `[RQ31]`.
+- **Stream moves** need manage on the whole moved subtree for an app or shared
+  access, trashed descendants included; a parent inside the moved subtree is
+  refused for every access; the permission walk stops on a stored cycle
+  `[STMV]` (`[SMV1]` to `[SMV12]`).
+- **Single-use invite withdrawal**
+  (https://github.com/pryv/open-pryv.io/issues/160):
+  `consent/invalidate-link-cmc` withdraws an open single-use invite; a
+  withdrawal racing an accept wins; a consumed one stays a no-op; the offer
+  stays readable through the withdrawn link until expiry `[CN100]` to
+  `[CN103]`, `[IS13]`, `[CMCIL-C]`, `[CMCIL-C2]`.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.32 | access-control bullet: single-use invite withdrawal, stream-move rule, account-field guards (with what the earlier releases allowed); delegate-account bullet: namespace closed by every spelling and as a parent, CMC regions likewise, retry worker; new "Calls to a counterparty" bullet (B.11) | `CN100`, `CN102`, `CNRP1`, `CNRP6`, `CNRP7`, `DSC05`, `DSU02`, `CNM2A`, `CNM2B`, `RQ32`, `ASA1`, `ASA6`, `SMV1`, `SMV10` (+ B.11 codes) |
+| gdpr | Art.7 | §3 note: a revoke notice to a refused destination is not queued; the retry loop acts only on server-written records | `HR41`, `RQ33`, `RQ32` |
+| iso-27001 | A.5.15 | new paragraphs: plugin-managed and account streams judged by every spelling (correction: earlier releases held for canonical ids only); stream-move rule | `CNRP1`, `CNRP6`, `CNRP7`, `DSC05`, `ASA3`, `ASA6`, `SMV1`, `SMV4`, `SMV10` |
+| iso-27001 | A.8.2 | new detail: account-field guards; correction, earlier releases let an access holding `contribute` on the email field change the primary email, and a `*` app grant an account field | `ASA1`, `ASA2`, `ASA3`, `ASA6` |
+| iso-27001 | A.8.3 | new detail: stream-move rule; correction, earlier releases let a lower-granted child move into the target parent's permissions | `SMV1`, `SMV2`, `SMV3`, `SMV4`, `SMV5`, `SMV10` |
+| hipaa-security | 164.312(a)(1) | new paragraphs: plugin-managed and account streams by every spelling, retry worker, stream moves (with the earlier gap) | `CNRP1`, `CNRP6`, `CNRP7`, `DSC05`, `ASA1`, `ASA2`, `ASA3`, `ASA6`, `CNM2B`, `RQ32`, `SMV1`, `SMV4` |
+| soc2 | CC6.1 | new paragraph: privileged streams by every spelling (with the earlier gap) | `ASA1`, `ASA2`, `ASA6`, `CNRP6`, `CNRP7` |
+| soc2 | CC6.3 | new paragraph: least privilege when streams move; correction, the overview's "cannot touch out-of-scope data" did not hold for stream moves before rc.56 | `SMV1`, `SMV2`, `SMV3`, `SMV4`, `SMV10` |
+
+Context notes: `context/cmc-consent-primitives.md` (table row and paragraph
+on `consent/invalidate-link-cmc`; new sections "Plugin-managed regions are
+closed by every spelling of an id" and "Calls to a counterparty: destination
+guard"; revoke-notice delivery residual; code references),
+`context/delegation-model.md` (namespace guard posture: rc.56 closure and the
+earlier gap), `docs/pryv-primitives.md` (stream primitive: move rule,
+plugin-managed streams by every spelling).
+
+Walked without change: `soc2.CC6.2`, `iso-27001.A.5.16`,
+`hipaa-security.164.312(d)` (no authentication change);
+`iso-27001.A.5.18` (lifecycle of access rights unchanged; the move rule is
+recorded on A.5.15 / A.8.3); `iso-27701.A.7.3.4`, `hipaa-privacy.164.508`
+(withdrawal of a consent given is unchanged: withdrawing an unaccepted invite
+is the requester's act, before any consent exists; it is recorded on
+`gdpr.Art.32` and the CMC context note); `gdpr.Art.8` (no change to the
+carer / delegate consent paths); `gdpr.Art.25` default 10 (consent still
+required; the invite withdrawal narrows exposure, already covered by Art.32);
+`hipaa-security.164.312(c)(1)` and `soc2.PI1.3` (the retry-worker fix stops a
+crafted record being acted on, recorded as access control; no stored-record
+integrity claim shifts). B.1: no new API method; `consent/invalidate-link-cmc`
+gains the single-use case and new error ids (`cmc-reserved-stream`,
+`delegation-reserved-stream`, `cmc-retry-foreign-record`,
+`cmc-retry-system-authored`, `cmc-handler-destination-refused`,
+`cmc-capability-destination-refused`) are cited where the rows need them.
+B.3, B.4, B.6, B.9, B.10: none.
+
+**Not row-relevant**: usernames and the platform's DNS names share one
+namespace (registration, `check_username`, username change, admin
+pre-registration and delegated account creation refuse core ids,
+`dns.staticEntries` keys and runtime DNS record names; a new DNS record or
+core id under an account's name is refused; `[RR13]`, `[RR14]`, `[PLH7]`,
+`[PLH8]`, `[BNCX4]`): a reachability fix no row claims against. The backup
+rows' "a restore refuses names the platform routes itself" (`[BKRN1]` on
+`hipaa-security.164.308(a)(7)(ii)(A)`, `iso-27001.A.8.13`, the
+`backup-restore` primitive) holds and now covers these names too: walked
+without change. `streams.update` refusing a `parentId` inside the moved
+subtree for every access (`[SMV10]`) is cited with the move rule.
+
+**Next release (unreleased on open-pryv.io master at this walk, not claimed by
+any row)**: the receiver-owned fields of a received revoke notice
+(`superseded`, `backChannelAccessId`, `dataGrantAccessId`,
+`revokedAccessIds`) written by the receiving server only (`d4fa7acc`); event
+type catalogue 1.3.1 and 1.3.2 (description changes, B.2 below); upgrade
+advice wording; licence headers on three scripts; a test made independent of
+its neighbour. `context/cmc-consent-primitives.md` says a late notice "is
+marked `content.superseded` on arrival", which holds before and after; re-walk
+`gdpr.Art.7` and that note at the release that carries `d4fa7acc` in case the
+server-owned wording is wanted.
 
 ### B.9: OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
 
@@ -2103,6 +2221,84 @@ the behaviour they govern: `hipaa-security.164.308(a)(3)(ii)(C)`,
 application-security, platform DB and backup rows: not affected (a core that
 ran with the loop off retires its old retry records as `cmc-retry-stale`
 instead of replaying them; an operational note, no row claim).
+
+**Walked 2026-10-20 for open-pryv.io 2.0.0-rc.56** (tag `2.0.0-rc.56`, commit
+`d8556b84`). Two new config keys; no new response header, platform DB or
+backup behaviour. The access-control half of the release is under B.8 (same
+date). No tier shift, no `planned:` chips involved.
+- **`cmc.allowedPrivateHosts`** (default `[]`; merge `2975ead2`). Calls to a
+  counterparty (consent deliveries, chat, revocations, scope updates, the
+  capability read of an accept, delegation notices, OAuth revocation notices)
+  are refused before any connection toward a loopback, private, link-local or
+  otherwise reserved address (the webhook address rules, checked again at
+  connect time), over `http:` unless `cluster.allowInsecurePeerUrl`, or with
+  credentials in the URL; a redirect or an answer over 1 MiB is refused; the
+  platform's own host names are always allowed (never an IP literal by that
+  rule); the key lists private peers (host names, IPs, CIDR ranges, same
+  grammar as `webhooks.allowedPrivateHosts`, checked at boot); a refused
+  delivery is permanent and never queued. Tests: business `[PFR1]` to
+  `[PFR11]`, cmc `[CO20]` to `[CO23]`, `[HC13]`, `[HR41]`, `[RQ33]` (and
+  `[HA08b]`, `[HA08c]`, `[HMA16b]`, `[MR44b]`, cited in prose only: the
+  matrix `tests:` field takes upper-case codes).
+  - `iso-27001.A.8.26`: third example block (outbound calls); `config_keys`
+    `cmc.allowedPrivateHosts`; tests `PFR1`, `PFR2`, `PFR4`, `PFR5`, `PFR6`,
+    `PFR10`, `CO21`, `CO22`, `RQ33`.
+  - `iso-27001.A.8.20`: outbound-side paragraph; `config_keys`
+    `cmc.allowedPrivateHosts`, `cluster.allowInsecurePeerUrl`; tests `PFR1`,
+    `PFR2`, `PFR3`, `PFR4`, `CO22`.
+  - `soc2.CC6.6`: new detail (the boundary holds outbound); `config_keys`
+    `cmc.allowedPrivateHosts`; tests `PFR1`, `PFR2`, `PFR3`, `PFR5`, `CO22`.
+  - `soc2.CC6.7`: counterparty calls refuse `http:`; `config_keys`
+    `cluster.allowInsecurePeerUrl`; test `PFR4`.
+  - `hipaa-security.164.312(e)(1)`: "Calls to a counterparty" paragraph
+    (deliveries carry a data grant's endpoint; earlier releases applied
+    neither check); `config_keys` `cluster.allowInsecurePeerUrl`,
+    `cmc.allowedPrivateHosts`; tests `PFR1`, `PFR4`, `CO22`.
+  - `gdpr.Art.32`: new "Calls to a counterparty" bullet; `config_keys`
+    `cmc.allowedPrivateHosts`, `cluster.allowInsecurePeerUrl`; tests `PFR1`,
+    `PFR2`, `PFR4`, `PFR5`, `PFR6`, `CO22`.
+  - `gdpr.Art.7`: a revoke notice to a refused destination is not re-sent
+    (B.8 table); `config_keys` `cmc.allowedPrivateHosts`.
+  - `context/cmc-consent-primitives.md`: new section "Calls to a
+    counterparty: destination guard".
+  - Walked without change: `soc2.CC6.8` (malicious-software prevention; the
+    guard protects the network, not content), `iso-27001.A.8.24`,
+    `hipaa-security.164.312(e)(2)(i)`, `164.312(e)(2)(ii)` (no change to the
+    cryptography Pryv applies; the `http:` refusal is recorded on the
+    transmission rows above), `context/subprocessor-posture-and-data-flow.md`
+    (outbound calls go to the counterparties the implementer's users choose,
+    no new subprocessor).
+- **`accesses.deletionRecords.retentionDays`** (default 0 = kept until the
+  account is deleted; merge `0886dab5`). Above 0 the master purges, once a
+  day, the deletion records of accesses deleted more than that many days ago,
+  with their version rows and access-index rows; past it an audit row or an
+  event's author shows such an access by id only, and
+  `/system/accesses/:accessId` no longer resolves it; a bad value stops the
+  boot. Tests `[ADPG]` (`[ADP1]`, `[ADP2]`), `[ADRP]` (`[ADR1]` to `[ADR5]`).
+  - `hipaa-security.164.312(b)`: deletion records resolve audit rows while
+    kept; `config_keys`; tests `ADP1`, `ADR5`.
+  - `hipaa-security.164.316(b)(2)(i)`: new "Access deletion records"
+    paragraph (a retention below six years shortens attribution);
+    `config_keys`; test `ADP1`.
+  - `gdpr.Art.33`: the breach-scope lookup resolves revoked accesses unless
+    purged; `config_keys`; test `ADP1`.
+  - `gdpr.Art.25`: "Still in your hands" retention bullet; `config_keys`;
+    tests `ADP1`, `ADR5`.
+  - `gdpr.Art.15`: deleted accesses listed while their records are kept;
+    `config_keys`.
+  - `gdpr.Art.5` (§1(e)): "no TTL / auto-delete primitive" now reads "for
+    account data", with the one narrow built-in purge named. `reviewed_at`
+    left unchanged.
+  - Context notes: `context/data-retention-operator-owned.md` (background
+    loops list; it named two loops as the only ones, now lists the CMC retry
+    loop too), `context/account-backup-coverage.md` (Art.15(1)(c) recipients
+    of the past).
+  - Walked without change: `iso-27001.A.8.15` (the audit rows themselves are
+    kept, each with its access id), `iso-27001.A.5.18`, `soc2.CC7.2`,
+    `soc2.P6.6`, the breach rows of `hipaa-breach`, `pipeda` and
+    `swiss-nlpd`, `context/breach-notification-delivery-operator-owned.md`
+    (they cite `bin/breach-scope.js` or the reverse index without claiming
+    that revoked accesses resolve; `gdpr.Art.33` carries the caveat).
 
 ## Section C: Maintenance reminders
 

@@ -34,7 +34,7 @@ catalogue 1.3.0, bundled with open-pryv.io 2.0.0-rc.53):
 | `consent/revoke-cmc` | Tear down established consent | Either party's app |
 | `consent/scope-request-cmc` | Propose scope change | Collector app |
 | `consent/scope-update-cmc` | Apply scope change | User-side app or plugin |
-| `consent/invalidate-link-cmc` | Invalidate open-link capability | Requester app (on the invite's own scope or an ancestor, since 2.0.0-rc.53) |
+| `consent/invalidate-link-cmc` | Invalidate an open-link capability, or (since 2.0.0-rc.56) a single-use invite nobody accepted yet | Requester app (on the invite's own scope or an ancestor, since 2.0.0-rc.53) |
 | `consent/member-access-cmc` | A group member asks the group's core for an access of their own on a patient's account | Member app, through its membership access (group accounts, 2.0.0-rc.53) |
 | `consent/member-revoke-cmc` | Record of the sweep that deletes a departing member's accesses | Group's plugin only; a client write is refused (group accounts, 2.0.0-rc.53) |
 
@@ -67,6 +67,20 @@ internal offer stream (`components/cmc/README.md`). Open-link invites may carry
 `expiresAt: null` (no expiry); the link is then ended by
 `consent/invalidate-link-cmc`, and the consent record of each participant is
 unaffected by the link's lifetime.
+
+Since open-pryv.io 2.0.0-rc.56 (https://github.com/pryv/open-pryv.io/issues/160)
+the same event also withdraws a **single-use** invite nobody accepted yet: the
+capability flips to `invalidated`, the `consent/request-cmc` trigger's
+`content.status` becomes `invalidated` (with `invalidatedAt`, `reason`), and a
+later accept fails with `cmc-capability-invalidated` `[CN100]`, `[IS13]`,
+`[CMCIL-C]`. A withdrawal that races an accept wins: the accept is refused and
+no relationship is left `[CN102]`. On an accepted single-use invite it stays a
+no-op success `[CN101]`, `[CMCIL-C2]`; withdrawing an invite is not withdrawing
+a consent already given (that is `consent/revoke-cmc`). The offer text stays
+readable through a withdrawn link until it expires `[CN103]`, so give
+sensitive invites a short `expiresAt`. Earlier releases accepted the event on a
+single-use invite as a no-op, so a link sent to the wrong person stayed usable
+until it expired.
 
 On `accept-cmc`, the plugin transactionally:
 1. Creates the bidirectional shared access pair (one access on each side).
@@ -371,6 +385,62 @@ accept (`cmc-offer-stream-not-offerable`) `[CN71]`, `[MB35]`, `[VC09]`.
 `*` and the accepter's own `:_cmc:apps:<app>[:<path>]` streams stay
 offerable; `*` never reaches the inbox nor the internal subtree.
 
+## Plugin-managed regions are closed by every spelling of an id (2.0.0-rc.56)
+
+The plugin-managed regions of the `:_cmc:` namespace (`:_cmc:` itself,
+`:_cmc:inbox`, the `:_cmc:_internal` subtree, the plugin-owned `chats` /
+`collectors` segments) are closed to user writes for every token, the owner's
+personal token included. Since open-pryv.io 2.0.0-rc.56:
+
+- every guard judges the stream an id resolves to: the store-prefixed form
+  (`:local:<id>`, which addresses the same stream as `<id>`) is canonicalised
+  before the reserved and internal write / read guards, the reserved-parent
+  check, the member-access permission check and the scope-update partition
+  `[CNRP7]`, `[CNM2A]`, `[CNM2C]`;
+- a `streams.create` or a move whose parent is inside a plugin-managed region
+  is refused (`400 invalid-operation`, `cmc-reserved-stream`), a
+  plugin-managed stream cannot be moved or trashed, while `:_cmc:apps` and the
+  user-created streams under it keep taking children `[CNRP1]` to `[CNRP5]`,
+  `[CRPP1]`, `[CRPP2]`, `[CSU02]`;
+- the retry worker dispatches only records the server wrote (author, stream
+  and type checked); any other record found in the retry stream is retired
+  `failed-permanent` (`cmc-retry-foreign-record`) without being run
+  `[RQ32]`, `[CNM2B]`, and a retried accept the server authored is refused
+  (`cmc-retry-system-authored`) `[RQ30]`, `[RQ31]`.
+
+Before rc.56 a store-prefixed spelling was not recognised by these guards and
+the parent of a new or moved stream was not checked, so the closure held only
+for requests using canonical ids. The same canonicalisation covers the account
+fields (see the `gdpr.Art.32` access-control bullet) and the `:_delegation:*`
+namespace (`context/delegation-model.md`).
+
+## Calls to a counterparty: destination guard (2.0.0-rc.56)
+
+Consent deliveries, chat, revocations, scope updates, the capability read of
+an accept, delegation notices and OAuth revocation notices go to URLs the other
+side supplies. Since open-pryv.io 2.0.0-rc.56 such a call is refused, before
+any connection, when the host is or resolves to a loopback, private,
+link-local or otherwise reserved address (the address rules of webhooks,
+checked again at connect time), when it uses `http:` (unless
+`cluster.allowInsecurePeerUrl`) or carries credentials, and when the answer is
+a redirect or larger than 1 MiB `[PFR1]`..`[PFR7]`, `[CO22]`. The platform's
+own host names (the host of `core.url`, `dns.domain` and below, the
+`service.api` host) are always allowed, never an IP literal by that rule
+`[PFR8]`; private peers, and a private `core.url` literal, are listed in
+`cmc.allowedPrivateHosts` (host names, IPs or CIDR ranges, the grammar of
+`webhooks.allowedPrivateHosts`; unusable entries reported at boot) `[PFR3]`,
+`[PFR9]`.
+
+A refused delivery is permanent and never queued: the trigger reports
+`cmc-handler-destination-refused` (or `cmc-capability-destination-refused`
+when an accept's offer read is refused), and an accept whose delivery is
+refused removes the data grant it had created, as for a rejected one
+`[CO20]`, `[CO21]`, `[CO23]`, `[HA08b]`, `[HA08c]`, `[HC13]`, `[HR41]`,
+`[RQ33]`, `[HMA16b]`, `[MR44b]`. Consequence for the withdrawal claims: a
+revoke notice to a refused destination is not re-sent by the retry loop (see
+"Delivery of the notification" below). Code:
+`open-pryv.io/components/business/src/outbound/peerFetch.ts`.
+
 ## Group accounts: members acting under a patient's grant
 
 Shipped in open-pryv.io 2.0.0-rc.53 (release commit `61fb28dd`);
@@ -615,7 +685,10 @@ the grant.
   is marked `content.superseded` on arrival `[CIR26]`, `[CIR27]`.
   Residual: the notices sent while an account is being deleted are not queued
   (no account is left to hold them), and nothing is queued while
-  `cmc.retryLoop.enabled` is `false` `[HR26]`, `[DH26]`. A notice that never
+  `cmc.retryLoop.enabled` is `false` `[HR26]`, `[DH26]`, nor, since
+  open-pryv.io 2.0.0-rc.56, a notice to a destination the outbound guard
+  refuses (marked failed at once, `[HR41]`, `[RQ33]`; see "Calls to a
+  counterparty" above). A notice that never
   reaches the peer means the peer never runs its teardown, so the withdrawing
   party's access on that account outlives the relationship until it expires or
   is deleted there. The withdrawal is complete and effective on the withdrawing
@@ -673,6 +746,11 @@ the grant.
   its ledger), `memberSweep.ts`, `handleMemberRevoke.ts` (offboarding),
   `retryQueue.ts`, `bootRetryLoop.ts` (the retry loop: trigger retries,
   revoke-notice re-sends, the periodic ledger pass).
+- `components/cmc/src/constants.ts` `canonicalLocalStreamId` and
+  `components/mall/src/helpers/storeDataUtils.ts` `canonicalStreamId` (the
+  canonical spelling every guard compares, 2.0.0-rc.56);
+  `components/business/src/outbound/peerFetch.ts` (the counterparty
+  destination guard, 2.0.0-rc.56).
 - `data-types/src/consent.json`: the 10 `consent/*` formats (catalogue
   1.3.0).
 - `data-types/dist/event-types.json`: built artefact consumed at runtime

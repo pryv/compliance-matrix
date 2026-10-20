@@ -353,7 +353,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, MFA, encryption-at-rest-secrets, letsEncrypt-integration, shared-secrets, delegation]
-    tests: [AA01, AA02, ACCP, MA15C, MA11A, SHS02, SHS09, SHS13]
+    tests: [AA01, AA02, ACCP, MA15C, MA11A, SHS02, SHS09, SHS13, ASA1, ASA2, ASA6, CNRP6, CNRP7]
     derives_from: [iso-27001.A.5.15, iso-27001.A.8.5, hipaa-security.164.312(a)(1)]
     planned:
       - kind: enhancement
@@ -425,6 +425,20 @@ requirements:
       delete; internal subtree read-guarded and excluded from wildcard
       reads); each delegate's actions are audited on the controlled
       account. See `context/delegation-model.md`.
+
+      **Privileged streams, by every spelling of an id** (open-pryv.io
+      2.0.0-rc.56). The guards that isolate the account fields (the
+      primary email, written only through `account.update`; the
+      non-editable and hidden fields; the level caps on account-stream
+      permissions), the delegation namespace and the plugin-managed
+      regions of the cross-account (CMC) namespace judge the stream an
+      id resolves to, whatever store-prefixed spelling a request uses,
+      for every token `[ASA1]`, `[ASA2]`, `[ASA6]`, `[CNRP6]`,
+      `[CNRP7]`. Before this release a store-prefixed spelling was not
+      recognised by these guards, so the isolation held only for
+      requests using the canonical ids; in particular an access holding
+      `contribute` on the email field could change the primary email
+      through the events API.
 
   - ref: CC6.2
     title: CC6.2 User registration, credential issuance, and de-provisioning
@@ -516,7 +530,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, audit, delegation, CMC]
-    tests: [AA01, AA02, ACCP, DCH06, DCH08, DCH09, DCH12, CMCMA, GA02, GA12, GA14, GA15, GA20, MB21, MB34]
+    tests: [AA01, AA02, ACCP, DCH06, DCH08, DCH09, DCH12, CMCMA, GA02, GA12, GA14, GA15, GA20, MB21, MB34, SMV1, SMV2, SMV3, SMV4, SMV10]
     derives_from: [iso-27001.A.5.15, iso-27001.A.5.18, iso-27001.A.5.3]
     overview: |
       Least privilege is native: an access carries only the
@@ -551,6 +565,18 @@ requirements:
       memberships are consent relationships; there is still no role,
       role-to-permission mapping or hierarchy inside Pryv (Pattern 3 of
       the same note).
+
+      **Least privilege when streams move** (open-pryv.io
+      2.0.0-rc.56). A permission on a stream reaches its descendants,
+      so a move could widen who reaches a subtree. An app or shared
+      access now moves a stream only with manage rights on every stream
+      of the moved subtree, trashed ones included `[SMV1]` to `[SMV4]`,
+      and no access can move a stream under its own descendant
+      `[SMV10]`. Before this release a child granted to the moving
+      access at a lower level (`read`, `create-only`, `none`) moved
+      along into the target parent's inherited permissions, so the
+      "cannot touch out-of-scope data" property above did not hold for
+      stream moves.
 
       **OAuth2 revoke + refresh-chain teardown.** For delegated apps,
       the durable consent behind an OAuth2 grant is a cross-account CMC
@@ -654,8 +680,8 @@ requirements:
     pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, access]
-    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls]
-    tests: [ACMEINT, ACMEORCH, BUNDLEENC]
+    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cmc.allowedPrivateHosts]
+    tests: [ACMEINT, ACMEORCH, BUNDLEENC, PFR1, PFR2, PFR3, PFR5, CO22]
     derives_from: [iso-27001.A.8.20, hipaa-security.164.312(e)(1)]
     overview: |
       Every API request is token-gated, whatever the deployment. The
@@ -670,6 +696,17 @@ requirements:
       from the user-facing plane. Edge controls (WAF, firewall, rate
       limiting) sit in your reverse proxy by design, see
       context/rate-limiting-and-dos-protection.md.
+    detail: |
+      The boundary also holds outbound (open-pryv.io 2.0.0-rc.56): a
+      URL supplied by a counterparty cannot make Pryv call inside your
+      network. Cross-account deliveries, chat, revocations, scope
+      updates, delegation and OAuth revocation notices are refused,
+      before any connection, when the host is or resolves to a
+      loopback, private, link-local or otherwise reserved address
+      (checked again at connect time), and redirects are not followed
+      `[PFR1]`, `[PFR2]`, `[PFR5]`, `[CO22]`. The platform's own host
+      names are allowed; other private peers must be listed in
+      `cmc.allowedPrivateHosts` `[PFR3]`.
 
   - ref: CC6.7
     title: CC6.7 Restriction and encryption of information in transmission and movement
@@ -682,8 +719,8 @@ requirements:
     pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, access, permissions]
-    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, hostedSites.<name>.hsts]
-    tests: [ACMEINT, ATRENC, BUNDLEENC, HSHT]
+    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, hostedSites.<name>.hsts, cluster.allowInsecurePeerUrl]
+    tests: [ACMEINT, ATRENC, BUNDLEENC, HSHT, PFR4]
     derives_from: [iso-27001.A.8.24, hipaa-security.164.312(e)(1), hipaa-security.164.312(e)(2)(ii)]
     overview: |
       Transmission is TLS once you configure where it terminates: in
@@ -701,6 +738,11 @@ requirements:
       If your proxy terminates TLS, set `hostedSites.<name>.hsts: always`
       so the sites the core hosts keep sending `Strict-Transport-Security`
       (open-pryv.io 2.0.0-rc.34); see hipaa-security 164.312(e)(2)(ii).
+      Since open-pryv.io 2.0.0-rc.56 the calls Pryv makes to a
+      counterparty (cross-account deliveries, which carry a data grant's
+      endpoint, and the related notices) refuse plain `http:` unless
+      `cluster.allowInsecurePeerUrl` is set for a development or test
+      cluster `[PFR4]`.
 
   - ref: CC6.8
     title: CC6.8 Prevention and detection of unauthorized or malicious software

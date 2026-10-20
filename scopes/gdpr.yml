@@ -254,8 +254,8 @@ requirements:
       - Storage limitation (§1(e)), VOLUNTARILY MISSING +
         OPERATOR-OWNED at the retention-enforcement layer +
         CONFIGURABLE at the erasure-mechanics layer. Pryv exposes
-        no TTL / auto-delete / scheduler primitive, automatic
-        retention is the operator's external job, composing
+        no TTL / auto-delete / scheduler primitive for account data,
+        automatic retention is the operator's external job, composing
         `events.get toTime=<cutoff>` + `events.delete` (two-stage)
         + `streams.delete` + `auth.delete` + the audit log as
         inactivity oracle. Every retention deletion is captured
@@ -263,7 +263,11 @@ requirements:
         Engine-dependent backup-tail considerations apply (see
         Art.17). Full pattern + cron-job recipe + audit-trace
         treatment + "why not built-in" rationale in
-        `context/data-retention-operator-owned.md`.
+        `context/data-retention-operator-owned.md`. One narrow
+        built-in purge exists since open-pryv.io 2.0.0-rc.56: the
+        deletion records of accesses, opt-in with
+        `accesses.deletionRecords.retentionDays` (default 0, kept
+        until the account is deleted).
       - Integrity & confidentiality (§1(f)), covered separately at Art.32.
       - Accountability (§2), IMPLEMENTED. Every API call audited with
         the access reference + version; access carries the consent state
@@ -407,8 +411,8 @@ requirements:
     reviewed_at: "2026-07-18"
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md]
-    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11, MAAC, GA10, GA24, GA30, MB10, HR25, DH25, RQ20, RQ21, RQ22, RQ23, CIR26, CIR27]
-    config_keys: [cmc.retryLoop.enabled]
+    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11, MAAC, GA10, GA24, GA30, MB10, HR25, DH25, RQ20, RQ21, RQ22, RQ23, CIR26, CIR27, HR41, RQ33, RQ32]
+    config_keys: [cmc.retryLoop.enabled, cmc.allowedPrivateHosts]
     overview: |
       The access Pryv mints when your user grants permission IS your
       durable consent record, versioned permissions + clientData
@@ -471,8 +475,13 @@ requirements:
       re-established meanwhile `[CIR26]`, `[CIR27]`. Not re-sent: the
       notices of an account being deleted (no account is left to hold
       them), and any notice while `cmc.retryLoop.enabled` is `false`.
-      The person's own accept event also records the end itself,
-      whatever ended the consent: `content.withdrawal = { at, by,
+      Nor, since open-pryv.io 2.0.0-rc.56, a notice to an address Pryv
+      refuses to call (loopback, private or reserved, unless listed in
+      `cmc.allowedPrivateHosts`; see Art.32): it is tried once and
+      marked failed at once `[HR41]`, `[RQ33]`. The same release has
+      the retry loop act only on records the server wrote into its
+      queue `[RQ32]`. The person's own accept event also records the
+      end itself, whatever ended the consent: `content.withdrawal = { at, by,
       accessId, revokeEventId? }`, with `by: 'accesses.delete'` (the
       data grant deleted through the API) `[CN58]`, `[DH16]`,
       `'revoke-cmc'` (the person wrote a `consent/revoke-cmc`) `[CN59]`,
@@ -1107,6 +1116,7 @@ requirements:
     draft: true
     pryv_primitives: [access, stream, event, audit, account-backup-tool]
     functional_specs: [EVENT.BASE, STREAM.BASE]
+    config_keys: [accesses.deletionRecords.retentionDays]
     tests: [AA01, EGSQ, UZEV]
     overview: |
       Your subject, holding a personal token, reads everything via the
@@ -1122,6 +1132,10 @@ requirements:
         - `events.get`: all events
         - `streams.get`: all streams
         - `accesses.get ?includeHistory=true`: accesses + version chain
+          (deleted accesses with `includeDeletions`, kept until the
+          account is deleted unless the operator sets
+          `accesses.deletionRecords.retentionDays`, opt-in since
+          open-pryv.io 2.0.0-rc.56)
         - `events.get ?streams=[':_audit:*']`: audit log (the dedicated
           `/audit/logs` route was removed 2026-06-15; audit is a regular
           datastore mounted on the `:_audit:*` streams)
@@ -1708,6 +1722,8 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [access, permissions, stream, system-streams]
+    config_keys: [accesses.deletionRecords.retentionDays]
+    tests: [ADP1, ADR5]
     overview: |
       Pryv's whole
       architecture leans privacy-by-design, per-user storage
@@ -1778,6 +1794,12 @@ requirements:
         - Are app tokens minted with the smallest possible scope?
         - Is your subject's notice-of-collection on by default?
         - Is data retention set to the shortest necessary period?
+          One retention Pryv applies for you on request: since
+          open-pryv.io 2.0.0-rc.56 the deletion records of accesses
+          (kept by default until the account is deleted) are purged
+          once a day past `accesses.deletionRecords.retentionDays`
+          `[ADP1]`, `[ADR5]`; past it an audit row names such an access
+          by id only, so weigh minimisation against attribution.
         - Is your auth UI surface using the opt-in pattern
           (privacy-by-default UX from the dev-site
           reference) rather than the standard "by continuing
@@ -2005,8 +2027,8 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC]
-    config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09]
+    config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -2090,7 +2112,28 @@ requirements:
           which holds every grant endpoint the account received, or
           its internal streams), at write and again at accept `[CN71]`,
           `[MB35]`, `[VC09]`, and closes an invite link only from the
-          invite's own scope `[CN72]`.
+          invite's own scope `[CN72]`. Since open-pryv.io 2.0.0-rc.56
+          the app that created a single-use invite can also withdraw it
+          while nobody has accepted it, so a link sent to the wrong
+          person stops working before its expiry (a withdrawal that
+          races an accept wins) `[CN100]`, `[CN102]`
+          (https://github.com/pryv/open-pryv.io/issues/160); earlier
+          releases accepted the withdrawal of an open link only.
+          Moving a stream (a new `parentId`) with an app or shared
+          access needs manage rights on every stream of the moved
+          subtree, since the same release `[SMV1]`, `[SMV10]`: before
+          it, a child granted to that access at a lower level moved
+          along under the target parent and took on the permissions
+          other accesses held there. The account-field guards (the
+          primary email, written only through `account.update`; the
+          non-editable and hidden fields; the level caps on
+          account-stream permissions) judge the canonical stream id
+          whatever spelling a request uses, on events and on access
+          creation and update `[ASA1]`, `[ASA6]`; before 2.0.0-rc.56 a
+          store-prefixed spelling of an account field was not
+          recognised by them, so an access holding `contribute` on the
+          email field could change the primary email (the
+          password-reset address) through the events API.
         - Integrity of stored records: IMPLEMENTED for the built-in
           stores, an `events.update`, a trash (a shared-secret event
           excepted, trashed by compare-and-set) or an attachment
@@ -2124,8 +2167,19 @@ requirements:
           carrying no forge-protected delegation marker). The whole
           `:_delegation:*` namespace is plugin-owned and guarded (no
           user create/write/delete; internal subtree read-guarded and
-          excluded from wildcard reads), and each delegate's actions
-          are audited on the controlled account (same-core +
+          excluded from wildcard reads). Since open-pryv.io 2.0.0-rc.56
+          that holds for every token, the owner's included, whatever
+          spelling of the stream id a request uses, and also refuses
+          creating a stream under, or moving one into, the namespace
+          `[CNRP6]`, `[DSC05]`, `[DSU02]`; before it a store-prefixed
+          spelling (`:local:<id>`) was not recognised by these guards
+          and a stream could be placed under a namespace parent. The
+          plugin-managed regions of the cross-account (CMC) namespace
+          are closed the same way (`:_cmc:`, its inbox and internal
+          streams; `:_cmc:apps` stays open to apps) `[CNRP1]`,
+          `[CNRP7]`, and the CMC retry worker now acts only on records
+          the server wrote `[CNM2A]`, `[CNM2B]`, `[RQ32]`. Each
+          delegate's actions are audited on the controlled account (same-core +
           cross-core). Apps a delegate grants access to the controlled
           account receive an ordinary app access, never the
           owner-equivalent token; that access carries a non-forgeable
@@ -2195,6 +2249,25 @@ requirements:
           `components/api-server/src/middleware/attachment-access.ts`).
           Uploads are not refused for their type; an app that displays
           HTML or SVG attachments renders them in its own sandbox.
+        - Calls to a counterparty: IMPLEMENTED, since open-pryv.io
+          2.0.0-rc.56 the calls Pryv makes to URLs the other side
+          supplies (cross-account consent deliveries, chat, revocations,
+          scope updates, the read of an offer, delegation notices,
+          OAuth revocation notices) are refused, before any connection,
+          when the host is or resolves to a loopback, private,
+          link-local or otherwise reserved address (the address rules of
+          webhooks, checked again at connect time), when the URL uses
+          `http:` (unless `cluster.allowInsecurePeerUrl`, for
+          development and test clusters) or carries credentials, and
+          when the answer is a redirect or larger than 1 MiB `[PFR1]`,
+          `[PFR2]`, `[PFR4]`, `[PFR5]`, `[PFR6]`, `[CO22]`. The
+          platform's own host names are always allowed; a peer on a
+          private network, or a private `core.url` given as an IP, is
+          listed in `cmc.allowedPrivateHosts` (host names, IPs or CIDR
+          ranges, same grammar as `webhooks.allowedPrivateHosts`). A
+          refused delivery is permanent: the trigger reports
+          `cmc-handler-destination-refused` and it is not retried.
+          Keeping your own network's egress filtering stays yours.
         - Regular testing (§1(d)): FILLED BY EXISTING PRIMITIVES.
           **Existing evidence (citable today)**:
             - **Multi-engine CI test matrix**: ~2351 tests on
@@ -2265,7 +2338,8 @@ requirements:
     draft: true
     pryv_primitives: [audit, encryption-at-rest-secrets]
     docs: [customer-resources/audit-setup.md]
-    tests: [BRSC6]
+    config_keys: [accesses.deletionRecords.retentionDays]
+    tests: [BRSC6, ADP1]
     overview: |
       Pryv ships a breach-scoping toolchain: `bin/breach-scope.js`
       turns a compromised accessId + time window into an Art.33
@@ -2280,7 +2354,11 @@ requirements:
       `0b2874e0`):
         - `GET /system/accesses/:accessId` admin lookup (PlatformDB
           reverse-index) resolves a compromised accessId to its user +
-          home core in O(1), revoked accesses included. Existing
+          home core in O(1), revoked accesses included (unless their
+          deletion records were purged after
+          `accesses.deletionRecords.retentionDays`, an opt-in setting
+          since open-pryv.io 2.0.0-rc.56: choose it with breach
+          scoping in mind). Existing
           deployments index pre-existing accesses once per core with
           `bin/backfill-access-index.js`.
         - Read audit rows carry `content.recordCount` and

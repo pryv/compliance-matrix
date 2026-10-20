@@ -25,10 +25,16 @@ layer.** A code-level audit of `components/business/`,
 - No `retention` / `ttl` / `expireAfter` / `maxAge` field on
   event-type schemas.
 - No `deleteAfter` / `pruneOlderThan` config on stream definitions.
-- No scheduler / cron primitive in core. The only background
-  loops shipped today are LE certificate renewal and Bootstrap
-  TokenStore TTL on one-shot join tokens (24 h default),
-  domain-specific, not generalised.
+- No scheduler / cron primitive in core. The background loops
+  shipped are domain-specific, not generalised: LE certificate
+  renewal, Bootstrap TokenStore TTL on one-shot join tokens (24 h
+  default), the cross-account (CMC) retry loop, and, since
+  open-pryv.io 2.0.0-rc.56, an opt-in daily purge of the deletion
+  records of accesses deleted more than
+  `accesses.deletionRecords.retentionDays` ago (default 0: kept
+  until the account is deleted). That purge touches access
+  records only, never events, streams or audit rows; past it an
+  audit row names such an access by id only.
 - No "user inactivity" tracking that could trigger automatic
   account deletion. Audit-log read of "last authentication
   time" requires a custom query.

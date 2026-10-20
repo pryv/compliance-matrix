@@ -77,7 +77,7 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation, CMC]
     config_keys: [cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl]
-    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CMCGA, CMCMA, GA12, GA14, GA15, GA20, GA24, MB10]
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CMCGA, CMCMA, GA12, GA14, GA15, GA20, GA24, MB10, CNRP1, CNRP6, CNRP7, DSC05, ASA3, ASA6, SMV1, SMV4, SMV10]
     overview: |
       Logical access control is enforced at the API surface by the
       access + permissions primitives; every read/write request is
@@ -108,6 +108,31 @@ requirements:
       create/write/delete; internal subtree read-guarded and excluded
       from wildcard reads); each delegate's actions are audited on the
       controlled account. See `context/delegation-model.md`.
+
+      **Plugin-managed and account streams, by every spelling of an id**
+      (open-pryv.io 2.0.0-rc.56). The guards of the delegation
+      namespace, of the plugin-managed regions of the cross-account
+      (CMC) namespace (`:_cmc:`, its inbox and internal streams;
+      `:_cmc:apps` stays open to apps) and of the account fields judge
+      the stream an id resolves to, whatever store-prefixed spelling a
+      request uses, for every token, the owner's included; they also
+      refuse creating a stream under, or moving one into, a
+      plugin-managed parent `[CNRP1]`, `[CNRP6]`, `[CNRP7]`, `[DSC05]`.
+      On access creation and update a permission naming an account
+      field through such a spelling is judged, and stored, as that
+      field, so an app holding only a `*` grant on the regular streams
+      cannot hand one out `[ASA3]`, `[ASA6]`. Before this release a
+      store-prefixed spelling (`:local:<id>`, or the account store's
+      prefix) was not recognised by these guards, so the rule above
+      held only for requests using the canonical ids.
+
+      **Moving a stream** (open-pryv.io 2.0.0-rc.56). A move (a new
+      `parentId`) by an app or shared access needs manage rights on
+      every stream of the moved subtree, trashed ones included, as
+      deleting it does `[SMV1]`, `[SMV4]`; a parent inside the moved
+      subtree is refused for every access `[SMV10]`. Before it, a child
+      granted to the moving access at a lower level travelled into the
+      target parent's inherited permissions.
 
       Apps a delegate authorizes on the controlled account get a scoped
       `app` access, never the owner-equivalent token; the server marks
@@ -203,13 +228,27 @@ requirements:
     draft: true
     pryv_primitives: [access, system-streams]
     config_keys: [auth.adminAccessKey]
-    tests: [LG20, GF33]
+    tests: [LG20, GF33, ASA1, ASA2, ASA3, ASA6]
     overview: |
       Pryv's privileged-access surface is small and explicit: the
       operator's `auth.adminAccessKey` is the root credential; system
       streams (account, password, mfa) require an explicit grant in
       `permissions[]`. Both surfaces are auditable. The operator's
       custody process for the admin key is the policy-side control.
+    detail: |
+      The account-field guards (the primary email, written only through
+      `account.update`; the non-editable and hidden fields; the level
+      caps on account-stream permissions) judge the canonical stream id
+      whatever store-prefixed spelling a request uses, on
+      `events.create` / `update` / `delete` and on `accesses.create` /
+      `update`, since open-pryv.io 2.0.0-rc.56 `[ASA1]`, `[ASA2]`,
+      `[ASA3]`, `[ASA6]`. Before that release a store-prefixed spelling
+      of an account field was not recognised by these guards: an access
+      holding `contribute` on the email field could change the primary
+      email (the password-reset address) through the events API, and an
+      app holding only a `*` grant on the regular streams could grant
+      an account field to an access it created. Upgrading is the fix;
+      no setting closes it on earlier releases.
 
   - ref: A.8.3
     title: A.8.3 Information access restriction
@@ -221,12 +260,25 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, stream]
-    tests: [AA01, AA02, ACCP]
+    tests: [AA01, AA02, ACCP, SMV1, SMV2, SMV3, SMV4, SMV5, SMV10]
     overview: |
       Per-stream permissions are the technical access-restriction
       primitive. Stream design (which data lives where) is the
       implementer's choice; permission scoping per access is
       operationally enforced at every API call.
+    detail: |
+      A permission on a stream reaches its descendants, so moving a
+      stream changes who reaches its subtree. Since open-pryv.io
+      2.0.0-rc.56 an app or shared access may move a stream (a new
+      `parentId`) only with manage rights on every stream of the moved
+      subtree, trashed ones included, in addition to manage on the
+      target parent; otherwise `403 forbidden` and nothing moves
+      `[SMV1]` to `[SMV5]`. A parent inside the moved subtree is refused
+      for every access `[SMV10]`. Before that release a child granted
+      to the moving access at a lower level (`read`, `create-only`,
+      `none`) moved along and took on the permissions other accesses
+      held on the target parent. Renames and updates that keep the
+      current `parentId` are unchanged.
 
   - ref: A.8.5
     title: A.8.5 Secure authentication
@@ -534,8 +586,8 @@ requirements:
     pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
-    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, hostedSites.<name>.hsts]
-    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC, HSHT]
+    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, hostedSites.<name>.hsts, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl]
+    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC, HSHT, PFR1, PFR2, PFR3, PFR4, CO22]
     overview: |
       TLS in transit once configured: either the core terminates it
       (`http.ssl.*`, with the built-in ACME integration issuing,
@@ -556,6 +608,22 @@ requirements:
       only when the core itself terminates TLS; `never` turns it off.
       The core does not add HSTS to API answers on a separate API
       host, so set it on your proxy there.
+
+      Outbound side (open-pryv.io 2.0.0-rc.56): the calls Pryv makes
+      to URLs a counterparty supplies (cross-account consent
+      deliveries, chat, revocations, scope updates, delegation and
+      OAuth revocation notices) cannot be turned toward your internal
+      network. A host that is or resolves to a loopback, private,
+      link-local or otherwise reserved address is refused before any
+      connection, and checked again at connect time `[PFR1]`, `[PFR2]`,
+      `[CO22]`; plain `http:` is refused unless
+      `cluster.allowInsecurePeerUrl` (development and test clusters)
+      `[PFR4]`. The platform's own host names are always allowed; list
+      peers on a private network, and a private `core.url` given as an
+      IP, in `cmc.allowedPrivateHosts` (host names, IPs or CIDR ranges,
+      the grammar of `webhooks.allowedPrivateHosts`; checked at boot)
+      `[PFR3]`. Webhook deliveries apply the same address rules. Egress
+      filtering on your network stays yours.
 
   - ref: A.8.24
     title: A.8.24 Use of cryptography
@@ -1559,7 +1627,8 @@ requirements:
     draft: true
     pryv_primitives: [audit]
     derives_from: [iso-27001.A.8.25]
-    tests: [ACTY, MC04D, HTC1, HSPE1, QPR2]
+    config_keys: [cmc.allowedPrivateHosts]
+    tests: [ACTY, MC04D, HTC1, HSPE1, QPR2, PFR1, PFR2, PFR4, PFR5, PFR6, PFR10, CO21, CO22, RQ33]
     overview: |
       For the operator running
       Pryv as one of its applications, this compliance matrix IS the
@@ -1601,6 +1670,18 @@ requirements:
       `[HSPE1]`; query strings are parsed without letting a key shadow a
       built-in object property `[QPR2]`. If you put a cache or CDN in front
       of the API, keep it honouring these directives.
+
+      Another, for outbound calls (open-pryv.io 2.0.0-rc.56): a URL a
+      counterparty supplies cannot make the server call an address it
+      should not reach. The cross-account, delegation and OAuth
+      revocation calls refuse, before any connection, a host that is or
+      resolves to a loopback, private, link-local or otherwise reserved
+      address (unless listed in `cmc.allowedPrivateHosts`), plain
+      `http:` and URLs carrying credentials, do not follow redirects and
+      stop reading an answer past 1 MiB `[PFR1]`, `[PFR2]`, `[PFR4]`,
+      `[PFR5]`, `[PFR6]`, `[CO22]`; a refusal names the host, never the
+      path or a token `[PFR10]`, and a refused delivery is not retried
+      `[CO21]`, `[RQ33]`.
 
   - ref: A.8.27
     title: A.8.27 Secure system architecture and engineering principles

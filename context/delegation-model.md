@@ -107,6 +107,18 @@ control-channel bearer that must never reach a client; and a wildcard `*`
 event read excludes the hidden plugin-internal namespaces so a broad read
 cannot exfiltrate them either.
 
+Since open-pryv.io 2.0.0-rc.56 these guards judge the stream an id resolves
+to, whatever spelling a request uses: the store-prefixed form (`:local:<id>`,
+which addresses the same stream as `<id>`) is canonicalised before any check.
+The same release also refuses, for every token (the owner's included), a
+`streams.create` or a move (`streams.update` with a new `parentId`) whose
+parent is inside `:_delegation:*` (`delegation-reserved-stream`), a move of a
+`:_delegation:*` stream out of its place, and trashing one `[CNRP6]`,
+`[DSC05]`, `[DSU01]`, `[DSU02]`. Before rc.56 a store-prefixed spelling was not
+recognised by the guards and the parent of a new or moved stream was not
+checked, so "no user create" held only for requests naming a
+`:_delegation:*` id directly in its canonical form.
+
 ## Per-delegate audit attribution
 
 Every delegate's actions are attributable on the **controlled account**: the

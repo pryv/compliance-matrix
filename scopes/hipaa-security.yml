@@ -523,7 +523,7 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation, CMC]
     config_keys: [cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl, cmc.memberAccess.ratePerMinute, cmc.memberAccess.maxInFlightPerMembership, cmc.memberAccess.allowNameOnly, cmc.retryLoop.enabled]
-    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10, MAAC, CMCGA, CMCMA, GA01, GA10, GA11, GA12, GA14, GA15, GA24, GA31, MB10, MB12, MB13]
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10, MAAC, CMCGA, CMCMA, GA01, GA10, GA11, GA12, GA14, GA15, GA24, GA31, MB10, MB12, MB13, CNRP1, CNRP6, CNRP7, DSC05, ASA1, ASA2, ASA3, ASA6, CNM2B, RQ32, SMV1, SMV4]
     overview: |
       Per-stream permissions are enforced at every API call; an access
       can read or write only the streams its `permissions[]` lists, at
@@ -573,6 +573,31 @@ requirements:
       and excluded from wildcard reads), and each delegate's actions
       are audited on the controlled account. See
       `context/delegation-model.md`.
+
+      **Plugin-managed and account streams, by every spelling of an
+      id** (open-pryv.io 2.0.0-rc.56). The guards of the delegation
+      namespace, of the plugin-managed regions of the cross-account
+      (CMC) namespace and of the account fields (the primary email,
+      written only through `account.update`; non-editable and hidden
+      fields; level caps on account-stream permissions) judge the
+      stream an id resolves to, whatever store-prefixed spelling a
+      request uses, for every token, the owner's included, and refuse
+      creating a stream under, or moving one into, a plugin-managed
+      parent `[CNRP1]`, `[CNRP6]`, `[CNRP7]`, `[DSC05]`, `[ASA1]`,
+      `[ASA2]`, `[ASA3]`, `[ASA6]`. The CMC retry worker acts only on
+      records the server wrote `[CNM2B]`, `[RQ32]`. Before this
+      release a store-prefixed spelling was not recognised by these
+      guards, so the separation of the system and plugin namespaces
+      held only for requests using the canonical ids; in particular an
+      access holding `contribute` on the email field could change the
+      primary email through the events API.
+
+      **Moving a stream** (open-pryv.io 2.0.0-rc.56). An app or shared
+      access moving a stream needs manage rights on every stream of the
+      moved subtree, trashed ones included `[SMV1]`, `[SMV4]`; before
+      it, a child granted to that access at a lower level moved along
+      into the target parent's inherited permissions, reaching accesses
+      that had not been granted it.
 
       **Apps granted access through a delegation.** When a delegate
       grants a software program access to the controlled account, the
@@ -817,7 +842,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream]
-    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41]
+    config_keys: [accesses.deletionRecords.retentionDays]
+    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5]
     planned:
       - kind: feature
         summary: "Chained / signed audit log strengthens tamper-resistance evidence"
@@ -889,7 +915,13 @@ requirements:
       the `accesses.delete` deletion, so a member access (or a grant)
       that is gone stays readable by name as a deletion record
       (`accesses.get` with `includeDeletions`) and the audit rows that
-      cite it can still be resolved `[GA22]`, `[GA30]`. The reference
+      cite it can still be resolved `[GA22]`, `[GA30]`. That holds
+      while the deletion record is kept: by default until the account
+      is deleted; since open-pryv.io 2.0.0-rc.56 you may have them
+      purged after `accesses.deletionRecords.retentionDays`, past which
+      an audit row shows such an access by id only `[ADP1]`, `[ADR5]`.
+      Set it no shorter than your audit-review and retention needs
+      (see 164.316(b)(2)(i)). The reference
       account app's audit page shows such an access as "<member
       access> via <grant name>", deleted accesses included, from its
       first release after 0.21.0 (app-web-user-account). On the
@@ -1168,8 +1200,8 @@ requirements:
     pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, shared-secrets]
-    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls]
-    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13]
+    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cluster.allowInsecurePeerUrl, cmc.allowedPrivateHosts]
+    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22]
     overview: |
       You choose where TLS terminates, and you must choose. The core
       serves HTTPS when you configure it to: a certificate at
@@ -1206,6 +1238,17 @@ requirements:
       narrows accordingly. See `context/webhooks-signal-only.md` for
       the full design rationale + operational caveats (TLS-on-
       delivery, retry semantics, poison-pill protection).
+
+      **Calls to a counterparty** (open-pryv.io 2.0.0-rc.56).
+      Cross-account consent deliveries, which carry the endpoint of a
+      data grant, and the other calls Pryv makes to URLs a counterparty
+      supplies (chat, revocations, scope updates, delegation and OAuth
+      revocation notices) are refused over plain `http:` unless
+      `cluster.allowInsecurePeerUrl` is set (meant for development and
+      test clusters) `[PFR4]`, and refused toward a loopback, private,
+      link-local or otherwise reserved address unless it is listed in
+      `cmc.allowedPrivateHosts` `[PFR1]`, `[CO22]`. Earlier releases
+      applied neither check to these calls.
 
       **Credential hand-off between parties.** TLS protects the pipe;
       the shared-secrets primitive
@@ -1432,8 +1475,8 @@ requirements:
     facilitation_mode: storage
     draft: true
     pryv_primitives: [backup-restore, audit]
-    config_keys: [audit.onUserDelete]
-    tests: [DKP1]
+    config_keys: [audit.onUserDelete, accesses.deletionRecords.retentionDays]
+    tests: [DKP1, ADP1]
     overview: |
       Six-year is a **minimum** retention period, not a maximum
       (the statute says "retain … for 6 years"; covered entities
@@ -1487,6 +1530,15 @@ requirements:
       erased it, so `keep` behaved like `erase` on SQLite: if you
       relied on `keep` there, audit of accounts deleted earlier is
       gone.
+
+      **Access deletion records** (open-pryv.io 2.0.0-rc.56). The
+      record of a deleted access is what lets an audit row name the
+      access that acted. It is kept until the account is deleted unless
+      you set `accesses.deletionRecords.retentionDays` above 0, in
+      which case the master purges older ones once a day, whatever
+      `audit.onUserDelete` says `[ADP1]`. The audit rows themselves are
+      kept; past the purge they name such an access by id only. A
+      retention shorter than six years shortens that attribution.
 
   - ref: 164.316(b)(2)(iii)
     title: Documentation, updates, Required

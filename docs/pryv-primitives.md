@@ -76,10 +76,16 @@ A hierarchical container for events, owned by one user.
 
 - **Purpose**: organize events by topic / context / classification.
 - **Permissions handle**: access permissions reference streams; `level`
-  applies to the stream and its descendants (per Pryv semantics).
+  applies to the stream and its descendants (per Pryv semantics). Since
+  open-pryv.io 2.0.0-rc.56 an app or shared access moves a stream only
+  with manage rights on the whole moved subtree `[SMV1]`, `[SMV4]`.
 - **System streams**: privileged streams (account, password, mfa, etc.)
   managed by the core; not user-creatable. Plugin-managed streams
-  (e.g., `:_cmc:*`) follow similar conventions.
+  (e.g., `:_cmc:*`, `:_delegation:*`) follow similar conventions. Since
+  open-pryv.io 2.0.0-rc.56 their guards judge the stream an id resolves
+  to, whatever store-prefixed spelling a request uses, and refuse a
+  plugin-managed parent on create and move `[ASA1]`, `[CNRP7]`,
+  `[DSC05]`.
 - **Compliance role**: data classification + purpose-scoping primitive.
 
 ### `event`

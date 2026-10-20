@@ -111,6 +111,12 @@ data + multi-attachment events without loss.
 | (g) source of data | event `createdBy` + audit + clientData | derivable from `events-YYYY-MM.json` + `/audit/logs` | ✅ all sources wired in v0.5.0 |
 | (h) automated decision-making | nothing native to Pryv | application layer | ✅ (out of scope) |
 
+Recipients of the past, (c): `/accesses?includeDeletions=true` lists every
+deleted access by default. Since open-pryv.io 2.0.0-rc.56 an operator may set
+`accesses.deletionRecords.retentionDays` above 0, and the deletion records
+older than that are purged; the export then lists only those still kept, and
+the audit rows of a purged access name it by id only.
+
 ## Map to Art.20 (data portability)
 
 - "structured, commonly used, machine-readable format", JSON
