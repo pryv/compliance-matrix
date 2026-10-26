@@ -65,8 +65,7 @@ keyed across the cluster:
   the account's home core whether that account holds the id
   (`POST /system/ext-id/holds`, admin key, the answer a boolean, not
   audited; https only unless `cluster.allowInsecurePeerUrl`). The
-  answer is a yes or no, never an account or a value. From the release
-  after 2.0.0-rc.59 (expected 2.0.0-rc.60), the admin release
+  answer is a yes or no, never an account or a value. From 2.0.0-rc.60, the admin release
   (`POST /system/admin/ext-id/release`) acts only on the core that
   holds the id: another core answers `307` with the holding core, and
   the holder's audit row and notice are written there. A core rename

@@ -83,8 +83,7 @@ seeing the identifier. Since open-pryv.io 2.0.0-rc.58
   `[XIDFR7]`..`[XIDFR9]`. Across cores the check asks the account's
   home core `POST /system/ext-id/holds` (`system.extIdHolds`, admin key,
   a boolean, not audited) `[XIDH1]`..`[XIDH3]`, `[XIDFC1]`..`[XIDFC4]`.
-- **Admin release** (the release after 2.0.0-rc.59, expected
-  2.0.0-rc.60): `POST /system/admin/ext-id/release { namespace,
+- **Admin release** (2.0.0-rc.60): `POST /system/admin/ext-id/release { namespace,
   blindedValue, reason }` (`system.extIdRelease`, admin key) frees an id
   claimed by the wrong account. The answer never names the account
   (`404` when nobody holds the id, `307` to the holding core); the
@@ -111,14 +110,13 @@ seeing the identifier. Since open-pryv.io 2.0.0-rc.58
   rebuilt by `bin/reconcile-user-cores.js --ext-ids` from each core's
   local table. In 2.0.0-rc.58 and 2.0.0-rc.59 the per-user backup does
   not carry the account's ids: the local table is covered by your
-  database-level backup of the core. From the release after
-  2.0.0-rc.59 (expected 2.0.0-rc.60) it does (namespace, blinded value,
+  database-level backup of the core. From 2.0.0-rc.60 it does (namespace, blinded value,
   claim date, incremental chains included), and a restore links them
   again on the restoring core; an id another account holds by then
   stays with it (`lost` in the restore report) `[XIDB2]`..`[XIDB4]`,
   `[XIDBK1]`, `[XIDBK2]`, `[XIDS18]`. The blinded values make a
   per-user backup as sensitive as a claim credential.
-- **Core rename** (the release after 2.0.0-rc.59):
+- **Core rename** (2.0.0-rc.60):
   `/reg/admin/servers/<old>/rename/<new>` moves the core's index rows
   with its accounts and reports how many (`externalIds`) `[ADRN2]`,
   `[XIDP7]`; run it with the renamed core stopped.
@@ -130,7 +128,7 @@ seeing the identifier. Since open-pryv.io 2.0.0-rc.58
   which core. Residual: whoever holds a blinded value before the
   patient claims it (an unused invitation link) can claim it first. A
   denial, never a data flow: data reaches an account only through an
-  access its holder grants. Remedy from the release after 2.0.0-rc.59:
+  access its holder grants. Remedy from 2.0.0-rc.60:
   the audited admin release above, the holder being told; the patient
   can claim the id right after `[XIDAR1]`. Until then the only remedy
   is the holder's own release. Forced mode binds the credential to the
@@ -467,8 +465,7 @@ from a backup file.
   (`extIdNamespaceSaltMismatch`) `[XIDB1]`. The `ext-id/` index rows
   are not backed up (each core's reconcile rebuilds them), and the
   per-user backup does not carry the account's ids in 2.0.0-rc.58 and
-  2.0.0-rc.59. From the release after 2.0.0-rc.59 (expected
-  2.0.0-rc.60) it does (`users/<userId>/external-ids.jsonl[.gz]`:
+  2.0.0-rc.59. From 2.0.0-rc.60 it does (`users/<userId>/external-ids.jsonl[.gz]`:
   namespace, blinded value, claim date); a restore links them again,
   after the platform rows, and an id another account holds by then
   stays with it (`lost` in the restore report) `[XIDB2]`..`[XIDB4]`,
