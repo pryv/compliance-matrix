@@ -45,6 +45,62 @@ A routable, platform-unique de-identifying name substituted for the username.
   the access is deleted. See
   [`../proposals/aliases-as-pseudonymization-primitive.md`](../proposals/aliases-as-pseudonymization-primitive.md).
 
+### `external-id-index`
+
+A platform-wide "one account per record id" index for a third-party
+identifier (an EHR patient id, for example), without the platform ever
+seeing the identifier. Since open-pryv.io 2.0.0-rc.58
+(https://github.com/pryv/open-pryv.io/issues/161).
+
+- **Blinded by the caller**: the service that knows the record id sends
+  `blindedValue = HMAC(K_namespace, recordId)`, computed with a key it
+  keeps per namespace. The key and the record id never reach Pryv.
+- **Namespaces**: admin-managed (`system.extIdNamespaces.*`, admin key,
+  routes under `/system/admin/ext-id-ns`); each has a server-generated
+  salt that is never returned. One id per account per namespace, one
+  account per id on the whole platform.
+- **Account methods, personal token only** (an app or shared access gets
+  `403`): `account.externalIds.claim`, `.list` (namespaces and claim
+  dates, never a value), `.replace`, `.release`. A claim held elsewhere
+  answers `409 external-id-already-claimed` without naming the account.
+- **Lookup**: `POST /reg/ext-id/cores` (`auth.extIdCores`, no
+  credentials) answers the core that holds an id, never the account; an
+  unknown namespace and an unclaimed id give the same 404. Lookups and
+  refused claims share a per-address budget (10 a minute per core, then
+  `429`).
+- **Where it lives**: the replicated platform DB holds
+  `ext-id-ns/<namespace>` rows (label, default mode, salt) and
+  `ext-id/<nsToken>/<valueToken>` rows that map a token of the blinded
+  value to a **core id**, never to an account; the tokens are keyed by
+  the platform pepper in hashed PII mode (the default). Only the home
+  core knows which of its accounts holds an id (local table:
+  account, blinded value, claim date).
+- **Never exposed**: no response, error, listing, log line or audit
+  record carries the blinded value (`[XIDG1]`, `[XIDFG1]`); the auth
+  page never puts it in a URL or browser storage.
+- **Erasure**: deleting an account releases its ids at once, no trace
+  kept (`[XIDD2]`).
+- **Backups**: the namespace rows (with their salts) travel in the
+  platform backup of `bin/backup.js` `[XIDB1]`; the index rows are
+  rebuilt by `bin/reconcile-user-cores.js --ext-ids` from each core's
+  local table. In 2.0.0-rc.58 the per-user backup does not carry the
+  account's ids: the local table is covered by your database-level
+  backup of the core.
+- **Boundary** (public statement: the developer-site guide
+  [External ids](https://pryv.github.io/customer-resources/external-ids/),
+  "Privacy boundary"): a core alone learns, from the index, how many
+  ids each core holds per namespace; a core that also holds
+  `K_namespace` can test whether a record id is on the platform and on
+  which core. Residual: whoever holds a blinded value before the
+  patient claims it (an unused invitation link) can claim it first. A
+  denial, never a data flow: data reaches an account only through an
+  access its holder grants.
+- **Compliance role**: pseudonymous cross-service identity matching
+  (GDPR Art.4(5) / Art.25 / Art.32(1)(a)); the re-identification code
+  stays with the caller, not the platform (HIPAA §164.514(c)). Tests:
+  `[XIDC1]`..`[XIDC7]`, `[XIDLU1]`..`[XIDLU3]`, `[XIDA1]`, `[XIDA2]`,
+  `[XIDN4]`, `[2C50]`, `[2C51]`.
+
 ### `permissions`
 
 The set of stream+level tuples carried by an access.
@@ -358,6 +414,14 @@ from a backup file.
   reads an account file a restore replaced. Tests: `[BKC1]`-`[BKC7]`,
   `[BKCC1]`, `[BKCU1]`, `[BKCE2]`, `[BKIC1]`-`[BKIC4]`, `[UASF1]`,
   `[UASF2]`.
+- **External-id namespaces** (open-pryv.io 2.0.0-rc.58): the platform
+  backup carries the `ext-id-ns/` rows with their salts (a lost salt
+  orphans every id of its namespace); a restore never overwrites a live
+  namespace whose salt differs, it keeps the live one and reports it
+  (`extIdNamespaceSaltMismatch`) `[XIDB1]`. The `ext-id/` index rows
+  are not backed up (each core's reconcile rebuilds them), and the
+  per-user backup does not carry the account's ids yet. See
+  `external-id-index`.
 - **Compliance role**: data restorability (GDPR Art.32 §1(c)) +
   per-user erasure path for SQLite engine.
 
@@ -545,7 +609,11 @@ hostings (different countries / cloud regions / on-premise locations).
   each other**, the only horizontal data is PlatformDB, which
   carries a strictly limited set: `user-core/<username>` lookups,
   `emailIndex/<email-hash>` uniqueness, DNS records, TLS materials,
-  `access-state/*`, `cluster_kv/*`. No event content, no streams,
+  and since open-pryv.io 2.0.0-rc.58 the external-id rows
+  (`ext-id-ns/*` namespaces, `ext-id/*` blinded id to core id, see
+  `external-id-index`). The short-lived sign-in request state and the
+  MFA sessions are not in it: they live in `cluster_kv`, an in-memory
+  store of each core's master, never replicated. No event content, no streams,
   no attachments, no audit. So a user assigned to an EU core has
   *all* their events, streams, accesses, audit log, attachments
   exclusively on that EU core's storage. Cross-region data

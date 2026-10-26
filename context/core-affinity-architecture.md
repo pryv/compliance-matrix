@@ -35,6 +35,30 @@ keyed across the cluster:
   rows, keyed by the SHA-256 of the credential and carrying no access
   token (no credential is stored in PlatformDB since open-pryv.io
   `3e72be4f`).
+- **External ids** (open-pryv.io 2.0.0-rc.58, `external-id-index`
+  primitive): `ext-id-ns/<namespace>` rows (label, default mode, a
+  server-generated salt never returned) and `ext-id/<nsToken>/<valueToken>
+  → <core id>`. The value is a **core id, not an account**: the row says
+  which core holds a caller-blinded record id
+  (`HMAC(K_namespace, recordId)`, the key stays with the caller). The
+  account is known only to the home core, in a local table (account,
+  blinded value, claim date) that is never replicated; that table's
+  unique index is the authoritative one-account-per-id check (two
+  accounts of one core both pass the platform row). Tokens are keyed by
+  the platform pepper in hashed PII mode (the default); in cleartext
+  mode they are the salt and the blinded value as is.
+
+  The boundary, as stated publicly in the developer-site guide
+  ([External ids](https://pryv.github.io/customer-resources/external-ids/),
+  "Privacy boundary"): a compromised core **without** `K_namespace`
+  learns from the index how many ids each core holds per namespace and
+  nothing about the record ids; **with** `K_namespace` it can test
+  whether a record id is on the platform and on which core, and only the
+  home core can tell which of its accounts holds it. The lookup
+  (`POST /reg/ext-id/cores`, no credentials) answers a core, never an
+  account; data still reaches an account only through an access its
+  holder grants. Deleting an account releases its ids at once, on its
+  home core.
 
 `cluster_kv` (MFA sessions, `/reg/access` sign-in request state) is
 **not** PlatformDB: it is an in-memory store held by each core's master
@@ -85,7 +109,7 @@ them data-plane forwarding):
 |---|---|
 | Audit log timestamps (Art.30, ISO A.8.15) | Single-core scope. Per-core monotonic time suffices; cross-core ordering not meaningful. |
 | Access expiry (Art.7, Art.13) | Single-core. An access valid on its home core cannot be replayed on a peer. |
-| Right-to-erasure (Art.17) | Single-core run of `auth.delete`. The Q8 PG-audit gap is the same shape, engine-dependent, not cross-core-dependent. |
+| Right-to-erasure (Art.17) | Single-core run of `auth.delete`. The Q8 PG-audit gap is the same shape, engine-dependent, not cross-core-dependent. The account's external ids are released by its home core in the same deletion (local rows and the platform `ext-id/` rows that point at the core). |
 | Right-of-access (Art.15) | Subject's `pryv-account-backup` run hits one `apiEndpoint`. CMC-shared data on a peer's core needs a separate run with the counterparty's credentials (the subject's name on the peer account is the counterparty's username, not theirs). |
 | Data residency (Art.44 / Swiss nLPD Art.34) | Per-user `core.url` determines the jurisdiction. Choice happens at registration; "migrate user to another core" is not a Pryv-native primitive (would require a `backup → restore` to peer core). |
 | TLS / cert (Art.32 §1(d) / iso A.8.24) | Each core terminates TLS on its own machine. Peers materialize the same cert from rqlite but the active handshake is core-local. |

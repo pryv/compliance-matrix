@@ -1490,6 +1490,91 @@ account's member accesses are deleted on the patient cores first `[GA40]`,
 erasure rows walked without change (their text does not detail relationship
 teardown); `soc2.CC6.1` walked without change.
 
+**Walked 2026-10-26 for open-pryv.io 2.0.0-rc.58** (tag on `b88af4d4`,
+https://github.com/pryv/open-pryv.io/issues/161): external ids, one account
+per third-party record id, platform-wide, without the platform seeing the id.
+No Section A slug covers it and no `planned:` chip was queued on the rows
+below; no tier shift; `reviewed_at` left unchanged. Public description:
+[External ids](https://pryv.github.io/customer-resources/external-ids/)
+(source `dev-site2/src/content/docs/customer-resources/external-ids.md`).
+New surface:
+- **Account methods, personal token only** (`403` for an app or shared
+  access, `[XIDC2]`): `account.externalIds.claim`
+  (`POST /<username>/account/external-ids`), `.list` (namespaces and claim
+  dates, never a value), `.replace` (`PUT .../<namespace>`), `.release`
+  (`DELETE .../<namespace>`). Error `409 external-id-already-claimed`
+  (`value-taken` / `namespace-taken`), never naming the holder `[XIDC3]`.
+- **Lookup without credentials**: `auth.extIdCores`
+  (`POST /reg/ext-id/cores`) answers the core holding an id, never the
+  account; unknown namespace and unclaimed id are the same 404 `[XIDLU1]`.
+  Lookups and refused claims share a per-address budget (10 a minute per
+  core, `429 too-many-attempts`) `[XIDLU2]`, `[XIDLU3]`.
+- **Admin**: `system.extIdNamespaces.list` / `.get` / `.set` / `.delete`
+  under `/system/admin/ext-id-ns` (admin key; 404 without it; salt
+  server-generated, never returned; delete refused `409
+  external-id-namespace-in-use` while ids are linked, unless `force`)
+  `[XIDA1]`, `[XIDA2]`, `[XIDD1]`, `[XIDD3]`.
+- **Flow fields**: `externalId` on `/reg/access` and `POST /users` (hint
+  mode; `forced` refused for now), `externalIdDeclined` on an `ACCEPTED`
+  outcome, `externalIdLinked` in the registration answer `[XIDFA1]`..
+  `[XIDFR6]`.
+- **Audit method ids**: `account.externalIds.claim` / `.list` / `.release`
+  / `.replace` are audited on the account; `system.extIdNamespaces.set` /
+  `.delete` are audited without a user (syslog only); `.list`, `.get` and
+  `auth.extIdCores` are not audited (like `auth.cores`). The blinded value
+  is in no response, error, log line or audit record `[XIDG1]`, `[XIDFG1]`
+  (`redactUrl` also masks a `blindedValue` query parameter).
+- **New data category**: on the home core, a local table (account, blinded
+  value, claim date), never replicated; in the platform DB, `ext-id-ns/`
+  rows (label, default mode, salt) and `ext-id/<nsToken>/<valueToken>` rows
+  mapping a token of the value to a core id (tokens keyed by the platform
+  pepper in hashed PII mode) `[XIDN4]`, `[2C50]`, `[2C51]`.
+- **No new config key.**
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.4 | pseudonymisation mapping names external ids; primitive cited | none |
+| gdpr | Art.17 | "What an account deletion reaches": external ids released at once, no trace kept; a failed release is healed by the reconcile; primitive cited | `XIDD2` |
+| gdpr | Art.25 | new "cross-service identity by design" paragraph (blinded by the caller, core not account, personal token only, never logged, budgeted lookup; key custody and plaintext record id stay yours); primitive cited | `XIDC1`, `XIDC2`, `XIDG1`, `XIDLU1`, `XIDLU2` |
+| gdpr | Art.32 | pseudonymisation bullet: the external-id index and what a core learns with and without the namespace key; primitive cited | `XIDN4`, `XIDG1` |
+| ccpa | 1798.105 | deletion releases external ids; primitive cited | `XIDD2` |
+| iso-27001 | A.8.11 | record ids masked before they reach Pryv; key custody; primitive cited | `XIDC1`, `XIDC7`, `XIDG1`, `XIDN4` |
+| iso-27001 | A.8.13 | backup paragraph (B.11 below); primitive cited | `XIDB1` |
+| hipaa-privacy | 164.514(c) | external ids keep the re-identification means with the caller; the blinded value is derived from the record id, so §514(c) compliance rests on key custody and is the implementer's determination; primitive cited | `XIDC1`, `XIDG1`, `XIDN4` |
+
+Walked without change:
+- **DSAR / subject access** (`gdpr.Art.15`, `gdpr.Art.20`, `soc2.P5.1`,
+  `hipaa-privacy.164.524`, `pipeda.Principle.4.9`, `ccpa.1798.110`,
+  `swiss-nlpd.Art.25`): the subject's personal token lists which namespaces
+  are linked and when; the value is never returned, so there is no
+  identifier to port. Neither backup tool carries the account's links yet
+  (recorded in `context/operator-backup-coverage.md`).
+- **Rectification** (`gdpr.Art.16`, `ccpa.1798.106`, `soc2.P5.2`):
+  `account.externalIds.replace` is the subject's own correction of a wrong
+  link; rows describe data rectification, not touched.
+- **Erasure, other rows** (`pipeda.Principle.4.5`, `swiss-nlpd.Art.32`,
+  `soc2.CC6.5`, `soc2.P4.3`, `soc2.C1.2`): their text does not enumerate
+  what a deletion reaches.
+- **Access control** (`hipaa-security.164.312(a)(1)`, `soc2.CC6.1`,
+  `soc2.CC6.3`): no new grant path; the methods take the personal token
+  only and the lookup returns no account and no data.
+- **Audit** (`hipaa-security.164.312(b)`, `iso-27001.A.8.15`, `soc2.P6.2`):
+  the new account methods are audited like any API call; the rows' claims
+  hold.
+- **Minimisation** (`gdpr.Art.5` §1(c), §1(f)): §1(f) is covered at
+  Art.32; the reviewed Art.5 row is left for the next review pass.
+- **Rate limiting** (`iso-27001.A.8.6`, `A.8.21`,
+  `hipaa-security.164.308(a)(5)(ii)(C)`): the new budget is recorded in
+  `context/rate-limiting-and-dos-protection.md`; the client-IP paragraph of
+  the developer-site rate-limiting page is unchanged (same
+  `http.trustedProxies` rule).
+Also updated: `docs/pryv-primitives.md` (new `external-id-index` entry;
+`data-residency` PlatformDB list; `backup-restore` entry),
+`context/core-affinity-architecture.md` (B.7),
+`context/operator-backup-coverage.md` (B.11),
+`context/rate-limiting-and-dos-protection.md`. B.2, B.3, B.5, B.6, B.8 (no
+change to the consent-bearing methods), B.9, B.10: none.
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
@@ -1586,7 +1671,12 @@ Reverse-check: which rows should cite the new primitive in their
 `pryv_primitives: [...]` array? Greppable from
 `docs/pryv-primitives.md`.
 
-Most recent: `delegation` (2026-09-15), cited on `gdpr.Art.7` / `Art.8` /
+Most recent: `external-id-index` (2026-10-26, open-pryv.io 2.0.0-rc.58),
+cited on `gdpr.Art.4` / `Art.17` / `Art.25` / `Art.32`, `ccpa.1798.105`,
+`iso-27001.A.8.11` / `A.8.13`, `hipaa-privacy.164.514(c)`. See the B.1 walk
+of the same date.
+
+Before it: `delegation` (2026-09-15), cited on `gdpr.Art.7` / `Art.8` /
 `Art.32`, `hipaa-privacy.164.502(g)`, `hipaa-security.164.312(a)(1)` /
 `164.312(d)`, `soc2.CC6.1` / `CC6.2` / `CC6.3`, `iso-27001.A.5.15` / `A.5.16`.
 See the `ACCOUNT-DELEGATION` entry in Section A.
@@ -1607,6 +1697,12 @@ benefit from pointing at the new scope.
 ### B.7: Major Pryv-side architectural change
 
 Touches `context/*.md` notes. Recent examples:
+- External ids (open-pryv.io 2.0.0-rc.58, 2026-10-26): a new PlatformDB row
+  family (`ext-id-ns/`, `ext-id/` mapping a blinded id to a core id) and a
+  home-core local table holding the account; added to the PlatformDB
+  catalogue of `context/core-affinity-architecture.md` with the stated
+  boundary (what a core learns with and without the namespace key). See the
+  B.1 walk of the same date.
 - Apps granted access for a controlled account (server-stamped
   `delegated-child` lineage attribute on accesses, revoked at detach;
   `context/delegation-model.md` gained a section, 2026-09-18). See the
@@ -2300,6 +2396,37 @@ date). No tier shift, no `planned:` chips involved.
     (they cite `bin/breach-scope.js` or the reverse index without claiming
     that revoked accesses resolve; `gdpr.Art.33` carries the caveat).
 
+**Walked 2026-10-26 for open-pryv.io 2.0.0-rc.58** (external ids, full
+surface under B.1 of the same date). No new config key or response header.
+Platform DB and backup behaviour:
+- **New platform DB rows** `ext-id-ns/<namespace>` and
+  `ext-id/<nsToken>/<valueToken>` (value: a core id); new PlatformDB
+  primitives `claimCoreRow` / `getCoreRow` / `deleteCoreRowIfValue` /
+  `getAllCoreRows`; a home-core local table (PostgreSQL `external_ids`,
+  SQLite `external-ids.db`).
+- **Backups**: the namespace rows travel in the platform data stream with
+  their salts (an older restore skips them); a restore keeps a live
+  namespace whose salt differs and reports it
+  (`extIdNamespaceSaltMismatch`) `[XIDB1]`. The `ext-id/` rows are not
+  backed up; the per-user backup does not carry the account's links in
+  this release.
+- **New operator tool**: `bin/reconcile-user-cores.js --ext-ids
+  [--old-pepper <BASE64>] [--dry-run]` (token refresh after a pepper
+  rotation or a PII-mode switch, stale rows deleted, missing rows claimed
+  again, ids of deleted accounts released, refusal with exit code 3 when
+  the local table is empty and the index holds the core's ids);
+  `bin/platform-pii-rotate.js` refreshes the core's ids itself.
+Rows: `iso-27001.A.8.13` (new paragraph, `XIDB1`), the `backup-restore`
+primitive, `context/operator-backup-coverage.md` (new symmetry row and gap
+note). Walked without change: `hipaa-security.164.308(a)(7)(ii)(A)` / `(B)`,
+`hds.Activity.5`, `soc2.PI1.5`, `soc2.A1.2` (they describe the per-user
+backup and its encryption, which are unchanged; the missing per-user links
+are recorded in the context note), the integrity rows (`gdpr.Art.32`
+§1(b), `iso-27001.A.8.14` / `A.8.22`: no change to the platform DB
+integrity check), the transport and application-security rows (no new
+header or transport setting). Erasure (`gdpr.Art.17`, `ccpa.1798.105`)
+recorded under B.1.
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check
@@ -2324,7 +2451,7 @@ ships the fix.
 
 | Added | Where | Gap | Remove when |
 |---|---|---|---|
-| (none open) | | | |
+| 2026-10-26 | `iso-27001.A.8.13` detail ("External ids"); `docs/pryv-primitives.md` `external-id-index` and `backup-restore` entries; `context/operator-backup-coverage.md` (symmetry row and gap note) | The per-user `bin/backup.js` backup does not carry an account's external ids (the core's local external-id table); only the namespace rows travel in the platform backup. Observed on open-pryv.io 2.0.0-rc.58. | An open-pryv.io release puts the account's external-id rows in the per-user backup and re-claims them on restore. |
 
 Discharged: the 2026-10-14 clause on CMC withdrawal of delegable grants
 (derived accesses surviving every teardown path but `accesses.delete`,
