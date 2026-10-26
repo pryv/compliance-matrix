@@ -6,7 +6,7 @@
  *
  * Checks:
  *   1. Every scopes/*.yml parses + matches JSON Schema (scope + requirement).
- *   2. Every functional_specs reqid resolves in dev-site requirements.yml.
+ *   2. Every functional_specs reqid resolves in the functional specifications (dev-site2).
  *   3. Every test code appears in at least one open-pryv.io/components/{*}/test file.
  *   4. Every docs path exists in dev-site2/src/content/docs/, dev-site/src/ or compliance-matrix/docs/.
  *   5. Every qms_docs path exists in compliance-matrix/qms/.
@@ -36,6 +36,12 @@ const BACKLOG_DIR = process.env.BACKLOG_DIR || ['_plans', 'XXX-Backlog'].join(pa
 // validation still runs when the workspace backlog directory is present.
 const BACKLOG_DIR_PRESENT = fs.existsSync(path.join(WORKSPACE_ROOT, BACKLOG_DIR));
 
+// Functional specifications: the published source is dev-site2's JSON; the
+// older dev-site YAML is read only when dev-site2 is absent.
+const DEV_SITE2_REQUIREMENTS = path.join(
+  WORKSPACE_ROOT,
+  'dev-site2/src/data/functional-specifications.json'
+);
 const DEV_SITE_REQUIREMENTS = path.join(
   WORKSPACE_ROOT,
   'dev-site/src/_functional-specifications/requirements.yml'
@@ -73,16 +79,20 @@ addFormats(ajv);
 ajv.addSchema(reqSchema);
 const validateScope = ajv.compile(scopeSchema);
 
-// ---------- 2. Load dev-site reqids ----------
+// ---------- 2. Load functional-spec reqids ----------
 
 const knownReqids = new Set();
-if (fs.existsSync(DEV_SITE_REQUIREMENTS)) {
-  const root = yaml.load(fs.readFileSync(DEV_SITE_REQUIREMENTS, 'utf8'));
+const reqidSource = [DEV_SITE2_REQUIREMENTS, DEV_SITE_REQUIREMENTS].find(f => fs.existsSync(f));
+if (reqidSource) {
+  const text = fs.readFileSync(reqidSource, 'utf8');
+  const root = reqidSource.endsWith('.json') ? JSON.parse(text) : yaml.load(text);
   // Walk sections[].requirements[] (and nested sections); reqid = '<SECTION>.<REQ>'
   const walk = (sections, prefix = '') => {
     if (!Array.isArray(sections)) return;
     for (const s of sections) {
-      const sectionId = s.reqid || s.id;
+      // Only a section's reqid joins the id (as on the rendered page,
+      // REQ_<SECTION>_<REQ>); a section with an id alone adds nothing.
+      const sectionId = s.reqid;
       const sectionPrefix = sectionId ? (prefix ? `${prefix}.${sectionId}` : sectionId) : prefix;
       if (Array.isArray(s.requirements)) {
         for (const r of s.requirements) {
@@ -95,9 +105,9 @@ if (fs.existsSync(DEV_SITE_REQUIREMENTS)) {
     }
   };
   walk(root.sections || []);
-  console.log(`[OK]   dev-site reqids loaded: ${knownReqids.size}`);
+  console.log(`[OK]   functional-spec reqids loaded: ${knownReqids.size} (${path.relative(WORKSPACE_ROOT, reqidSource)})`);
 } else {
-  w(`dev-site requirements.yml not found at ${DEV_SITE_REQUIREMENTS}, reqid xref skipped`);
+  w(`functional specifications not found (${DEV_SITE2_REQUIREMENTS}), reqid xref skipped`);
 }
 
 // ---------- 3. Load test codes from open-pryv.io ----------
@@ -232,7 +242,7 @@ for (const { scope, file } of allScopes) {
     // reqid resolution
     for (const reqid of r.functional_specs || []) {
       if (knownReqids.size > 0 && !knownReqids.has(reqid)) {
-        e(`${cell}: functional_specs '${reqid}' not found in dev-site requirements.yml`);
+        e(`${cell}: functional_specs '${reqid}' not found in the functional specifications`);
       }
     }
 
