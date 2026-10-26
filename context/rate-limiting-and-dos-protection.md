@@ -169,7 +169,9 @@ Rows whose `detail` should call out the operator-side responsibility
   budget of 10 a minute per address, kept by each core (a successful
   claim does not count); past it `429 too-many-attempts` with
   `Retry-After` `[XIDLU2]`, `[XIDLU3]`. It bounds how fast a holder of a
-  namespace key can test candidate values of a small id space.
+  namespace key can test candidate values of a small id space. Since
+  2.0.0-rc.59 the `not-holder` refusals of a forced-mode sign-in count
+  in the same budget (a `token-invalid` refusal does not) `[XIDFF8]`.
 - **Per-account caps**: `services.mfa.sessions.maxPendingPerUser`
   pending MFA logins (default 5) `[MCPU1]`; SMS sends per session,
   per user, per destination (platform-wide since 2.0.0-rc.50) and per

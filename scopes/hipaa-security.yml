@@ -841,9 +841,9 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [audit, audit-event-stream]
+    pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [accesses.deletionRecords.retentionDays]
-    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5]
+    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1]
     planned:
       - kind: feature
         summary: "Chained / signed audit log strengthens tamper-resistance evidence"
@@ -931,6 +931,21 @@ requirements:
       at offboarding (`consent/member-revoke-cmc`, server-written) is
       an event naming the member `[GA20]`, `[MA41]`. See
       `context/workforce-access-patterns.md`, Pattern 3.
+
+      **External ids** (`external-id-index` primitive). The account's
+      own claims, replacements and releases are audited on its trail
+      like any API call (open-pryv.io 2.0.0-rc.58). From the release
+      after 2.0.0-rc.59 (expected 2.0.0-rc.60) an administrator's
+      release of an id (`POST /system/admin/ext-id/release`, admin key)
+      is recorded twice: the admin call itself without a user (syslog),
+      and an `account.externalIds.adminRelease` entry in the trail of
+      the account that held the id, with the namespace and the
+      administrator's reason, when audit is active `[XIDAR1]`. The
+      blinded value is in neither, nor in any log line `[XIDG1]`. Not
+      audited, like `auth.cores`: the unauthenticated lookup
+      `auth.extIdCores` and the core-to-core holder answer
+      `system.extIdHolds` used by forced-mode sign-ins (open-pryv.io
+      2.0.0-rc.59), both reads that name no account.
 
   - ref: 164.312(c)(1)
     title: Integrity, standard

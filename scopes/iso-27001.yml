@@ -387,7 +387,7 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [backup-restore, backup-payload-encryption, multi-core-mTLS, external-id-index]
-    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1]
+    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1, XIDB2, XIDB3, XIDB4, XIDBK1, XIDBK2]
     overview: |
       `bin/backup.js`
       produces per-user backup files, the only copy of user data Pryv
@@ -467,9 +467,21 @@ requirements:
       keeps a live namespace whose salt differs and reports it `[XIDB1]`.
       The index rows are rebuilt by `bin/reconcile-user-cores.js
       --ext-ids` on each core. The accounts' own links (the core's local
-      external-id table) are not in the per-user backup in 2.0.0-rc.58:
-      include that table in your database-level backup of each core and
-      in the restore drill. See `context/operator-backup-coverage.md`.
+      external-id table) are not in the per-user backup in 2.0.0-rc.58
+      and 2.0.0-rc.59: include that table in your database-level backup
+      of each core and in the restore drill. See
+      `context/operator-backup-coverage.md`. From the release after
+      2.0.0-rc.59 (expected 2.0.0-rc.60) the per-user backup carries
+      each account's ids (`users/<userId>/external-ids.jsonl[.gz]`:
+      namespace, blinded value, claim date), also in incremental
+      chains; a restore links them again after the platform rows, an
+      id another account holds by then stays with it and is counted
+      `lost`, an id of an unknown namespace is `skipped` `[XIDB2]`,
+      `[XIDB3]`, `[XIDB4]`, `[XIDBK1]`, `[XIDBK2]`. A blinded value can
+      claim its id, so a per-user backup becomes as sensitive as a
+      claim credential: encrypt it (see above). An account rolled back
+      by `--verify-integrity` keeps its restored ids; release them with
+      the admin release if the account is to be dropped.
 
   - ref: A.8.15
     title: A.8.15 Logging
@@ -480,9 +492,9 @@ requirements:
     coverage: implemented
     pryv_effort_saved: high
     draft: true
-    pryv_primitives: [audit, audit-event-stream]
+    pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [logs.file, logs.fileSync]
-    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1]
+    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1]
     planned:
       - kind: feature
         summary: "Chained / signed audit log adds the software-side tamper-resistance signal A.8.15 expects"
@@ -553,6 +565,18 @@ requirements:
       `[BLFM1]`. Check the retention of logs written by releases before
       2.0.0-rc.43, which may hold credential values; log shipping,
       retention and access to the log host stay yours.
+
+      **External ids** (`external-id-index` primitive): an
+      administrator's release of an id claimed by the wrong account
+      (from the release after 2.0.0-rc.59, expected 2.0.0-rc.60) is
+      logged on the admin side without a user (syslog) and, when audit
+      is active, in the trail of the account that held it
+      (`account.externalIds.adminRelease`: namespace and reason)
+      `[XIDAR1]`, so the subject's own history shows the operator's
+      act. The blinded value reaches no audit row and no server log
+      `[XIDG1]`. The credential-free lookup and the core-to-core holder
+      answer of forced-mode sign-ins (`system.extIdHolds`, 2.0.0-rc.59)
+      are not audited.
 
       **Long-running deployment tiering**: for the "logs … stored,
       protected, analysed" portion of A.8.15 at multi-year scales,
