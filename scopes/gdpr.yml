@@ -1023,8 +1023,10 @@ requirements:
     pryv_effort_saved: medium
     facilitation_mode: storage
     draft: true
-    pryv_primitives: [access, clientData, event]
+    pryv_primitives: [access, clientData, event, external-id-index]
     docs: [guides/consent.md, customer-resources/audit-setup.md]
+    config_keys: [services.email.enabled.externalIdReleased, services.email.externalIdReleasedTemplate]
+    tests: [XIDAR1, XIDAR3]
     overview: |
       Pryv keeps the
       notice / consent text you presented to the subject, retrievable
@@ -1045,6 +1047,21 @@ requirements:
       addressing the "concise, transparent, intelligible" requirement
       at the artefact level. Whether the artefact itself is concise +
       intelligible is your editorial responsibility.
+
+      An operator action on the account is communicated by Pryv itself
+      in this case: from the release after 2.0.0-rc.59 (expected
+      2.0.0-rc.60), when your administrator releases an external id the
+      account held (`external-id-index` primitive), the account gets the
+      `external-id-released` mail with the namespace label and the
+      reason your administrator gave, never the id, when mail is
+      configured (`services.email.enabled.externalIdReleased`, default
+      on; template `services.email.externalIdReleasedTemplate`), and an
+      `account.externalIds.adminRelease` entry in its own audit trail
+      `[XIDAR1]`, `[XIDAR3]`. The subject reads the reason as written:
+      the wording is yours, keep it factual and free of anyone else's
+      data. A failed send does not undo the release (the answer then
+      says `audit-only`), so follow up by your own channel when the
+      mail did not go out.
 
   - ref: Art.13
     title: Information to be provided where data are collected from the data subject
@@ -1234,7 +1251,7 @@ requirements:
     draft: true
     pryv_primitives: [event, stream, backup-restore, external-id-index]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete]
-    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2]
+    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2]
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -1363,7 +1380,14 @@ requirements:
           them `[XIDD2]`. A failure at that step does not stop the
           deletion: the rows it leaves point at an account that no longer
           exists, and `bin/reconcile-user-cores.js --ext-ids` releases
-          them. The index never held the record id itself.
+          them. The index never held the record id itself. From the
+          release after 2.0.0-rc.59 (expected 2.0.0-rc.60) the per-user
+          backup carries the account's ids (namespace, blinded value,
+          claim date): restoring an erased account from such a backup
+          links them again, unless another account has claimed one
+          since, which keeps it `[XIDBK1]`, `[XIDBK2]`. Erasure reaches
+          those ids in your backups when you retire the backups that
+          hold the account, as for the rest of its data.
       If you erased accounts on earlier releases after a username
       change or through an alias, check the series storage for
       leftovers under the former names.
@@ -1732,7 +1756,7 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, stream, system-streams, external-id-index]
     config_keys: [accesses.deletionRecords.retentionDays]
-    tests: [ADP1, ADR5, XIDC1, XIDC2, XIDG1, XIDLU1, XIDLU2]
+    tests: [ADP1, ADR5, XIDC1, XIDC2, XIDG1, XIDLU1, XIDLU2, XIDFF1, XIDFF3, XIDFF4, XIDAR1, XIDAR3]
     overview: |
       Pryv's whole
       architecture leans privacy-by-design, per-user storage
@@ -1825,10 +1849,21 @@ requirements:
       account's personal token can link or unlink it, and no response,
       log line or audit record carries the value `[XIDC1]`, `[XIDC2]`,
       `[XIDG1]`. The lookup is unauthenticated and budgeted per address
-      `[XIDLU1]`, `[XIDLU2]`. What stays yours: who holds the namespace
-      key (every holder can look up and claim ids of that namespace),
-      and, if you need the plaintext record id, keeping it as ordinary
-      data in the person's own account. Public boundary statement:
+      `[XIDLU1]`, `[XIDLU2]`. Since open-pryv.io 2.0.0-rc.59 an
+      invitation can be record-bound (forced mode): the app receives a
+      credential only for the account that holds the id, checked by the
+      server when the sign-in is accepted, and the sign-in never links
+      an id by itself `[XIDFF1]`, `[XIDFF3]`, `[XIDFF4]`. Whoever holds a
+      blinded value before the person claims it can claim it first with
+      another account (a denial, never a data flow); from the release
+      after 2.0.0-rc.59 (expected 2.0.0-rc.60) your administrator can
+      remove such a link with the admin key, and the account that held
+      it is told by mail and in its own audit trail `[XIDAR1]`,
+      `[XIDAR3]`. What stays yours: who holds the namespace key (every
+      holder can look up and claim ids of that namespace), the decision
+      to release an id and the reason you give the holder, and, if you
+      need the plaintext record id, keeping it as ordinary data in the
+      person's own account. Public boundary statement:
       [External ids](https://pryv.github.io/customer-resources/external-ids/).
 
       Privacy-enhancing technologies (PETs) catalogued in the
@@ -2054,7 +2089,7 @@ requirements:
     draft: true
     pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index]
     config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -2120,6 +2155,29 @@ requirements:
           namespace key can test whether an id is on the platform and on
           which core. Keep that key in your services, never on the
           cores.
+        - Record-bound sign-in: IMPLEMENTED, since open-pryv.io
+          2.0.0-rc.59 (release commit `927919ba`) an auth request that
+          carries an external id in forced mode delivers the app's
+          credential only to the account holding that id. When the page
+          accepts, the server checks that the posted token is an app
+          access of the posted username, on that account's own core,
+          and that this account holds the id; otherwise `400
+          external-id-mismatch` and the request stays open for the
+          holder `[XIDFF1]`, `[XIDFF2]`, `[XIDFF3]`, `[XIDFF4]`. A
+          shared access the holder handed out does not complete it
+          `[XIDFFS]`; a grant for a controlled account is checked on
+          that account `[XIDFF7]`; a check that cannot run answers
+          `503 external-id-check-unavailable`, never a pass `[XIDFF9]`.
+          When the account lives on another core, the cores ask each
+          other with the admin key (`POST /system/ext-id/holds`, a yes
+          or no, not audited), over https unless
+          `cluster.allowInsecurePeerUrl` `[XIDH1]`, `[XIDFC1]`,
+          `[XIDFC4]`. A forced registration refuses an id another
+          account holds before anything is reserved `[XIDFR7]`. The
+          guarantee binds the credential to the account holding the id,
+          which is whoever claimed it first: who receives a blinded value
+          before the person stays yours to protect (see Art.25 for the
+          residual and the administrator's release).
         - Access control: IMPLEMENTED, `permissions` enforce stream-
           level scope at every API call (technical control, not policy).
           Expiry is enforced down the chain: a `shared` access managed
@@ -2275,7 +2333,12 @@ requirements:
           availability after a quorum loss. Operator backups carry
           high-frequency series data only since open-pryv.io
           2.0.0-rc.34 (earlier backups silently held none, on every
-          series engine): take a new backup after upgrading.
+          series engine): take a new backup after upgrading. From the
+          release after 2.0.0-rc.59 (expected 2.0.0-rc.60) the per-user
+          backup also carries the account's external ids and a restore
+          links them again `[XIDBK1]`; each blinded value in it can
+          claim the id, so protect the backup as a credential store
+          (encrypt it).
         - Stored active content: IMPLEMENTED, an attachment whose
           declared type a browser executes or renders as a document
           (HTML, SVG and other XML, JavaScript) is served with

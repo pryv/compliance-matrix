@@ -68,6 +68,32 @@ seeing the identifier. Since open-pryv.io 2.0.0-rc.58
   unknown namespace and an unclaimed id give the same 404. Lookups and
   refused claims share a per-address budget (10 a minute per core, then
   `429`).
+- **Sign-in and registration**: an auth request (`/reg/access`) or a
+  registration (`POST /users`) may carry `externalId`. Hint mode
+  (2.0.0-rc.58): the page offers the link, the user may decline. Forced
+  mode (2.0.0-rc.59, release commit `927919ba`): the app receives a
+  credential only for the account that holds the id; at `ACCEPTED` the
+  server checks that the posted token is an app access of the posted
+  username, on that account's own core, and that this account holds
+  the id, else `400 external-id-mismatch` (`token-invalid` /
+  `not-holder`, the request stays open) `[XIDFF1]`..`[XIDFF8]`,
+  `[XIDFFS]`; a check that cannot run is `503`, never a pass
+  `[XIDFF9]`; the auth request never claims. A forced registration
+  refuses an id another account holds before anything is reserved
+  `[XIDFR7]`..`[XIDFR9]`. Across cores the check asks the account's
+  home core `POST /system/ext-id/holds` (`system.extIdHolds`, admin key,
+  a boolean, not audited) `[XIDH1]`..`[XIDH3]`, `[XIDFC1]`..`[XIDFC4]`.
+- **Admin release** (the release after 2.0.0-rc.59, expected
+  2.0.0-rc.60): `POST /system/admin/ext-id/release { namespace,
+  blindedValue, reason }` (`system.extIdRelease`, admin key) frees an id
+  claimed by the wrong account. The answer never names the account
+  (`404` when nobody holds the id, `307` to the holding core); the
+  holder gets an `account.externalIds.adminRelease` entry in its own
+  audit trail (namespace and reason, never the value) and the
+  `external-id-released` mail when mail is configured
+  (`services.email.enabled.externalIdReleased`,
+  `externalIdReleasedTemplate`); a failed mail never undoes the release
+  `[XIDAR1]`..`[XIDAR6]`, `[XIDS19]`.
 - **Where it lives**: the replicated platform DB holds
   `ext-id-ns/<namespace>` rows (label, default mode, salt) and
   `ext-id/<nsToken>/<valueToken>` rows that map a token of the blinded
@@ -83,9 +109,19 @@ seeing the identifier. Since open-pryv.io 2.0.0-rc.58
 - **Backups**: the namespace rows (with their salts) travel in the
   platform backup of `bin/backup.js` `[XIDB1]`; the index rows are
   rebuilt by `bin/reconcile-user-cores.js --ext-ids` from each core's
-  local table. In 2.0.0-rc.58 the per-user backup does not carry the
-  account's ids: the local table is covered by your database-level
-  backup of the core.
+  local table. In 2.0.0-rc.58 and 2.0.0-rc.59 the per-user backup does
+  not carry the account's ids: the local table is covered by your
+  database-level backup of the core. From the release after
+  2.0.0-rc.59 (expected 2.0.0-rc.60) it does (namespace, blinded value,
+  claim date, incremental chains included), and a restore links them
+  again on the restoring core; an id another account holds by then
+  stays with it (`lost` in the restore report) `[XIDB2]`..`[XIDB4]`,
+  `[XIDBK1]`, `[XIDBK2]`, `[XIDS18]`. The blinded values make a
+  per-user backup as sensitive as a claim credential.
+- **Core rename** (the release after 2.0.0-rc.59):
+  `/reg/admin/servers/<old>/rename/<new>` moves the core's index rows
+  with its accounts and reports how many (`externalIds`) `[ADRN2]`,
+  `[XIDP7]`; run it with the renamed core stopped.
 - **Boundary** (public statement: the developer-site guide
   [External ids](https://pryv.github.io/customer-resources/external-ids/),
   "Privacy boundary"): a core alone learns, from the index, how many
@@ -94,12 +130,22 @@ seeing the identifier. Since open-pryv.io 2.0.0-rc.58
   which core. Residual: whoever holds a blinded value before the
   patient claims it (an unused invitation link) can claim it first. A
   denial, never a data flow: data reaches an account only through an
-  access its holder grants.
+  access its holder grants. Remedy from the release after 2.0.0-rc.59:
+  the audited admin release above, the holder being told; the patient
+  can claim the id right after `[XIDAR1]`. Until then the only remedy
+  is the holder's own release. Forced mode binds the credential to the
+  account that holds the id, which is whoever claimed it first: who
+  receives a blinded value before the patient stays the implementer's
+  to protect.
 - **Compliance role**: pseudonymous cross-service identity matching
   (GDPR Art.4(5) / Art.25 / Art.32(1)(a)); the re-identification code
-  stays with the caller, not the platform (HIPAA §164.514(c)). Tests:
-  `[XIDC1]`..`[XIDC7]`, `[XIDLU1]`..`[XIDLU3]`, `[XIDA1]`, `[XIDA2]`,
-  `[XIDN4]`, `[2C50]`, `[2C51]`.
+  stays with the caller, not the platform (HIPAA §164.514(c));
+  record-bound credential delivery (forced mode, GDPR Art.32); the
+  operator's correction of a wrong link is audited on the subject's
+  trail and notified to them (GDPR Art.12, HIPAA §164.312(b), ISO
+  27001 A.8.15). Tests: `[XIDC1]`..`[XIDC7]`, `[XIDLU1]`..`[XIDLU3]`,
+  `[XIDA1]`, `[XIDA2]`, `[XIDN4]`, `[2C50]`, `[2C51]`, `[XIDFF1]`..
+  `[XIDFF9]`, `[XIDH1]`..`[XIDH3]`, `[XIDAR1]`..`[XIDAR6]`.
 
 ### `permissions`
 
@@ -420,7 +466,14 @@ from a backup file.
   namespace whose salt differs, it keeps the live one and reports it
   (`extIdNamespaceSaltMismatch`) `[XIDB1]`. The `ext-id/` index rows
   are not backed up (each core's reconcile rebuilds them), and the
-  per-user backup does not carry the account's ids yet. See
+  per-user backup does not carry the account's ids in 2.0.0-rc.58 and
+  2.0.0-rc.59. From the release after 2.0.0-rc.59 (expected
+  2.0.0-rc.60) it does (`users/<userId>/external-ids.jsonl[.gz]`:
+  namespace, blinded value, claim date); a restore links them again,
+  after the platform rows, and an id another account holds by then
+  stays with it (`lost` in the restore report) `[XIDB2]`..`[XIDB4]`,
+  `[XIDBK1]`, `[XIDBK2]`. The blinded values make the per-user backup
+  as sensitive as a claim credential: encrypt it. See
   `external-id-index`.
 - **Compliance role**: data restorability (GDPR Art.32 §1(c)) +
   per-user erasure path for SQLite engine.

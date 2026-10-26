@@ -1575,6 +1575,109 @@ Also updated: `docs/pryv-primitives.md` (new `external-id-index` entry;
 `context/rate-limiting-and-dos-protection.md`. B.2, B.3, B.5, B.6, B.8 (no
 change to the consent-bearing methods), B.9, B.10: none.
 
+**Walked 2026-10-26 for open-pryv.io 2.0.0-rc.59** (release commit
+`927919ba`) **and, ahead of release, the next one** (merged on
+open-pryv.io master, unreleased at this walk, expected 2.0.0-rc.60;
+the rows say "the release after 2.0.0-rc.59 (expected 2.0.0-rc.60)").
+External ids, second wave; extends the rc.58 walk above. No Section A
+slug, no `planned:` chip, no tier shift; `reviewed_at` left unchanged.
+Public description: the same developer-site guide, sections "Forced
+mode" (live for rc.59) and "Releasing an id claimed by the wrong
+account" (published with the next release).
+- **Forced mode (2.0.0-rc.59)**: `externalId.mode: 'forced'` (or a
+  namespace whose `defaultMode` is `forced`) accepted on `/reg/access`
+  and `POST /users`. At `ACCEPTED` the server checks that the posted
+  token is an app access of the posted username, on that account's own
+  core, and that the account holds the id; otherwise `400
+  external-id-mismatch` (`token-invalid` / `not-holder`, nobody holding
+  the id is `not-holder` too), the request stays `NEED_SIGNIN`
+  `[XIDFF1]`..`[XIDFF4]`, `[XIDFFS]`, `[XIDFF7]`; a check that cannot
+  run is `503 external-id-check-unavailable` `[XIDFF9]`; the page
+  hand-off and `externalIdDeclined` refused (`400 invalid-parameters`)
+  `[XIDFF5]`; a `credentialHandoff` request is checked before the
+  server creates the secret `[XIDFF6]`; `not-holder` refusals count in the lookup
+  budget `[XIDFF8]`; registration refuses an id another account holds
+  (`409`, before anything is reserved) and links an unclaimed one
+  `[XIDFR7]`..`[XIDFR9]`.
+- **New admin method, core to core (2.0.0-rc.59)**: `system.extIdHolds`
+  (`POST /system/ext-id/holds`, admin key, `{ holds: boolean }`, 404
+  for an account of another core), **not audited** `[XIDH1]`..`[XIDH3]`,
+  `[XIDFC1]`..`[XIDFC4]`.
+- **New admin method (next release)**: `system.extIdRelease`
+  (`POST /system/admin/ext-id/release { namespace, blindedValue,
+  reason }`, admin key; `{ released: true, notified: 'mail' |
+  'audit-only' }`, never naming the account; `404` when nobody holds
+  it; `307 { server }` from a core that does not hold it), audited
+  without a user (syslog) `[XIDAR1]`..`[XIDAR6]`, `[XIDS19]`.
+- **New audit method id (next release)**: `account.externalIds.adminRelease`,
+  written in the holder's own trail (namespace and reason, never the
+  value) when audit is active `[XIDAR1]`, `[XIDG1]`.
+- **New mail and config keys (next release)**: the `external-id-released`
+  mail to the holder (variables `USERNAME`, `NAMESPACE_LABEL`, `REASON`);
+  `services.email.enabled.externalIdReleased` (default `true`) and
+  `services.email.externalIdReleasedTemplate` (default
+  `external-id-released`); deployments seeded earlier add the template
+  with `bin/mail.js templates set`. A failed send never undoes the
+  release `[XIDAR3]`.
+- **Per-user backup and core rename (next release)**: under B.11 below.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.12 | new detail paragraph: the admin release is told to the holder by mail and in its audit trail; the reason is the implementer's wording; `config_keys` `services.email.enabled.externalIdReleased`, `services.email.externalIdReleasedTemplate`; primitive cited | `XIDAR1`, `XIDAR3` |
+| gdpr | Art.17 | external-ids bullet: the per-user backup carries the ids from the next release, a restore links them again unless claimed since; erasure reaches them with backup retirement | `XIDBK1`, `XIDBK2` |
+| gdpr | Art.25 | cross-service identity paragraph: forced mode (record-bound credential), the residual and its remedy (admin release, holder told) | `XIDFF1`, `XIDFF3`, `XIDFF4`, `XIDAR1`, `XIDAR3` |
+| gdpr | Art.32 | new "Record-bound sign-in" bullet (forced mode, core-to-core holder check); Restoration bullet: per-user backup carries the ids, protect it as a credential store | `XIDFF1`, `XIDFF2`, `XIDFF3`, `XIDFF4`, `XIDFFS`, `XIDFF7`, `XIDFF9`, `XIDH1`, `XIDFC1`, `XIDFC4`, `XIDFR7`, `XIDBK1` |
+| hipaa-security | 164.312(b) | new "External ids" paragraph: what is audited where (account methods, admin release twice, holder answer and lookup not audited); primitive cited | `XIDAR1`, `XIDG1` |
+| iso-27001 | A.8.15 | new "External ids" paragraph (same audit split); primitive cited | `XIDAR1`, `XIDG1` |
+| iso-27001 | A.8.13 | external-ids paragraph (B.11 below) | `XIDB2`, `XIDB3`, `XIDB4`, `XIDBK1`, `XIDBK2` |
+
+Walked without change:
+- **Integrity / minimisation** (`gdpr.Art.5` §1(f)): covered at Art.32
+  (new bullet); the reviewed Art.5 row is still left for the next review
+  pass.
+- **Information to the subject, other rows** (`gdpr.Art.13`,
+  `gdpr.Art.14`): they cover notices at collection; the release notice
+  is an operator-action communication, recorded at Art.12.
+- **Records of processing** (`gdpr.Art.30`, reviewed): its register
+  derivation from the audit trail holds; the new audit method is
+  recorded on the audit rows.
+- **Audit, other rows** (`soc2.P6.2`): no disclosure is added; the admin
+  release removes a link, it shares nothing.
+- **Access control and authentication** (`hipaa-security.164.312(a)(1)`,
+  `164.312(d)`, `soc2.CC6.1`, `iso-27001.A.5.15`, `A.5.16`): the
+  sign-in and its credentials are unchanged; forced mode only restricts
+  which account an auth request may complete for, recorded on
+  `gdpr.Art.32`. `system.extIdHolds` and `system.extIdRelease` take the
+  admin key, like the other `system.*` methods.
+- **Rectification** (`gdpr.Art.16`, `ccpa.1798.106`, `soc2.P5.2`): a
+  subject who cannot link their record because another account holds it
+  is helped by the admin release; the rows describe data rectification,
+  not touched.
+- **Erasure, other rows** (`ccpa.1798.105`, which derives from
+  `gdpr.Art.17`; `pipeda.Principle.4.5`, `swiss-nlpd.Art.32`,
+  `soc2.CC6.5`, `soc2.P4.3`, `soc2.C1.2`): unchanged by the backup
+  addition, recorded on `gdpr.Art.17`.
+- **De-identification** (`hipaa-privacy.164.514(c)`, `iso-27001.A.8.11`,
+  `gdpr.Art.4`): no change to what the platform stores; the per-user
+  backup copies the blinded values the core already held.
+- **Subprocessors** (`gdpr.Art.28`): the new mail goes through the
+  SMTP relay already listed (username, namespace label, reason).
+Also updated: `docs/pryv-primitives.md` (`external-id-index`: sign-in
+modes, admin release, backups, core rename, residual remedy, compliance
+role; `backup-restore` entry), `context/core-affinity-architecture.md`
+(core-to-core calls, rename; B.7),
+`context/operator-backup-coverage.md` (B.11),
+`context/rate-limiting-and-dos-protection.md` (`not-holder` refusals in
+the budget). B.2, B.3, B.5, B.6, B.8 (forced mode adds a check on
+`/reg/access` acceptance, not a token-class change on a consent-bearing
+method), B.9, B.10: none. **Re-walk at the release**: replace "the
+release after 2.0.0-rc.59 (expected 2.0.0-rc.60)" with the released
+name in `gdpr.Art.12`, `Art.17`, `Art.25`, `Art.32`,
+`hipaa-security.164.312(b)`, `iso-27001.A.8.13`, `A.8.15`,
+`docs/pryv-primitives.md`, `context/core-affinity-architecture.md`,
+`context/operator-backup-coverage.md`, and discharge the Section C
+clause (per-user backup).
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
@@ -1674,7 +1777,9 @@ Reverse-check: which rows should cite the new primitive in their
 Most recent: `external-id-index` (2026-10-26, open-pryv.io 2.0.0-rc.58),
 cited on `gdpr.Art.4` / `Art.17` / `Art.25` / `Art.32`, `ccpa.1798.105`,
 `iso-27001.A.8.11` / `A.8.13`, `hipaa-privacy.164.514(c)`. See the B.1 walk
-of the same date.
+of the same date. Second wave (2.0.0-rc.59 and the next release, same
+date): also cited on `gdpr.Art.12`, `hipaa-security.164.312(b)`,
+`iso-27001.A.8.15`.
 
 Before it: `delegation` (2026-09-15), cited on `gdpr.Art.7` / `Art.8` /
 `Art.32`, `hipaa-privacy.164.502(g)`, `hipaa-security.164.312(a)(1)` /
@@ -1702,7 +1807,11 @@ Touches `context/*.md` notes. Recent examples:
   home-core local table holding the account; added to the PlatformDB
   catalogue of `context/core-affinity-architecture.md` with the stated
   boundary (what a core learns with and without the namespace key). See the
-  B.1 walk of the same date.
+  B.1 walk of the same date. Second wave (2.0.0-rc.59 and the next
+  release): the forced-mode holder check is a core-to-core call
+  (`system.extIdHolds`, a boolean), the admin release acts on the
+  holding core only (`307` elsewhere), and a core rename moves the
+  core's `ext-id/` rows; recorded in the same context note.
 - Apps granted access for a controlled account (server-stamped
   `delegated-child` lineage attribute on accesses, revoked at detach;
   `context/delegation-model.md` gained a section, 2026-09-18). See the
@@ -2427,6 +2536,42 @@ integrity check), the transport and application-security rows (no new
 header or transport setting). Erasure (`gdpr.Art.17`, `ccpa.1798.105`)
 recorded under B.1.
 
+**Walked 2026-10-26 for open-pryv.io 2.0.0-rc.59 and the next release**
+(external ids, second wave; full surface under B.1 of the same date).
+- **2.0.0-rc.59**: no new config key, header, platform DB or backup
+  behaviour. The forced-mode holder check is a core-to-core call that
+  uses the admin key and refuses `http:` unless
+  `cluster.allowInsecurePeerUrl`, and gives no admin key to a home core
+  URL that is not a usable core URL `[XIDFC4]`; recorded on
+  `gdpr.Art.32` (which already lists the key).
+- **Next release, new config keys**:
+  `services.email.enabled.externalIdReleased` and
+  `services.email.externalIdReleasedTemplate` (the holder notice of the
+  admin release); added to `gdpr.Art.12` `config_keys`.
+- **Next release, backup**: the per-user backup of `bin/backup.js`
+  carries each account's ids (`users/<userId>/external-ids.jsonl[.gz]`:
+  namespace, blinded value, claim date), incremental chains included;
+  the restore links them again after the platform rows; an id held
+  meanwhile by another account or core stays with its holder (`lost`),
+  an id of an absent namespace is `skipped`; a backup written earlier
+  restores without ids; an account rolled back by `--verify-integrity`
+  keeps its restored ids `[XIDB2]`..`[XIDB4]`, `[XIDBK1]`, `[XIDBK2]`,
+  `[XIDS18]`. Sensitivity: a blinded value can claim its id, so the
+  per-user backup must be protected like a claim credential. Rows:
+  `iso-27001.A.8.13` (paragraph extended), `gdpr.Art.32` Restoration
+  bullet, `gdpr.Art.17` (B.1), the `backup-restore` and
+  `external-id-index` primitives, `context/operator-backup-coverage.md`
+  (row and gap note).
+- **Next release, platform DB**: a core rename moves the core's
+  `ext-id/` rows (only those naming it) and reports the number
+  (`externalIds`) `[ADRN2]`, `[XIDP7]`; `context/core-affinity-architecture.md`.
+Walked without change: `hipaa-security.164.308(a)(7)(ii)(A)` / `(B)`,
+`hds.Activity.5`, `soc2.PI1.5`, `soc2.A1.2` (they describe the per-user
+backup and its encryption in general; the backup now holding more of the
+account changes no claim, and the sensitivity note is on
+`iso-27001.A.8.13`), the integrity, transport and application-security
+rows (no change).
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check
@@ -2451,7 +2596,7 @@ ships the fix.
 
 | Added | Where | Gap | Remove when |
 |---|---|---|---|
-| 2026-10-26 | `iso-27001.A.8.13` detail ("External ids"); `docs/pryv-primitives.md` `external-id-index` and `backup-restore` entries; `context/operator-backup-coverage.md` (symmetry row and gap note) | The per-user `bin/backup.js` backup does not carry an account's external ids (the core's local external-id table); only the namespace rows travel in the platform backup. Observed on open-pryv.io 2.0.0-rc.58. | An open-pryv.io release puts the account's external-id rows in the per-user backup and re-claims them on restore. |
+| 2026-10-26 | `iso-27001.A.8.13` detail ("External ids"); `docs/pryv-primitives.md` `external-id-index` and `backup-restore` entries; `context/operator-backup-coverage.md` (symmetry row and gap note) | The per-user `bin/backup.js` backup does not carry an account's external ids (the core's local external-id table); only the namespace rows travel in the platform backup. Observed on open-pryv.io 2.0.0-rc.58, still so in 2.0.0-rc.59. Fix merged on open-pryv.io master, unreleased (2026-10-26); each place now states both the gap (rc.58, rc.59) and the fix as "the release after 2.0.0-rc.59 (expected 2.0.0-rc.60)". | The release that carries the fix is walked: name it in each place, keep the gap only as "before <release>". |
 
 Discharged: the 2026-10-14 clause on CMC withdrawal of delegable grants
 (derived accesses surviving every teardown path but `accesses.delete`,

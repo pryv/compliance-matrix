@@ -60,6 +60,21 @@ keyed across the cluster:
   holder grants. Deleting an account releases its ids at once, on its
   home core.
 
+  Core-to-core calls (still core affinity, no data-plane forwarding):
+  since 2.0.0-rc.59, a forced-mode sign-in accepted on one core asks
+  the account's home core whether that account holds the id
+  (`POST /system/ext-id/holds`, admin key, the answer a boolean, not
+  audited; https only unless `cluster.allowInsecurePeerUrl`). The
+  answer is a yes or no, never an account or a value. From the release
+  after 2.0.0-rc.59 (expected 2.0.0-rc.60), the admin release
+  (`POST /system/admin/ext-id/release`) acts only on the core that
+  holds the id: another core answers `307` with the holding core, and
+  the holder's audit row and notice are written there. A core rename
+  (`/reg/admin/servers/<old>/rename/<new>`) moves the core's
+  `ext-id/` rows along with its accounts (only the rows that name the
+  renamed core, `[ADRN2]`); run it with that core stopped, since a claim
+  it commits after the rename would carry the old core id.
+
 `cluster_kv` (MFA sessions, `/reg/access` sign-in request state) is
 **not** PlatformDB: it is an in-memory store held by each core's master
 process, shared by that core's workers only, never replicated.
