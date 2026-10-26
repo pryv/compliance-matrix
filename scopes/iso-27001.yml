@@ -386,8 +386,8 @@ requirements:
     pryv_effort_saved: medium
     facilitation_mode: infrastructure
     draft: true
-    pryv_primitives: [backup-restore, backup-payload-encryption, multi-core-mTLS]
-    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4]
+    pryv_primitives: [backup-restore, backup-payload-encryption, multi-core-mTLS, external-id-index]
+    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1]
     overview: |
       `bin/backup.js`
       produces per-user backup files, the only copy of user data Pryv
@@ -461,6 +461,15 @@ requirements:
       include a chain restore and `--inspect` of the chain you rely on.
       The chain index and run manifests are checked for consistency, not
       signed.
+
+      **External ids (open-pryv.io 2.0.0-rc.58).** The platform backup
+      carries the external-id namespace rows with their salts; a restore
+      keeps a live namespace whose salt differs and reports it `[XIDB1]`.
+      The index rows are rebuilt by `bin/reconcile-user-cores.js
+      --ext-ids` on each core. The accounts' own links (the core's local
+      external-id table) are not in the per-user backup in 2.0.0-rc.58:
+      include that table in your database-level backup of each core and
+      in the restore drill. See `context/operator-backup-coverage.md`.
 
   - ref: A.8.15
     title: A.8.15 Logging
@@ -928,7 +937,8 @@ requirements:
     pryv_effort_saved: medium
     facilitation_mode: primitive
     draft: true
-    pryv_primitives: [randomAlias, stream, system-streams, event]
+    pryv_primitives: [randomAlias, stream, system-streams, event, external-id-index]
+    tests: [XIDC1, XIDC7, XIDG1, XIDN4]
     overview: |
       Pryv enforces masking by **projection**, not transformation:
       stream-level isolation + permission-scoped access tokens hide
@@ -949,6 +959,14 @@ requirements:
           Pryv does natively: `accesses.create {randomAlias:true}` mints
           a routable `r-XXXXXXXX` alias that hides the username per access
           (`proposals/aliases-as-pseudonymization-primitive.md`).
+        - Third-party record ids are masked before they reach Pryv
+          (open-pryv.io 2.0.0-rc.58, `external-id-index` primitive): your
+          service sends `HMAC(K_namespace, recordId)` with a key it keeps,
+          the platform index stores a token of it mapped to a core, and
+          no listing, error, log line or audit record returns the value
+          `[XIDC1]`, `[XIDC7]`, `[XIDG1]`, `[XIDN4]`. Key custody is
+          yours: every holder of `K_namespace` can look up and claim ids
+          of that namespace.
         - Static masking for non-prod environments + field-level
           encryption at the schema layer are both implementer
           concerns today; end-to-end encryption

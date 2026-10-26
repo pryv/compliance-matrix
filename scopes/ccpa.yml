@@ -46,15 +46,18 @@ requirements:
     coverage: configurable
     pryv_effort_saved: medium
     draft: true
-    pryv_primitives: [event, stream, backup-restore]
+    pryv_primitives: [event, stream, backup-restore, external-id-index]
     derives_from: [gdpr.Art.17]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
-    tests: [USAD]
+    tests: [USAD, XIDD2]
     overview: |
       Same primitive as GDPR Art. 17: `system.users.delete` is the
       per-consumer erasure call. Backup-completeness of the deletion
       depends on the chosen storage engine (SQLite per-user file vs
-      PG row deletion), same notes as gdpr.Art.17 apply. The
+      PG row deletion), same notes as gdpr.Art.17 apply. Since
+      open-pryv.io 2.0.0-rc.58 the deletion also releases the
+      consumer's external ids (links to third-party record ids) at
+      once, on the home core and in the platform index `[XIDD2]`. The
       §1798.105(d) statutory exceptions (warranty, security, legal
       compliance, etc.) are your programmatic determination; if an
       exception applies you suppress the deletion and document why.

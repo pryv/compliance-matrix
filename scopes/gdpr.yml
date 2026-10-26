@@ -156,7 +156,7 @@ requirements:
     pryv_effort_saved: medium
     facilitation_mode: awareness
     draft: true
-    pryv_primitives: [access, permissions, stream, event, system-streams, randomAlias]
+    pryv_primitives: [access, permissions, stream, event, system-streams, randomAlias, external-id-index]
     overview: |
       Article 4 defines GDPR
       vocabulary. Pryv's primitives map cleanly to most of these
@@ -177,7 +177,7 @@ requirements:
       | processing | any API call on `events.*` / `streams.*` / `accesses.*` (audit-recorded) |
       | filing system | N/A, Pryv is fully automated |
       | personal data breach | event/audit anomaly + post-mortem (see Art.33) |
-      | pseudonymisation | `accesses.create {randomAlias:true}` (platform-unique routable alias hides the username per access) + system-streams + custom event-type design |
+      | pseudonymisation | `accesses.create {randomAlias:true}` (platform-unique routable alias hides the username per access) + external ids (a third-party record id held only as a value the caller blinds with its own key, open-pryv.io 2.0.0-rc.58) + system-streams + custom event-type design |
       | profiling | application-side concern (out for Pryv) |
       | restriction of processing | scope-down via `accesses.update` (see Art.18) |
 
@@ -1232,9 +1232,9 @@ requirements:
     coverage: configurable
     pryv_effort_saved: medium
     draft: true
-    pryv_primitives: [event, stream, backup-restore]
+    pryv_primitives: [event, stream, backup-restore, external-id-index]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete]
-    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28]
+    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2]
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -1355,6 +1355,15 @@ requirements:
           would be left with no way in); setting an email on it lifts
           the refusal, and a deletion with the admin key goes through
           and is logged `[DADL08]`.
+        - **External ids are released** (2.0.0-rc.58,
+          `external-id-index` primitive): the account's links to
+          third-party record ids are removed from its home core and from
+          the platform index at once, so the same record id can be
+          linked to another account, and the erasure keeps no trace of
+          them `[XIDD2]`. A failure at that step does not stop the
+          deletion: the rows it leaves point at an account that no longer
+          exists, and `bin/reconcile-user-cores.js --ext-ids` releases
+          them. The index never held the record id itself.
       If you erased accounts on earlier releases after a username
       change or through an alias, check the series storage for
       leftovers under the former names.
@@ -1721,9 +1730,9 @@ requirements:
     pryv_effort_saved: high
     facilitation_mode: infrastructure
     draft: true
-    pryv_primitives: [access, permissions, stream, system-streams]
+    pryv_primitives: [access, permissions, stream, system-streams, external-id-index]
     config_keys: [accesses.deletionRecords.retentionDays]
-    tests: [ADP1, ADR5]
+    tests: [ADP1, ADR5, XIDC1, XIDC2, XIDG1, XIDLU1, XIDLU2]
     overview: |
       Pryv's whole
       architecture leans privacy-by-design, per-user storage
@@ -1804,6 +1813,23 @@ requirements:
           (privacy-by-default UX from the dev-site
           reference) rather than the standard "by continuing
           you agree" anti-pattern?
+
+      Cross-service identity by design (open-pryv.io 2.0.0-rc.58,
+      `external-id-index` primitive,
+      https://github.com/pryv/open-pryv.io/issues/161): when several
+      of your services know a person by the same third-party record id
+      (an EHR patient id), they can find the one account linked to it
+      without the platform ever holding the id. Each service sends a
+      value it blinds with its own namespace key; the replicated index
+      maps that value to a core, never to an account; only the
+      account's personal token can link or unlink it, and no response,
+      log line or audit record carries the value `[XIDC1]`, `[XIDC2]`,
+      `[XIDG1]`. The lookup is unauthenticated and budgeted per address
+      `[XIDLU1]`, `[XIDLU2]`. What stays yours: who holds the namespace
+      key (every holder can look up and claim ids of that namespace),
+      and, if you need the plaintext record id, keeping it as ordinary
+      data in the person's own account. Public boundary statement:
+      [External ids](https://pryv.github.io/customer-resources/external-ids/).
 
       Privacy-enhancing technologies (PETs) catalogued in the
       dev-site guide: pseudonymisation (partial, `ALIASES`
@@ -2026,9 +2052,9 @@ requirements:
     pryv_effort_saved: high
     facilitation_mode: infrastructure
     draft: true
-    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC]
+    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index]
     config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -2082,7 +2108,18 @@ requirements:
           PostgreSQL, the same DB-level encryption that covers user rows.
         - Pseudonymisation: FACILITATED, system streams + custom
           event-type design; pseudonyms live in `clientData` or
-          dedicated streams.
+          dedicated streams. Since open-pryv.io 2.0.0-rc.58 a
+          third-party record id (an EHR patient id) can be linked to one
+          account platform-wide as a value your service blinds with its
+          own key (`HMAC(K_namespace, id)`); the platform index stores a
+          token of that value (keyed by the platform pepper in hashed
+          PII mode, the default) mapped to a core, never to an account,
+          and never the id or the key (`external-id-index` primitive)
+          `[XIDN4]`, `[XIDG1]`. A core alone learns only how
+          many ids each core holds; a core that also holds your
+          namespace key can test whether an id is on the platform and on
+          which core. Keep that key in your services, never on the
+          cores.
         - Access control: IMPLEMENTED, `permissions` enforce stream-
           level scope at every API call (technical control, not policy).
           Expiry is enforced down the chain: a `shared` access managed

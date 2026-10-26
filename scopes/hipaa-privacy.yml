@@ -781,8 +781,9 @@ requirements:
     pryv_effort_saved: medium
     facilitation_mode: primitive
     draft: true
-    pryv_primitives: [randomAlias, stream, system-streams, access, clientData]
+    pryv_primitives: [randomAlias, stream, system-streams, access, clientData, external-id-index]
     derives_from: [hipaa-privacy.164.514(a)]
+    tests: [XIDC1, XIDG1, XIDN4]
     overview: |
       `accesses.create {randomAlias:true}` provides the re-identification
       code directly: it mints a platform-unique `r-XXXXXXXX` alias that is
@@ -795,6 +796,18 @@ requirements:
       stream-adjacent subtree with access permitted only to the
       re-identification administrator role; the code generation method
       (random / hash-of-non-PHI) must not encode PHI per §514(c)(1)(ii).
+      To link an account to a record id your EHR already uses (a patient
+      id), external ids (open-pryv.io 2.0.0-rc.58, `external-id-index`)
+      keep the re-identification means with you, not the platform: your
+      service sends `HMAC(K_namespace, recordId)` under a key it holds,
+      and Pryv stores only a token of that value mapped to a core, never
+      the record id nor the key, and never returns the value `[XIDC1]`,
+      `[XIDG1]`, `[XIDN4]`. The blinded value is derived from the record
+      id, so it is not by itself a code "not derived from" information
+      about the individual (§514(c)(1)): whether your design meets
+      §514(c) rests on your key custody (the key, the means of
+      re-identification, is not disclosed nor used for another purpose,
+      §514(c)(2)) and is your determination.
 
   - ref: 164.528(b)
     title: Accounting of disclosures, Implementation specifications

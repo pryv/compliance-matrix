@@ -163,7 +163,13 @@ Rows whose `detail` should call out the operator-side responsibility
   `access.unopenedRequestTtl` (600 s) `[RAI1]`, `[RAU1]`;
   `POST /access/invitationtoken/check` allows 10 checks a minute per
   address `[IVCK1]`; password reset requests were already budgeted
-  per account and per address (2.0.0-rc.43).
+  per account and per address (2.0.0-rc.43). Since 2.0.0-rc.58 the
+  external-id lookup `POST /reg/ext-id/cores` (no credentials) and the
+  refused claims of `account.externalIds.claim` / `.replace` share a
+  budget of 10 a minute per address, kept by each core (a successful
+  claim does not count); past it `429 too-many-attempts` with
+  `Retry-After` `[XIDLU2]`, `[XIDLU3]`. It bounds how fast a holder of a
+  namespace key can test candidate values of a small id space.
 - **Per-account caps**: `services.mfa.sessions.maxPendingPerUser`
   pending MFA logins (default 5) `[MCPU1]`; SMS sends per session,
   per user, per destination (platform-wide since 2.0.0-rc.50) and per
