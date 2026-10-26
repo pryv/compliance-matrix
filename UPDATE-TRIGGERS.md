@@ -1678,6 +1678,12 @@ name in `gdpr.Art.12`, `Art.17`, `Art.25`, `Art.32`,
 `context/operator-backup-coverage.md`, and discharge the Section C
 clause (per-user backup).
 
+**Re-walked 2026-10-26 at the release**: the next release is
+open-pryv.io 2.0.0-rc.60 (release commit `f3db0564`, deployed on
+pryv.me the same day), with no change to its content since the walk
+above. Every row and note listed above now names 2.0.0-rc.60; the
+Section C clause (per-user backup) is discharged.
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
@@ -2596,7 +2602,15 @@ ships the fix.
 
 | Added | Where | Gap | Remove when |
 |---|---|---|---|
-| 2026-10-26 | `iso-27001.A.8.13` detail ("External ids"); `docs/pryv-primitives.md` `external-id-index` and `backup-restore` entries; `context/operator-backup-coverage.md` (symmetry row and gap note) | The per-user `bin/backup.js` backup does not carry an account's external ids (the core's local external-id table); only the namespace rows travel in the platform backup. Observed on open-pryv.io 2.0.0-rc.58, still so in 2.0.0-rc.59. Fix merged on open-pryv.io master, unreleased (2026-10-26); each place now states both the gap (rc.58, rc.59) and the fix as "the release after 2.0.0-rc.59 (expected 2.0.0-rc.60)". | The release that carries the fix is walked: name it in each place, keep the gap only as "before <release>". |
+| (none open) | | | |
+
+Discharged: the 2026-10-26 clause on external ids missing from the
+per-user backup (observed on open-pryv.io 2.0.0-rc.58 and rc.59; in
+`iso-27001.A.8.13`, the `external-id-index` and `backup-restore`
+primitives and `context/operator-backup-coverage.md`). Fixed in
+2.0.0-rc.60 (`f3db0564`); each place now names that release as the fix
+and keeps the gap for rc.58 and rc.59 only, citing `[XIDB2]`..`[XIDB4]`,
+`[XIDBK1]`, `[XIDBK2]` (re-walk recorded under B.1, 2026-10-26).
 
 Discharged: the 2026-10-14 clause on CMC withdrawal of delegable grants
 (derived accesses surviving every teardown path but `accesses.delete`,

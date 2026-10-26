@@ -934,8 +934,7 @@ requirements:
 
       **External ids** (`external-id-index` primitive). The account's
       own claims, replacements and releases are audited on its trail
-      like any API call (open-pryv.io 2.0.0-rc.58). From the release
-      after 2.0.0-rc.59 (expected 2.0.0-rc.60) an administrator's
+      like any API call (open-pryv.io 2.0.0-rc.58). From 2.0.0-rc.60 an administrator's
       release of an id (`POST /system/admin/ext-id/release`, admin key)
       is recorded twice: the admin call itself without a user (syslog),
       and an `account.externalIds.adminRelease` entry in the trail of

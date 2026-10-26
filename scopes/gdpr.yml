@@ -1049,8 +1049,7 @@ requirements:
       intelligible is your editorial responsibility.
 
       An operator action on the account is communicated by Pryv itself
-      in this case: from the release after 2.0.0-rc.59 (expected
-      2.0.0-rc.60), when your administrator releases an external id the
+      in this case: from 2.0.0-rc.60, when your administrator releases an external id the
       account held (`external-id-index` primitive), the account gets the
       `external-id-released` mail with the namespace label and the
       reason your administrator gave, never the id, when mail is
@@ -1380,8 +1379,7 @@ requirements:
           them `[XIDD2]`. A failure at that step does not stop the
           deletion: the rows it leaves point at an account that no longer
           exists, and `bin/reconcile-user-cores.js --ext-ids` releases
-          them. The index never held the record id itself. From the
-          release after 2.0.0-rc.59 (expected 2.0.0-rc.60) the per-user
+          them. The index never held the record id itself. From 2.0.0-rc.60 the per-user
           backup carries the account's ids (namespace, blinded value,
           claim date): restoring an erased account from such a backup
           links them again, unless another account has claimed one
@@ -1855,8 +1853,7 @@ requirements:
       server when the sign-in is accepted, and the sign-in never links
       an id by itself `[XIDFF1]`, `[XIDFF3]`, `[XIDFF4]`. Whoever holds a
       blinded value before the person claims it can claim it first with
-      another account (a denial, never a data flow); from the release
-      after 2.0.0-rc.59 (expected 2.0.0-rc.60) your administrator can
+      another account (a denial, never a data flow); from 2.0.0-rc.60 your administrator can
       remove such a link with the admin key, and the account that held
       it is told by mail and in its own audit trail `[XIDAR1]`,
       `[XIDAR3]`. What stays yours: who holds the namespace key (every
@@ -2333,8 +2330,7 @@ requirements:
           availability after a quorum loss. Operator backups carry
           high-frequency series data only since open-pryv.io
           2.0.0-rc.34 (earlier backups silently held none, on every
-          series engine): take a new backup after upgrading. From the
-          release after 2.0.0-rc.59 (expected 2.0.0-rc.60) the per-user
+          series engine): take a new backup after upgrading. From 2.0.0-rc.60 the per-user
           backup also carries the account's external ids and a restore
           links them again `[XIDBK1]`; each blinded value in it can
           claim the id, so protect the backup as a credential store

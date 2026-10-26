@@ -470,8 +470,7 @@ requirements:
       external-id table) are not in the per-user backup in 2.0.0-rc.58
       and 2.0.0-rc.59: include that table in your database-level backup
       of each core and in the restore drill. See
-      `context/operator-backup-coverage.md`. From the release after
-      2.0.0-rc.59 (expected 2.0.0-rc.60) the per-user backup carries
+      `context/operator-backup-coverage.md`. From 2.0.0-rc.60 the per-user backup carries
       each account's ids (`users/<userId>/external-ids.jsonl[.gz]`:
       namespace, blinded value, claim date), also in incremental
       chains; a restore links them again after the platform rows, an
@@ -568,7 +567,7 @@ requirements:
 
       **External ids** (`external-id-index` primitive): an
       administrator's release of an id claimed by the wrong account
-      (from the release after 2.0.0-rc.59, expected 2.0.0-rc.60) is
+      (from 2.0.0-rc.60) is
       logged on the admin side without a user (syslog) and, when audit
       is active, in the trail of the account that held it
       (`account.externalIds.adminRelease`: namespace and reason)
