@@ -2169,7 +2169,10 @@ requirements:
           other with the admin key (`POST /system/ext-id/holds`, a yes
           or no, not audited), over https unless
           `cluster.allowInsecurePeerUrl` `[XIDH1]`, `[XIDFC1]`,
-          `[XIDFC4]`. A forced registration refuses an id another
+          `[XIDFC4]`; tested end to end across two running cores
+          (holder accepted, non-holder refused) `[2C56]`, `[2C57]`
+          (tests added after 2.0.0-rc.61; the behaviour is that of
+          2.0.0-rc.59). A forced registration refuses an id another
           account holds before anything is reserved `[XIDFR7]`. The
           guarantee binds the credential to the account holding the id,
           which is whoever claimed it first: who receives a blinded value

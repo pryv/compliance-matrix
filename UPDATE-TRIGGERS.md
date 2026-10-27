@@ -1684,6 +1684,15 @@ pryv.me the same day), with no change to its content since the walk
 above. Every row and note listed above now names 2.0.0-rc.60; the
 Section C clause (per-user backup) is discharged.
 
+**Test codes added 2026-10-27**: the open-pryv.io two-core suite now
+runs its cores as a real multi-core platform; `[2C56]` (holder of core
+B accepted on core A, checked on B) and `[2C57]` (non-holder of B
+refused on A) cover forced mode across cores end to end. Cited in
+`gdpr.Art.32` (the record-bound sign-in bullet; the tests list only
+accepts codes starting with a letter, so the `2Cxx` codes stay in prose). No
+claim changes: the behaviour shipped in 2.0.0-rc.59; also checked by
+hand on pryv.me (2.0.0-rc.61) the same day.
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
