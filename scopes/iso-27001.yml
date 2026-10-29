@@ -482,6 +482,17 @@ requirements:
       by `--verify-integrity` keeps its restored ids; release them with
       the admin release if the account is to be dropped.
 
+      **Account aliases (open-pryv.io `4547b32a`, the release after
+      2.0.0-rc.65).** Earlier backups did not carry an account's aliases
+      (access aliases, former usernames): after a restore its aliased
+      accesses and endpoints under a former username did not route and a
+      former username could be registered by someone else. From that
+      release the per-user manifest lists them (`aliases`) and the restore
+      reserves them again; an alias another account or core holds by then
+      stays with it and is reported `[BKAL1]`. Series still held under a
+      former username are exported and restored under the username
+      `[BKAL3]`. Take a new backup after upgrading.
+
   - ref: A.8.15
     title: A.8.15 Logging
     text: |
@@ -981,7 +992,11 @@ requirements:
         - Username-side pseudonymisation is the one transformation
           Pryv does natively: `accesses.create {randomAlias:true}` mints
           a routable `r-XXXXXXXX` alias that hides the username per access
-          (`proposals/aliases-as-pseudonymization-primitive.md`).
+          (`proposals/aliases-as-pseudonymization-primitive.md`); it
+          survives a backup and restore and routes on every topology
+          since open-pryv.io `4547b32a`. It masks the username from the
+          holder, it does not stop a holder who guesses the username
+          from confirming it.
         - Third-party record ids are masked before they reach Pryv
           (open-pryv.io 2.0.0-rc.58, `external-id-index` primitive): your
           service sends `HMAC(K_namespace, recordId)` with a key it keeps,

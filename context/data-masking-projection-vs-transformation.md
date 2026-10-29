@@ -53,10 +53,12 @@ When implementers need a "masked" view, the Pryv-native pattern is:
    prove the support role's scope at the moment of any historical
    read.
 
-For username-side pseudonymisation specifically, the planned
-`auth.randomAlias` primitive (see
-`proposals/aliases-as-pseudonymization-primitive.md`) ships the
-alias-issuance step at the access layer.
+For username-side pseudonymisation specifically, the shipped
+`randomAlias` primitive (`accesses.create {randomAlias:true}`, see
+`proposals/aliases-as-pseudonymization-primitive.md`) issues the
+alias at the access layer. It hides the username from the holder of
+the access; it does not stop a holder who guesses the username from
+confirming it.
 
 ## What transformation use cases need (and what would help)
 

@@ -89,6 +89,25 @@ this slug, so none needed discharging.
 | iso-27701 | A.7.4.5 | ✅ | stale "planned / backlog `ALIASES`" prose corrected 2026-07-28 |
 | ccpa | 1798.140(ae) | ✅ | deployment-pattern recommendation cites the alias |
 
+**Re-checked 2026-10-29 for the alias and username-change hardening**
+(open-pryv.io `4547b32a`, merged to master, ships in the release after
+2.0.0-rc.65). The claim now holds after a backup and restore (`[BKAL1]`)
+and on a single core answering DNS (`[ALRT1]`); a custom account field
+named `username` or `usernameChangeCount` is refused at boot (`[SDB3]`);
+aliases per account are bounded by `accesses.maxAliasesPerAccount`
+(`[AL12]`). Every row citing the primitive (the six above plus
+`soc2.C1.1`) now states the limit: the alias hides the username from the
+holder, it does not stop a holder who guesses the username from
+confirming it (lifted only when alias-bound addressing ships; no row
+claims it before). `iso-27701.A.7.4.5` overclaim corrected (the alias is
+not end-of-processing de-identification). Stale "planned" mentions
+corrected in `docs/implementer-faq.md`,
+`context/privacy-by-design-and-default.md`,
+`context/data-masking-projection-vs-transformation.md`,
+`context/data-retention-operator-owned.md` (the alias is not an
+account-level anonymisation verb; `audit.onUserDelete: pseudonymise` is
+not implemented). No tier change, no chips.
+
 Proposal: `proposals/aliases-as-pseudonymization-primitive.md`
 
 ### `AUDIT-LOG-CHAINING`
@@ -2586,6 +2605,42 @@ backup and its encryption in general; the backup now holding more of the
 account changes no claim, and the sensitivity note is on
 `iso-27001.A.8.13`), the integrity, transport and application-security
 rows (no change).
+
+**Walked 2026-10-29 for the release after 2.0.0-rc.65** (alias and
+username-change hardening, open-pryv.io `4547b32a`).
+- **New config keys**: `accesses.maxAliasesPerAccount` (default 1000,
+  aliases one account may hold; past it `randomAlias` is refused
+  `invalid-operation`, `[AL12]`): added to `gdpr.Art.32` `config_keys`
+  (pseudonymisation bullet), the `randomAlias` primitive.
+  `auth.usernameChangeLimit` (default 2, `0` disables; declared in
+  `default-config.yml` for the first time, the behaviour is unchanged):
+  the `randomAlias` primitive; no row cites username changes, none
+  changed.
+- **Config refusal**: custom account stream ids `username` /
+  `usernameChangeCount` refused at boot (`[SDB3]`): `gdpr.Art.32`,
+  the `randomAlias` primitive, the ALIASES proposal.
+- **Backup**: the per-user manifest carries the account's aliases and
+  the restore reserves them; series under former usernames exported and
+  restored under the username (`[BKAL1]`, `[BKAL3]`). Rows:
+  `iso-27001.A.8.13` (paragraph added), `gdpr.Art.32` pseudonymisation
+  bullet, the `backup-restore` and `randomAlias` primitives,
+  `context/operator-backup-coverage.md` (new row; the stale
+  `pseudonymise` note corrected).
+- **Platform DB**: name to core rows written for aliases and changed
+  usernames on a single core too; `bin/reconcile-user-cores.js` now
+  applies on a single core (one run after upgrading; refuses an empty
+  users index, exit 3); the platform integrity check now reports user
+  ids unknown to the users index (it could not before; blind on SQLite).
+  `context/core-affinity-architecture.md` not changed (routing model
+  unchanged). One-time repair `bin/gather-former-series.js` for series of
+  accounts renamed earlier: no row change.
+Walked without change: `hipaa-security.164.308(a)(7)(ii)(A)` / `(B)`,
+`hds.Activity.5`, `soc2.PI1.5`, `soc2.A1.2` (per-user backup in general),
+the integrity rows (`gdpr.Art.32` §1(b), `iso-27001.A.8.14` / `A.8.22`:
+the users-index check now reports orphans, no claim relied on it), the
+transport and application-security rows. Test codes are cited in prose
+only until the matrix validator reads an open-pryv.io checkout that holds
+them.
 
 ## Section C: Maintenance reminders
 
