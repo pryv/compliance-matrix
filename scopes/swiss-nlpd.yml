@@ -312,11 +312,22 @@ requirements:
     derives_from: [gdpr.Art.16, gdpr.Art.17]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
     tests: [PTU1, USAD]
+    planned:
+      - kind: feature
+        summary: "Account auto-deletion: the person can schedule the erasure of their own account at a date or after a period without use, with reminders; same erasure path"
+        proposal: proposals/account-auto-deletion.md
+        impact: low
     overview: |
       Rectification and erasure: same mapping as GDPR Art. 16 + 17.
       `events.update` for rectification (with version preservation);
       `system.users.delete` for erasure (with the same engine-dependent
       backup semantics noted under GDPR Art. 17).
+    detail: |
+      Planned, not yet released: account auto-deletion (see
+      gdpr.Art.17). The person is designed to be able to schedule the
+      erasure of their own account, at a date or after a period
+      without use, with reminder mails before it; the erasure is the
+      same as `system.users.delete`.
 
   - ref: Art.34
     title: Disclosure of personal data abroad

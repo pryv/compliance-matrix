@@ -1254,6 +1254,98 @@ rules hold; the one addition is the delegation grant guard's exemption for
 `[DDG04]`, which does not let a delegate publish an offer; their entries'
 dated "hard delete" wording is history and stays.
 
+### `ACCOUNT-AUTO-DELETION` (PLANNED: implemented on an open-pryv.io feature branch, not released; chips added 2026-10-29)
+
+**Where the work lives**: open-pryv.io branch `feat/account-auto-deletion`
+(not merged): `components/business/src/autoDeletion/` (`config.ts` the
+`account.autoDeletion` block and its boot check, `state.ts` per-account
+setting / bookkeeping / encrypted beneficiary identity, `deadline.ts` the
+schedule engine, `sweep.ts` the per-core sweep),
+`components/business/src/accesses/accountActivity.ts` (activity = personal +
+app accesses, delegate use counted and reported),
+`components/api-server/src/methods/accountAutoDeletion.ts` (`account.getAutoDeletion`
+/ `account.setAutoDeletion`, `GET` / `PUT /{username}/account/auto-deletion`),
+`components/api-server/src/methods/helpers/autoDeletionSweep.ts` (the sweep
+in the designated API worker, the `account.autoDeletion.erase` audit row),
+`auth.login` recording `lastUsed`, three mail templates
+(`account-deletion-scheduled`, `-reminder`, `-blocked`, en / fr). Operator
+page `customer-resources/account-auto-deletion` on the dev-site2 branch of the
+same name (not published). Delivered by a scheduled open-pryv.io release, not
+a backlog file, so the chips carry no `backlog:` key; no public issue yet.
+Falls under **B.1** (two new API methods, a new `features.autoDeletion`
+service-info entry, new error ids, an audited method), **B.7** (a new
+per-core background loop that erases accounts), **B.11** (new config block
+`account.autoDeletion.*`, new mail switches `services.email.enabled.
+accountDeletion*`), and **B.2** only in the sense of a new audit event type
+`audit-log/account-auto-deletion` written by the server (not a data-types
+catalogue entry).
+
+An account is deleted at a date its holder chose, or after a period without
+use (latest `lastUsed` of its personal and app accesses, a delegate's included,
+shared accesses never), by the holder's own schedule or by an operator
+inactivity preset (default none). Reminder mails at 60, 30, 7 and 1 days, a
+7-day minimum notice after the first notice actually sent, a preset clock that
+starts the day it first applies (no surprise deletion of dormant accounts),
+password to arm or shorten, delegates refused on set, `delete` offered only
+where self-deletion is allowed, the deletion guards and erasure of
+`auth.delete`, WARN log before and after, audit row where the audit outlives
+the account, `dryRun`, `maxDeletionsPerPass`. The second action, **transfer
+to a beneficiary, is designed and NOT implemented**: its chips (marked
+"transfer") stay until its own release. Context:
+`context/data-retention-operator-owned.md` ("Account-level auto-deletion
+(planned, not yet released)" and "Planned: transfer to a beneficiary", which
+holds the Art.6 / Art.13 / Art.14(5)(b) reading, unconfirmed). Implementer-FAQ
+Q31 carries a planned note. Proposal: `proposals/account-auto-deletion.md`.
+
+**Chips added 2026-10-29** (detail paragraphs marked "Planned, not yet
+released" or "Planned, designed and not implemented"; no tier shift; no
+`tests:`, `config_keys:` or `docs:` added, since nothing is on open-pryv.io
+master or the published docs site; `reviewed_at` unchanged):
+
+| Scope | Ref | Kind | Impact | What will change |
+|---|---|---|---|---|
+| gdpr | Art.5 | feature | medium | §1(e): account-level storage limitation configurable (preset, holder schedule, reminders, minimum notice); event level stays operator-owned |
+| gdpr | Art.5 | feature | low | transfer: §1(c) beneficiary data minimised, encrypted, erased with the transfer |
+| gdpr | Art.6 | feature | low | transfer: basis for the operator's processing of beneficiary data (6(1)(f) reading, unconfirmed) |
+| gdpr | Art.13 | feature | low | §2(a): a preset is a retention period for the privacy notice; holder told by confirmation and reminders |
+| gdpr | Art.13 | feature | low | transfer: holder notice on when / how the operator may read beneficiary name and date of birth |
+| gdpr | Art.14 | feature | low | transfer: beneficiary informed atSetup or atTrigger (Art.14(5)(b) reading, unconfirmed) |
+| gdpr | Art.17 | feature | medium | erasure scheduled by the data subject (§1(a)/(b)), same path and guards as `auth.delete` |
+| gdpr | Art.25 | feature | low | retention-by-default bullet: default never, preset, dry run, no surprise deletion |
+| gdpr | Art.32 | feature | low | password step-up and delegate refusal on arming; transfer: identity encrypted at rest, claim token hashed |
+| ccpa | 1798.105 | feature | low | consumer-scheduled deletion (no §1798.105(d) hook) |
+| pipeda | Principle.4.5 | feature | medium | inactive-account retention enforceable by configuration |
+| swiss-nlpd | Art.32 | feature | low | erasure scheduled by the person |
+| soc2 | CC6.5 | feature | low | scheduled whole-account destruction, same path |
+| soc2 | P4.2 | feature | medium | account-level retention enforced by the platform; tier review at release |
+| soc2 | P4.3 | feature | low | scheduled disposal, same path |
+| soc2 | C1.2 | feature | low | scheduled disposal, same path |
+| iso-27701 | A.7.4.5 | feature | medium | "as soon as no longer necessary" enforceable for inactive accounts |
+| iso-27001 | A.8.10 | feature | low | deletion when no longer required, schedulable |
+| hipaa-security | 164.316(b)(2)(i) | feature | low | scheduled erasure follows `audit.onUserDelete`; `keep` writes an erasure audit row |
+
+Walked without a chip: `iso-27001.A.7.14` (secure disposal or re-use of
+equipment, `out-of-scope`): physical media, unaffected; the information-deletion
+row is `A.8.10`, chipped instead. `iso-27701.A.7.4.7` (records of PII
+processing): unchanged, the new methods are audited like any other and
+add no record family the row has to name. (The sample README cited `hipaa-privacy.164.530(j)`,
+which has no row in the matrix; it now cites `hipaa-security.164.316(b)(2)(i)`.)
+
+**At the deletion release**: discharge every chip not marked "transfer";
+rewrite each "Planned, not yet released" paragraph as shipped with the
+release name, commit and test codes (`[ACXP]`, `[ACSW]`, `[ACRM]`, `[ACST]`,
+`[ACAC]`, `[LGLU]`, `[ACCF]`, `[CVAD]`, `[CKCF7]`, `[ADKS]`, `[ADKR]`; the
+proposal lists the numbered codes); add `account.autoDeletion.*`,
+`accessTracking.isActive` and `services.email.enabled.accountDeletion*` to
+`config_keys:` where the row cites the behaviour they govern; cite the
+operator page in `docs:` once published; decide on a primitive entry in
+`docs/pryv-primitives.md`; review the tier of `soc2.P4.2` and the §1(e) label
+of `gdpr.Art.5`; turn the planned sections of the context note, FAQ Q31 and
+`samples/scheduled-retention-job/README.md` into shipped text. **At the
+transfer release**: discharge the "transfer" chips (gdpr Art.5 second chip,
+Art.6, Art.13 second chip, Art.14, the transfer half of Art.32) and walk the
+delegation rows listed in the proposal (a controller can be set by a claim).
+
 ## Section B: Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued
@@ -1693,6 +1785,24 @@ accepts codes starting with a letter, so the `2Cxx` codes stay in prose). No
 claim changes: the behaviour shipped in 2.0.0-rc.59; also checked by
 hand on pryv.me (2.0.0-rc.61) the same day.
 
+**Pre-release walk 2026-10-29 for account auto-deletion (implemented on a
+branch, NOT released; `ACCOUNT-AUTO-DELETION` in Section A)**. New methods
+`account.getAutoDeletion` / `account.setAutoDeletion` (personal token, both
+audited; set refused to delegation-derived accesses, password required to arm
+or shorten), `features.autoDeletion` in service info, new error ids
+`auto-deletion-*`, a server-written audit action `account.autoDeletion.erase`.
+Rows of the B.1 families walked:
+- **Erasure** (`gdpr.Art.17`, `ccpa.1798.105`, `pipeda.Principle.4.5`,
+  `swiss-nlpd.Art.32`; SOC 2 `CC6.5`, `P4.3`, `C1.2`): all chipped (scheduled
+  erasure through the same path).
+- **Access control** (`hipaa-security.164.312(a)(1)`, `soc2.CC6.1`,
+  `soc2.CC6.3`): walked without change (no new access path; the new
+  delegate refusal and password step-up are recorded under `gdpr.Art.32`).
+- **Audit** (`hipaa-security.164.312(b)`, `iso-27001.A.8.15`, `soc2.P6.2`):
+  walked without change (two more audited methods; the erasure audit row is
+  recorded under `hipaa-security.164.316(b)(2)(i)`).
+- DSAR, rectification and restriction families: unchanged.
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
@@ -1817,6 +1927,13 @@ benefit from pointing at the new scope.
 ### B.7: Major Pryv-side architectural change
 
 Touches `context/*.md` notes. Recent examples:
+- Account auto-deletion (implemented on an open-pryv.io branch, not
+  released, walked 2026-10-29): a new per-core background loop in the
+  designated API worker that erases accounts on a schedule; recorded in
+  `context/data-retention-operator-owned.md` ("Account-level auto-deletion
+  (planned, not yet released)"), whose "voluntarily missing" framing now
+  holds for records inside an account only. See `ACCOUNT-AUTO-DELETION` in
+  Section A.
 - External ids (open-pryv.io 2.0.0-rc.58, 2026-10-26): a new PlatformDB row
   family (`ext-id-ns/`, `ext-id/` mapping a blinded id to a core id) and a
   home-core local table holding the account; added to the PlatformDB
@@ -2586,6 +2703,22 @@ backup and its encryption in general; the backup now holding more of the
 account changes no claim, and the sensitivity note is on
 `iso-27001.A.8.13`), the integrity, transport and application-security
 rows (no change).
+
+**Pre-release walk 2026-10-29 for account auto-deletion (implemented on a
+branch, NOT released; `ACCOUNT-AUTO-DELETION` in Section A)**. New per-core
+block `account.autoDeletion.*` (`enabled`, `dryRun`, `inactivity.defaultDays`
+/ `minDays` / `maxDays`, `userOverride`, `allowUserOptOut`,
+`date.minLeadDays`, `reminders.leadDays` / `minNoticeDays`, `sweepIntervalMs`,
+`maxDeletionsPerPass`, `transfer.claimWindowDays`,
+`transfer.identitySecretsKey` (a YAML-only secret, unused until the transfer
+ships)); boot check: an inactivity preset with `accessTracking.isActive: false`
+refuses the boot, a preset without mail or `service.account` is a warning.
+Mail switches `services.email.enabled.accountDeletionScheduled` /
+`accountDeletionReminder` / `accountDeletionBlocked`. Closest precedent
+`accesses.deletionRecords.retentionDays` (a built-in purge with an opt-in
+period). Not security-transport keys: the rows they govern are the retention
+and erasure rows chipped in Section A; `config_keys:` are added there at
+release. No transport, header, platform DB or backup change.
 
 ## Section C: Maintenance reminders
 

@@ -256,6 +256,11 @@ requirements:
     derives_from: [gdpr.Art.17, gdpr.Art.4, hipaa-security.164.310, hipaa-privacy.164.514, ccpa.1798.105]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
     tests: [USAD]
+    planned:
+      - kind: feature
+        summary: "Account auto-deletion: 'as soon as no longer necessary' enforceable for inactive accounts by configuration (operator inactivity preset, reminders, minimum notice), and schedulable by the PII principal"
+        proposal: proposals/account-auto-deletion.md
+        impact: medium
     overview: |
       Per-user deletion via `system.users.delete` (engine-dependent
       backup behaviour, same notes as GDPR Art. 17). Per-event /
@@ -263,8 +268,9 @@ requirements:
       De-identification (Safe Harbor / Expert Determination methods) is
       an application-layer transformation; Pryv stores the result.
       "**Soon as the original PII is no longer necessary**" is the
-      operator's scheduled-retention obligation; Pryv ships no
-      TTL primitive; the operator composes `events.get toTime=` +
+      operator's scheduled-retention obligation; released versions
+      ship no TTL primitive (account-level auto-deletion is planned,
+      see detail); the operator composes `events.get toTime=` +
       `events.delete` + audit-log inactivity oracle in an external
       retention job (`context/data-retention-operator-owned.md`).
       `accesses.create {randomAlias:true}` ships the anonymisation
@@ -272,6 +278,17 @@ requirements:
       "delete": a platform-unique routable alias replaces the username
       on that access, so a counterparty holding it cannot re-identify
       the principal or cross-match them against another access.
+    detail: |
+      Planned, not yet released: account auto-deletion (see gdpr.Art.5
+      §1(e)). For whole accounts, "no longer necessary" is designed to
+      be enforceable by configuration: your inactivity preset
+      (`account.autoDeletion.inactivity.defaultDays`, default none)
+      deletes plain accounts with an email address after that many
+      days without use of their personal and app accesses, after
+      reminder mails and at least 7 days after the first notice; the
+      PII principal may also schedule their own account's deletion at
+      a date or after a period. The deletion is `system.users.delete`'s.
+      Per-record retention and de-identification stay as above.
 
   - ref: A.7.4.6
     title: A.7.4.6 Temporary files

@@ -363,6 +363,11 @@ requirements:
     pryv_primitives: [event, stream, backup-restore]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
     tests: [USAD, DLN1, DLN4, DLLW1]
+    planned:
+      - kind: feature
+        summary: "Account auto-deletion: whole-account deletion when no longer required can be scheduled (holder's date or period, operator inactivity preset), through the same erasure path"
+        proposal: proposals/account-auto-deletion.md
+        impact: low
     overview: |
       Per-user erasure: `system.users.delete` removes the user's data
       from the live store. Engine-dependent backup behaviour (SQLite
@@ -375,6 +380,13 @@ requirements:
       usernames and aliases (earlier releases could leave them), and
       since 2.0.0-rc.50 points written during the deletion do not
       survive it; see GDPR Art.17 for the full list.
+    detail: |
+      Planned, not yet released: account auto-deletion (see gdpr.Art.5
+      §1(e) and gdpr.Art.17). Deleting a whole account "when no longer
+      required" is designed to be schedulable: by the account holder
+      (a date, or a period without use) or by your inactivity preset,
+      with reminder mails and a minimum notice before, through the same
+      erasure as `system.users.delete`.
 
   - ref: A.8.13
     title: A.8.13 Information backup

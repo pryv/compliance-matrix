@@ -50,6 +50,11 @@ requirements:
     derives_from: [gdpr.Art.17]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
     tests: [USAD, XIDD2]
+    planned:
+      - kind: feature
+        summary: "Account auto-deletion: the consumer can schedule the deletion of their own account at a date or after a period without use, with reminders; same deletion path"
+        proposal: proposals/account-auto-deletion.md
+        impact: low
     overview: |
       Same primitive as GDPR Art. 17: `system.users.delete` is the
       per-consumer erasure call. Backup-completeness of the deletion
@@ -61,6 +66,17 @@ requirements:
       §1798.105(d) statutory exceptions (warranty, security, legal
       compliance, etc.) are your programmatic determination; if an
       exception applies you suppress the deletion and document why.
+    detail: |
+      Planned, not yet released: account auto-deletion (see
+      gdpr.Art.17). The consumer is designed to be able to schedule the
+      deletion of their own account, at a date or after a period
+      without use, from the reference account app; reminders precede
+      it and the deletion is the same as `system.users.delete`, guards
+      included. As designed it has no hook for a §1798.105(d)
+      exception: if one applies to a consumer whose deletion is
+      scheduled, that is still your determination, made before the
+      deadline (for example by turning the feature off on the core, or
+      by your own process outside it).
 
   - ref: "1798.106"
     title: Right to correct inaccurate personal information

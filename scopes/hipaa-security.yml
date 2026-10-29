@@ -1491,6 +1491,11 @@ requirements:
     pryv_primitives: [backup-restore, audit]
     config_keys: [audit.onUserDelete, accesses.deletionRecords.retentionDays]
     tests: [DKP1, ADP1]
+    planned:
+      - kind: feature
+        summary: "Account auto-deletion: a scheduled account erasure follows audit.onUserDelete like any deletion; with keep, an account.autoDeletion.erase audit row is written in the account's trail before erasing"
+        proposal: proposals/account-auto-deletion.md
+        impact: low
     overview: |
       Six-year is a **minimum** retention period, not a maximum
       (the statute says "retain … for 6 years"; covered entities
@@ -1553,6 +1558,19 @@ requirements:
       `audit.onUserDelete` says `[ADP1]`. The audit rows themselves are
       kept; past the purge they name such an access by id only. A
       retention shorter than six years shortens that attribution.
+
+      **Planned, not yet released: account auto-deletion.** An account
+      erased because its holder scheduled it, or because your
+      inactivity preset applied, follows `audit.onUserDelete` like any
+      account deletion: with the default `erase` its audit goes with it
+      and a WARN log line before and after the erasure is what remains;
+      with `keep` (and the audit active) the trail survives and an
+      `account.autoDeletion.erase` row (username, trigger, whether the
+      holder or your preset set the schedule, deadline, when the
+      notices were sent) is written in it before the erasure starts. A covered entity that
+      enables account auto-deletion keeps `audit.onUserDelete: keep`
+      and keeps those log lines for the six-year period if they are
+      part of its documentation.
 
   - ref: 164.316(b)(2)(iii)
     title: Documentation, updates, Required

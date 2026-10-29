@@ -10,8 +10,8 @@ operator's. This sample is the recipe.
 ## What it demonstrates
 
 - **GDPR Art.5(1)(e)** storage limitation + **Art.17** erasure on a schedule.
-- **PIPEDA Principle 4.5**, **ISO 27701 A.7.4.5**, **HIPAA-Privacy
-  164.530(j)** retention/disposal.
+- **PIPEDA Principle 4.5**, **ISO 27701 A.7.4.5**, **HIPAA-Security
+  164.316(b)(2)(i)** retention/disposal.
 
 It is a Node script (not a web app) because retention is a scheduled backend
 task, the topology should reflect that.
@@ -39,6 +39,23 @@ boolean composition, no per-rule rollback. The summary (deleted count,
 elapsed, errors per rule) is printed to stdout and can be piped to your
 observability sink.
 
+## Account-level retention: not here
+
+This job works on events inside accounts. It never deletes an account.
+
+- **Releases with account auto-deletion** (planned for the next open-pryv.io
+  release; implemented on a feature branch, not yet released): use the built-in
+  feature for inactive accounts. Set an inactivity preset in
+  `account.autoDeletion.inactivity.defaultDays` and run it with `dryRun: true`
+  first. The core then sends the reminder mails, holds a minimum notice and runs
+  the deletion guards and teardowns of `auth.delete`. State the preset in your
+  privacy notice. See `context/data-retention-operator-owned.md`, "Account-level
+  auto-deletion".
+- **Earlier releases:** account-level deletion stays your own job, built on an
+  inactivity measure you have reviewed (the context note's audit-log oracle
+  pattern). Wire `auth.delete` to your admin-key flow only after that review,
+  and send your own notices before deleting.
+
 ## Deployment wrappers
 
 - [`deploy/systemd-timer/`](./deploy/systemd-timer/): `.service` + `.timer`.
@@ -59,4 +76,4 @@ observability sink.
 ## Backed matrix rows
 
 `gdpr.Art.5`, `gdpr.Art.17`, `pipeda.Principle.4.5`, `iso-27701.A.7.4.5`,
-`hipaa-privacy.164.530(j)`.
+`hipaa-security.164.316(b)(2)(i)`.
