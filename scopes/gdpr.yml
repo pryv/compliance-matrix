@@ -177,7 +177,7 @@ requirements:
       | processing | any API call on `events.*` / `streams.*` / `accesses.*` (audit-recorded) |
       | filing system | N/A, Pryv is fully automated |
       | personal data breach | event/audit anomaly + post-mortem (see Art.33) |
-      | pseudonymisation | `accesses.create {randomAlias:true}` (platform-unique routable alias hides the username per access) + external ids (a third-party record id held only as a value the caller blinds with its own key, open-pryv.io 2.0.0-rc.58) + system-streams + custom event-type design |
+      | pseudonymisation | `accesses.create {randomAlias:true}` (platform-unique routable alias hides the username per access from its holder; a holder who guesses the username can still confirm it, see Art.32) + external ids (a third-party record id held only as a value the caller blinds with its own key, open-pryv.io 2.0.0-rc.58) + system-streams + custom event-type design |
       | profiling | application-side concern (out for Pryv) |
       | restriction of processing | scope-down via `accesses.update` (see Art.18) |
 
@@ -2248,8 +2248,8 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index]
-    config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1]
+    config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -2318,7 +2318,23 @@ requirements:
           many ids each core holds; a core that also holds your
           namespace key can test whether an id is on the platform and on
           which core. Keep that key in your services, never on the
-          cores.
+          cores. For the account name itself, an access created with
+          `randomAlias:true` carries a platform-unique `r-XXXXXXXX`
+          alias in place of the username (`randomAlias` primitive):
+          nothing returned to that access names the account. Since
+          open-pryv.io `4547b32a` (2.0.0-rc.66) the
+          alias routes on every topology, a single core answering DNS
+          included (`[ALRT1]`), and survives a backup and restore
+          (manifest `aliases`, `[BKAL1]`); an account holds at most
+          `accesses.maxAliasesPerAccount` aliases (default 1000,
+          `[AL12]`), and a custom account field named `username` or
+          `usernameChangeCount` is refused at boot so no account
+          stream can expose the stored username to an aliased access
+          (`[SDB3]`, `[AL08]`). Limit: the alias hides the username,
+          it does not stop a holder who already suspects which account
+          it is from confirming the guess (the token also works under
+          the account's other names), so treat it as pseudonymisation
+          towards the holder, not as unlinkability against guessing.
         - Record-bound sign-in: IMPLEMENTED, since open-pryv.io
           2.0.0-rc.59 (release commit `927919ba`) an auth request that
           carries an external id in forced mode delivers the app's

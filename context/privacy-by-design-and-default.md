@@ -271,7 +271,7 @@ enhancing technologies) the platform could absorb. Status:
 
 | PET | Today | Backlog status |
 |---|---|---|
-| **Pseudonymisation** | partial, accesses + streams provide structural pseudonymisation; `auth.randomAlias` planned | `ALIASES` backlog |
+| **Pseudonymisation** | partial, accesses + streams provide structural pseudonymisation; access aliases (`accesses.create {randomAlias:true}`) shipped, hiding the username from an access's holder (a holder who guesses the username can still confirm it) | `ALIASES` (shipped) |
 | **Proxy re-encryption** (sharing segments of existing datasets safely; client-side keying during consent) | not shipped; PoC at github.com/perki/test-proxy-re-encrypt | `E2E-ENCRYPTION` backlog + `proposals/e2e-encryption.md` |
 | **Homomorphic encryption** | not shipped; out-of-scope for the platform; implementer can layer it on top per use-case | (not backlogged) |
 | **Differential privacy** | not shipped; out-of-scope; operator-side analytics layer | (not backlogged) |

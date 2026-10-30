@@ -35,11 +35,28 @@ A routable, platform-unique de-identifying name substituted for the username.
 - **Routable**: the alias replaces the username in the access's `apiEndpoint`
   and resolves to the user exactly like the username (including across cores);
   the real-username↔alias mapping stays with the platform, never exposed to
-  the aliased access.
+  the aliased access. Since open-pryv.io `4547b32a` (2.0.0-rc.66) this holds on a single core answering DNS too (`[ALRT1]`;
+  aliases minted earlier on such a core need one run of
+  `bin/reconcile-user-cores.js`) and after a backup and restore (manifest
+  `aliases`, `[BKAL1]`).
+- **Bounded**: an account holds at most `accesses.maxAliasesPerAccount`
+  aliases (default 1000; its access aliases plus its former usernames;
+  `[AL12]`). An expired access keeps its alias until it is deleted.
+- **Configuration guard**: a custom account field named `username` or
+  `usernameChangeCount` is refused at boot (`[SDB3]`): the server keeps those
+  fields itself, and such a stream would expose them to an aliased access.
 - **Reported by**: `access-info` returns the alias as `user.username`, so a
   counterparty holding the access sees only the alias.
 - **Also underpins**: `account.changeUsername`, a superseded username is
-  demoted to a (non-`r-`) alias so accesses issued under it keep working.
+  demoted to a (non-`r-`) alias so accesses issued under it keep working
+  (sign-in with it too; an `r-` access alias is never a sign-in name). The
+  number of changes is capped by `auth.usernameChangeLimit` (default 2, `0`
+  disables).
+- **Limit**: the alias hides the username from the holder of the access; it
+  does not stop a holder who already suspects which account it is from
+  confirming the guess, since the token also works under the account's other
+  names. Describe it as pseudonymisation towards the holder, not as
+  unlinkability against guessing.
 - **Compliance role**: Pryv-native pseudonymisation primitive (GDPR Art.4(5) /
   Art.32(1)(a)) and the HIPAA §164.514(c) re-identification code. Released when
   the access is deleted. See
@@ -472,6 +489,12 @@ from a backup file.
   `[XIDBK1]`, `[XIDBK2]`. The blinded values make the per-user backup
   as sensitive as a claim credential: encrypt it. See
   `external-id-index`.
+- **Account aliases** (open-pryv.io `4547b32a`, 2.0.0-rc.66): the per-user manifest lists each account's aliases (access
+  aliases and former usernames, `aliases`) and the restore reserves them
+  again; an alias another account or core holds by then stays with it and
+  is reported `[BKAL1]`. The series an account still holds under a former
+  username are exported too and restored under the username `[BKAL3]`.
+  Backups written before list no aliases.
 - **Compliance role**: data restorability (GDPR Art.32 §1(c)) +
   per-user erasure path for SQLite engine.
 

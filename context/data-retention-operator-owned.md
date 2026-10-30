@@ -114,7 +114,7 @@ retention_rules:
     action: delete
   - account_inactivity:
       no_auth_for_days: 1095   # 3 years
-      action: delete            # or: anonymise via auth.randomAlias
+      action: delete            # the only platform verb (no account-level anonymise)
 
 # 2. Cron-style scheduler (operator's choice: systemd timer,
 #    Kubernetes CronJob, GitHub Actions schedule, AWS EventBridge,
@@ -234,20 +234,17 @@ const cutoff = Date.now() - 3 * 365 * 24 * 60 * 60 * 1000;
 const lastActivity = await getLastAuditTime(userId);
 if (lastActivity < cutoff) {
   await pryv.system.users.delete(userId);
-  // OR (less aggressive):
-  // await pryv.auth.randomAlias(userId);
-  //, pseudonymises the account, keeps the data, breaks the
-  //   subject-linkability claim.
 }
 ```
 
-The `auth.randomAlias` primitive (backlog `ALIASES`, GH
-[`#38`](https://github.com/pryv/open-pryv.io/issues/38)) is the
-**de-identification companion to deletion**: for retention
-regimes where "anonymised after N years" is the policy rather
-than "deleted after N years". Currently a planned feature; once
-shipped, the retention job has two action verbs (`delete` /
-`anonymise`) instead of one.
+The alias primitive that shipped (`accesses.create
+{randomAlias:true}`, GH
+[`#38`](https://github.com/pryv/open-pryv.io/issues/38)) is **not**
+a de-identification companion to deletion: it aliases an access
+(hides the username from that access's holder), it does not
+anonymise an account or its data. For retention regimes where
+"anonymised after N years" is the policy, the anonymisation is the
+operator's own transformation; the platform verb is `delete`.
 
 ## Account-level auto-deletion (planned, not yet released)
 
@@ -526,9 +523,9 @@ the `:_audit:action-events.delete` action under the retention job's
 - `proposals/audit-on-user-delete.md`: Q8 / Art.17 audit-
   survival gap on PG; relevant when retention triggers
   account-level deletion.
-- `proposals/aliases-as-pseudonymization-primitive.md`,
-  `auth.randomAlias` as the anonymisation companion to
-  deletion.
+- `proposals/aliases-as-pseudonymization-primitive.md`, the
+  access alias (`randomAlias`) and why it is not an account-level
+  anonymisation verb.
 - `context/audit-archival-via-custom-datastore.md`: Q16 audit
   log tiering pattern; a different retention dimension (audit
   data itself rather than event data).

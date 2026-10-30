@@ -343,11 +343,12 @@ preflight). The `auth.delete` pipeline does not call it.
      implementer documents this in their DPIA.
    - `pseudonymise`: null/hash the audit row's personal
      identifiers (`accessId`, `userId`, params containing personal
-     data); keep timestamps + action verbs. Composes with the
-     `randomAlias` primitive
-     (`proposals/aliases-as-pseudonymization-primitive.md`), an
-     alias-issuing deployment never stores the canonical
-     identifier in the audit row at all.
+     data); keep timestamps + action verbs. *Status: not
+     implemented; `audit.onUserDelete: pseudonymise` is refused at
+     boot.* The `randomAlias` access primitive has shipped
+     (`proposals/aliases-as-pseudonymization-primitive.md`); its
+     composition with the audit is part of the mode that is not
+     implemented.
 
 **Future direction note.** The chained-audit-log proposal
 (`proposals/audit-log-chaining.md`) must accommodate post-hoc row
@@ -459,7 +460,7 @@ Tier stays `Implemented | High`; one tooling follow-up remains
 | 2 | HF series read pattern at scale? | `GET /events/<id>/series` per series-event reads data points (HFS worker). The backup tool calls this for every `series:*`-typed event as of v0.3.0; data points land in `hf-data/<eventId>.json`. Per-series 4xx is non-fatal (series may be empty / unreadable; skip + log). |
 | 3 | Attachment download semantics in the bundle? | Backup script downloads bytes inline (10-parallel) via `GET /events/<id>/<attId>?readToken=...`. Inline binaries land in `attachments/` under the bundle folder. Multi-attachment events round-trip in full as of v0.4.0 (multi-attachment restore). |
 | 4 | Cross-core aggregation in multi-core deployments? | Subject's user-account is core-affine, `apiEndpoint` resolves to the home core. CMC counterparty data lives in the counterparty's account on whichever core hosts that subject. Backup runs against one `apiEndpoint`; the subject must run a separate backup against each CMC-shared account they hold. Not a v2-only concern; same for multi-region deployments. |
-| 5 | Audit log truncation interaction with `audit.onUserDelete` (Q8)? | Both Q8 + Q10 fixes shipped 2026-05-27. The backup tool fetches audit via `/audit/logs`. `audit.onUserDelete: keep` mode means the bundle includes the long audit history; `pseudonymise` mode (REFUSED AT BOOT until `auth.randomAlias` ships) will mean the audit content carries aliases rather than the canonical username; `erase` (default) means the audit content matches whatever wasn't already erased by prior `auth.delete` calls. The subject's right to read their own audit log via `audit.getLogs` works directly with their personal token. |
+| 5 | Audit log truncation interaction with `audit.onUserDelete` (Q8)? | Both Q8 + Q10 fixes shipped 2026-05-27. The backup tool fetches audit via `/audit/logs`. `audit.onUserDelete: keep` mode means the bundle includes the long audit history; `pseudonymise` mode is not implemented (the pseudonymisation of the audit at user deletion does not exist; the setting is refused at boot, although the access-alias primitive `randomAlias` has shipped); `erase` (default) means the audit content matches whatever wasn't already erased by prior `auth.delete` calls. The subject's right to read their own audit log via `audit.getLogs` works directly with their personal token. |
 
 **Audit of pryv-account-backup v0.4.0 vs Art.15(1) sub-paragraphs**: full
 table at `context/account-backup-coverage.md`. Highlights:
@@ -2065,8 +2066,11 @@ by-default settings)**:
 **Privacy-enhancing technologies (PETs)** the dev-site guide
 catalogues, operator's enrichment path:
 
-- **Pseudonymisation**: partial; `auth.randomAlias` planned
-  (`ALIASES` backlog).
+- **Pseudonymisation**: partial; the access alias
+  (`accesses.create {randomAlias:true}`) has shipped: it hides the
+  username from the holder of an access, but does not stop a holder
+  who guesses the username from confirming it (see the `randomAlias`
+  primitive in `docs/pryv-primitives.md`).
 - **Proxy re-encryption**: `E2E-ENCRYPTION` backlog +
   github.com/perki/test-proxy-re-encrypt PoC. Client-side
   keying during consent request; backend re-crypts data for
@@ -2455,14 +2459,15 @@ deliberate reasons:
    right choice; a Pryv-shipped scheduler would compete with
    already-wired retries / alerting / observability.
 
-3. **Anonymisation as alternative to deletion?** **Planned
-   feature**, `auth.randomAlias` (backlog `ALIASES`, GH
-   [`#38`](https://github.com/pryv/open-pryv.io/issues/38))
-   becomes the de-identification companion to deletion once
-   shipped. The retention job then has two action verbs
-   (`delete` / `anonymise`) instead of one. Currently
-   anonymisation is the operator's own application-layer
-   transformation; the matrix already encodes this on
+3. **Anonymisation as alternative to deletion?** **Not
+   available as a platform verb.** The alias feature that shipped
+   (`accesses.create {randomAlias:true}`, GH
+   [`#38`](https://github.com/pryv/open-pryv.io/issues/38)) aliases
+   an *access*: it hides the username from that access's holder, it
+   does not anonymise an account or its data at the end of a
+   retention period. The retention job has one platform verb
+   (`delete`); anonymisation stays the operator's own
+   application-layer transformation, as encoded on
    `iso-27701.A.7.4.5`.
 
 4. **Sample-app candidate?** **Possibly.** A reference
