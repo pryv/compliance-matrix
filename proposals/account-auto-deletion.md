@@ -91,9 +91,11 @@ per-transfer salt) under a key derived from `transfer.identitySecretsKey` or the
 only the salt is stored, so a database dump holds no usable link (the filed text said "random
 token, only its hash stored"; the property claimed, no usable secret at rest, is the same or
 stronger). The claim binds to the first claimant account; a wrong link counts on the address's
-failed-secret budget (`auth.passwordAttempts.perIp`) and ten failed claims of one transfer
-refuse claims until the next sweep pass. Setting or changing a transfer needs the account
-password. The beneficiary's mails never carry the name the owner gave. Tests `[ACTR]` (27),
+failed-secret budget (`auth.passwordAttempts.perIp`) and is reported to the owner
+(`transfer.failedClaims`), but refuses nothing else: a per-transfer lock, as filed, would have let
+anyone who knows the username lock the beneficiary out and learn that a transfer is open (removed
+after the cross-model code review, `b98c81d3` on the same branch). Setting or changing a
+transfer needs the account password. The beneficiary's mails never carry the name the owner gave. Tests `[ACTR]` (27),
 `[ACTX]` (cross-core claim), `[ATRU]` (links, window), mails `account-transfer-named`,
 `-claim`, `-started`, `-cancelled`, `-lapsed`, `-completed`. Name and date of birth are optional, used only by the operator to identify a
 beneficiary the email cannot reach, stored AES-256-GCM encrypted in their own account field
