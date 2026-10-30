@@ -9,8 +9,9 @@ guarded erasure), released in 2.0.0-rc.66 (release commit `18c60698`). Operator 
 `customer-resources/account-auto-deletion` (dev-site2). The 14 deletion chips were discharged
 and the rows rewritten on 2026-10-30, the Art.32 chip narrowed to its transfer half; see
 `UPDATE-TRIGGERS.md` Section A `ACCOUNT-AUTO-DELETION` for the per-row record. The second
-action, **transfer to a beneficiary, is designed and NOT implemented**: its 5 chips stay until
-the release that ships it. The text below is the proposal as filed (2026-10-29), kept as
+action, **transfer to a beneficiary, is implemented on the open-pryv.io branch
+`feat/account-transfer` (`f4c05d3c`, 2026-10-30) and NOT released**: its 5 chips stay until the
+release that ships it (see "At release (transfer)" below). The text below is the proposal as filed (2026-10-29), kept as
 history; where it says "as implemented on the branch", the rows, the context note and the
 operator page are authoritative.
 **Delivery vehicle:** macroPryv plan 139 (`_plans/139-account-auto-deletion-atwork/`), not a
@@ -78,14 +79,23 @@ answer for the account level.)
   an erasure ledger (backlog `COMPLIANCE-ERASURE-LEDGER`, open-pryv.io issue #154; the
   `trigger` is passed to `eraseAccount` for it).
 
-### Planned second release: transfer to a beneficiary (designed, not implemented)
+### Second release: transfer to a beneficiary (implemented on a branch, not released)
 
 `action: 'transfer'` with `{ email, name?, dateOfBirth?, notifyBeneficiary: 'atSetup' |
 'atTrigger', fallback: 'delete' | 'keep' }`, user-chosen only (presets always delete). At the
-deadline a claim window opens (`transfer.claimWindowDays`, 90); the beneficiary gets a
-single-use claim link (random token, only its hash stored) and, by signing in to or creating an
-account on the platform, becomes the account's **controller** through the existing delegation
-handshake. Name and date of birth are optional, used only by the operator to identify a
+deadline a claim window opens (`transfer.claimWindowDays`, 90); the beneficiary gets a claim
+link and, by signing in to or creating an account on the platform, becomes the account's
+**controller** through the existing delegation handshake. **As implemented** (2026-10-30,
+`f4c05d3c`): the claim and decline links are HMAC-SHA256 values over (kind, account id, a
+per-transfer salt) under a key derived from `transfer.identitySecretsKey` or the admin key;
+only the salt is stored, so a database dump holds no usable link (the filed text said "random
+token, only its hash stored"; the property claimed, no usable secret at rest, is the same or
+stronger). The claim binds to the first claimant account; a wrong link counts on the address's
+failed-secret budget (`auth.passwordAttempts.perIp`) and ten failed claims of one transfer
+refuse claims until the next sweep pass. Setting or changing a transfer needs the account
+password. The beneficiary's mails never carry the name the owner gave. Tests `[ACTR]` (27),
+`[ACTX]` (cross-core claim), `[ATRU]` (links, window), mails `account-transfer-named`,
+`-claim`, `-started`, `-cancelled`, `-lapsed`, `-completed`. Name and date of birth are optional, used only by the operator to identify a
 beneficiary the email cannot reach, stored AES-256-GCM encrypted in their own account field
 (key `transfer.identitySecretsKey` or derived from the admin key), never readable in v1 (the
 operator read method, its audit entry and the owner notification are deferred), erased with
@@ -210,6 +220,25 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
 7. Keep the transfer chips (Art.5 §1(c), Art.6, Art.13 owner notice, Art.14, Art.32 identity)
    until the transfer release.
 
+## At release (transfer)
+
+0. **Precondition, external:** a DPO / counsel reading of `gdpr.Art.14` §5(b) for
+   `notifyBeneficiary: 'atTrigger'` (the analysis above is UNCONFIRMED). If it fails, the option
+   is removed or the beneficiary is notified at setup whenever a name or a date of birth is
+   given, before the release.
+1. Discharge the 5 transfer chips (`gdpr.Art.5` §1(c), `Art.6`, `Art.13` owner notice,
+   `Art.14`, `Art.32` identity); rewrite each as shipped with the release name, commit and test
+   codes (`[ACTR1A]` to `[ACTR6E]`, `[ACTX1]`, `[ATRU1-5]`).
+2. Walk the access-control and delegation rows listed above (a controller set by a claim): cite
+   the claim path (`account.transferClaim`, server-run `requestAttach` on the owner's behalf,
+   accepted with the claimant's own `delegations.acceptAttach`).
+3. Add `config_keys:` `account.autoDeletion.transfer.*`, `services.email.enabled.accountTransfer*`,
+   `delegation.active` where the transfer's availability is cited.
+4. `docs:` the operator page's "Transfer to a beneficiary" section, once dev-site2 publishes it.
+5. Note on `gdpr.Art.32`: the operator read path for the name and date of birth is NOT shipped;
+   the row must say they are unreadable (encrypted, no method) until it is, and that rotating
+   the admin key without `identitySecretsKey` makes them unreadable.
+
 ## History
 
 - 2026-10-29: filed with the chips above, from plan 139 P6; v1 implemented on the branch, transfer
@@ -225,3 +254,6 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
   owner notice, Art.14, Art.32 identity).
 - 2026-10-30: the sweep tests renamed `ACSW` to `ADSW` in open-pryv.io (`2c7989c8`), `ACSW` being
   the account-streams write suite's code; rows cite the `ADSW` codes.
+- 2026-10-30: transfer implemented on open-pryv.io `feat/account-transfer` (`f4c05d3c`), not
+  released; links HMAC-derived (only a salt stored); "At release (transfer)" checklist added;
+  the 5 transfer chips stay `planned`.
