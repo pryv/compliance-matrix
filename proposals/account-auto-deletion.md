@@ -1,13 +1,18 @@
 # Account auto-deletion: at a date, or after a period without use, with reminders
 
-**Status: implemented on an open-pryv.io feature branch, not yet released** (2026-10-29).
-Branch `feat/account-auto-deletion` (commits `926dad8a` login records `lastUsed`, `1e138706`
-activity breakdown and delegate use, `81c8a9c6` config block and per-account state, `d12b4c89`
-schedule engine, `ad8f4894` API + `features.autoDeletion` + confirmation mail, `7c3497a0` the
-sweep, reminder and blocked mails, guarded erasure); not merged to master, not tagged. The
-operator page `customer-resources/account-auto-deletion` is on the dev-site2 branch of the same
-name, not published. The second action, **transfer to a beneficiary, is designed and NOT
-implemented**: it is planned for the release after the deletion one.
+**Status: deletion shipped in open-pryv.io 2.0.0-rc.66 (`8521c8d5`), 2026-10-30; transfer
+planned.** Merged to open-pryv.io master as `8521c8d5` on 2026-10-29 (feature commits
+`926dad8a` login records `lastUsed`, `1e138706` activity breakdown and delegate use, `81c8a9c6`
+config block and per-account state, `d12b4c89` schedule engine, `ad8f4894` API +
+`features.autoDeletion` + confirmation mail, `7c3497a0` the sweep, reminder and blocked mails,
+guarded erasure), released in 2.0.0-rc.66 (release commit `18c60698`). Operator page:
+`customer-resources/account-auto-deletion` (dev-site2). The 14 deletion chips were discharged
+and the rows rewritten on 2026-10-30, the Art.32 chip narrowed to its transfer half; see
+`UPDATE-TRIGGERS.md` Section A `ACCOUNT-AUTO-DELETION` for the per-row record. The second
+action, **transfer to a beneficiary, is designed and NOT implemented**: its 5 chips stay until
+the release that ships it. The text below is the proposal as filed (2026-10-29), kept as
+history; where it says "as implemented on the branch", the rows, the context note and the
+operator page are authoritative.
 **Delivery vehicle:** macroPryv plan 139 (`_plans/139-account-auto-deletion-atwork/`), not a
 backlog file, so the chips carry no `backlog:` key. Two releases: v1 deletion (the API, the
 sweep, the reminder mails, the account-app card, docs), then transfer (`features.autoDeletion.
@@ -209,3 +214,13 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
 
 - 2026-10-29: filed with the chips above, from plan 139 P6; v1 implemented on the branch, transfer
   designed only.
+- 2026-10-30: v1 (deletion) released in open-pryv.io 2.0.0-rc.66 (`8521c8d5`). Checklist "At
+  release (v1 deletion)": 1 done (codes cited per row; `ACSW1`..`ACSW7` collide with the
+  account-streams write suite, so the rows cite `ACXP` codes for those cases; the config boot
+  check is `CKCF8`, not `CKCF7`); 2 done; 3 done (`docs:` cites
+  `customer-resources/account-auto-deletion.md`); 4 decided: new primitive
+  `account-auto-deletion` in `docs/pryv-primitives.md`, cited on every discharged row; 5 tier
+  review: `soc2.P4.2` kept `facilitated` / `low` (records inside an account stay the
+  operator's job), `gdpr.Art.5` §1(e) label now "configurable for whole accounts"; 6 done
+  (context note, FAQ Q31, sample README); 7 transfer chips kept (Art.5 §1(c), Art.6, Art.13
+  owner notice, Art.14, Art.32 identity).

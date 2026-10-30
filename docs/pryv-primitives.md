@@ -889,6 +889,44 @@ lives in the controlled account's standard per-user storage.
   owner-reclaim by genuine login. See
   [`../context/delegation-model.md`](../context/delegation-model.md).
 
+### `account-auto-deletion`
+
+Whole-account deletion at a date or after a period without use, with reminder
+mails (open-pryv.io 2.0.0-rc.66, `8521c8d5`; per-core block
+`account.autoDeletion.*`; `components/api-server/src/methods/helpers/autoDeletionSweep.ts`).
+
+- **Two sources of a schedule**: the holder's own setting
+  (`account.getAutoDeletion` / `account.setAutoDeletion`, personal token; `date`,
+  `inactivity` within the operator's bounds, `never` or `default`), or the
+  operator's inactivity preset (`account.autoDeletion.inactivity.defaultDays`,
+  default none: nothing is deleted). A holder can schedule a deletion only where
+  `user-account.delete` lists `personalToken` `[ACST10]`; arming or bringing the
+  deletion nearer needs the account password `[ACST3]`, a delegate can read but
+  not set it `[ACST5]`. A preset covers plain accounts with an email address on a
+  core that sends mail, never group accounts or accounts under a delegation
+  `[ACST14]`, and its clock starts the day it first applies `[ACXP2]`.
+- **Activity**: the latest `lastUsed` of the account's `personal` and `app`
+  accesses, a delegate's included; `shared` accesses never count; a sign-in
+  records `lastUsed` `[ACAC1]`, `[ACAC2]`, `[ACAC7]`, `[LGLU3]`. Needs
+  `accessTracking.isActive` (a preset without it refuses the boot `[CVAD3]`).
+- **Notice**: confirmation mail on every change `[ACST15A]`, `[ACST15B]`;
+  reminders at 60, 30, 7 and 1 days `[ACXP3]`; no deletion less than
+  `reminders.minNoticeDays` (7) after the first notice actually sent `[ACXP8]`.
+- **Sweep**: one per core, in the API worker the master designates `[ACSW18]`;
+  re-reads activity, runs `auth.delete`'s deletion guards (a refusal holds the
+  erasure, mailed once `[ACSW8]`) and erases exactly as `auth.delete` does;
+  WARN log line before and after, an `account.autoDeletion.erase` audit row with
+  `audit.onUserDelete: keep` `[ACSW17]`; `dryRun` `[ACSW13]`,
+  `maxDeletionsPerPass` `[ACSW12]`; an interrupted erasure completes later
+  `[ACSW19]`.
+- **Not covered**: retention of events and streams inside an account (the
+  operator's job, `context/data-retention-operator-owned.md`); transfer to a
+  beneficiary (designed, not implemented, `proposals/account-auto-deletion.md`).
+- **Compliance role**: account-level storage limitation (GDPR Art.5 §1(e), PIPEDA
+  Principle 4.5, ISO 27701 A.7.4.5, SOC 2 P4.2) and erasure scheduled by the
+  data subject (GDPR Art.17, CCPA 1798.105, Swiss nLPD Art.32). Operator page:
+  `customer-resources/account-auto-deletion` on pryv.github.io.
+
 ## How to cite primitives in a scope YAML
 
 ```yaml

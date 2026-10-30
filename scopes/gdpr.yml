@@ -199,14 +199,12 @@ requirements:
     draft: false
     reviewed_by: Pryv compliance
     reviewed_at: "2026-06-19"
-    pryv_primitives: [access, permissions, clientData, stream, audit]
+    pryv_primitives: [access, permissions, clientData, stream, audit, account-auto-deletion]
     functional_specs: [EVENT.BASE, STREAM.BASE]
-    tests: [GLHP, UZEV]
+    config_keys: [account.autoDeletion.inactivity.defaultDays, account.autoDeletion.userOverride, account.autoDeletion.allowUserOptOut, account.autoDeletion.reminders.leadDays, account.autoDeletion.reminders.minNoticeDays, account.autoDeletion.dryRun, accessTracking.isActive]
+    docs: [customer-resources/account-auto-deletion.md]
+    tests: [GLHP, UZEV, ACXP2, ACXP3, ACXP8, ACXP10, ACXP19, ACAC1, ACAC2, ACAC7, ACSW8, ACSW9, ACSW13, ACST14, LGLU3, CVAD3]
     planned:
-      - kind: feature
-        summary: "Account auto-deletion: §1(e) storage limitation becomes configurable at the account level (operator inactivity preset or the holder's own date / period, reminders and a minimum notice before deletion); event-level retention stays operator-owned"
-        proposal: proposals/account-auto-deletion.md
-        impact: medium
       - kind: feature
         summary: "Account transfer to a beneficiary (release after the deletion one): §1(c) minimisation of the beneficiary's data (email required; name and date of birth optional, encrypted, erased with the transfer)"
         proposal: proposals/account-auto-deletion.md
@@ -260,11 +258,13 @@ requirements:
         either way, not the prior value (see
         `context/event-history.md`). Full split
         in `context/data-accuracy-structural-vs-semantic.md`.
-      - Storage limitation (§1(e)), VOLUNTARILY MISSING +
-        OPERATOR-OWNED at the retention-enforcement layer +
-        CONFIGURABLE at the erasure-mechanics layer. Released
-        versions expose no TTL / auto-delete / scheduler primitive
-        for account data (account auto-deletion is planned, below),
+      - Storage limitation (§1(e)), CONFIGURABLE for whole accounts
+        (account auto-deletion) + VOLUNTARILY MISSING and
+        OPERATOR-OWNED for event-level and stream-level retention +
+        CONFIGURABLE at the erasure-mechanics layer. Pryv exposes no
+        TTL / auto-delete / scheduler primitive for events and
+        streams (whole accounts are covered by account auto-deletion
+        since 2.0.0-rc.66, below): event-level and stream-level
         automatic retention is the operator's external job, composing
         `events.get toTime=<cutoff>` + `events.delete` (two-stage)
         + `streams.delete` + `auth.delete` + the audit log as
@@ -279,24 +279,32 @@ requirements:
         `accesses.deletionRecords.retentionDays` (default 0, kept
         until the account is deleted).
 
-        Planned, not yet released: account auto-deletion. An account is designed to be deleted at a date its
-        holder picks, or after a period without use of its personal
-        and app accesses (a delegate's use included, shared accesses
-        never). Two sources: the holder's own schedule (their erasure
-        request, see Art.17), or your inactivity preset
+        Account auto-deletion, since open-pryv.io 2.0.0-rc.66
+        (`8521c8d5`): an account is deleted at a date its holder
+        picks, or after a period without use of its personal and app
+        accesses (a sign-in counts, `[LGLU3]`; a delegate's use
+        included, shared accesses never, `[ACAC1]`, `[ACAC2]`,
+        `[ACAC7]`). Two sources: the holder's own schedule (their
+        erasure request, see Art.17), or your inactivity preset
         (`account.autoDeletion.inactivity.defaultDays`, default none).
         A preset is your storage-limitation rule: state the period and
-        what counts as use in your privacy notice (Art.13 §2(a)). As
-        designed: reminder mails before the deletion (60, 30, 7 and 1
-        days by default), no deletion less than 7 days after the first
-        notice actually sent, a preset applies only to plain accounts
-        with an email address, and its clock starts the day it first
-        applies, so turning one on never deletes dormant accounts by
-        surprise; a dry-run mode shows the numbers first. The erasure
-        is `auth.delete`'s, guards included. Event-level and
-        stream-level retention stays your retention job. See
-        `context/data-retention-operator-owned.md`, "Account-level
-        auto-deletion".
+        what counts as use in your privacy notice (Art.13 §2(a)).
+        Reminder mails before the deletion (60, 30, 7 and 1 days by
+        default, `[ACXP3]`), no deletion less than 7 days
+        after the first notice actually sent (`[ACXP8]`); a preset
+        applies only to plain accounts with an email address on a core
+        that sends mail (`[ACST14]`, `[ACSW9]`), and its clock starts
+        the day it first applies, so turning one on never deletes
+        dormant accounts by surprise (`[ACXP2]`, `[ACXP10]`); a dry run
+        shows the numbers first (`[ACSW13]`). Inactivity needs
+        `accessTracking.isActive`: a preset without it refuses the
+        boot (`[CVAD3]`), and a holder's inactivity schedule is
+        suspended, never erased, while tracking is off (`[ACXP19]`).
+        The erasure is `auth.delete`'s, guards included (`[ACSW8]`).
+        Event-level and stream-level retention stays your retention
+        job. See `context/data-retention-operator-owned.md`,
+        "Account-level auto-deletion", and the operator page
+        `customer-resources/account-auto-deletion`.
       - Data minimisation, planned with the account transfer (the
         release after the deletion one; designed, not implemented): a
         holder may name a beneficiary who receives control of the
@@ -1128,13 +1136,11 @@ requirements:
     pryv_effort_saved: medium
     facilitation_mode: storage
     draft: true
-    pryv_primitives: [access, clientData, event]
-    docs: [guides/consent.md, guides/privacy-by-design.md]
+    pryv_primitives: [access, clientData, event, account-auto-deletion]
+    docs: [guides/consent.md, guides/privacy-by-design.md, customer-resources/account-auto-deletion.md]
+    config_keys: [account.autoDeletion.inactivity.defaultDays, services.email.enabled.accountDeletionScheduled, services.email.enabled.accountDeletionReminder]
+    tests: [ACST1, ACST2, ACST15A, ACST15B, ACRM1]
     planned:
-      - kind: feature
-        summary: "Account auto-deletion: an operator inactivity preset is a retention period your privacy notice must state, with what counts as use (§2(a)); the holder is told the schedule by a confirmation mail and reminders"
-        proposal: proposals/account-auto-deletion.md
-        impact: low
       - kind: feature
         summary: "Account transfer (designed, not implemented): the holder is told, at entry and in the confirmation, when and how the operator may read a beneficiary's name and date of birth"
         proposal: proposals/account-auto-deletion.md
@@ -1161,17 +1167,23 @@ requirements:
         `versioning.forceKeepHistory: true`; your app surfaces them
         at the right moment.
     detail: |
-      **Planned, not yet released: account auto-deletion.** If you set
-      an inactivity preset (`account.autoDeletion.inactivity.defaultDays`),
-      it is a retention period of your platform: your privacy notice
-      states it, with what counts as use of an account (sign-ins and
-      the use of personal and app accesses, a delegate's included;
-      shared accesses never), as §2(a) requires. Pryv does not write
-      that notice. What Pryv is designed to tell the account holder
-      directly: a confirmation mail on every change of their schedule
-      (the deadline, or that nothing is scheduled) and reminder mails
-      before the deletion, with links to change the schedule and to
-      download the data. See `context/data-retention-operator-owned.md`.
+      **Account auto-deletion (open-pryv.io 2.0.0-rc.66, `8521c8d5`).**
+      If you set an inactivity preset
+      (`account.autoDeletion.inactivity.defaultDays`), it is a
+      retention period of your platform: your privacy notice states
+      it, with what counts as use of an account (sign-ins and the use
+      of personal and app accesses, a delegate's included; shared
+      accesses never), as §2(a) requires. Pryv does not write that
+      notice. What Pryv tells the account holder directly: a
+      confirmation mail on every change of their schedule, clearing
+      included (the deadline, or that nothing is scheduled,
+      `[ACST15A]`, `[ACST15B]`), and reminder mails before the
+      deletion (`[ACRM1]`), with links to change the schedule and to
+      download the data. `account.getAutoDeletion` shows the holder
+      the live schedule, its source and their last activity
+      (`[ACST1]`, `[ACST2]`). See
+      `context/data-retention-operator-owned.md` and the operator page
+      `customer-resources/account-auto-deletion`.
 
       **Planned, designed and not implemented: account transfer to a
       beneficiary.** Where the holder names a beneficiary with an
@@ -1370,14 +1382,10 @@ requirements:
     coverage: configurable
     pryv_effort_saved: medium
     draft: true
-    pryv_primitives: [event, stream, backup-restore, external-id-index]
-    config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete]
-    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2]
-    planned:
-      - kind: feature
-        summary: "Account auto-deletion: the data subject schedules the erasure of their own account at a date or after a period without use (§1(a)/(b)), with reminders; the erasure is auth.delete's, guards and teardowns included"
-        proposal: proposals/account-auto-deletion.md
-        impact: medium
+    pryv_primitives: [event, stream, backup-restore, external-id-index, account-auto-deletion]
+    config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass]
+    docs: [customer-resources/account-auto-deletion.md]
+    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ACSW8, ACSW12, ACSW16, ACSW17, ACSW19, ACSW27]
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -1407,33 +1415,43 @@ requirements:
       above covers them with no extra step.
 
       Erasure here is **caller-triggered**, the subject (or operator
-      on their behalf) issues the DELETE call. The **scheduled /
-      automatic** erasure obligation under Art.5(1)(e) "storage
-      limitation" is operator-owned by design, see Art.5 detail +
-      `context/data-retention-operator-owned.md` for the retention-
-      job pattern that composes `events.delete` + `auth.delete` +
-      the audit log.
+      on their behalf) issues the DELETE call, or **scheduled** by the
+      subject or by your inactivity preset (account auto-deletion,
+      below). Event-level and stream-level scheduled erasure under
+      Art.5(1)(e) "storage limitation" stays operator-owned by design,
+      see Art.5 detail + `context/data-retention-operator-owned.md`
+      for the retention-job pattern that composes `events.delete` +
+      `auth.delete` + the audit log.
 
-      Planned, not yet released: account auto-deletion. The data
-      subject is designed to schedule the erasure of their own account
-      (`account.setAutoDeletion`, from the reference account app): at a
-      date, or after a period without use. That is their own erasure
-      request (§1(a): they judge the account no longer necessary;
-      §1(b): where your processing rests on consent, the schedule is a
-      withdrawal that takes effect at a date), not a retention rule of
-      yours. As designed: arming or bringing a deletion nearer needs
-      the account password; a delegate can read the schedule but not
-      set it; a holder can schedule only what they could do directly
-      (the `delete` action is offered where `user-account.delete` lists
-      `personalToken`); every change is confirmed by mail and reminders
-      precede the deletion. At the deadline the core's sweep runs the
-      same deletion guards and the same erasure as `auth.delete`
-      (relationships torn down, audit per `audit.onUserDelete`), logs
-      it before and after, and with `audit.onUserDelete: keep` writes
-      an `account.autoDeletion.erase` row in the account's trail first.
-      An operator preset (Art.5 §1(e)) uses the same path. See
-      `context/data-retention-operator-owned.md`, "Account-level
-      auto-deletion".
+      Account auto-deletion, since open-pryv.io 2.0.0-rc.66
+      (`8521c8d5`). The data subject schedules the erasure of their
+      own account (`account.setAutoDeletion`, from the reference
+      account app): at a date, or after a period without use. That is
+      their own erasure request (§1(a): they judge the account no
+      longer necessary; §1(b): where your processing rests on consent,
+      the schedule is a withdrawal that takes effect at a date), not a
+      retention rule of yours. Arming or bringing a deletion nearer
+      needs the account password (`[ACST3]`, `[ACST4]`); a delegate can
+      read the schedule but not set it (`[ACST5]`); a holder can
+      schedule only what they could do directly (the `delete` action
+      is offered where `user-account.delete` lists `personalToken`,
+      `[ACST10]`; a deletion the holder chose waits if self-deletion
+      was withdrawn since, `[ACSW27]`); every change is confirmed by
+      mail (`[ACST15A]`) and reminders precede the deletion. At the
+      deadline the core's sweep re-reads the account's use (a use
+      between evaluation and erasure wins, `[ACSW16]`), runs the same
+      deletion guards (a refusal holds the erasure and is mailed once,
+      `[ACSW8]`) and the same erasure as `auth.delete` (relationships
+      torn down, audit per `audit.onUserDelete`), logs it
+      before and after, and with `audit.onUserDelete: keep` writes an
+      `account.autoDeletion.erase` row in the account's trail first
+      (`[ACSW17]`). An erasure interrupted halfway, by the sweep or by
+      a direct `auth.delete`, is completed at a later pass
+      (`[ACSW19]`); `account.autoDeletion.maxDeletionsPerPass` (20)
+      caps a pass (`[ACSW12]`). An operator preset (Art.5 §1(e)) uses
+      the same path. See `context/data-retention-operator-owned.md`,
+      "Account-level auto-deletion", and the operator page
+      `customer-resources/account-auto-deletion`.
 
       `bin/backup.js` supports per-user backup files alongside DB-engine
       backups; using per-user backups improves erasure semantics
@@ -1900,14 +1918,10 @@ requirements:
     pryv_effort_saved: high
     facilitation_mode: infrastructure
     draft: true
-    pryv_primitives: [access, permissions, stream, system-streams, external-id-index]
-    config_keys: [accesses.deletionRecords.retentionDays]
-    tests: [ADP1, ADR5, XIDC1, XIDC2, XIDG1, XIDLU1, XIDLU2, XIDFF1, XIDFF3, XIDFF4, XIDAR1, XIDAR3]
-    planned:
-      - kind: feature
-        summary: "Account auto-deletion: account retention becomes a setting (default never; an operator inactivity preset or the holder's own schedule), with a dry run before arming and no surprise deletion of dormant accounts"
-        proposal: proposals/account-auto-deletion.md
-        impact: low
+    pryv_primitives: [access, permissions, stream, system-streams, external-id-index, account-auto-deletion]
+    config_keys: [accesses.deletionRecords.retentionDays, account.autoDeletion.inactivity.defaultDays, account.autoDeletion.dryRun, account.autoDeletion.maxDeletionsPerPass]
+    tests: [ADP1, ADR5, XIDC1, XIDC2, XIDG1, XIDLU1, XIDLU2, XIDFF1, XIDFF3, XIDFF4, XIDAR1, XIDAR3, ACCF1, ACXP2, ACXP13, ACSW12, ACSW13, ACXP8]
+    docs: [customer-resources/account-auto-deletion.md]
     overview: |
       Pryv's whole
       architecture leans privacy-by-design, per-user storage
@@ -1984,16 +1998,19 @@ requirements:
           once a day past `accesses.deletionRecords.retentionDays`
           `[ADP1]`, `[ADR5]`; past it an audit row names such an access
           by id only, so weigh minimisation against attribution.
-          Planned, not yet released: account auto-deletion makes the
-          retention of accounts a setting. Its default deletes nothing
-          (no operator preset); you may set an inactivity preset
+          Since open-pryv.io 2.0.0-rc.66 (`8521c8d5`), account
+          auto-deletion makes the retention of accounts a setting. Its
+          default deletes nothing (no operator preset, `[ACCF1]`;
+          accounts without a policy get no schedule, `[ACXP13]`); you
+          may set an inactivity preset
           (`account.autoDeletion.inactivity.defaultDays`) as your
           retention rule, and each holder may schedule their own
-          account's deletion. As designed, a preset's clock starts the
-          day it first applies to an account, reminders and a 7-day
-          minimum notice precede every deletion, `dryRun: true` shows
-          what a preset would do before you arm it, and
-          `maxDeletionsPerPass` caps the deletions of one pass.
+          account's deletion. A preset's clock starts the day it first
+          applies to an account (`[ACXP2]`), reminders and a 7-day
+          minimum notice precede every deletion (`[ACXP8]`),
+          `dryRun: true` shows what a preset would do before you arm it
+          (`[ACSW13]`), and `maxDeletionsPerPass` caps the deletions of
+          one pass (`[ACSW12]`).
         - Is your auth UI surface using the opt-in pattern
           (privacy-by-default UX from the dev-site
           reference) rather than the standard "by continuing
@@ -2247,9 +2264,9 @@ requirements:
     pryv_effort_saved: high
     facilitation_mode: infrastructure
     draft: true
-    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index]
+    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion]
     config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -2263,7 +2280,7 @@ requirements:
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705795&issue=pryv%7Copen-pryv.io%7C118
         impact: low
       - kind: feature
-        summary: "Account auto-deletion: arming or bringing a deletion nearer needs the account password, a delegate cannot set it; transfer (designed, not implemented): a beneficiary's name and date of birth encrypted at rest, unreadable before the transfer starts"
+        summary: "Account transfer to a beneficiary (designed, not implemented): a beneficiary's name and date of birth encrypted at rest, unreadable before the transfer starts"
         proposal: proposals/account-auto-deletion.md
         impact: low
     overview: |
@@ -2470,12 +2487,15 @@ requirements:
           the delegation, unless the account holder, reviewing the
           delegate's consents at detach, keeps it as their own
           (open-pryv.io 2.0.0-rc.31). See `context/delegation-model.md`.
-          Planned, not yet released (account auto-deletion): a delegate
-          can read the controlled account's deletion schedule but cannot
-          set it, and arming a schedule or bringing a deletion nearer
-          needs the account password even with the owner's token, so a
+          Account auto-deletion (open-pryv.io 2.0.0-rc.66,
+          `8521c8d5`): a delegate can read the controlled account's
+          deletion schedule but cannot set it (`[ACST5]`), and arming a
+          schedule or bringing a deletion nearer needs the account
+          password even with the owner's token (`[ACST3]`, `[ACST4]`),
+          counted on the sign-in tally like a login (`[ACST18]`), so a
           stolen session alone cannot schedule an account's deletion;
-          every change is confirmed to the account's email.
+          every change is confirmed to the account's email
+          (`[ACST15A]`).
         - Planned, designed and not implemented (account transfer to a
           beneficiary): a beneficiary's optional name and date of birth
           are designed to be stored AES-256-GCM encrypted in a field of

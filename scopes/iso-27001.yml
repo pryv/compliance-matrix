@@ -360,14 +360,10 @@ requirements:
     coverage: configurable
     pryv_effort_saved: medium
     draft: true
-    pryv_primitives: [event, stream, backup-restore]
-    config_keys: [storages.userAccountStorage.engine, user-account.delete]
-    tests: [USAD, DLN1, DLN4, DLLW1]
-    planned:
-      - kind: feature
-        summary: "Account auto-deletion: whole-account deletion when no longer required can be scheduled (holder's date or period, operator inactivity preset), through the same erasure path"
-        proposal: proposals/account-auto-deletion.md
-        impact: low
+    pryv_primitives: [event, stream, backup-restore, account-auto-deletion]
+    config_keys: [storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.inactivity.defaultDays]
+    docs: [customer-resources/account-auto-deletion.md]
+    tests: [USAD, DLN1, DLN4, DLLW1, ACXP3, ACXP8, ACSW8, ACSW19]
     overview: |
       Per-user erasure: `system.users.delete` removes the user's data
       from the live store. Engine-dependent backup behaviour (SQLite
@@ -381,12 +377,14 @@ requirements:
       since 2.0.0-rc.50 points written during the deletion do not
       survive it; see GDPR Art.17 for the full list.
     detail: |
-      Planned, not yet released: account auto-deletion (see gdpr.Art.5
-      §1(e) and gdpr.Art.17). Deleting a whole account "when no longer
-      required" is designed to be schedulable: by the account holder
-      (a date, or a period without use) or by your inactivity preset,
-      with reminder mails and a minimum notice before, through the same
-      erasure as `system.users.delete`.
+      Account auto-deletion, since open-pryv.io 2.0.0-rc.66
+      (`8521c8d5`, see gdpr.Art.5 §1(e) and gdpr.Art.17). Deleting a
+      whole account "when no longer required" is schedulable: by the
+      account holder (a date, or a period without use) or by your
+      inactivity preset, with reminder mails (`[ACXP3]`) and a minimum
+      notice (`[ACXP8]`) before, through the same erasure as
+      `system.users.delete`, guards included (`[ACSW8]`); an erasure
+      interrupted halfway is completed at a later pass (`[ACSW19]`).
 
   - ref: A.8.13
     title: A.8.13 Information backup

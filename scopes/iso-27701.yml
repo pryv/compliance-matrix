@@ -252,15 +252,11 @@ requirements:
     coverage: configurable
     pryv_effort_saved: medium
     draft: true
-    pryv_primitives: [event, stream, backup-restore, randomAlias]
+    pryv_primitives: [event, stream, backup-restore, randomAlias, account-auto-deletion]
     derives_from: [gdpr.Art.17, gdpr.Art.4, hipaa-security.164.310, hipaa-privacy.164.514, ccpa.1798.105]
-    config_keys: [storages.userAccountStorage.engine, user-account.delete]
-    tests: [USAD]
-    planned:
-      - kind: feature
-        summary: "Account auto-deletion: 'as soon as no longer necessary' enforceable for inactive accounts by configuration (operator inactivity preset, reminders, minimum notice), and schedulable by the PII principal"
-        proposal: proposals/account-auto-deletion.md
-        impact: medium
+    config_keys: [storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.inactivity.defaultDays, account.autoDeletion.reminders.minNoticeDays]
+    docs: [customer-resources/account-auto-deletion.md]
+    tests: [USAD, ACXP2, ACXP3, ACXP8, ACST10, ACST14, ACSW8]
     overview: |
       Per-user deletion via `system.users.delete` (engine-dependent
       backup behaviour, same notes as GDPR Art. 17). Per-event /
@@ -268,10 +264,11 @@ requirements:
       De-identification (Safe Harbor / Expert Determination methods) is
       an application-layer transformation; Pryv stores the result.
       "**Soon as the original PII is no longer necessary**" is the
-      operator's scheduled-retention obligation; released versions
-      ship no TTL primitive (account-level auto-deletion is planned,
-      see detail); the operator composes `events.get toTime=` +
-      `events.delete` + audit-log inactivity oracle in an external
+      operator's scheduled-retention obligation for records; Pryv
+      ships no TTL primitive for events and streams (whole accounts:
+      account auto-deletion since 2.0.0-rc.66, see detail); the
+      operator composes `events.get toTime=` + `events.delete` +
+      audit-log inactivity oracle in an external
       retention job (`context/data-retention-operator-owned.md`).
       `accesses.create {randomAlias:true}` reduces identification at
       the access layer while processing continues: a platform-unique
@@ -283,15 +280,18 @@ requirements:
       guesses the username from confirming it; at the end of
       processing, deletion stays the mechanism.
     detail: |
-      Planned, not yet released: account auto-deletion (see gdpr.Art.5
-      §1(e)). For whole accounts, "no longer necessary" is designed to
-      be enforceable by configuration: your inactivity preset
-      (`account.autoDeletion.inactivity.defaultDays`, default none)
-      deletes plain accounts with an email address after that many
-      days without use of their personal and app accesses, after
-      reminder mails and at least 7 days after the first notice; the
-      PII principal may also schedule their own account's deletion at
-      a date or after a period. The deletion is `system.users.delete`'s.
+      Account auto-deletion, since open-pryv.io 2.0.0-rc.66
+      (`8521c8d5`, see gdpr.Art.5 §1(e)). For whole accounts, "no
+      longer necessary" is enforceable by configuration: your
+      inactivity preset (`account.autoDeletion.inactivity.defaultDays`,
+      default none) deletes plain accounts with an email address
+      (`[ACST14]`) after that many days without use of their personal
+      and app accesses, its clock starting the day it first applies
+      (`[ACXP2]`), after reminder mails (`[ACXP3]`) and at least 7 days
+      after the first notice (`[ACXP8]`); the PII principal may also
+      schedule their own account's deletion at a date or after a
+      period, where self-deletion is allowed (`[ACST10]`). The deletion
+      is `system.users.delete`'s, guards included (`[ACSW8]`).
       Per-record retention and de-identification stay as above.
 
   - ref: A.7.4.6

@@ -43,15 +43,15 @@ observability sink.
 
 This job works on events inside accounts. It never deletes an account.
 
-- **Releases with account auto-deletion** (planned for the next open-pryv.io
-  release; implemented on a feature branch, not yet released): use the built-in
-  feature for inactive accounts. Set an inactivity preset in
+- **Releases with account auto-deletion** (open-pryv.io 2.0.0-rc.66 and
+  later): use the built-in feature for inactive accounts. Set an inactivity preset in
   `account.autoDeletion.inactivity.defaultDays` and run it with `dryRun: true`
   first. The core then sends the reminder mails, holds a minimum notice and runs
   the deletion guards and teardowns of `auth.delete`. State the preset in your
   privacy notice. See `context/data-retention-operator-owned.md`, "Account-level
-  auto-deletion".
-- **Earlier releases:** account-level deletion stays your own job, built on an
+  auto-deletion", and the operator page `customer-resources/account-auto-deletion`
+  on pryv.github.io.
+- **Earlier releases** (before 2.0.0-rc.66): account-level deletion stays your own job, built on an
   inactivity measure you have reviewed (the context note's audit-log oracle
   pattern). Wire `auth.delete` to your admin-key flow only after that review,
   and send your own notices before deleting.

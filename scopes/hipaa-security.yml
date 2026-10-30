@@ -1488,14 +1488,10 @@ requirements:
     pryv_effort_saved: low
     facilitation_mode: storage
     draft: true
-    pryv_primitives: [backup-restore, audit]
+    pryv_primitives: [backup-restore, audit, account-auto-deletion]
     config_keys: [audit.onUserDelete, accesses.deletionRecords.retentionDays]
-    tests: [DKP1, ADP1]
-    planned:
-      - kind: feature
-        summary: "Account auto-deletion: a scheduled account erasure follows audit.onUserDelete like any deletion; with keep, an account.autoDeletion.erase audit row is written in the account's trail before erasing"
-        proposal: proposals/account-auto-deletion.md
-        impact: low
+    docs: [customer-resources/account-auto-deletion.md]
+    tests: [DKP1, ADP1, ACSW17]
     overview: |
       Six-year is a **minimum** retention period, not a maximum
       (the statute says "retain … for 6 years"; covered entities
@@ -1559,15 +1555,16 @@ requirements:
       kept; past the purge they name such an access by id only. A
       retention shorter than six years shortens that attribution.
 
-      **Planned, not yet released: account auto-deletion.** An account
-      erased because its holder scheduled it, or because your
-      inactivity preset applied, follows `audit.onUserDelete` like any
-      account deletion: with the default `erase` its audit goes with it
-      and a WARN log line before and after the erasure is what remains;
-      with `keep` (and the audit active) the trail survives and an
-      `account.autoDeletion.erase` row (username, trigger, whether the
-      holder or your preset set the schedule, deadline, when the
-      notices were sent) is written in it before the erasure starts. A covered entity that
+      **Account auto-deletion (open-pryv.io 2.0.0-rc.66, `8521c8d5`).**
+      An account erased because its holder scheduled it, or because
+      your inactivity preset applied, follows `audit.onUserDelete` like
+      any account deletion: with the default `erase` its audit goes with
+      it and a WARN log line before and after the erasure is what
+      remains; with `keep` (and the audit active) the trail survives and
+      an `account.autoDeletion.erase` row (username, trigger, whether
+      the holder or your preset set the schedule, deadline, when the
+      notices were sent) is written in it before the erasure starts
+      (`[ACSW17]`). A covered entity that
       enables account auto-deletion keeps `audit.onUserDelete: keep`
       and keeps those log lines for the six-year period if they are
       part of its documentation.

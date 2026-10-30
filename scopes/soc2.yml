@@ -657,15 +657,11 @@ requirements:
     coverage: configurable
     pryv_effort_saved: medium
     draft: true
-    pryv_primitives: [event, stream, backup-restore]
-    config_keys: [storages.userAccountStorage.engine]
-    tests: [USAD]
+    pryv_primitives: [event, stream, backup-restore, account-auto-deletion]
+    config_keys: [storages.userAccountStorage.engine, audit.onUserDelete, account.autoDeletion.inactivity.defaultDays]
+    docs: [customer-resources/account-auto-deletion.md]
+    tests: [USAD, ACSW8, ACSW17, ACSW19, ACSW12]
     derives_from: [iso-27001.A.8.10, gdpr.Art.17, hipaa-security.164.310(d)(1)]
-    planned:
-      - kind: feature
-        summary: "Account auto-deletion: whole-account logical destruction can be scheduled (holder's date or period, operator inactivity preset) and runs through the same erasure path"
-        proposal: proposals/account-auto-deletion.md
-        impact: low
     overview: |
       Logical destruction is per-user: system.users.delete removes the
       user's data from the live store; event- and stream-level deletion
@@ -676,13 +672,16 @@ requirements:
       destruction policy; physical media sanitisation is your hosting
       procedure.
     detail: |
-      Planned, not yet released: account auto-deletion (see
-      gdpr.Art.17 and gdpr.Art.5 §1(e)). Whole-account destruction is
-      designed to be schedulable, by the account holder or by your
-      inactivity preset, and to run through the same erasure as
-      system.users.delete; each scheduled erasure is logged before and
-      after, and kept as an audit row where `audit.onUserDelete: keep`.
-      The backup reach above is unchanged.
+      Account auto-deletion, since open-pryv.io 2.0.0-rc.66
+      (`8521c8d5`, see gdpr.Art.17 and gdpr.Art.5 §1(e)). Whole-account
+      destruction is schedulable, by the account holder or by your
+      inactivity preset, and runs through the same erasure as
+      system.users.delete, guards included (`[ACSW8]`); each scheduled
+      erasure is logged before and after, and kept as an audit row
+      where `audit.onUserDelete: keep` (`[ACSW17]`); an erasure
+      interrupted halfway is completed at a later pass (`[ACSW19]`),
+      and `maxDeletionsPerPass` caps a pass (`[ACSW12]`). The backup
+      reach above is unchanged.
 
   - ref: CC6.6
     title: CC6.6 Boundary protection against external threats
@@ -1129,15 +1128,11 @@ requirements:
     coverage: configurable
     pryv_effort_saved: medium
     draft: true
-    pryv_primitives: [event, stream, backup-restore]
+    pryv_primitives: [event, stream, backup-restore, account-auto-deletion]
     config_keys: [storages.userAccountStorage.engine]
-    tests: [USAD]
+    docs: [customer-resources/account-auto-deletion.md]
+    tests: [USAD, ACSW8, ACSW19]
     derives_from: [iso-27001.A.8.10, gdpr.Art.17]
-    planned:
-      - kind: feature
-        summary: "Account auto-deletion: whole-account disposal can be scheduled and runs through the same erasure path"
-        proposal: proposals/account-auto-deletion.md
-        impact: low
     overview: |
       Confidential-data disposal uses the same per-user erasure path as
       CC6.5: system.users.delete for whole-account, event/stream
@@ -1145,9 +1140,11 @@ requirements:
       per-user file vs PostgreSQL row + pg_dump rotation), pick the
       engine that matches your disposal commitment.
     detail: |
-      Planned, not yet released: account auto-deletion, as under CC6.5
-      (whole-account disposal schedulable by the holder or by your
-      inactivity preset, same erasure path).
+      Account auto-deletion (open-pryv.io 2.0.0-rc.66, `8521c8d5`), as
+      under CC6.5: whole-account disposal schedulable by the holder or
+      by your inactivity preset, same erasure path, guards included
+      (`[ACSW8]`), an interrupted erasure completed later
+      (`[ACSW19]`).
 
   # ───────────────────────────────────────────────────────────────
   # PI1, Processing Integrity (additional category)
@@ -1392,27 +1389,27 @@ requirements:
     pryv_effort_saved: low
     facilitation_mode: storage
     draft: true
-    pryv_primitives: [clientData, event, backup-restore]
+    pryv_primitives: [clientData, event, backup-restore, account-auto-deletion]
     derives_from: [gdpr.Art.5, iso-27701.A.7.4.7]
-    planned:
-      - kind: feature
-        summary: "Account auto-deletion: account-level retention enforced by the platform (operator inactivity preset or the holder's schedule, reminders, minimum notice); tier review at release for the account level, event-level retention stays an operator job"
-        proposal: proposals/account-auto-deletion.md
-        impact: medium
+    config_keys: [account.autoDeletion.inactivity.defaultDays, account.autoDeletion.allowUserOptOut, account.autoDeletion.userOverride, account.autoDeletion.dryRun]
+    docs: [customer-resources/account-auto-deletion.md]
+    tests: [ACXP2, ACXP3, ACXP8, ACST8, ACST9, ACST14, ACSW13]
     overview: |
       Retention metadata (period, basis, scheduled disposal date) can
       ride on event / access clientData so each record carries its own
-      retention contract. Released versions ship no automatic TTL /
-      expiry primitive, enforcement of the retention schedule is an
-      operator job today (a scheduled sweep calling events/streams
-      delete; account-level auto-deletion is planned, see detail). The retention
+      retention contract. Pryv ships no automatic TTL / expiry
+      primitive for records: enforcement of their retention schedule
+      is an operator job (a scheduled sweep calling events/streams
+      delete); whole accounts are covered by account auto-deletion
+      since 2.0.0-rc.66, see detail. The retention
       policy itself is yours; treat the absence of auto-expiry as an
       operator responsibility when you attest P4.2.
     detail: |
-      This is **voluntarily missing + operator-owned** by design, the
-      same classification as GDPR Art.5(1)(e) storage limitation. Pryv
-      stays retention-policy-neutral: no TTL / auto-delete / scheduler
-      primitive ships, so automatic disposal is the operator's external
+      For records inside an account this is **voluntarily missing +
+      operator-owned** by design, the same classification as GDPR
+      Art.5(1)(e) storage limitation. Pryv stays retention-policy-neutral:
+      no TTL / auto-delete / scheduler primitive ships for events and
+      streams, so their automatic disposal is the operator's external
       scheduled job composing existing primitives (`events.get
       toTime=<cutoff>` + two-stage `events.delete` + `streams.delete` +
       `auth.delete`, with the audit log as the inactivity oracle).
@@ -1421,18 +1418,22 @@ requirements:
       rationale + the recommended operator retention-job pattern in
       `context/data-retention-operator-owned.md`.
 
-      Planned, not yet released: account auto-deletion. For whole
-      accounts, retention is designed to become a platform setting:
-      your inactivity preset (`account.autoDeletion.inactivity.defaultDays`,
-      default none) deletes plain accounts with an email address
-      after that many days without use, with reminder mails, a 7-day
-      minimum notice and a clock that starts the day the preset first
-      applies; holders may schedule their own deletion, and
-      `allowUserOptOut: false` keeps them from opting out of your
-      preset. `dryRun: true` lets you measure a preset before arming
-      it. Retention of records inside an account (events, streams)
-      stays your scheduled job. When you attest P4.2, the preset's
-      period is part of your stated retention policy.
+      Account auto-deletion, since open-pryv.io 2.0.0-rc.66
+      (`8521c8d5`). For whole accounts, retention is a platform
+      setting: your inactivity preset
+      (`account.autoDeletion.inactivity.defaultDays`, default none)
+      deletes plain accounts with an email address after that many
+      days without use (`[ACST14]`), with reminder mails (`[ACXP3]`), a
+      7-day minimum notice (`[ACXP8]`) and a clock that starts the day
+      the preset first applies (`[ACXP2]`); holders may schedule their
+      own deletion, `allowUserOptOut: false` keeps them from opting
+      out of your preset (`[ACST8]`) and `userOverride: false` from
+      choosing another date or period (`[ACST9]`). `dryRun: true` lets
+      you measure a preset before arming it (`[ACSW13]`). Retention of
+      records inside an account (events, streams) stays your scheduled
+      job, which is why the row stays facilitated. When you attest
+      P4.2, the preset's period is part of your stated retention
+      policy.
 
   - ref: P4.3
     title: P4.3, Disposal of personal information
@@ -1442,15 +1443,11 @@ requirements:
     coverage: configurable
     pryv_effort_saved: medium
     draft: true
-    pryv_primitives: [event, stream, backup-restore]
+    pryv_primitives: [event, stream, backup-restore, account-auto-deletion]
     config_keys: [storages.userAccountStorage.engine]
-    tests: [USAD]
+    docs: [customer-resources/account-auto-deletion.md]
+    tests: [USAD, ACSW8, ACSW19]
     derives_from: [gdpr.Art.17, iso-27001.A.8.10, iso-27701.A.7.4.7]
-    planned:
-      - kind: feature
-        summary: "Account auto-deletion: whole-account disposal can be scheduled (holder or operator preset) and runs through the same erasure path"
-        proposal: proposals/account-auto-deletion.md
-        impact: low
     overview: |
       Disposal uses the per-user erasure path: system.users.delete for
       whole-account, event/stream deletion for per-record. Backup reach
@@ -1458,9 +1455,11 @@ requirements:
       + pg_dump rotation), choose the engine that matches your disposal
       commitment, same as GDPR Art.17.
     detail: |
-      Planned, not yet released: account auto-deletion (see P4.2 and
-      CC6.5). Scheduled whole-account disposal, by the holder or by
-      your inactivity preset, through the same erasure path.
+      Account auto-deletion (open-pryv.io 2.0.0-rc.66, `8521c8d5`, see
+      P4.2 and CC6.5): scheduled whole-account disposal, by the holder
+      or by your inactivity preset, through the same erasure path,
+      guards included (`[ACSW8]`), an interrupted erasure completed
+      later (`[ACSW19]`).
 
   - ref: P5.1
     title: P5.1, Data subject access to personal information

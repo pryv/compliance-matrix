@@ -1,13 +1,13 @@
 # Data retention: voluntarily missing at the platform, operator-owned
 
-> **Planned change, not yet released (2026-10-29):** account-level
-> auto-deletion (an account deleted at a date its holder picks, or
-> after a period without use, with reminders) is implemented on an
-> open-pryv.io feature branch for the next release. It changes the
+> **Account-level auto-deletion shipped in open-pryv.io 2.0.0-rc.66
+> (2026-10-30):** an account is deleted at a date its holder picks,
+> or after a period without use, with reminders. It changes the
 > account level of this note only; the event and stream levels stay
-> operator-owned. See "Account-level auto-deletion (planned)" below
-> and `proposals/account-auto-deletion.md`. The rest of this note
-> describes released versions.
+> operator-owned. See "Account-level auto-deletion" below, the
+> operator page `customer-resources/account-auto-deletion` and
+> `proposals/account-auto-deletion.md`. Transfer to a beneficiary
+> is designed and not implemented (last section).
 
 GDPR Art.5(1)(e) "storage limitation" requires personal data to be
 **kept in a form which permits identification of data subjects for
@@ -26,8 +26,9 @@ the subject to come back and click "delete account".
 
 ## What Pryv ships
 
-**No TTL / retention / auto-delete primitive on the platform
-layer.** A code-level audit of `components/business/`,
+**No TTL / retention / auto-delete primitive for events and
+streams.** (Whole accounts: account auto-deletion, since
+2.0.0-rc.66, see below.) A code-level audit of `components/business/`,
 `components/mall/`, `components/storage/`, and
 `components/api-server/src/schema/` finds:
 
@@ -37,19 +38,20 @@ layer.** A code-level audit of `components/business/`,
 - No scheduler / cron primitive in core. The background loops
   shipped are domain-specific, not generalised: LE certificate
   renewal, Bootstrap TokenStore TTL on one-shot join tokens (24 h
-  default), the cross-account (CMC) retry loop, and, since
+  default), the cross-account (CMC) retry loop, the account
+  auto-deletion sweep (since 2.0.0-rc.66, whole accounts only), and, since
   open-pryv.io 2.0.0-rc.56, an opt-in daily purge of the deletion
   records of accesses deleted more than
   `accesses.deletionRecords.retentionDays` ago (default 0: kept
   until the account is deleted). That purge touches access
   records only, never events, streams or audit rows; past it an
   audit row names such an access by id only.
-- No "user inactivity" tracking that could trigger automatic
-  account deletion. Audit-log read of "last authentication
-  time" requires a custom query. (Planned: the account
-  auto-deletion release measures inactivity from the `lastUsed`
-  of the account's personal and app accesses, and a sign-in
-  records `lastUsed`; see below.)
+- Account inactivity is measured for account auto-deletion only
+  (since 2.0.0-rc.66): the latest `lastUsed` of the account's
+  personal and app accesses, a sign-in recording `lastUsed`
+  (`[LGLU1]`..`[LGLU4]`, `[ACAC1]`..`[ACAC10]`); see below. Any
+  other inactivity measure (for example "last authentication
+  time" from the audit log) is a custom query.
 
 `access.expires` exists but bounds the **authorisation
 lifetime** (the moment after which the access-token stops
@@ -221,12 +223,11 @@ events.
 
 ## Account-level retention via the audit-log oracle
 
-On releases without account auto-deletion (all released versions
-at the time of writing), the "inactive user, 3-year deletion"
-pattern uses the audit log as the inactivity oracle; once the
-built-in feature is released, prefer it (next section), it
-carries the reminders, the minimum notice and the deletion guards
-this pseudocode leaves out:
+On releases before 2.0.0-rc.66 (without account auto-deletion),
+the "inactive user, 3-year deletion" pattern uses the audit log as
+the inactivity oracle; from 2.0.0-rc.66 on, prefer the built-in
+feature (next section), it carries the reminders, the minimum
+notice and the deletion guards this pseudocode leaves out:
 
 ```js
 // Pseudocode, operator's retention job, per-account scan.
@@ -246,13 +247,20 @@ anonymise an account or its data. For retention regimes where
 "anonymised after N years" is the policy, the anonymisation is the
 operator's own transformation; the platform verb is `delete`.
 
-## Account-level auto-deletion (planned, not yet released)
+## Account-level auto-deletion
 
-**Status:** implemented on an open-pryv.io feature branch, not
-merged, not released (2026-10-29). Wire shapes may change until the
-release; the release note and the operator page
-(`customer-resources/account-auto-deletion` on pryv.github.io, once
-published) are authoritative from then on.
+**Status:** shipped in open-pryv.io 2.0.0-rc.66 (`8521c8d5`,
+2026-10-30). The release note and the operator page
+(`customer-resources/account-auto-deletion` on pryv.github.io) are
+authoritative for the wire shapes. Tests: schedule engine
+`[ACXP1]`..`[ACXP19]`, sweep `[ACSW8]`..`[ACSW27]` (the codes
+`ACSW1`..`ACSW7` are also used by another open-pryv.io suite, so
+the matrix rows cite the engine codes for those cases), mails
+`[ACRM1]`..`[ACRM5]`, API `[ACST1]`..`[ACST19]` and
+`[ACST15A]`..`[ACST15C]`, activity `[ACAC1]`..`[ACAC10]`, login
+`[LGLU1]`..`[LGLU4]`, configuration `[ACCF1]`..`[ACCF9]`,
+`[CVAD1]`..`[CVAD4]`, `[CKCF8]`, state `[ADKS1]`..`[ADKS6]`,
+`[ADKR1]`..`[ADKR4]`.
 
 **What it does.** An account is deleted at a date its holder chose
 (`date`), or after a number of days without use (`inactivity`),
@@ -336,8 +344,8 @@ cluster coordination (an account lives on one core).
    accounts, accounts under a delegation) stay under your own
    retention procedure if your rule must reach them; their holders
    can still schedule their own deletion.
-5. **Legal hold.** There is no per-account operator hold in this
-   design (an admin method to clear a schedule is later work). To
+5. **Legal hold.** There is no per-account operator hold (an
+   admin method to clear a schedule is later work). To
    stop deletions on a core, set `inactivity.defaultDays: null`
    (stops the preset) or `enabled: false` (hides the feature and
    stops the sweep entirely, holders' own schedules included).
@@ -502,8 +510,8 @@ limitation under Art.5(1)(e)":
    rotation policy + retention cutoffs together complete the
    storage-limitation argument across the full data lifecycle.
 
-Once account auto-deletion is released, the account level of the
-same answer becomes: your preset (`account.autoDeletion.inactivity.
+Since account auto-deletion (2.0.0-rc.66), the account level of the
+same answer is: your preset (`account.autoDeletion.inactivity.
 defaultDays`) as the policy, stated in your privacy notice; the
 core's sweep as the enforcement, measured with `dryRun` before it
 was armed; the sweep's WARN log lines (and, with
@@ -532,9 +540,9 @@ the `:_audit:action-events.delete` action under the retention job's
 - `docs/pryv-primitives.md`: `audit-event-stream` +
   `backup-restore` entries (the primitives the retention
   pattern composes).
-- `proposals/account-auto-deletion.md`: the planned account-level
-  auto-deletion and transfer, the rows they will change, and what
-  the release must update.
+- `proposals/account-auto-deletion.md`: account-level
+  auto-deletion (shipped in 2.0.0-rc.66) and the planned transfer,
+  the rows they change.
 - `samples/scheduled-retention-job/`: the event-level retention
-  job recipe (account-level retention: the built-in feature once
-  released).
+  job recipe (account-level retention: the built-in feature since
+  2.0.0-rc.66).

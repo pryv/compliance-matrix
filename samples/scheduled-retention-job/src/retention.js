@@ -13,8 +13,8 @@
  *
  * Account-level deletion (auth.delete) is intentionally NOT performed here,
  * wire it to your admin-key flow only after a reviewed inactivity oracle.
- * On releases with account auto-deletion (account.autoDeletion), use that
- * built-in feature for inactive accounts instead (see README.md).
+ * From open-pryv.io 2.0.0-rc.66 on (account auto-deletion, account.autoDeletion),
+ * use that built-in feature for inactive accounts instead (see README.md).
  */
 import fs from 'node:fs';
 import yaml from 'js-yaml';

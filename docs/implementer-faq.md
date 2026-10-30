@@ -2342,21 +2342,23 @@ oracle). Pryv provides the
 deletion APIs and the audit trace; the operator owns the
 scheduler + retention-rule definitions + legal-hold overrides.
 
-**Planned, not yet released (2026-10-29): account auto-deletion.**
-The answer below holds for released versions. For **whole
-accounts**, the next open-pryv.io release is designed to change it
-(implemented on a feature branch): an account is deleted at a date
-its holder picks, or after a period without use of its personal and
-app accesses, either by the holder's own schedule or by your
-inactivity preset (`account.autoDeletion.inactivity.defaultDays`,
-default none), with reminder mails, a 7-day minimum notice, a
-dry-run mode and the deletion guards of `auth.delete`. A preset is
-your retention rule and goes in your privacy notice. Retention of
-events and streams inside an account stays the operator job
-described here. See `context/data-retention-operator-owned.md`,
-"Account-level auto-deletion", and
-`proposals/account-auto-deletion.md` (planned chips on the
-storage-limitation, erasure and disposal rows).
+**Update (open-pryv.io 2.0.0-rc.66, 2026-10-30): account
+auto-deletion.** The answer below holds for releases before
+2.0.0-rc.66, and still holds for events and streams. For **whole
+accounts** it changed: an account is deleted at a date its holder
+picks, or after a period without use of its personal and app
+accesses, either by the holder's own schedule or by your inactivity
+preset (`account.autoDeletion.inactivity.defaultDays`, default
+none), with reminder mails, a 7-day minimum notice, a dry-run mode
+and the deletion guards of `auth.delete`. A preset is your retention
+rule and goes in your privacy notice. Retention of events and
+streams inside an account stays the operator job described here.
+See `context/data-retention-operator-owned.md`, "Account-level
+auto-deletion", the operator page
+`customer-resources/account-auto-deletion` and
+`proposals/account-auto-deletion.md` (the storage-limitation,
+erasure and disposal rows now cite the shipped feature; the
+transfer chips stay planned).
 
 **The customer scenario:**
 
