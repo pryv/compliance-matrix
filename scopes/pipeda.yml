@@ -116,7 +116,7 @@ requirements:
     derives_from: [gdpr.Art.5, gdpr.Art.17, ccpa.1798.105, iso-27701.A.7.4.5]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.inactivity.defaultDays, account.autoDeletion.reminders.minNoticeDays]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [AA02, ACCP, USAD, ACXP2, ACXP3, ACXP8, ACST14, ACSW9]
+    tests: [AA02, ACCP, USAD, ACXP2, ACXP3, ACXP8, ACST14, ADSW9]
     overview: |
       Limit-use enforced by permissions; limit-disclosure enforced by
       access scope to recipient. Retention has the same
@@ -140,7 +140,7 @@ requirements:
       reminder mails (`[ACXP3]`) and at least 7 days after the first
       notice (`[ACXP8]`), and each individual may schedule their own
       account's deletion. A preset covers only plain accounts with an
-      email address (`[ACST14]`, `[ACSW9]`); state it in your privacy
+      email address (`[ACST14]`, `[ADSW9]`); state it in your privacy
       policy. Event-level retention stays your retention job.
 
   - ref: Principle.4.6

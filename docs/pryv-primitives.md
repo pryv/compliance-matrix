@@ -912,13 +912,13 @@ mails (open-pryv.io 2.0.0-rc.66, `8521c8d5`; per-core block
 - **Notice**: confirmation mail on every change `[ACST15A]`, `[ACST15B]`;
   reminders at 60, 30, 7 and 1 days `[ACXP3]`; no deletion less than
   `reminders.minNoticeDays` (7) after the first notice actually sent `[ACXP8]`.
-- **Sweep**: one per core, in the API worker the master designates `[ACSW18]`;
+- **Sweep**: one per core, in the API worker the master designates `[ADSW18]`;
   re-reads activity, runs `auth.delete`'s deletion guards (a refusal holds the
-  erasure, mailed once `[ACSW8]`) and erases exactly as `auth.delete` does;
+  erasure, mailed once `[ADSW8]`) and erases exactly as `auth.delete` does;
   WARN log line before and after, an `account.autoDeletion.erase` audit row with
-  `audit.onUserDelete: keep` `[ACSW17]`; `dryRun` `[ACSW13]`,
-  `maxDeletionsPerPass` `[ACSW12]`; an interrupted erasure completes later
-  `[ACSW19]`.
+  `audit.onUserDelete: keep` `[ADSW17]`; `dryRun` `[ADSW13]`,
+  `maxDeletionsPerPass` `[ADSW12]`; an interrupted erasure completes later
+  `[ADSW19]`.
 - **Not covered**: retention of events and streams inside an account (the
   operator's job, `context/data-retention-operator-owned.md`); transfer to a
   beneficiary (designed, not implemented, `proposals/account-auto-deletion.md`).

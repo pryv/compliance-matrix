@@ -312,7 +312,7 @@ requirements:
     derives_from: [gdpr.Art.16, gdpr.Art.17]
     config_keys: [storages.userAccountStorage.engine, user-account.delete]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [PTU1, USAD, ACST3, ACST10, ACRM1, ACSW8]
+    tests: [PTU1, USAD, ACST3, ACST10, ACRM1, ADSW8]
     overview: |
       Rectification and erasure: same mapping as GDPR Art. 16 + 17.
       `events.update` for rectification (with version preservation);
@@ -325,7 +325,7 @@ requirements:
       without use, where your `user-account.delete` lets them delete
       it directly (`[ACST10]`, arming needs the password, `[ACST3]`),
       with reminder mails before it (`[ACRM1]`); the erasure is the
-      same as `system.users.delete`, guards included (`[ACSW8]`).
+      same as `system.users.delete`, guards included (`[ADSW8]`).
 
   - ref: Art.34
     title: Disclosure of personal data abroad

@@ -1356,28 +1356,27 @@ released" paragraph rewritten as shipped with the release name, commit and
 test codes; `docs: [customer-resources/account-auto-deletion.md]` and the new
 `account-auto-deletion` primitive added on every discharged row; no tier
 shift; `reviewed_at` left unchanged so the rewritten prose awaits the next
-review pass. Test codes: the sweep suite's `ACSW1`..`ACSW7` are also used by
-the account-streams write suite of open-pryv.io, so the rows cite the
-schedule-engine codes (`ACXP`) for those cases and only `ACSW8` and above;
+review pass. Test codes: the sweep suite is `ADSW` (renamed from `ACSW` in
+open-pryv.io `2c7989c8`, that code being the account-streams write suite's);
 the configuration boot check is `[CKCF8]` (not `CKCF7` as first listed).
 
 | Scope | Ref | What changed | Tests added | Config keys added |
 |---|---|---|---|---|
-| gdpr | Art.5 | §1(e) label: configurable for whole accounts, operator-owned for records; shipped paragraph | `ACXP2`, `ACXP3`, `ACXP8`, `ACXP10`, `ACXP19`, `ACAC1`, `ACAC2`, `ACAC7`, `ACSW8`, `ACSW9`, `ACSW13`, `ACST14`, `LGLU3`, `CVAD3` | `account.autoDeletion.inactivity.defaultDays`, `.userOverride`, `.allowUserOptOut`, `.reminders.leadDays`, `.reminders.minNoticeDays`, `.dryRun`, `accessTracking.isActive` |
+| gdpr | Art.5 | §1(e) label: configurable for whole accounts, operator-owned for records; shipped paragraph | `ACXP2`, `ACXP3`, `ACXP8`, `ACXP10`, `ACXP19`, `ACAC1`, `ACAC2`, `ACAC7`, `ADSW8`, `ADSW9`, `ADSW13`, `ACST14`, `LGLU3`, `CVAD3` | `account.autoDeletion.inactivity.defaultDays`, `.userOverride`, `.allowUserOptOut`, `.reminders.leadDays`, `.reminders.minNoticeDays`, `.dryRun`, `accessTracking.isActive` |
 | gdpr | Art.13 | §2(a) preset in the privacy notice; confirmation and reminders as shipped (transfer chip kept) | `ACST1`, `ACST2`, `ACST15A`, `ACST15B`, `ACRM1` | `account.autoDeletion.inactivity.defaultDays`, `services.email.enabled.accountDeletionScheduled`, `services.email.enabled.accountDeletionReminder` |
-| gdpr | Art.17 | erasure caller-triggered or scheduled; shipped paragraph (password, delegate, self-deletion, use wins, guards, audit row, completion, cap) | `ACST3`, `ACST4`, `ACST5`, `ACST10`, `ACST15A`, `ACSW8`, `ACSW12`, `ACSW16`, `ACSW17`, `ACSW19`, `ACSW27` | `account.autoDeletion.enabled`, `account.autoDeletion.maxDeletionsPerPass` |
-| gdpr | Art.25 | retention-by-default bullet as shipped | `ACCF1`, `ACXP2`, `ACXP8`, `ACXP13`, `ACSW12`, `ACSW13` | `account.autoDeletion.inactivity.defaultDays`, `.dryRun`, `.maxDeletionsPerPass` |
+| gdpr | Art.17 | erasure caller-triggered or scheduled; shipped paragraph (password, delegate, self-deletion, use wins, guards, audit row, completion, cap) | `ACST3`, `ACST4`, `ACST5`, `ACST10`, `ACST15A`, `ADSW8`, `ADSW12`, `ADSW16`, `ADSW17`, `ADSW19`, `ADSW27` | `account.autoDeletion.enabled`, `account.autoDeletion.maxDeletionsPerPass` |
+| gdpr | Art.25 | retention-by-default bullet as shipped | `ACCF1`, `ACXP2`, `ACXP8`, `ACXP13`, `ADSW12`, `ADSW13` | `account.autoDeletion.inactivity.defaultDays`, `.dryRun`, `.maxDeletionsPerPass` |
 | gdpr | Art.32 | delegate refusal and password step-up as shipped (sign-in tally); chip narrowed to the transfer identity | `ACST3`, `ACST4`, `ACST5`, `ACST18`, `ACST15A` | |
-| ccpa | 1798.105 | consumer-scheduled deletion as shipped; §1798.105(d) via `enabled: false` | `ACST3`, `ACST10`, `ACSW8`, `ACRM1` | `account.autoDeletion.enabled` |
-| pipeda | Principle.4.5 | inactive-account retention by configuration as shipped | `ACXP2`, `ACXP3`, `ACXP8`, `ACST14`, `ACSW9` | `account.autoDeletion.inactivity.defaultDays`, `.reminders.minNoticeDays` |
-| swiss-nlpd | Art.32 | erasure scheduled by the person as shipped | `ACST3`, `ACST10`, `ACRM1`, `ACSW8` | |
-| soc2 | CC6.5 | scheduled whole-account destruction as shipped | `ACSW8`, `ACSW12`, `ACSW17`, `ACSW19` | `audit.onUserDelete`, `account.autoDeletion.inactivity.defaultDays` |
-| soc2 | P4.2 | account-level retention as shipped; tier reviewed and kept (below) | `ACXP2`, `ACXP3`, `ACXP8`, `ACST8`, `ACST9`, `ACST14`, `ACSW13` | `account.autoDeletion.inactivity.defaultDays`, `.allowUserOptOut`, `.userOverride`, `.dryRun` |
-| soc2 | P4.3 | scheduled disposal as shipped | `ACSW8`, `ACSW19` | |
-| soc2 | C1.2 | scheduled disposal as shipped | `ACSW8`, `ACSW19` | |
-| iso-27701 | A.7.4.5 | inactive-account deletion by configuration as shipped | `ACXP2`, `ACXP3`, `ACXP8`, `ACST10`, `ACST14`, `ACSW8` | `account.autoDeletion.inactivity.defaultDays`, `.reminders.minNoticeDays` |
-| iso-27001 | A.8.10 | schedulable whole-account deletion as shipped | `ACXP3`, `ACXP8`, `ACSW8`, `ACSW19` | `account.autoDeletion.inactivity.defaultDays` |
-| hipaa-security | 164.316(b)(2)(i) | erasure audit row with `keep` as shipped | `ACSW17` | |
+| ccpa | 1798.105 | consumer-scheduled deletion as shipped; §1798.105(d) via `enabled: false` | `ACST3`, `ACST10`, `ADSW8`, `ACRM1` | `account.autoDeletion.enabled` |
+| pipeda | Principle.4.5 | inactive-account retention by configuration as shipped | `ACXP2`, `ACXP3`, `ACXP8`, `ACST14`, `ADSW9` | `account.autoDeletion.inactivity.defaultDays`, `.reminders.minNoticeDays` |
+| swiss-nlpd | Art.32 | erasure scheduled by the person as shipped | `ACST3`, `ACST10`, `ACRM1`, `ADSW8` | |
+| soc2 | CC6.5 | scheduled whole-account destruction as shipped | `ADSW8`, `ADSW12`, `ADSW17`, `ADSW19` | `audit.onUserDelete`, `account.autoDeletion.inactivity.defaultDays` |
+| soc2 | P4.2 | account-level retention as shipped; tier reviewed and kept (below) | `ACXP2`, `ACXP3`, `ACXP8`, `ACST8`, `ACST9`, `ACST14`, `ADSW13` | `account.autoDeletion.inactivity.defaultDays`, `.allowUserOptOut`, `.userOverride`, `.dryRun` |
+| soc2 | P4.3 | scheduled disposal as shipped | `ADSW8`, `ADSW19` | |
+| soc2 | C1.2 | scheduled disposal as shipped | `ADSW8`, `ADSW19` | |
+| iso-27701 | A.7.4.5 | inactive-account deletion by configuration as shipped | `ACXP2`, `ACXP3`, `ACXP8`, `ACST10`, `ACST14`, `ADSW8` | `account.autoDeletion.inactivity.defaultDays`, `.reminders.minNoticeDays` |
+| iso-27001 | A.8.10 | schedulable whole-account deletion as shipped | `ACXP3`, `ACXP8`, `ADSW8`, `ADSW19` | `account.autoDeletion.inactivity.defaultDays` |
+| hipaa-security | 164.316(b)(2)(i) | erasure audit row with `keep` as shipped | `ADSW17` | |
 
 Tier review: `soc2.P4.2` stays `facilitated` / `low` / `storage`. The account
 level is now configurable, but P4.2 covers the retention of all personal

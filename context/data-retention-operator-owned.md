@@ -253,9 +253,7 @@ operator's own transformation; the platform verb is `delete`.
 2026-10-30). The release note and the operator page
 (`customer-resources/account-auto-deletion` on pryv.github.io) are
 authoritative for the wire shapes. Tests: schedule engine
-`[ACXP1]`..`[ACXP19]`, sweep `[ACSW8]`..`[ACSW27]` (the codes
-`ACSW1`..`ACSW7` are also used by another open-pryv.io suite, so
-the matrix rows cite the engine codes for those cases), mails
+`[ACXP1]`..`[ACXP19]`, sweep `[ADSW1]`..`[ADSW27]`, mails
 `[ACRM1]`..`[ACRM5]`, API `[ACST1]`..`[ACST19]` and
 `[ACST15A]`..`[ACST15C]`, activity `[ACAC1]`..`[ACAC10]`, login
 `[LGLU1]`..`[LGLU4]`, configuration `[ACCF1]`..`[ACCF9]`,

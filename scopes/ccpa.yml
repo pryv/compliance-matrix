@@ -50,7 +50,7 @@ requirements:
     derives_from: [gdpr.Art.17]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.enabled]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [USAD, XIDD2, ACST3, ACST10, ACSW8, ACRM1]
+    tests: [USAD, XIDD2, ACST3, ACST10, ADSW8, ACRM1]
     overview: |
       Same primitive as GDPR Art. 17: `system.users.delete` is the
       per-consumer erasure call. Backup-completeness of the deletion
@@ -70,7 +70,7 @@ requirements:
       `user-account.delete` lets them delete it directly
       (`[ACST10]`; arming needs the password, `[ACST3]`); reminders
       precede it (`[ACRM1]`) and the deletion is the same as
-      `system.users.delete`, guards included (`[ACSW8]`). It has no
+      `system.users.delete`, guards included (`[ADSW8]`). It has no
       hook for a §1798.105(d) exception: if one applies to a consumer
       whose deletion is scheduled, that is still your determination,
       made before the deadline (for example by turning the feature off

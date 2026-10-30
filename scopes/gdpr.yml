@@ -203,7 +203,7 @@ requirements:
     functional_specs: [EVENT.BASE, STREAM.BASE]
     config_keys: [account.autoDeletion.inactivity.defaultDays, account.autoDeletion.userOverride, account.autoDeletion.allowUserOptOut, account.autoDeletion.reminders.leadDays, account.autoDeletion.reminders.minNoticeDays, account.autoDeletion.dryRun, accessTracking.isActive]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [GLHP, UZEV, ACXP2, ACXP3, ACXP8, ACXP10, ACXP19, ACAC1, ACAC2, ACAC7, ACSW8, ACSW9, ACSW13, ACST14, LGLU3, CVAD3]
+    tests: [GLHP, UZEV, ACXP2, ACXP3, ACXP8, ACXP10, ACXP19, ACAC1, ACAC2, ACAC7, ADSW8, ADSW9, ADSW13, ACST14, LGLU3, CVAD3]
     planned:
       - kind: feature
         summary: "Account transfer to a beneficiary (release after the deletion one): §1(c) minimisation of the beneficiary's data (email required; name and date of birth optional, encrypted, erased with the transfer)"
@@ -293,14 +293,14 @@ requirements:
         default, `[ACXP3]`), no deletion less than 7 days
         after the first notice actually sent (`[ACXP8]`); a preset
         applies only to plain accounts with an email address on a core
-        that sends mail (`[ACST14]`, `[ACSW9]`), and its clock starts
+        that sends mail (`[ACST14]`, `[ADSW9]`), and its clock starts
         the day it first applies, so turning one on never deletes
         dormant accounts by surprise (`[ACXP2]`, `[ACXP10]`); a dry run
-        shows the numbers first (`[ACSW13]`). Inactivity needs
+        shows the numbers first (`[ADSW13]`). Inactivity needs
         `accessTracking.isActive`: a preset without it refuses the
         boot (`[CVAD3]`), and a holder's inactivity schedule is
         suspended, never erased, while tracking is off (`[ACXP19]`).
-        The erasure is `auth.delete`'s, guards included (`[ACSW8]`).
+        The erasure is `auth.delete`'s, guards included (`[ADSW8]`).
         Event-level and stream-level retention stays your retention
         job. See `context/data-retention-operator-owned.md`,
         "Account-level auto-deletion", and the operator page
@@ -1385,7 +1385,7 @@ requirements:
     pryv_primitives: [event, stream, backup-restore, external-id-index, account-auto-deletion]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ACSW8, ACSW12, ACSW16, ACSW17, ACSW19, ACSW27]
+    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27]
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -1436,19 +1436,19 @@ requirements:
       schedule only what they could do directly (the `delete` action
       is offered where `user-account.delete` lists `personalToken`,
       `[ACST10]`; a deletion the holder chose waits if self-deletion
-      was withdrawn since, `[ACSW27]`); every change is confirmed by
+      was withdrawn since, `[ADSW27]`); every change is confirmed by
       mail (`[ACST15A]`) and reminders precede the deletion. At the
       deadline the core's sweep re-reads the account's use (a use
-      between evaluation and erasure wins, `[ACSW16]`), runs the same
+      between evaluation and erasure wins, `[ADSW16]`), runs the same
       deletion guards (a refusal holds the erasure and is mailed once,
-      `[ACSW8]`) and the same erasure as `auth.delete` (relationships
+      `[ADSW8]`) and the same erasure as `auth.delete` (relationships
       torn down, audit per `audit.onUserDelete`), logs it
       before and after, and with `audit.onUserDelete: keep` writes an
       `account.autoDeletion.erase` row in the account's trail first
-      (`[ACSW17]`). An erasure interrupted halfway, by the sweep or by
+      (`[ADSW17]`). An erasure interrupted halfway, by the sweep or by
       a direct `auth.delete`, is completed at a later pass
-      (`[ACSW19]`); `account.autoDeletion.maxDeletionsPerPass` (20)
-      caps a pass (`[ACSW12]`). An operator preset (Art.5 §1(e)) uses
+      (`[ADSW19]`); `account.autoDeletion.maxDeletionsPerPass` (20)
+      caps a pass (`[ADSW12]`). An operator preset (Art.5 §1(e)) uses
       the same path. See `context/data-retention-operator-owned.md`,
       "Account-level auto-deletion", and the operator page
       `customer-resources/account-auto-deletion`.
@@ -1920,7 +1920,7 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, stream, system-streams, external-id-index, account-auto-deletion]
     config_keys: [accesses.deletionRecords.retentionDays, account.autoDeletion.inactivity.defaultDays, account.autoDeletion.dryRun, account.autoDeletion.maxDeletionsPerPass]
-    tests: [ADP1, ADR5, XIDC1, XIDC2, XIDG1, XIDLU1, XIDLU2, XIDFF1, XIDFF3, XIDFF4, XIDAR1, XIDAR3, ACCF1, ACXP2, ACXP13, ACSW12, ACSW13, ACXP8]
+    tests: [ADP1, ADR5, XIDC1, XIDC2, XIDG1, XIDLU1, XIDLU2, XIDFF1, XIDFF3, XIDFF4, XIDAR1, XIDAR3, ACCF1, ACXP2, ACXP13, ADSW12, ADSW13, ACXP8]
     docs: [customer-resources/account-auto-deletion.md]
     overview: |
       Pryv's whole
@@ -2009,8 +2009,8 @@ requirements:
           applies to an account (`[ACXP2]`), reminders and a 7-day
           minimum notice precede every deletion (`[ACXP8]`),
           `dryRun: true` shows what a preset would do before you arm it
-          (`[ACSW13]`), and `maxDeletionsPerPass` caps the deletions of
-          one pass (`[ACSW12]`).
+          (`[ADSW13]`), and `maxDeletionsPerPass` caps the deletions of
+          one pass (`[ADSW12]`).
         - Is your auth UI surface using the opt-in pattern
           (privacy-by-default UX from the dev-site
           reference) rather than the standard "by continuing

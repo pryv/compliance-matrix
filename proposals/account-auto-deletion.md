@@ -196,7 +196,7 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
 ## At release (v1 deletion)
 
 1. Discharge the deletion chips; rewrite each "Planned, not yet released" paragraph as shipped
-   with the release name, commit and test codes: `[ACXP1-15]` (engine), `[ACSW1-18]` (sweep),
+   with the release name, commit and test codes: `[ACXP1-15]` (engine), `[ADSW1-18]` (sweep),
    `[ACRM1-5]` (mails), `[ACST1-16]`, `[ACST15A-C]` (API), `[ACAC1-10]` (activity), `[LGLU1-4]`
    (login), `[ACCF1-8]`, `[CVAD1-4]`, `[CKCF7]` (config), `[ADKS1-6]`, `[ADKR1-4]` (state).
 2. Add `config_keys:` `account.autoDeletion.*` (and `accessTracking.isActive` where inactivity
@@ -215,12 +215,13 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
 - 2026-10-29: filed with the chips above, from plan 139 P6; v1 implemented on the branch, transfer
   designed only.
 - 2026-10-30: v1 (deletion) released in open-pryv.io 2.0.0-rc.66 (`8521c8d5`). Checklist "At
-  release (v1 deletion)": 1 done (codes cited per row; `ACSW1`..`ACSW7` collide with the
-  account-streams write suite, so the rows cite `ACXP` codes for those cases; the config boot
-  check is `CKCF8`, not `CKCF7`); 2 done; 3 done (`docs:` cites
+  release (v1 deletion)": 1 done (codes cited per row; the config boot check is `CKCF8`, not
+  `CKCF7`); 2 done; 3 done (`docs:` cites
   `customer-resources/account-auto-deletion.md`); 4 decided: new primitive
   `account-auto-deletion` in `docs/pryv-primitives.md`, cited on every discharged row; 5 tier
   review: `soc2.P4.2` kept `facilitated` / `low` (records inside an account stay the
   operator's job), `gdpr.Art.5` §1(e) label now "configurable for whole accounts"; 6 done
   (context note, FAQ Q31, sample README); 7 transfer chips kept (Art.5 §1(c), Art.6, Art.13
   owner notice, Art.14, Art.32 identity).
+- 2026-10-30: the sweep tests renamed `ACSW` to `ADSW` in open-pryv.io (`2c7989c8`), `ACSW` being
+  the account-streams write suite's code; rows cite the `ADSW` codes.

@@ -256,7 +256,7 @@ requirements:
     derives_from: [gdpr.Art.17, gdpr.Art.4, hipaa-security.164.310, hipaa-privacy.164.514, ccpa.1798.105]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.inactivity.defaultDays, account.autoDeletion.reminders.minNoticeDays]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [USAD, ACXP2, ACXP3, ACXP8, ACST10, ACST14, ACSW8]
+    tests: [USAD, ACXP2, ACXP3, ACXP8, ACST10, ACST14, ADSW8]
     overview: |
       Per-user deletion via `system.users.delete` (engine-dependent
       backup behaviour, same notes as GDPR Art. 17). Per-event /
@@ -291,7 +291,7 @@ requirements:
       after the first notice (`[ACXP8]`); the PII principal may also
       schedule their own account's deletion at a date or after a
       period, where self-deletion is allowed (`[ACST10]`). The deletion
-      is `system.users.delete`'s, guards included (`[ACSW8]`).
+      is `system.users.delete`'s, guards included (`[ADSW8]`).
       Per-record retention and de-identification stay as above.
 
   - ref: A.7.4.6

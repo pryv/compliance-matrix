@@ -363,7 +363,7 @@ requirements:
     pryv_primitives: [event, stream, backup-restore, account-auto-deletion]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.inactivity.defaultDays]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [USAD, DLN1, DLN4, DLLW1, ACXP3, ACXP8, ACSW8, ACSW19]
+    tests: [USAD, DLN1, DLN4, DLLW1, ACXP3, ACXP8, ADSW8, ADSW19]
     overview: |
       Per-user erasure: `system.users.delete` removes the user's data
       from the live store. Engine-dependent backup behaviour (SQLite
@@ -383,8 +383,8 @@ requirements:
       account holder (a date, or a period without use) or by your
       inactivity preset, with reminder mails (`[ACXP3]`) and a minimum
       notice (`[ACXP8]`) before, through the same erasure as
-      `system.users.delete`, guards included (`[ACSW8]`); an erasure
-      interrupted halfway is completed at a later pass (`[ACSW19]`).
+      `system.users.delete`, guards included (`[ADSW8]`); an erasure
+      interrupted halfway is completed at a later pass (`[ADSW19]`).
 
   - ref: A.8.13
     title: A.8.13 Information backup

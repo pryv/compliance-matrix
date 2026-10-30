@@ -1491,7 +1491,7 @@ requirements:
     pryv_primitives: [backup-restore, audit, account-auto-deletion]
     config_keys: [audit.onUserDelete, accesses.deletionRecords.retentionDays]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [DKP1, ADP1, ACSW17]
+    tests: [DKP1, ADP1, ADSW17]
     overview: |
       Six-year is a **minimum** retention period, not a maximum
       (the statute says "retain … for 6 years"; covered entities
@@ -1564,7 +1564,7 @@ requirements:
       an `account.autoDeletion.erase` row (username, trigger, whether
       the holder or your preset set the schedule, deadline, when the
       notices were sent) is written in it before the erasure starts
-      (`[ACSW17]`). A covered entity that
+      (`[ADSW17]`). A covered entity that
       enables account auto-deletion keeps `audit.onUserDelete: keep`
       and keeps those log lines for the six-year period if they are
       part of its documentation.
