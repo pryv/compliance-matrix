@@ -1103,7 +1103,10 @@ requirements:
       privileged tier independent of your scheme; clientData / event
       type can carry machine-readable classification labels. Masking is
       by projection (stream + permissions), not value transformation,
-      see context/data-masking-projection-vs-transformation.md.
+      see context/data-masking-projection-vs-transformation.md. For
+      the account name, accesses created with `randomAlias:true` carry
+      an alias in place of the username (hidden from the holder, not
+      from a holder who guesses it).
 
   - ref: C1.2
     title: C1.2, Disposal of confidential information

@@ -267,11 +267,15 @@ requirements:
       TTL primitive; the operator composes `events.get toTime=` +
       `events.delete` + audit-log inactivity oracle in an external
       retention job (`context/data-retention-operator-owned.md`).
-      `accesses.create {randomAlias:true}` ships the anonymisation
-      companion for "render in a non-identifying form" rather than
-      "delete": a platform-unique routable alias replaces the username
-      on that access, so a counterparty holding it cannot re-identify
-      the principal or cross-match them against another access.
+      `accesses.create {randomAlias:true}` reduces identification at
+      the access layer while processing continues: a platform-unique
+      routable alias replaces the username on that access, so what the
+      server returns to a counterparty holding it does not name the
+      principal nor match it against another access. It is not an
+      end-of-processing de-identification of the PII (the data stays
+      linked to the account) and it does not stop a counterparty who
+      guesses the username from confirming it; at the end of
+      processing, deletion stays the mechanism.
 
   - ref: A.7.4.6
     title: A.7.4.6 Temporary files

@@ -414,7 +414,10 @@ requirements:
       sensitive PI is editorial. An alias-only deployment pattern is now
       available: issue accesses with `randomAlias:true` so counterparties
       hold a routable `r-XXXXXXXX` alias instead of a linkable username,
-      keeping linkable identifiers off the sensitive-PI access path.
+      keeping linkable identifiers off the sensitive-PI access path (a
+      counterparty that already suspects the username can still confirm
+      it with the token, so the alias is not protection against
+      guessing).
 
   - ref: "1798.155"
     title: Enforcement
