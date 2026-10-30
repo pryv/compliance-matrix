@@ -8,7 +8,7 @@ same merge and reuses the alias mechanism (a superseded username is demoted to a
 routable alias). The matrix rows in the `ALIASES` trigger can now be reclassified
 (see UPDATE-TRIGGERS.md `ALIASES`).
 **Hardening re-check (2026-10-29):** guarantees completed in `open-pryv.io`
-`4547b32a` (merged to master; ships in the release after 2.0.0-rc.65); see
+`4547b32a` (released in 2.0.0-rc.66); see
 "Re-check after the hardening" below.
 **Upstream backlog item:** macroPryv `_plans/XXX-Backlog/ALIASES.md`.
 **Filed:** 2026-05-19, while backfilling the facilitation typology and
@@ -100,8 +100,7 @@ From macroPryv `_plans/XXX-Backlog/ALIASES.md`:
 
 Two cross-model code reviews of the shipped feature found that the
 pseudonymisation claim did not hold in every configuration. The fixes
-merged to open-pryv.io master as `4547b32a` and ship in the release after
-2.0.0-rc.65. Re-check of the rows this proposal cites:
+merged to open-pryv.io master as `4547b32a` and shipped in 2.0.0-rc.66. Re-check of the rows this proposal cites:
 
 | Property the rows rely on | Before `4547b32a` | From `4547b32a` | Evidence |
 |---|---|---|---|

@@ -2086,7 +2086,7 @@ requirements:
     draft: true
     pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index]
     config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -2155,7 +2155,7 @@ requirements:
           `randomAlias:true` carries a platform-unique `r-XXXXXXXX`
           alias in place of the username (`randomAlias` primitive):
           nothing returned to that access names the account. Since
-          open-pryv.io `4547b32a` (the release after 2.0.0-rc.65) the
+          open-pryv.io `4547b32a` (2.0.0-rc.66) the
           alias routes on every topology, a single core answering DNS
           included (`[ALRT1]`), and survives a backup and restore
           (manifest `aliases`, `[BKAL1]`); an account holds at most

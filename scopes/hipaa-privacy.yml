@@ -783,7 +783,7 @@ requirements:
     draft: true
     pryv_primitives: [randomAlias, stream, system-streams, access, clientData, external-id-index]
     derives_from: [hipaa-privacy.164.514(a)]
-    tests: [XIDC1, XIDG1, XIDN4]
+    tests: [XIDC1, XIDG1, XIDN4, BKAL1, ALRT1]
     overview: |
       `accesses.create {randomAlias:true}` provides the re-identification
       code directly: it mints a platform-unique `r-XXXXXXXX` alias that is
@@ -791,8 +791,7 @@ requirements:
       §514(c)(1)(ii) out of the box. The platform holds the alias-to-user
       mapping and the aliased access exposes only the alias, the covered
       entity re-identifies by resolving the alias, and the code is used for
-      no other purpose. Since open-pryv.io `4547b32a` (the release after
-      2.0.0-rc.65) the alias survives a backup and restore (`[BKAL1]`)
+      no other purpose. Since open-pryv.io `4547b32a` (2.0.0-rc.66) the alias survives a backup and restore (`[BKAL1]`)
       and routes on a single core answering DNS (`[ALRT1]`). The alias
       keeps the username from the recipient; it does not stop a
       recipient who already suspects whose record it is from confirming

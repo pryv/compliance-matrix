@@ -35,8 +35,7 @@ A routable, platform-unique de-identifying name substituted for the username.
 - **Routable**: the alias replaces the username in the access's `apiEndpoint`
   and resolves to the user exactly like the username (including across cores);
   the real-username↔alias mapping stays with the platform, never exposed to
-  the aliased access. Since open-pryv.io `4547b32a` (the release after
-  2.0.0-rc.65) this holds on a single core answering DNS too (`[ALRT1]`;
+  the aliased access. Since open-pryv.io `4547b32a` (2.0.0-rc.66) this holds on a single core answering DNS too (`[ALRT1]`;
   aliases minted earlier on such a core need one run of
   `bin/reconcile-user-cores.js`) and after a backup and restore (manifest
   `aliases`, `[BKAL1]`).
@@ -490,8 +489,7 @@ from a backup file.
   `[XIDBK1]`, `[XIDBK2]`. The blinded values make the per-user backup
   as sensitive as a claim credential: encrypt it. See
   `external-id-index`.
-- **Account aliases** (open-pryv.io `4547b32a`, the release after
-  2.0.0-rc.65): the per-user manifest lists each account's aliases (access
+- **Account aliases** (open-pryv.io `4547b32a`, 2.0.0-rc.66): the per-user manifest lists each account's aliases (access
   aliases and former usernames, `aliases`) and the restore reserves them
   again; an alias another account or core holds by then stays with it and
   is reported `[BKAL1]`. The series an account still holds under a former

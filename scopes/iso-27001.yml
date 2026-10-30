@@ -387,7 +387,7 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [backup-restore, backup-payload-encryption, multi-core-mTLS, external-id-index]
-    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1, XIDB2, XIDB3, XIDB4, XIDBK1, XIDBK2]
+    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1, XIDB2, XIDB3, XIDB4, XIDBK1, XIDBK2, BKAL1, BKAL3]
     overview: |
       `bin/backup.js`
       produces per-user backup files, the only copy of user data Pryv
@@ -482,8 +482,7 @@ requirements:
       by `--verify-integrity` keeps its restored ids; release them with
       the admin release if the account is to be dropped.
 
-      **Account aliases (open-pryv.io `4547b32a`, the release after
-      2.0.0-rc.65).** Earlier backups did not carry an account's aliases
+      **Account aliases (open-pryv.io `4547b32a`, 2.0.0-rc.66).** Earlier backups did not carry an account's aliases
       (access aliases, former usernames): after a restore its aliased
       accesses and endpoints under a former username did not route and a
       former username could be registered by someone else. From that

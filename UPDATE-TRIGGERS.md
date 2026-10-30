@@ -90,8 +90,7 @@ this slug, so none needed discharging.
 | ccpa | 1798.140(ae) | ✅ | deployment-pattern recommendation cites the alias |
 
 **Re-checked 2026-10-29 for the alias and username-change hardening**
-(open-pryv.io `4547b32a`, merged to master, ships in the release after
-2.0.0-rc.65). The claim now holds after a backup and restore (`[BKAL1]`)
+(open-pryv.io `4547b32a`, released in 2.0.0-rc.66). The claim now holds after a backup and restore (`[BKAL1]`)
 and on a single core answering DNS (`[ALRT1]`); a custom account field
 named `username` or `usernameChangeCount` is refused at boot (`[SDB3]`);
 aliases per account are bounded by `accesses.maxAliasesPerAccount`
@@ -2606,7 +2605,7 @@ account changes no claim, and the sensitivity note is on
 `iso-27001.A.8.13`), the integrity, transport and application-security
 rows (no change).
 
-**Walked 2026-10-29 for the release after 2.0.0-rc.65** (alias and
+**Walked 2026-10-29 for 2.0.0-rc.66** (alias and
 username-change hardening, open-pryv.io `4547b32a`).
 - **New config keys**: `accesses.maxAliasesPerAccount` (default 1000,
   aliases one account may hold; past it `randomAlias` is refused
@@ -2638,9 +2637,12 @@ Walked without change: `hipaa-security.164.308(a)(7)(ii)(A)` / `(B)`,
 `hds.Activity.5`, `soc2.PI1.5`, `soc2.A1.2` (per-user backup in general),
 the integrity rows (`gdpr.Art.32` §1(b), `iso-27001.A.8.14` / `A.8.22`:
 the users-index check now reports orphans, no claim relied on it), the
-transport and application-security rows. Test codes are cited in prose
-only until the matrix validator reads an open-pryv.io checkout that holds
-them.
+transport and application-security rows. Once 2.0.0-rc.66 was tagged
+(2026-10-30), the codes cited in prose joined the rows' `tests:` arrays:
+`gdpr.Art.32` (`ALRT1`, `BKAL1`, `AL12`, `SDB3`, `AL08`),
+`hipaa-privacy.164.514(c)` (`BKAL1`, `ALRT1`), `iso-27001.A.8.13`
+(`BKAL1`, `BKAL3`). The validator resolves them against an open-pryv.io
+checkout holding 2.0.0-rc.66 or later.
 
 ## Section C: Maintenance reminders
 
