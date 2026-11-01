@@ -9,8 +9,8 @@ guarded erasure), released in 2.0.0-rc.66 (release commit `18c60698`). Operator 
 `customer-resources/account-auto-deletion` (dev-site2). The 14 deletion chips were discharged
 and the rows rewritten on 2026-10-30, the Art.32 chip narrowed to its transfer half; see
 `UPDATE-TRIGGERS.md` Section A `ACCOUNT-AUTO-DELETION` for the per-row record. The second
-action, **transfer to a beneficiary, is implemented on the open-pryv.io branch
-`feat/account-transfer` (`f4c05d3c`, 2026-10-30) and NOT released**: its 5 chips stay until the
+action, **transfer to a beneficiary, is implemented (`f4c05d3c`, 2026-10-30) and merged to open-pryv.io
+master (`2bd4778b`, 2026-11-01), NOT released**: its 5 chips stay until the
 release that ships it (see "At release (transfer)" below). The text below is the proposal as filed (2026-10-29), kept as
 history; where it says "as implemented on the branch", the rows, the context note and the
 operator page are authoritative.
@@ -259,3 +259,5 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
 - 2026-10-30: transfer implemented on open-pryv.io `feat/account-transfer` (`f4c05d3c`), not
   released; links HMAC-derived (only a salt stored); "At release (transfer)" checklist added;
   the 5 transfer chips stay `planned`.
+- 2026-11-01: transfer merged to open-pryv.io master (`2bd4778b`); still not released (the release
+  waits for the Art.14(5)(b) reading); the 5 transfer chips stay `planned`.

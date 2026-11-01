@@ -1272,7 +1272,7 @@ rules hold; the one addition is the delegation grant guard's exemption for
 `[DDG04]`, which does not let a delegate publish an offer; their entries'
 dated "hard delete" wording is history and stays.
 
-### `ACCOUNT-AUTO-DELETION` (DELETION SHIPPED in open-pryv.io 2.0.0-rc.66 `8521c8d5`, 2026-10-30; 14 deletion chips discharged and the Art.32 chip narrowed to its transfer half, rows walked 2026-10-30; TRANSFER IMPLEMENTED on open-pryv.io `feat/account-transfer` `f4c05d3c`, not released: 5 chips kept)
+### `ACCOUNT-AUTO-DELETION` (DELETION SHIPPED in open-pryv.io 2.0.0-rc.66 `8521c8d5`, 2026-10-30; 14 deletion chips discharged and the Art.32 chip narrowed to its transfer half, rows walked 2026-10-30; TRANSFER MERGED to open-pryv.io master `2bd4778b` (2026-11-01), not released: 5 chips kept)
 
 **Where the work lives**: open-pryv.io master since `8521c8d5` (2026-10-29),
 released in 2.0.0-rc.66 (2026-10-30): `components/business/src/autoDeletion/` (`config.ts` the
@@ -1308,8 +1308,8 @@ password to arm or shorten, delegates refused on set, `delete` offered only
 where self-deletion is allowed, the deletion guards and erasure of
 `auth.delete`, WARN log before and after, audit row where the audit outlives
 the account, `dryRun`, `maxDeletionsPerPass`. The second action, **transfer
-to a beneficiary, is designed and NOT implemented**: its chips (marked
-"transfer") stay until its own release. Context:
+to a beneficiary, is merged to open-pryv.io master (`2bd4778b`, 2026-11-01) and NOT
+released**: its chips (marked "transfer") stay until its own release. Context:
 `context/data-retention-operator-owned.md` ("Account-level auto-deletion",
 shipped, and "Planned: transfer to a beneficiary", which holds the Art.6 /
 Art.13 / Art.14(5)(b) reading, unconfirmed). Implementer-FAQ Q31 carries the
