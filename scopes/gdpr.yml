@@ -306,7 +306,7 @@ requirements:
         "Account-level auto-deletion", and the operator page
         `customer-resources/account-auto-deletion`.
       - Data minimisation, planned with the account transfer (the
-        release after the deletion one; designed, not implemented): a
+        release after the deletion one; implemented, not released): a
         holder may name a beneficiary who receives control of the
         account at the deadline. Only the beneficiary's email is
         required; a name and date of birth are optional, kept
@@ -339,7 +339,7 @@ requirements:
     pryv_primitives: [access, clientData, audit, event]
     planned:
       - kind: feature
-        summary: "Account transfer to a beneficiary (designed, not implemented): the platform stores a third party's email, and optionally name and date of birth, on the holder's instruction; the operator needs a basis for that processing"
+        summary: "Account transfer to a beneficiary (implemented, not released): the platform stores a third party's email, and optionally name and date of birth, on the holder's instruction; the operator needs a basis for that processing"
         proposal: proposals/account-auto-deletion.md
         impact: low
     overview: |
@@ -446,7 +446,7 @@ requirements:
       / `new_legitimate_interest`) + `previous_purpose` (the pivot
       record). See `context/client-data-conventions.md`.
 
-      **Planned, designed and not implemented: account transfer to a
+      **Planned, implemented and not released: account transfer to a
       beneficiary** (the release after account auto-deletion). A
       holder may name one person who receives control of the account
       at its deadline; the platform then stores that person's email
@@ -1142,7 +1142,7 @@ requirements:
     tests: [ACST1, ACST2, ACST15A, ACST15B, ACRM1]
     planned:
       - kind: feature
-        summary: "Account transfer (designed, not implemented): the holder is told, at entry and in the confirmation, when and how the operator may read a beneficiary's name and date of birth"
+        summary: "Account transfer (implemented, not released): the holder is told, at entry and in the confirmation, when and how the operator may read a beneficiary's name and date of birth"
         proposal: proposals/account-auto-deletion.md
         impact: low
     overview: |
@@ -1185,7 +1185,7 @@ requirements:
       `context/data-retention-operator-owned.md` and the operator page
       `customer-resources/account-auto-deletion`.
 
-      **Planned, designed and not implemented: account transfer to a
+      **Planned, implemented and not released: account transfer to a
       beneficiary.** Where the holder names a beneficiary with an
       optional name and date of birth, the reference account app and
       the setup confirmation are designed to tell the holder that
@@ -1208,7 +1208,7 @@ requirements:
     pryv_primitives: [access, clientData, event, audit]
     planned:
       - kind: feature
-        summary: "Account transfer to a beneficiary (designed, not implemented): the beneficiary is informed when named (atSetup) or at the claim (atTrigger, resting on an Art.14(5)(b) analysis that is not yet confirmed)"
+        summary: "Account transfer to a beneficiary (implemented, not released): the beneficiary is informed when named (atSetup) or at the claim (atTrigger, resting on an Art.14(5)(b) analysis that is not yet confirmed)"
         proposal: proposals/account-auto-deletion.md
         impact: low
     overview: |
@@ -1226,7 +1226,7 @@ requirements:
       disclosure-notice text, you have the full Art.14 artefact set
       retrievable per subject.
 
-      **Planned, designed and not implemented: account transfer to a
+      **Planned, implemented and not released: account transfer to a
       beneficiary** (the release after account auto-deletion). The
       account holder, not the beneficiary, enters the beneficiary's
       email and, optionally, name and date of birth: data not obtained
@@ -2280,7 +2280,7 @@ requirements:
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705795&issue=pryv%7Copen-pryv.io%7C118
         impact: low
       - kind: feature
-        summary: "Account transfer to a beneficiary (designed, not implemented): a beneficiary's name and date of birth encrypted at rest, unreadable before the transfer starts"
+        summary: "Account transfer to a beneficiary (implemented, not released): a beneficiary's name and date of birth encrypted at rest, unreadable before the transfer starts"
         proposal: proposals/account-auto-deletion.md
         impact: low
     overview: |
@@ -2496,17 +2496,19 @@ requirements:
           stolen session alone cannot schedule an account's deletion;
           every change is confirmed to the account's email
           (`[ACST15A]`).
-        - Planned, designed and not implemented (account transfer to a
+        - Planned, implemented and not released (account transfer to a
           beneficiary): a beneficiary's optional name and date of birth
-          are designed to be stored AES-256-GCM encrypted in a field of
+          are stored AES-256-GCM encrypted in a field of
           their own (key `account.autoDeletion.transfer.identitySecretsKey`,
           or derived from the admin key; rotating the admin key without
           a dedicated key makes stored values unreadable), unreadable by
           any API before the transfer starts, and erased with every
           version on claim, cancellation, decline or account deletion.
-          The claim link is a random single-use token of which only the
-          hash is stored, bound to the first account that claims it,
-          and rate-limited. The operator's audited read of those fields
+          The claim and decline links are HMACs of (kind, account id,
+          salt) under the core's link key: only the salt is stored, so a
+          database dump holds no usable link. A claim binds the transfer
+          to the first account that claims it; failed links count on the
+          caller's per-address budget of failed secrets. The operator's audited read of those fields
           is deferred.
         - Credential hand-off: IMPLEMENTED, the shared-secrets
           endpoints (`open-pryv.io/components/shared-secrets/`) hand a

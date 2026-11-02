@@ -7,7 +7,7 @@
 > operator-owned. See "Account-level auto-deletion" below, the
 > operator page `customer-resources/account-auto-deletion` and
 > `proposals/account-auto-deletion.md`. Transfer to a beneficiary
-> is designed and not implemented (last section).
+> is implemented and merged, not released yet (last section).
 
 GDPR Art.5(1)(e) "storage limitation" requires personal data to be
 **kept in a form which permits identification of data subjects for
@@ -376,15 +376,16 @@ rebuild all three from the outside. The feature keeps the neutral
 default (no preset, nothing deleted) and leaves every retention
 decision to you or to the holder.
 
-## Planned: transfer to a beneficiary (designed, not implemented)
+## Planned: transfer to a beneficiary (implemented, not released)
 
-The release after account auto-deletion is designed to add a second
+A release after account auto-deletion adds a second
 action at the deadline, chosen by the holder only (a preset always
 deletes): **transfer** the account to one beneficiary instead of
 deleting it. At the deadline a claim window opens (90 days by
 default, `transfer.claimWindowDays`); the beneficiary receives a
-single-use claim link (a random token of which only the hash is
-stored) and, by signing in to or creating an account on the
+claim link (an HMAC under the core's link key of which only a
+per-transfer salt is stored, so a database dump holds no usable link)
+and, by signing in to or creating an account on the
 platform, becomes the **controller** of the holder's account through
 the existing delegation handshake. Unclaimed, the holder's
 `fallback` applies: delete, or keep the account. In `inactivity`
