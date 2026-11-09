@@ -57,8 +57,10 @@ For username-side pseudonymisation specifically, the shipped
 `randomAlias` primitive (`accesses.create {randomAlias:true}`, see
 `proposals/aliases-as-pseudonymization-primitive.md`) issues the
 alias at the access layer. It hides the username from the holder of
-the access; it does not stop a holder who guesses the username from
-confirming it.
+the access; since open-pryv.io 2.0.0-rc.69 the token is accepted under
+its alias only, so a holder who guesses the username cannot confirm it
+with the token (earlier releases accepted it under every name of the
+account).
 
 ## What transformation use cases need (and what would help)
 

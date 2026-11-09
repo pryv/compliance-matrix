@@ -76,8 +76,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation, CMC]
-    config_keys: [cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl]
-    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CMCGA, CMCMA, GA12, GA14, GA15, GA20, GA24, MB10, CNRP1, CNRP6, CNRP7, DSC05, ASA3, ASA6, SMV1, SMV4, SMV10]
+    config_keys: [cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl, oauth.audienceBoundSessions]
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CMCGA, CMCMA, GA12, GA14, GA15, GA20, GA24, MB10, CNRP1, CNRP6, CNRP7, DSC05, ASA3, ASA6, SMV1, SMV4, SMV10, OE31, OSUB3, OACR1, AL13, OPUE2, OTX05, OTXE02]
     overview: |
       Logical access control is enforced at the API surface by the
       access + permissions primitives; every read/write request is
@@ -95,6 +95,21 @@ requirements:
       minted app access carries only the user's granted subset of the
       referenced consent offer's permissions. PKCE (S256) is mandatory
       for every client.
+
+      **OAuth2 access rules added in open-pryv.io 2.0.0-rc.64 to
+      2.0.0-rc.77.** A consent for an operator-registered client never
+      grants account or system streams, `*` or `manage`, and by default
+      forbids creating accesses or webhooks and sharing secrets; the
+      grant's reach follows withdrawal and narrowing at once, the
+      accesses the app's sessions created included `[OE31]`, `[OSUB3]`,
+      `[OACR1]`. An aliased session is accepted under its alias only
+      `[AL13]`. An authorization for an account address is bound to the
+      signed-in account `[OPUE2]`. Token exchange gives a resource server
+      a token no wider than the one it replaces, only for a token issued
+      for one of its audiences `[OTX05]`; with
+      `oauth.audienceBoundSessions: true` the replaced token is refused
+      at the API (default `false`) `[OTXE02]`. Detail on
+      `hipaa-security.164.312(a)(1)`.
 
       **Delegate-account token class.** Account delegation
       (`open-pryv.io/components/delegation/`) adds an owner-equivalent
@@ -513,7 +528,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [logs.file, logs.fileSync]
-    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1]
+    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1, OXN02, OXI06, OTX03, OCMDE13, OPIU3, AUAB3]
     planned:
       - kind: feature
         summary: "Chained / signed audit log adds the software-side tamper-resistance signal A.8.15 expects"
@@ -534,6 +549,19 @@ requirements:
       "analysed" element (review cadence, alerting thresholds) is the
       operator's procedure.
     detail: |
+      **OAuth2 events added in open-pryv.io 2.0.0-rc.66 to 2.0.0-rc.77**:
+      `oauth.nonce.reused`, `oauth.token.exchanged` (subject's trail),
+      `oauth.consent.refused` reasons including
+      `audience-account-mismatch` and `issuer-account-mismatch`;
+      `oauth.token.introspected`, `oauth.token.exchange_refused`,
+      `oauth.client.metadata_fetched` / `metadata_refused` (syslog, no
+      user resolved; never a token or a document body) `[OXN02]`,
+      `[OXI06]`, `[OTX03]`, `[OCMDE13]`, `[OPIU3]`. Adapter-route
+      requests are not audited by the core. Since rc.77 a streamed
+      answer the client stopped reading is logged as an error
+      (`client-closed-request`), not a success `[AUAB3]`. Full list on
+      `hipaa-security.164.312(b)`.
+
       "Stored, protected" caveat, the audit log is append-only by
       convention in the write path, but there is **no software-side
       tamper-resistance signal** (no hash chain, no per-row
@@ -981,7 +1009,7 @@ requirements:
     facilitation_mode: primitive
     draft: true
     pryv_primitives: [randomAlias, stream, system-streams, event, external-id-index]
-    tests: [XIDC1, XIDC7, XIDG1, XIDN4]
+    tests: [XIDC1, XIDC7, XIDG1, XIDN4, AL13, OPSE5]
     overview: |
       Pryv enforces masking by **projection**, not transformation:
       stream-level isolation + permission-scoped access tokens hide
@@ -1004,8 +1032,11 @@ requirements:
           (`proposals/aliases-as-pseudonymization-primitive.md`); it
           survives a backup and restore and routes on every topology
           since open-pryv.io `4547b32a`. It masks the username from the
-          holder, it does not stop a holder who guesses the username
-          from confirming it.
+          holder, and since open-pryv.io 2.0.0-rc.69 the token is
+          accepted under its alias only, so a holder who guesses the
+          username cannot confirm it with the token (`[AL13]`,
+          `[OPSE5]`; earlier releases accepted it under every name of
+          the account).
         - Third-party record ids are masked before they reach Pryv
           (open-pryv.io 2.0.0-rc.58, `external-id-index` primitive): your
           service sends `HMAC(K_namespace, recordId)` with a key it keeps,
@@ -1184,8 +1215,9 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, system-streams, audit, delegation, CMC]
+    config_keys: [oauth.clientMetadataDocuments.mode, oauth.signingKeys, oauth.perUserIssuer]
     derives_from: [iso-27001.A.5.15, hipaa-security.164.308(a)(4)(ii)(C)]
-    tests: [AA01, AA02, ACCP, UZEV, DCH02, DCH12, CMCGA, GA01, GA10, GA20, GA21, GA23]
+    tests: [AA01, AA02, ACCP, UZEV, DCH02, DCH12, CMCGA, GA01, GA10, GA20, GA21, GA23, OCMDE06, OPSE1, OXD08, OPAL1, OPAL2, OPUE9, OCMP11, OPIS5]
     overview: |
       Pryv's account + access primitives implement the full identity
       lifecycle: create (registration), enable (login + access mint),
@@ -1224,7 +1256,26 @@ requirements:
       credential lifecycle), authenticating with mandatory PKCE (S256
       only) against an exact-match registered redirect-URI set. Open
       self-registration is disabled, so every client identity is
-      operator-authorised before it exists.
+      operator-authorised before it exists. Since open-pryv.io
+      2.0.0-rc.74 that holds while `oauth.clientMetadataDocuments.mode`
+      is `off` (the default); otherwise a client may identify itself by
+      an https URL on a host your policy accepts, with its reach set by
+      your template only (see `soc2.CC6.2`) `[OCMDE06]`.
+
+      **Identities an app sees (open-pryv.io 2.0.0-rc.68 to
+      2.0.0-rc.77).** An operator-registered client declares a subject
+      type, `public` or `pairwise`, with no default. A pairwise client
+      sees each user as a pseudonymous alias, one per user and client,
+      never the username, in token responses, the OpenID Connect id
+      token (`sub`, signed with a key of `oauth.signingKeys`) and
+      introspection `[OPSE1]`, `[OXD08]`; a public one sees the user's
+      internal id, also never the username. The account holder can mint
+      up to 10 address aliases (rc.76, personal token only, names chosen
+      by the server) that a consent can adopt as the app's address
+      `[OPAL1]`, `[OPAL2]`, `[OPUE9]`. Changing a grant's subject type
+      must be acknowledged by the user `[OCMP11]`. With
+      `oauth.perUserIssuer` (rc.77, opt-in) each account host is its own
+      OAuth2 issuer `[OPIS5]`.
 
       **Delegate-account identity lifecycle.** Account delegation
       (`open-pryv.io/components/delegation/`) manages the lifecycle of a
@@ -1256,6 +1307,8 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [system-streams, MFA, encryption-at-rest-secrets, shared-secrets]
+    config_keys: [oauth.refreshRetireGraceSeconds, oauth.signingKeys, oauth.stateKey, sso.stateKey]
+    tests: [ORET1, ORL04, ORL12, OCAK14, OCAK2, OCAK7, OCAK23, OXK01, OXSK1, CKOC2]
     planned:
       - kind: enhancement
         summary: "Reference MFA plugins broaden the authentication-information catalogue"
@@ -1286,6 +1339,23 @@ requirements:
       (`bin/oauth-client.js rotate-secret`). The operator's broader
       secret-distribution + rotation programme stays the organizational
       half; Pryv supplies the short-TTL + rotation mechanics.
+
+      **Since open-pryv.io 2.0.0-rc.69 to 2.0.0-rc.74.** A refreshed
+      token's predecessor expires after `oauth.refreshRetireGraceSeconds`
+      (default 60 s) `[ORET1]`; a refresh refused for bad client
+      authentication no longer uses up the refresh token `[ORL04]`; audit
+      rows name refresh tokens by a hash, never by their first
+      characters `[ORL12]`. Per-client lifetimes may only shorten the
+      platform's (rc.70); a rotated secret can stay valid for at most 30
+      days `[OCAK14]`. `private_key_jwt` assertions are checked only
+      with a key of their type and a pinned algorithm, a multi-key set
+      needs a `kid` on each key, and a `jwks_uri` is fetched through the
+      outbound guard `[OCAK2]`, `[OCAK7]`, `[OCAK23]`. The OpenID Connect
+      signing keys (`oauth.signingKeys`) and the per-core keys that sign
+      the consent flow's and third-party sign-in's browser state
+      (`oauth.stateKey`, `sso.stateKey`, required since rc.70, no longer
+      derived from the admin key) live in the YAML configuration, never
+      in the platform DB `[OXK01]`, `[OXSK1]`, `[CKOC2]`.
 
       **Transmitting authentication information to a third party.**
       "Appropriate handling" includes how a credential travels when you
@@ -1691,9 +1761,10 @@ requirements:
     facilitation_mode: awareness
     draft: true
     pryv_primitives: [audit]
+    docs: [customer-resources/adapter-routes.md]
     derives_from: [iso-27001.A.8.25]
-    config_keys: [cmc.allowedPrivateHosts]
-    tests: [ACTY, MC04D, HTC1, HSPE1, QPR2, PFR1, PFR2, PFR4, PFR5, PFR6, PFR10, CO21, CO22, RQ33]
+    config_keys: [cmc.allowedPrivateHosts, oauth.clientMetadataDocuments.maxDocumentBytes, adapterRoutes]
+    tests: [ACTY, MC04D, HTC1, HSPE1, QPR2, PFR1, PFR2, PFR4, PFR5, PFR6, PFR10, CO21, CO22, RQ33, OCMD01, OCMD03B, OCMD03D, OCMD03G, OCMD03H, OCMDE17, ADRI03, ADRI06, ADRI09, ADRI13, ADRC03, ADRC08, ADRU3, ADRU4]
     overview: |
       For the operator running
       Pryv as one of its applications, this compliance matrix IS the
@@ -1746,7 +1817,42 @@ requirements:
       stop reading an answer past 1 MiB `[PFR1]`, `[PFR2]`, `[PFR4]`,
       `[PFR5]`, `[PFR6]`, `[CO22]`; a refusal names the host, never the
       path or a token `[PFR10]`, and a refused delivery is not retried
-      `[CO21]`, `[RQ33]`.
+      `[CO21]`, `[RQ33]`. Since open-pryv.io 2.0.0-rc.70 a client's
+      `jwks_uri` key set, and since 2.0.0-rc.74 a client metadata
+      document and its key set, are fetched through the same guard, https
+      only whatever `cluster.allowInsecurePeerUrl` says, with the checked
+      address pinned to the connection, bounded size (64 KiB for a key
+      set, `oauth.clientMetadataDocuments.maxDocumentBytes`, default
+      16 KiB, for a document), a 5 s timeout and a budget of 10 document
+      fetches a minute per host; a document URL naming a host of your
+      platform is refused before any fetch `[OCMD01]`, `[OCMD03B]`,
+      `[OCMD03D]`, `[OCMD03G]`, `[OCMD03H]`, `[OCMDE17]`. Hosts listed in
+      `cmc.allowedPrivateHosts` are allowed for these fetches too, so
+      list there only peers you would let any client name.
+
+      **Adapter routes (open-pryv.io 2.0.0-rc.73, off unless
+      `adapterRoutes` is set).** The core forwards `/adapter/<name>/…`
+      (and optional `/.well-known/<label>/adapter/<name>/…` prefixes) to a
+      sidecar you run, before any API middleware: it authenticates
+      nothing on these paths and adds no CORS, audit or rate limit, so the
+      sidecar must authenticate every request and its port must not be
+      reachable from outside the host. What the core does enforce: the
+      upstream cannot be the platform or the core's own listener, an
+      encoded separator, dot segment or `%00` in the path is refused
+      before forwarding, bodies are capped (`maxBodyBytes`, default
+      1 MiB), idle requests time out (`idleTimeoutMs`, default 60 s),
+      `X-Forwarded-For` is set by the core and `X-Forwarded-Host` /
+      `-Proto` are taken only from a trusted proxy, and an https upstream
+      is verified against its own name `[ADRI03]`, `[ADRI06]`,
+      `[ADRI09]`, `[ADRI13]`, `[ADRC03]`, `[ADRC08]`. Since rc.75, on an
+      account host (`<name>.<dns.domain>`) the core tells the sidecar
+      which account the request addresses in `X-Adapter-Name` /
+      `X-Adapter-Base`, always removing client-sent copies (from a
+      trusted proxy too), and answers `421 wrong-core` without contacting
+      the sidecar when another core serves the account `[ADRU3]`,
+      `[ADRU4]`. These two headers are an address, not an identity:
+      upgrade each core before its sidecar relies on them, and do not let
+      an ingress route adapter paths around the core.
 
   - ref: A.8.27
     title: A.8.27 Secure system architecture and engineering principles

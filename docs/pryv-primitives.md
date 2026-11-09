@@ -52,11 +52,38 @@ A routable, platform-unique de-identifying name substituted for the username.
   (sign-in with it too; an `r-` access alias is never a sign-in name). The
   number of changes is capped by `auth.usernameChangeLimit` (default 2, `0`
   disables).
-- **Limit**: the alias hides the username from the holder of the access; it
-  does not stop a holder who already suspects which account it is from
-  confirming the guess, since the token also works under the account's other
-  names. Describe it as pseudonymisation towards the holder, not as
-  unlinkability against guessing.
+- **Bound to its alias** (alias-bound addressing, open-pryv.io 2.0.0-rc.69):
+  an aliased access is accepted only under its own alias (HTTP host or path,
+  socket.io namespace, series URLs, attachment `readToken`); under the
+  username, a former username or another alias it answers like an unknown
+  token. A non-aliased access is accepted only under the username and former
+  usernames; the owner's personal token under any name. Sign-in and password
+  reset at an alias get one fixed answer before any password check, with no
+  failed sign-in counted. An access an aliased access creates inherits its
+  alias. So a holder who suspects which account it is cannot confirm the
+  guess with the token, and holders of two aliases cannot test whether they
+  are the same person (`[AL13]`, `[AL03]`, `[AL14]`, `[OPSE5]`, `[OPSE16]`,
+  `[OPSE17]`). Earlier releases accepted the token under every name of the
+  account; accesses an aliased app created before rc.69 kept an endpoint
+  naming the username.
+- **OAuth2 pairwise subjects** (open-pryv.io 2.0.0-rc.69): an OAuth2 client
+  registered with `subjectType: pairwise`, or a consent offer with
+  `randomAlias: true`, gets one alias per user and client, stable across
+  refreshes and re-consents and released when the grant is deleted; the app
+  sees only the alias (`sub` of token responses, id token and introspection,
+  `api_base`) `[OPSE1]`, `[OPSE7]`, `[OXD08]`.
+- **Address aliases** (open-pryv.io 2.0.0-rc.76): the account holder mints up
+  to 10 extra names of the account with `account.addressAliases.create`
+  (personal token only; server-chosen `a-` + 8 characters, never a chosen
+  value), lists and deletes them; `<alias>.<dns.domain>` routes to the
+  account like the username. An OAuth2 consent at such an address adopts the
+  alias (one grant per alias); deleting it withdraws that grant. New
+  usernames of either alias shape are refused. Counted in
+  `accesses.maxAliasesPerAccount` `[OPAL1]`, `[OPAL2]`, `[OPAL3]`, `[OPAL4]`,
+  `[OPUE9]`, `[OPUE18]`.
+- **Limit**: the alias hides the username from the holder; the data stays
+  linked to the account on the platform, which holds the mapping. Describe it
+  as pseudonymisation towards the holder, not as de-identification.
 - **Compliance role**: Pryv-native pseudonymisation primitive (GDPR Art.4(5) /
   Art.32(1)(a)) and the HIPAA §164.514(c) re-identification code. Released when
   the access is deleted. See

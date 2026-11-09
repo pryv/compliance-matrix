@@ -429,10 +429,11 @@ requirements:
       sensitive PI is editorial. An alias-only deployment pattern is now
       available: issue accesses with `randomAlias:true` so counterparties
       hold a routable `r-XXXXXXXX` alias instead of a linkable username,
-      keeping linkable identifiers off the sensitive-PI access path (a
-      counterparty that already suspects the username can still confirm
-      it with the token, so the alias is not protection against
-      guessing).
+      keeping linkable identifiers off the sensitive-PI access path.
+      Since open-pryv.io 2.0.0-rc.69 the token is accepted under its
+      alias only, so a counterparty that suspects the username cannot
+      confirm it with the token; earlier releases accepted the token
+      under every name of the account.
 
   - ref: "1798.155"
     title: Enforcement

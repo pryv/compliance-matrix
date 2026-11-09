@@ -522,8 +522,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation, CMC]
-    config_keys: [cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl, cmc.memberAccess.ratePerMinute, cmc.memberAccess.maxInFlightPerMembership, cmc.memberAccess.allowNameOnly, cmc.retryLoop.enabled]
-    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10, MAAC, CMCGA, CMCMA, GA01, GA10, GA11, GA12, GA14, GA15, GA24, GA31, MB10, MB12, MB13, CNRP1, CNRP6, CNRP7, DSC05, ASA1, ASA2, ASA3, ASA6, CNM2B, RQ32, SMV1, SMV4]
+    config_keys: [cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl, cmc.memberAccess.ratePerMinute, cmc.memberAccess.maxInFlightPerMembership, cmc.memberAccess.allowNameOnly, cmc.retryLoop.enabled, oauth.clientRevokeCheckSeconds, oauth.audienceBoundSessions, adapterRoutes]
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10, MAAC, CMCGA, CMCMA, GA01, GA10, GA11, GA12, GA14, GA15, GA24, GA31, MB10, MB12, MB13, CNRP1, CNRP6, CNRP7, DSC05, ASA1, ASA2, ASA3, ASA6, CNM2B, RQ32, SMV1, SMV4, OE31, OSUB1, OSUB3, ACSW1, ACSW2, OACR1, OACR2, AL13, OPSE5, OPUE2, OPAL2, ORF1, OTX05, OTXE04, OTXE02]
     overview: |
       Per-stream permissions are enforced at every API call; an access
       can read or write only the streams its `permissions[]` lists, at
@@ -558,6 +558,42 @@ requirements:
       `open-pryv.io/components/oauth2/src/clientRegistry.ts`), so an
       issued authorization code cannot be diverted to an unregistered
       callback.
+
+      **What an OAuth2 grant can reach (open-pryv.io 2.0.0-rc.64 to
+      2.0.0-rc.77).** Withdrawing a consent deletes the app's live
+      sessions and the accesses they created at once (rc.64; earlier, a
+      live token ran out its lifetime) `[OE31]`; narrowing it re-cuts
+      every live session (rc.68) and the accesses a session created
+      (rc.70) `[OSUB1]`, `[OSUB3]`. No app, shared or consent-derived
+      access can write account fields (rc.65) `[ACSW1]`, `[ACSW2]`. A
+      consent for an operator-registered client can never grant
+      account or system streams, `*` or `manage`, and by default its
+      sessions cannot create accesses or webhooks or share secrets
+      (`accessCreation`, `webhooks`, `secretSharing` forbidden unless the
+      operator allows them per client) `[OACR1]`, `[OACR2]`. An aliased
+      session is accepted under its alias only (rc.69) `[AL13]`,
+      `[OPSE5]`. An authorization for an account address
+      (`https://{username}.<host>/…`, rc.75) is bound to the signed-in
+      account: another account's address is refused before anything is
+      written `[OPUE2]`; address aliases (rc.76) are created, listed and
+      deleted with the personal token only `[OPAL2]`. A suspended client,
+      or one under review after the operator changed its registration
+      (rc.71), is refused at every OAuth2 step and on the data API within
+      `oauth.clientRevokeCheckSeconds` (default 30 s) `[ORF1]`.
+      **Token exchange** (RFC 8693, rc.73): only a client registered
+      `--can-exchange` may trade a user's token for its own, only for a
+      token issued for one of its registered audiences (checked before
+      the home core is named), never for a derived token; the derived
+      session is a session of the same grant, no wider and no longer-lived
+      than the token it replaces, and ends when that token's session is
+      deleted `[OTX05]`, `[OTXE04]`. While `oauth.audienceBoundSessions`
+      is `false` (the default; a later release is planned to make it
+      `true`), the token an app sent to such a resource server also works
+      directly at the API; set it to `true` to refuse it there
+      `[OTXE02]`. **Adapter routes** (rc.73, off unless
+      `adapterRoutes` is set) forward `/adapter/<name>/…` to a sidecar
+      you run, with no authentication by the core: the sidecar must
+      authenticate every request (see `iso-27001.A.8.26`).
 
       **Delegate-account token class.** Account delegation
       (`open-pryv.io/components/delegation/`) adds a delegate token:
@@ -843,7 +879,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [accesses.deletionRecords.retentionDays]
-    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1]
+    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3]
     planned:
       - kind: feature
         summary: "Chained / signed audit log strengthens tamper-resistance evidence"
@@ -896,6 +932,34 @@ requirements:
       and `sso.refused` (pre-identification: no-account / unproved email /
       mint failure, syslog), so an attempted account takeover through an
       external identity is itself auditable.
+
+      **OAuth2 audit additions (open-pryv.io 2.0.0-rc.66 to
+      2.0.0-rc.77).** In the subject's trail: `oauth.nonce.reused` (an
+      OpenID Connect nonce presented twice, never the nonce itself)
+      `[OXN02]`; `oauth.token.exchanged` (a resource server traded the
+      user's token for its own, naming both clients); `oauth.consent.
+      refused` with its reason (`permission-level-conflict`,
+      `wrong-core`, `audience-account-mismatch`, `audience-not-listed`,
+      and with `oauth.perUserIssuer` on, `issuer-account-mismatch`), no
+      username in the payload `[OPUE2]`, `[OPIU3]`. In syslog (no user
+      resolved): `oauth.token.introspected` (which resource server asked
+      about which client's token, never the token) `[OXI06]`,
+      `oauth.token.exchange_refused` with its reason (an unauthenticated
+      caller is not audited) `[OTX03]`, and `oauth.client.
+      metadata_fetched` / `metadata_refused` for client metadata
+      documents, sampled per host and reason, never the document body
+      `[OCMDE13]`. Refresh tokens are named by a hash since rc.69
+      `[ORL12]`. Since rc.68 the session minted at consent is written by
+      the system, so the consent shows as `oauth.consent.granted` plus
+      the grant's own create or update row, no longer as an
+      `accesses.create` row. Not audited: requests on adapter routes
+      (the sidecar audits them) and the `421` answers for an account
+      served by another core (warning log only). The three address-alias
+      methods (rc.76) are audited like any API call `[OPAL2]`.
+      **Correction, rc.77:** a streamed answer (for example `events.get`)
+      that the client stopped reading was recorded as a success; it is
+      now recorded as an error with id `client-closed-request`. The call
+      was always in the trail; only its outcome was wrong `[AUAB3]`.
 
       Account delegation extends the per-record attribution: a record
       produced by a delegate token, or by an app access a delegate
@@ -1063,8 +1127,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams, delegation]
-    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.requireAppAccountMfa, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds]
-    tests: [MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1]
+    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds, oauth.signingKeys, oauth.idTokenTTL, oauth.stateKey, oauth.perUserIssuer]
+    tests: [MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3]
     planned:
       - kind: enhancement
         summary: "Reference MFA plugins (TOTP / WebAuthn) + primitive-catalogue doc surface the pluggability"
@@ -1151,10 +1215,45 @@ requirements:
       are short-lived (`oauth.accessTokenTTL`, default 1 h) and refresh
       tokens rotate single-use with a sliding TTL bounded by an
       absolute cap (`oauth.refreshTokenTTL` /
-      `oauth.refreshTokenAbsoluteTTL`). When `oauth.requireAppAccountMfa`
-      is set (default true), an app account must enrol MFA before it can
-      drive the OAuth2 write surface, so the second-factor requirement
-      extends to the delegated-app path.
+      `oauth.refreshTokenAbsoluteTTL`). Correction (2026-11-09): earlier
+      versions of this row said that `oauth.requireAppAccountMfa`
+      (default true) made an app account enrol MFA before driving the
+      OAuth2 write surface. That setting was never enforced and was
+      removed in open-pryv.io 2.0.0-rc.71 (a core where it is still set
+      logs a warning at boot). The second factor protects the account
+      holder's own sign-in, which is what grants consent; the app itself
+      authenticates as a client, as below.
+
+      **Client authentication and identity tokens (open-pryv.io
+      2.0.0-rc.68 to 2.0.0-rc.77).** Operator-registered clients
+      (`bin/oauth-client.js create-registry`, curated, `--subject-type`
+      mandatory) authenticate at `/oauth2/token` and `/oauth2/revoke`
+      with `none` (public, PKCE), a client secret or `private_key_jwt`;
+      `/oauth2/introspect` takes confidential clients registered
+      `--can-introspect` only. Assertions are verified only with a key of their
+      own type and pinned algorithms (`ES256`, `ES384`, `RS256` since
+      rc.74, `RS384`), a key set of several keys needs a `kid` on every
+      key and on the assertion, and a `jwks_uri` is fetched as a guarded
+      outbound call (https only, private addresses refused, size and time
+      bounded) `[OCAK2]`, `[OCAK7]`, `[OCAK23]`, `[OTPA1]`, `[OTPA3]`; a
+      secret rotation may keep the previous secret valid for at most 30
+      days `[OCAK14]`. Every refusal is one uniform `invalid_client`.
+      OpenID Connect is on when `oauth.signingKeys` lists a key (RS256,
+      per core, YAML only): the id token's `sub` is the user's internal
+      id or a pairwise alias, never the username, its `nonce` is
+      accepted once per client platform-wide, and since rc.70 its
+      `auth_time` is the user's last completed sign-in (password,
+      password and second factor, or identity provider); `max_age` and
+      `prompt` are not honoured `[OXD01]`, `[OXD04]`, `[OXN01]`,
+      `[OREG17]`. The browser state of the consent flow is signed with a
+      per-core `oauth.stateKey` (required since rc.70 when a consent page
+      is configured; the admin-key fallback is gone), so the admin key no
+      longer lets anyone forge consent state `[OXSK1]`, `[OREG16]`.
+      With `oauth.perUserIssuer` (rc.77, opt-in, default off) each
+      account host is its own issuer: codes, refresh tokens, id tokens
+      and client assertions are bound to that host, and only the account
+      the host names can consent there (`issuer-account-mismatch` in the
+      audit trail) `[OPIS4]`, `[OPIS5]`, `[OPIS6]`, `[OPIU3]`.
 
       **Sender-constrained tokens (DPoP).** A delegated app may opt into
       RFC 9449 DPoP: it proves possession of a client-held key on each
@@ -1214,8 +1313,8 @@ requirements:
     pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, shared-secrets]
-    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cluster.allowInsecurePeerUrl, cmc.allowedPrivateHosts]
-    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22]
+    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cluster.allowInsecurePeerUrl, cmc.allowedPrivateHosts, adapterRoutes]
+    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22, OCMD03B, OCMD03G, ADRC03, ADRI13]
     overview: |
       You choose where TLS terminates, and you must choose. The core
       serves HTTPS when you configure it to: a certificate at
@@ -1262,7 +1361,15 @@ requirements:
       test clusters) `[PFR4]`, and refused toward a loopback, private,
       link-local or otherwise reserved address unless it is listed in
       `cmc.allowedPrivateHosts` `[PFR1]`, `[CO22]`. Earlier releases
-      applied neither check to these calls.
+      applied neither check to these calls. The OAuth2 key sets
+      (`jwks_uri`, open-pryv.io 2.0.0-rc.70) and client metadata
+      documents (2.0.0-rc.74) are fetched over https only, whatever
+      `cluster.allowInsecurePeerUrl` says `[OCMD03B]`, `[OCMD03G]`.
+      Requests forwarded on adapter routes (2.0.0-rc.73) go to the
+      `upstream` you configure; Pryv warns at boot when it is `http:` to
+      a non-local address, since that traffic, credentials included,
+      travels in clear: use `https:` or keep the sidecar on the host
+      `[ADRC03]`, `[ADRI13]`.
 
       **Credential hand-off between parties.** TLS protects the pipe;
       the shared-secrets primitive

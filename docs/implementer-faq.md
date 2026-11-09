@@ -2068,9 +2068,10 @@ catalogues, operator's enrichment path:
 
 - **Pseudonymisation**: partial; the access alias
   (`accesses.create {randomAlias:true}`) has shipped: it hides the
-  username from the holder of an access, but does not stop a holder
-  who guesses the username from confirming it (see the `randomAlias`
-  primitive in `docs/pryv-primitives.md`).
+  username from the holder of an access, and since open-pryv.io
+  2.0.0-rc.69 the token is accepted under its alias only, so a holder
+  who guesses the username cannot confirm it with the token (see the
+  `randomAlias` primitive in `docs/pryv-primitives.md`).
 - **Proxy re-encryption**: `E2E-ENCRYPTION` backlog +
   github.com/perki/test-proxy-re-encrypt PoC. Client-side
   keying during consent request; backend re-crypts data for

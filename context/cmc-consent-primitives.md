@@ -206,10 +206,35 @@ access, versioned and revocable (revoking it collapses the app's refresh
 chain), so demonstrability and withdrawability rest on the access + its
 history exactly as for the flows above.
 
-Note on evidence surface: audit-event emission for the OAuth2 grant paths is
-defined (`components/oauth2/src/audit.ts` names the event catalogue) but **not
-yet wired**, the helper is a no-op stub. The citable consent evidence today is
-therefore the data-grant access + the signed offer material, not an event log.
+**Operator-registered (registry) clients, since open-pryv.io 2.0.0-rc.68.**
+A client the operator registers with `bin/oauth-client.js create-registry`
+reads its scope through an installed OAuth extension's grammar, not through a
+`cmc:` offer. Its durable consent record is an app access named
+`oauth-grant:<clientId>` on the user's own account (no counterparty account):
+versioned and revocable like any access, holding the granted permissions and
+the restrictions the owner sets. Whatever the grammar says, the core refuses
+account and system streams, `*`, level `manage` and two permissions on one
+stream, and forbids `webhooks`, `secretSharing` and (since rc.70)
+`accessCreation` unless the operator allows them per client. A re-consent
+shows what the app already holds and sets the grant to exactly what the user
+ticks; a change of subject (username to pseudonym or back) must be
+acknowledged. Withdrawal and narrowing reach the app at once: deleting the
+grant deletes its live sessions and the accesses they created (rc.64), a
+narrowed grant re-cuts every live session (rc.68) and the accesses sessions
+created (rc.70). The session minted at consent is written by the system
+(`createdBy: system`), so the consent is recorded by `oauth.consent.granted`
+plus the grant's own create or update row, not by an `accesses.create` row.
+A client identified by a client metadata document (rc.74, opt-in) gets its
+reach from the operator's template, never from the document. See
+`UPDATE-TRIGGERS.md` B.9 (walk of 2026-11-09).
+
+Evidence surface: OAuth2 authorization activity is in the audit trail since
+open-pryv.io `07b6d3b6` (`oauth.*` events: consent shown / granted / refused
+with a reason, code exchange, token issued / refreshed / revoked /
+reuse-detected / exchanged, introspection; user-less events go to syslog).
+*(Correction 2026-11-09: this note said the emission was a no-op stub; that
+was true before `07b6d3b6`, July 2026.)* The access and its version history
+remain the durable record; the audit trail shows who decided what, and when.
 
 ## Per-permission annotations on a consent request
 

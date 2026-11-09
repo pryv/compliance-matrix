@@ -353,7 +353,9 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, MFA, encryption-at-rest-secrets, letsEncrypt-integration, shared-secrets, delegation]
-    tests: [AA01, AA02, ACCP, MA15C, MA11A, SHS02, SHS09, SHS13, ASA1, ASA2, ASA6, CNRP6, CNRP7]
+    docs: [customer-resources/auth-oauth2.md]
+    config_keys: [oauth.signingKeys, oauth.clientMetadataDocuments.mode, oauth.perUserIssuer]
+    tests: [AA01, AA02, ACCP, MA15C, MA11A, SHS02, SHS09, SHS13, ASA1, ASA2, ASA6, CNRP6, CNRP7, ORVK1, OXI01, OXD01, ORI03, OTX05, OCMDE06, OACO1, OPUE2, OPIS4]
     derives_from: [iso-27001.A.5.15, iso-27001.A.8.5, hipaa-security.164.312(a)(1)]
     planned:
       - kind: enhancement
@@ -386,6 +388,24 @@ requirements:
       registration is curated-only, the operator promotes an account
       to an OAuth client via `bin/oauth-client.js`; open self-service
       registration (`POST /oauth2/register`) is deliberately disabled.
+
+      **The OAuth2 surface since open-pryv.io 2.0.0-rc.64.** Added and
+      tested: token revocation (`POST /oauth2/revoke`, RFC 7009) and
+      introspection for clients registered `--can-introspect`
+      (`POST /oauth2/introspect`, RFC 7662), OpenID Connect discovery,
+      key set and id tokens when `oauth.signingKeys` lists a key (rc.69)
+      `[ORVK1]`, `[OXI01]`, `[OXD01]`; resource indicators (RFC 8707),
+      refused as `invalid_target` (rc.70) `[ORI03]`; token exchange for
+      resource servers registered `--can-exchange` (RFC 8693, rc.73)
+      `[OTX05]`; clients identified by a client metadata document URL
+      when `oauth.clientMetadataDocuments.mode` is not `off` (rc.74, see
+      CC6.2) `[OCMDE06]`. Since rc.74 the OAuth2 and discovery endpoints
+      answer CORS with their own policy (any origin, never credentials)
+      instead of the API's `[OACO1]`. Per-user addresses (rc.75) bind an
+      authorization to the account its address names `[OPUE2]`; with
+      `oauth.perUserIssuer` (rc.77, opt-in) each account host is its own
+      issuer `[OPIS4]`. The access-control effect of these is recorded on
+      CC6.3 and `hipaa-security.164.312(a)(1)`.
 
       **Federated sign-in (SSO).** An account holder may also authenticate
       through an external OpenID Connect provider (`sso.*`, beta, off by
@@ -452,7 +472,9 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, system-streams, audit, delegation, CMC]
-    tests: [AA01, AA02, ACCP, UZEV, DCH01, DCH12, CMCGA, GA01, GA10, GA11, GA12, GA20, GA22, GA23, MA50]
+    docs: [customer-resources/auth-oauth2.md]
+    config_keys: [oauth.logoHosts, oauth.clientMetadataDocuments.mode, oauth.clientMetadataDocuments.allowedHosts, oauth.clientMetadataDocuments.deniedHosts, oauth.clientMetadataDocuments.client]
+    tests: [AA01, AA02, ACCP, UZEV, DCH01, DCH12, CMCGA, GA01, GA10, GA11, GA12, GA20, GA22, GA23, MA50, OCLI19, ORF1, OCAK14, ORF4, OCMD01, OCMD05, OCMDE03, OCMDE06, OCMDE13]
     derives_from: [iso-27001.A.5.16, iso-27001.A.5.18, hipaa-security.164.308(a)(3)(ii)(C)]
     overview: |
       The full credential lifecycle is Pryv primitives: registration
@@ -477,6 +499,40 @@ requirements:
       appropriate) stays your policy; the issuance + rotation mechanism
       is shipped (`open-pryv.io/components/oauth2/`, open-pryv.io
       2.0.0-rc.8).
+
+      **Operator-registered clients and their vetting (open-pryv.io
+      2.0.0-rc.68 and 2.0.0-rc.71).** `bin/oauth-client.js
+      create-registry` registers a client for an installed OAuth
+      extension, with a mandatory subject type (`public` or `pairwise`,
+      no default), audiences, lifetimes, an optional region and a
+      secret, `private_key_jwt` keys or none (public, PKCE). Since rc.71
+      a change to what an active client may do (redirect URIs, scope,
+      keys, auth method, audiences, allowed features, lifetimes) moves
+      it to `review` until the operator approves it, and a client under
+      review or suspended is refused everywhere, the data API included
+      `[OCLI19]`, `[ORF1]`. A rotated secret can keep the previous one
+      valid for at most 30 days `[OCAK14]`; logos are shown only from
+      hosts listed in `oauth.logoHosts` `[ORF4]`.
+
+      **Correction and opt-in: client metadata documents (open-pryv.io
+      2.0.0-rc.74).** "Curated only" holds while
+      `oauth.clientMetadataDocuments.mode` is `off`, the default. With
+      `allowList` (hosts you list) or `any`, a client may identify itself
+      by an https URL whose JSON document Pryv fetches: identity and
+      display come from the document, reach comes only from your
+      `client` template (scope, audiences, subject type, lifetimes),
+      never from the document. Such a client can never hold a secret,
+      introspection, token exchange, allowed features or "any audience",
+      and authenticates with `none` or `private_key_jwt` only
+      `[OCMD01]`, `[OCMD05]`, `[OCMDE03]`, `[OCMDE06]`. The fetch is a
+      guarded outbound call (see `CC6.6`), every fetch and refusal is in
+      the audit trail without the document body (`oauth.client.
+      metadata_fetched` / `metadata_refused`) `[OCMDE13]`, and the
+      consent screen must show the client's host next to its name.
+      `mode: any` lets any party present a client to your users' consent
+      screen: prefer `allowList`, keep `deniedHosts` current. Open
+      registration (`POST /oauth2/register`) stays disabled in every
+      mode.
 
       **Delegate-credential issuance + de-provisioning.** Account
       delegation (`open-pryv.io/components/delegation/`) issues a
@@ -530,7 +586,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, audit, delegation, CMC]
-    tests: [AA01, AA02, ACCP, DCH06, DCH08, DCH09, DCH12, CMCMA, GA02, GA12, GA14, GA15, GA20, MB21, MB34, SMV1, SMV2, SMV3, SMV4, SMV10]
+    config_keys: [oauth.refreshRetireGraceSeconds, oauth.clientRevokeCheckSeconds]
+    tests: [AA01, AA02, ACCP, DCH06, DCH08, DCH09, DCH12, CMCMA, GA02, GA12, GA14, GA15, GA20, MB21, MB34, SMV1, SMV2, SMV3, SMV4, SMV10, OE31, OSUB3, PMRG2, ORVK1, ORET1, ORL04, ORF1, ORGP1, OCR02, OCMD18, OPAL4]
     derives_from: [iso-27001.A.5.15, iso-27001.A.5.18, iso-27001.A.5.3]
     overview: |
       Least privilege is native: an access carries only the
@@ -600,6 +657,31 @@ requirements:
       propagation window (open-pryv.io `7b6321aa`). For DPoP-bound apps
       the same is available per client key (`revoke-key <jkt>`,
       open-pryv.io `4c0a5ade`).
+
+      **Removal and modification reach live tokens (open-pryv.io
+      2.0.0-rc.64 to 2.0.0-rc.76).** Deleting a consent grant deletes
+      the app's live sessions and the accesses they created at once
+      (rc.64; before, a live access token ran out its lifetime, up to
+      `oauth.accessTokenTTL`) `[OE31]`. Narrowing a grant re-cuts every
+      live session at once (rc.68) and narrows the accesses sessions
+      created, deleting those left with nothing (rc.70); a refresh never
+      mints more than the grant now holds (rc.66) `[OSUB3]`, `[PMRG2]`.
+      An app ends a token itself with `/oauth2/revoke` (rc.69); a
+      refreshed token's predecessor expires after
+      `oauth.refreshRetireGraceSeconds` (default 60 s) instead of living
+      out its lifetime; a refresh refused for bad client authentication
+      no longer uses up the refresh token, so a leaked refresh token
+      without the client's credential cannot end the user's consent
+      `[ORVK1]`, `[ORET1]`, `[ORL04]`. Suspending a client (or putting it
+      under review) stops its live tokens on the data API within
+      `oauth.clientRevokeCheckSeconds` and its `client_credentials`
+      grant since rc.71 (rc.68 to rc.70 stopped neither) `[ORF1]`.
+      `purge-grants <clientId>` deletes a client's grants, sessions,
+      created accesses and refresh chains on a core (rc.71) `[ORGP1]`.
+      Since rc.74 everything a revoked client was issued up to 5 s after
+      the revoke stays refused even if the id is registered again
+      `[OCR02]`, `[OCMD18]`. Deleting an address alias withdraws the
+      grant that adopted it (rc.76) `[OPAL4]`.
 
       Expiry removes derived access too: a `shared` access managed by an
       app access can no longer outlive it (it inherits the app access's
@@ -692,8 +774,9 @@ requirements:
     pryv_effort_saved: medium
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, access]
-    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cmc.allowedPrivateHosts]
-    tests: [ACMEINT, ACMEORCH, BUNDLEENC, PFR1, PFR2, PFR3, PFR5, CO22]
+    docs: [customer-resources/adapter-routes.md]
+    config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cmc.allowedPrivateHosts, adapterRoutes]
+    tests: [ACMEINT, ACMEORCH, BUNDLEENC, PFR1, PFR2, PFR3, PFR5, CO22, OCMD03B, OCMD03G, OCMD03H, ADRI03, ADRI06, ADRI09, ADRU3, ADRU4]
     derives_from: [iso-27001.A.8.20, hipaa-security.164.312(e)(1)]
     overview: |
       Every API request is token-gated, whatever the deployment. The
@@ -718,7 +801,23 @@ requirements:
       (checked again at connect time), and redirects are not followed
       `[PFR1]`, `[PFR2]`, `[PFR5]`, `[CO22]`. The platform's own host
       names are allowed; other private peers must be listed in
-      `cmc.allowedPrivateHosts` `[PFR3]`.
+      `cmc.allowedPrivateHosts` `[PFR3]`. The same guard covers the key
+      sets (`jwks_uri`, rc.70) and client metadata documents (rc.74)
+      Pryv fetches for OAuth2 clients, https only, size, time and
+      per-host bounded `[OCMD03B]`, `[OCMD03G]`, `[OCMD03H]`; a host you
+      list in `cmc.allowedPrivateHosts` is allowed for them too.
+
+      Inbound, adapter routes (open-pryv.io 2.0.0-rc.73, off unless
+      `adapterRoutes` is set) open `/adapter/<name>/…` on every host the
+      core serves and forward it to a sidecar you run, without
+      authentication, CORS, audit or rate limiting by the core: the
+      sidecar is part of your boundary and must authenticate every
+      request, and its port must stay closed to the outside. The core
+      refuses traversal paths, caps bodies and idle time, sets the
+      forwarding headers itself, and since rc.75 names the addressed
+      account in `X-Adapter-Name` / `X-Adapter-Base` (client copies
+      removed) or answers `421` for an account of another core
+      `[ADRI03]`, `[ADRI06]`, `[ADRI09]`, `[ADRU3]`, `[ADRU4]`.
 
   - ref: CC6.7
     title: CC6.7 Restriction and encryption of information in transmission and movement
@@ -1117,8 +1216,10 @@ requirements:
       by projection (stream + permissions), not value transformation,
       see context/data-masking-projection-vs-transformation.md. For
       the account name, accesses created with `randomAlias:true` carry
-      an alias in place of the username (hidden from the holder, not
-      from a holder who guesses it).
+      an alias in place of the username, hidden from the holder; since
+      open-pryv.io 2.0.0-rc.69 the token is accepted under its alias
+      only, so a holder who guesses the username cannot confirm it with
+      the token.
 
   - ref: C1.2
     title: C1.2, Disposal of confidential information
@@ -1555,7 +1656,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream, access]
-    tests: [AT01, AT51, AT61, OE07]
+    tests: [AT01, AT51, AT61, OE07, OTX03, OTXE10, OXI06]
     derives_from: [hipaa-privacy.164.528, gdpr.Art.30]
     overview: |
       Every disclosure is a read against a shared / CMC access, and the
@@ -1565,7 +1666,13 @@ requirements:
       the *authorization* of a disclosure is recorded too: OAuth2
       `oauth.*` audit events capture the consent grant, the code
       exchange and every token issuance / refresh / revocation that
-      underlie a delegated-app disclosure. The audit-event-stream can
+      underlie a delegated-app disclosure. Since open-pryv.io
+      2.0.0-rc.73 a resource server that exchanges a user's token for
+      its own is recorded in the subject's trail as
+      `oauth.token.exchanged`, naming the resource server and the app
+      whose token it received `[OTX03]`, `[OTXE10]`; an introspection
+      (which resource server asked about whose token) is in syslog
+      (`oauth.token.introspected`, rc.69) `[OXI06]`. The audit-event-stream can
       surface the same record into the subject's own streams. This is
       the technical disclosure register; how long you retain it is your
       policy.

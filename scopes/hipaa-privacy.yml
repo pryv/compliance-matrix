@@ -783,7 +783,7 @@ requirements:
     draft: true
     pryv_primitives: [randomAlias, stream, system-streams, access, clientData, external-id-index]
     derives_from: [hipaa-privacy.164.514(a)]
-    tests: [XIDC1, XIDG1, XIDN4, BKAL1, ALRT1]
+    tests: [XIDC1, XIDG1, XIDN4, BKAL1, ALRT1, AL13, OPSE5]
     overview: |
       `accesses.create {randomAlias:true}` provides the re-identification
       code directly: it mints a platform-unique `r-XXXXXXXX` alias that is
@@ -793,11 +793,13 @@ requirements:
       entity re-identifies by resolving the alias, and the code is used for
       no other purpose. Since open-pryv.io `4547b32a` (2.0.0-rc.66) the alias survives a backup and restore (`[BKAL1]`)
       and routes on a single core answering DNS (`[ALRT1]`). The alias
-      keeps the username from the recipient; it does not stop a
-      recipient who already suspects whose record it is from confirming
-      the guess (the token also works under the account's other names),
-      so it does not by itself make the data de-identified under
-      §514(b): that determination stays yours. When the workflow instead needs an explicit
+      keeps the username from the recipient, and since open-pryv.io
+      2.0.0-rc.69 the token is accepted under its alias only, so a
+      recipient who suspects whose record it is cannot confirm the guess
+      with the token (`[AL13]`, `[OPSE5]`; earlier releases accepted it
+      under every name of the account). The data stays linked to the
+      account, so the alias does not by itself make it de-identified
+      under §514(b): that determination stays yours. When the workflow instead needs an explicit
       code-to-PHI map, keep it on a dedicated `re-id-map/*` system-
       stream-adjacent subtree with access permitted only to the
       re-identification administrator role; the code generation method

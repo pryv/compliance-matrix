@@ -1848,6 +1848,22 @@ Rows of the B.1 families walked:
   recorded under `hipaa-security.164.316(b)(2)(i)`).
 - DSAR, rectification and restriction families: unchanged.
 
+**Walked 2026-11-09 for open-pryv.io 2.0.0-rc.64 to 2.0.0-rc.77** (the OAuth2
+arc; full record under B.9). New API methods `account.addressAliases.create`
+(`POST /{username}/account/address-aliases`), `.list` (`GET`) and `.delete`
+(`DELETE .../{alias}`), rc.76: personal token only (`403 forbidden`
+otherwise), server-chosen names, at most 10, audited like any API call,
+delete withdraws the grant that adopted the alias `[OPAL1]`..`[OPAL4]`. New
+OAuth2 routes (not API methods): `POST /oauth2/revoke`,
+`POST /oauth2/introspect`, `GET /.well-known/openid-configuration`,
+`GET /oauth2/jwks` (rc.69), `POST /oauth2/authorize/offer` (rc.68), the
+token-exchange grant on `/oauth2/token` (rc.73). Rows: access control
+(`hipaa-security.164.312(a)(1)`, `soc2.CC6.1`, `soc2.CC6.3`) and audit
+(`hipaa-security.164.312(b)`, `iso-27001.A.8.15`, `soc2.P6.2`) updated as
+listed under B.9; DSAR, rectification, erasure and restriction families
+walked without change (address aliases are deleted with the account like
+any alias).
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
@@ -2320,6 +2336,15 @@ marked `content.superseded` on arrival", which holds before and after; re-walk
 `gdpr.Art.7` and that note at the release that carries `d4fa7acc` in case the
 server-owned wording is wanted.
 
+**Walked 2026-11-09 for open-pryv.io 2.0.0-rc.64 to 2.0.0-rc.77** (record
+under B.9). Token-class rules added: `POST /oauth2/authorize/accept` takes
+the account holder's personal token only (rc.68, `403 access_denied`
+otherwise); account fields are writable by the personal access only, a
+consent asking to write them is refused (rc.65, BREAKING); the address-alias
+methods take the personal token only (rc.76). Rows `gdpr.Art.7`,
+`hipaa-security.164.312(a)(1)` updated; the CMC consent triggers are
+unchanged.
+
 ### B.9: OAuth2 authorization server (`open-pryv.io/components/oauth2/`)
 
 New in `open-pryv.io 2.0.0-rc.8` (squash `8abb86a4`): a standards-based
@@ -2414,6 +2439,140 @@ must have the RFC 7636 form (rc.50, `[PKCF1]`, `[PKCV1]`) and a signed `state`
 with a non-ASCII signature is refused (rc.47, `[OE29]`); no row change (the
 rows already claim mandatory S256 PKCE). See `SECURITY-REVIEW-2026` in
 Section A.
+
+**Walked 2026-11-09 for open-pryv.io 2.0.0-rc.64 to 2.0.0-rc.77** (tags
+rc.64 `0e614118`, rc.65 `f4d99a49`, rc.66 `18c60698`, rc.68 `92a73bbe`, rc.69
+`784a9a47`, rc.70 `5b54bdf0`, rc.71 `ba3b8c2b`, rc.72 `a95b3478`, rc.73
+`6c6a97eb`, rc.74 `4cac81e3`, rc.75 `21c7c54a`, rc.76 `6e3b241b`, rc.77
+`c963e25a`; all released and deployed; SECURITY-AUDIT.md revisions for each).
+The OAuth2 arc of these releases, walked once across the rows it touches. No
+Section A slug, no `planned:` chip, no tier shift; `reviewed_at` left
+unchanged. Public description: [OAuth2](https://pryv.github.io/customer-resources/auth-oauth2/)
+and [Adapter routes](https://pryv.github.io/customer-resources/adapter-routes/)
+(sources `dev-site2/src/content/docs/customer-resources/auth-oauth2.md`,
+`adapter-routes.md`). What shipped:
+- **Withdrawal and narrowing reach live tokens**: grant deletion deletes the
+  app's live sessions and the accesses they created (rc.64, Medium in the
+  audit report), a refresh mints the meet of session and grant (rc.66), a
+  narrowed grant re-cuts live sessions (rc.68) and the accesses sessions
+  created (rc.70, Medium) `[OE31]`, `[PMRG2]`, `[OSUB1]`, `[OSUB3]`; account
+  fields writable by the personal access only (rc.65, BREAKING, Medium)
+  `[ACSW1]`; a consent refused for its permissions is final (rc.65)
+  `[RQAS1]`.
+- **Operator-registered clients and the OAuth extension** (rc.68):
+  `bin/oauth-client.js create-registry`, mandatory `--subject-type`,
+  `customExtensions.oauthExtension`, `oauth.extensionOptions`,
+  `oauth.extensionHookTimeoutMs`; core guards on every consent (no account or
+  system streams, `*`, `manage`), default-forbidden `webhooks`,
+  `secretSharing` and (rc.70, BREAKING) `accessCreation`; durable record an
+  app access `oauth-grant:<clientId>`; the session minted at consent is
+  written by the system (no `accesses.create` audit row); vetting `review`
+  status, suspension reaching the data API and `client_credentials`
+  (rc.71, Low), `purge-grants`, regions, `oauth.logoHosts`, entry ceiling
+  `[OACR1]`, `[OCLI19]`, `[ORF1]`, `[ORGP1]`.
+- **OpenID Connect, revocation, introspection, pseudonymous subjects**
+  (rc.69): `oauth.signingKeys`, `oauth.idTokenTTL`, single-use nonces
+  (`oauth.nonce.reused`), `POST /oauth2/revoke`, `POST /oauth2/introspect`
+  (`oauth.token.introspected`, syslog), pairwise subjects and **alias-bound
+  addressing** (Medium; lifts the alias limit every citing row stated, see
+  below), `oauth.refreshRetireGraceSeconds` (60 s), a refused refresh no
+  longer consumes its token (Medium), refresh ids hashed in audit rows,
+  `oauth.audAllowList` removed `[OXD01]`, `[OXN02]`, `[ORVK1]`, `[OXI06]`,
+  `[AL13]`, `[OPSE5]`, `[ORET1]`, `[ORL04]`, `[ORL12]`.
+- **State keys** `oauth.stateKey` / `sso.stateKey` (rc.69, required rc.70,
+  admin-key fallback removed) `[OXSK1]`, `[CKOC2]`.
+- **Client authentication** (rc.70, rc.74): pinned assertion algorithms
+  (`RS256` added rc.74), `kid` required in multi-key sets (BREAKING),
+  `jwks_uri` through the outbound guard, per-client lifetimes, a 30-day
+  secret rotation window, an 8 KiB scope cap, RFC 8707 `resource` with
+  `invalid_target` (BREAKING), a quadratic-regex fix (Medium), `auth_time` =
+  last sign-in `[OCAK2]`, `[OCAK7]`, `[OCAK14]`, `[OCAK23]`, `[ORI03]`,
+  `[OREG17]`.
+- **Removed `oauth.requireAppAccountMfa`** (rc.71): never enforced.
+- **Token exchange** (RFC 8693, rc.73): `--can-exchange`,
+  `oauth.audienceBoundSessions` (default `false`, a later release is planned
+  to default it to `true`), `oauth.token.exchanged` /
+  `oauth.token.exchange_refused` `[OTX03]`, `[OTX05]`, `[OTXE02]`,
+  `[OTXE04]`, `[OTXE10]`.
+- **Adapter routes** (rc.73): `adapterRoutes` (default `{}`), unauthenticated
+  forwarding to an operator sidecar, `adapter` a reserved username
+  `[ADRI03]`, `[ADRI09]`, `[ADRC03]`, `[ADRE05a]`.
+- **Client metadata documents** (rc.74, `oauth.clientMetadataDocuments.*`,
+  `mode: off` by default): URL-identified clients, reach from the operator's
+  template, guarded fetch, `oauth.client.metadata_fetched` /
+  `metadata_refused` (syslog); revoke epoch with a 5 s margin for every client
+  kind (Low); OAuth-only CORS policy; consent `421 wrong_core` `[OCMD01]`,
+  `[OCMD03G]`, `[OCMDE06]`, `[OCMDE13]`, `[OCMD18]`, `[OACO1]`.
+- **Per-user addresses** (rc.75): `{username}` audience entries bound to the
+  signed-in account (`audience-account-mismatch`, `audience-not-listed`),
+  `subject_token_resource`; adapter ingress by username (`X-Adapter-Name`,
+  `X-Adapter-Base`, client copies removed, `421 wrong-core`, not audited)
+  `[OPUE2]`, `[OPUX11]`, `[ADRU3]`, `[ADRU4]`.
+- **Address aliases** (rc.76): `account.addressAliases.create` / `.list` /
+  `.delete` (B.1) `[OPAL1]`..`[OPAL4]`.
+- **Per-user issuer** (rc.77): `oauth.perUserIssuer` (default `false`,
+  platform-wide, DNS topology only), audit reason `issuer-account-mismatch`
+  under `oauth.consent.refused`; consent at another issuer `400
+  issuer-mismatch` (not audited) `[OPIU1]`, `[OPIU3]`, `[OPIS4]`,
+  `[OPIS5]`, `[OPIS6]`, `[CKPU1]`, `[CVOA11]`.
+- **Audit outcome** (rc.77): a streamed call the client cut short is
+  audited as an error (`client-closed-request`) `[AUAB3]`.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| hipaa-security | 164.312(d) | correction: `oauth.requireAppAccountMfa` was never enforced (removed rc.71), key dropped from `config_keys`; new paragraph on client authentication, OpenID Connect, state keys, per-user issuer | `OCAK2`, `OCAK7`, `OCAK14`, `OCAK23`, `OTPA1`, `OTPA3`, `OXD01`, `OXD04`, `OXN01`, `OREG17`, `OXSK1`, `OREG16`, `OPIS4`..`OPIS6`, `OPIU3` |
+| hipaa-security | 164.312(a)(1) | new paragraph: what an OAuth2 grant can reach (withdrawal, narrowing, registry guards, alias binding, per-user addresses, suspension, token exchange and the `audienceBoundSessions` default, adapter routes) | `OE31`, `OSUB1`, `OSUB3`, `ACSW1`, `ACSW2`, `OACR1`, `OACR2`, `AL13`, `OPSE5`, `OPUE2`, `OPAL2`, `ORF1`, `OTX05`, `OTXE04`, `OTXE02` |
+| hipaa-security | 164.312(b) | new paragraph: OAuth2 audit additions, what is not audited, correction on streamed calls cut short | `OXN02`, `OPUE2`, `OPIU3`, `OXI06`, `OTX03`, `OCMDE13`, `ORL12`, `OPAL2`, `AUAB3` |
+| hipaa-security | 164.312(e)(1) | key sets and metadata documents https only; adapter `upstream` in clear warned | `OCMD03B`, `OCMD03G`, `ADRC03`, `ADRI13` |
+| soc2 | CC6.1 | new paragraph: the OAuth2 surface since rc.64 | `ORVK1`, `OXI01`, `OXD01`, `ORI03`, `OTX05`, `OCMDE06`, `OACO1`, `OPUE2`, `OPIS4` |
+| soc2 | CC6.2 | registry clients and vetting; **correction**: "curated only" holds while `oauth.clientMetadataDocuments.mode` is `off` | `OCLI19`, `ORF1`, `OCAK14`, `ORF4`, `OCMD01`, `OCMD05`, `OCMDE03`, `OCMDE06`, `OCMDE13` |
+| soc2 | CC6.3 | new paragraph: removal and modification reach live tokens (with the earlier gaps named) | `OE31`, `OSUB3`, `PMRG2`, `ORVK1`, `ORET1`, `ORL04`, `ORF1`, `ORGP1`, `OCR02`, `OCMD18`, `OPAL4` |
+| soc2 | CC6.6 | outbound guard covers key sets and metadata documents; adapter routes as part of your boundary | `OCMD03B`, `OCMD03G`, `OCMD03H`, `ADRI03`, `ADRI06`, `ADRI09`, `ADRU3`, `ADRU4` |
+| soc2 | P6.2 | token exchange recorded as a disclosure to a resource server; introspection in syslog | `OTX03`, `OTXE10`, `OXI06` |
+| iso-27001 | A.5.15 | new paragraph: OAuth2 access rules | `OE31`, `OSUB3`, `OACR1`, `AL13`, `OPUE2`, `OTX05`, `OTXE02` |
+| iso-27001 | A.5.16 | metadata-document identities; identities an app sees (subject types, address aliases, per-user issuer) | `OCMDE06`, `OPSE1`, `OXD08`, `OPAL1`, `OPAL2`, `OPUE9`, `OCMP11`, `OPIS5` |
+| iso-27001 | A.5.17 | refresh retire grace, refused refresh not consumed, hashed ids, key pinning, signing and state keys YAML-only | `ORET1`, `ORL04`, `ORL12`, `OCAK14`, `OCAK2`, `OCAK7`, `OCAK23`, `OXK01`, `OXSK1`, `CKOC2` |
+| iso-27001 | A.8.15 | OAuth2 events added; streamed-call outcome | `OXN02`, `OXI06`, `OTX03`, `OCMDE13`, `OPIU3`, `AUAB3` |
+| iso-27001 | A.8.26 | outbound guard for key sets and metadata documents (and the `cmc.allowedPrivateHosts` side effect); new adapter-routes block | `OCMD01`, `OCMD03B`, `OCMD03D`, `OCMD03G`, `OCMD03H`, `OCMDE17`, `ADRI03`, `ADRI06`, `ADRI09`, `ADRI13`, `ADRC03`, `ADRC08`, `ADRU3`, `ADRU4` |
+| iso-27001 | A.8.11 | alias limit lifted from rc.69 | `AL13`, `OPSE5` |
+| gdpr | Art.7 | withdrawal and narrowing at once, re-consent and subject change, refused consent final, registry clients' consent record | `OE31`, `OSUB1`, `OSUB3`, `OCMP7`, `OCMP11`, `RQAS1` |
+| gdpr | Art.32 | delegated-app bullet brought to rc.77 (with the "curated-only" correction); pseudonymisation bullet: alias limit lifted from rc.69; counterparty bullet: key sets and metadata documents; new adapter-routes bullet | `AL13`, `AL03`, `OPSE5`, `OPSE16`, `OPSE17`, `OE31`, `OSUB3`, `OPSE1`, `OXD08`, `OTX05`, `OCAK7`, `OPUE2`, `OPIU3`, `OCMD03B`, `OCMD03G`, `ADRI09`, `ADRU3` |
+| gdpr | Art.4 | pseudonymisation mapping: alias limit lifted from rc.69 | none |
+| hipaa-privacy | 164.514(c) | alias limit lifted from rc.69; de-identification determination stays yours | `AL13`, `OPSE5` |
+| iso-27701 | A.7.4.5 | alias limit lifted from rc.69 | none |
+| ccpa | 1798.140(ae) | alias-only pattern: limit lifted from rc.69 | none |
+| soc2 | C1.1 | alias limit lifted from rc.69 | none |
+
+**Correction carried across rows: the alias limit.** The 2026-10-29 re-check
+(Section A, `ALIASES`) put on every row citing `randomAlias` that a holder who
+guesses the username can confirm it, "lifted only when alias-bound addressing
+ships". It shipped in 2.0.0-rc.69 (`784a9a47`): every such row, the
+`randomAlias` primitive (now also describing pairwise subjects and address
+aliases), `docs/implementer-faq.md`, `context/privacy-by-design-and-default.md`,
+`context/data-masking-projection-vs-transformation.md` and the proposal now say
+so, naming earlier releases as the gap.
+
+Also updated: `context/cmc-consent-primitives.md` (registry clients' consent
+record; correction: the note said OAuth2 audit emission was a no-op stub, true
+only before `07b6d3b6`). Walked without change:
+- **Authentication family, other rows** (`hipaa-security.164.308(a)(5)(ii)(D)`,
+  `soc2.CC6.1` sign-in parts): no change to account-holder sign-in; the
+  second factor protects the sign-in that grants consent.
+- **DSAR and erasure families** (`gdpr.Art.15`, `Art.17`, `Art.20`, …): address
+  aliases are deleted with the account like any alias (rc.76); OAuth grants
+  and sessions are accesses, already covered.
+- **Records of processing** (`gdpr.Art.30`): the register derivation from the
+  audit trail holds; new events listed on the audit rows.
+- **Transport rows, other** (`hipaa-security.164.312(e)(2)(*)`,
+  `iso-27001.A.8.20`, `soc2.CC6.7`): no change to TLS; the OAuth-only CORS
+  policy (rc.74) is recorded on `soc2.CC6.1`.
+- **Privacy by default** (`gdpr.Art.25`): every new switch defaults to the
+  narrower behaviour (`mode: off`, `perUserIssuer: false`, adapter routes
+  off, registry default-forbidden features, the metadata template's
+  `subjectType: pairwise`); `audienceBoundSessions: false` is the one wider
+  default, disclosed on the access-control rows and in Section C.
+B.1 (address aliases), B.8 (token classes) and B.11 (config keys) carry
+pointers to this entry. B.2, B.3, B.5, B.6, B.10: none.
 
 ### B.10 Observability emitted-surface changes
 
@@ -2804,6 +2963,27 @@ period). Not security-transport keys: the rows they govern are the retention
 and erasure rows chipped in Section A; their `config_keys:` were added at the
 release (Section A table). No transport, header, platform DB or backup change.
 
+**Walked 2026-11-09 for open-pryv.io 2.0.0-rc.64 to 2.0.0-rc.77** (OAuth2
+arc, record under B.9). New security-relevant keys, each added to the
+`config_keys:` of the rows that cite its behaviour: `oauth.stateKey`,
+`sso.stateKey` (rc.69, required rc.70), `oauth.signingKeys`,
+`oauth.idTokenTTL`, `oauth.refreshRetireGraceSeconds` (rc.69),
+`customExtensions.oauthExtension`, `oauth.extensionOptions`,
+`oauth.extensionHookTimeoutMs` (rc.68), `oauth.logoHosts` (rc.71),
+`oauth.audienceBoundSessions`, `adapterRoutes` (rc.73),
+`oauth.clientMetadataDocuments.*` (rc.74), `oauth.perUserIssuer` (rc.77);
+removed `oauth.audAllowList` (rc.69) and `oauth.requireAppAccountMfa`
+(rc.71, dropped from `hipaa-security.164.312(d)`). Response headers: the
+OAuth-only CORS policy on `/oauth2/*` and `/.well-known/*` (rc.74,
+`soc2.CC6.1`); `Vary: Host` / `X-Forwarded-Host` on discovery while
+`oauth.perUserIssuer` is on. Outbound: key sets and metadata documents
+through the counterparty guard (`iso-27001.A.8.26`, `soc2.CC6.6`,
+`hipaa-security.164.312(e)(1)`, `gdpr.Art.32`). Platform DB: one session
+index row per minted OAuth2 session (`oauth-at/<hash>`, user id, client and
+core, no token, no username; rc.68) and metadata-document client rows
+(rc.74); no row claims against their absence. Backup: address aliases are
+carried like any alias (rc.76); no backup row changed.
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check
@@ -2828,7 +3008,7 @@ ships the fix.
 
 | Added | Where | Gap | Remove when |
 |---|---|---|---|
-| (none open) | | | |
+| 2026-11-09 | `hipaa-security.164.312(a)(1)`, `iso-27001.A.5.15`, `gdpr.Art.32` (delegated-app bullet), B.9 | `oauth.audienceBoundSessions` defaults to `false` (open-pryv.io 2.0.0-rc.73 to rc.77): a token an app sent to a resource server also works directly at the API unless the operator sets `true` | the release that defaults it to `true`: rewrite each clause as the default, name the release |
 
 Discharged: the 2026-10-26 clause on external ids missing from the
 per-user backup (observed on open-pryv.io 2.0.0-rc.58 and rc.59; in

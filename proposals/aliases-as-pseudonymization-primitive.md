@@ -10,6 +10,12 @@ routable alias). The matrix rows in the `ALIASES` trigger can now be reclassifie
 **Hardening re-check (2026-10-29):** guarantees completed in `open-pryv.io`
 `4547b32a` (released in 2.0.0-rc.66); see
 "Re-check after the hardening" below.
+**Alias-bound addressing shipped (walked 2026-11-09):** open-pryv.io
+2.0.0-rc.69 (`784a9a47`) accepts an aliased access under its own alias only,
+which lifts the limit recorded below; every citing row now states it from
+rc.69, with earlier releases named as the gap. Same release: OAuth2 pairwise
+subjects; 2.0.0-rc.76 (`6e3b241b`): address aliases. See the `randomAlias`
+primitive and UPDATE-TRIGGERS.md B.9.
 **Upstream backlog item:** macroPryv `_plans/XXX-Backlog/ALIASES.md`.
 **Filed:** 2026-05-19, while backfilling the facilitation typology and
 realising several matrix rows currently treat pseudonymization as
@@ -124,8 +130,8 @@ username succeeds exactly when the guess is right (a sign-in probe under
 the alias tells the two cases apart the same way). The rows therefore
 describe the alias as pseudonymisation towards the holder, not as
 unlinkability against guessing. Alias-bound addressing (a token accepted
-only under its alias) is planned and would lift this limit; until it ships,
-no row claims it.
+only under its alias) was planned to lift this limit. *(It shipped in
+open-pryv.io 2.0.0-rc.69; the rows were updated 2026-11-09, see the header.)*
 
 **Not changed:** `audit.onUserDelete: pseudonymise` is still not
 implemented (refused at boot); the alias is not an account-level

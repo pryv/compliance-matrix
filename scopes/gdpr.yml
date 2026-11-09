@@ -177,7 +177,7 @@ requirements:
       | processing | any API call on `events.*` / `streams.*` / `accesses.*` (audit-recorded) |
       | filing system | N/A, Pryv is fully automated |
       | personal data breach | event/audit anomaly + post-mortem (see Art.33) |
-      | pseudonymisation | `accesses.create {randomAlias:true}` (platform-unique routable alias hides the username per access from its holder; a holder who guesses the username can still confirm it, see Art.32) + external ids (a third-party record id held only as a value the caller blinds with its own key, open-pryv.io 2.0.0-rc.58) + system-streams + custom event-type design |
+      | pseudonymisation | `accesses.create {randomAlias:true}` (platform-unique routable alias hides the username per access from its holder; since 2.0.0-rc.69 the token is accepted under its alias only, so a holder who guesses the username cannot confirm it with the token, see Art.32) + external ids (a third-party record id held only as a value the caller blinds with its own key, open-pryv.io 2.0.0-rc.58) + system-streams + custom event-type design |
       | profiling | application-side concern (out for Pryv) |
       | restriction of processing | scope-down via `accesses.update` (see Art.18) |
 
@@ -475,8 +475,8 @@ requirements:
     reviewed_by: Pryv compliance
     reviewed_at: "2026-07-18"
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
-    docs: [guides/consent.md]
-    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11, MAAC, GA10, GA24, GA30, MB10, HR25, DH25, RQ20, RQ21, RQ22, RQ23, CIR26, CIR27, HR41, RQ33, RQ32]
+    docs: [guides/consent.md, customer-resources/auth-oauth2.md]
+    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11, MAAC, GA10, GA24, GA30, MB10, HR25, DH25, RQ20, RQ21, RQ22, RQ23, CIR26, CIR27, HR41, RQ33, RQ32, OE31, OSUB1, OSUB3, OCMP7, OCMP11, RQAS1]
     config_keys: [cmc.retryLoop.enabled, cmc.allowedPrivateHosts]
     overview: |
       The access Pryv mints when your user grants permission IS your
@@ -679,7 +679,27 @@ requirements:
       (`open-pryv.io/components/oauth2/src/routes/accept.ts`). The
       durable consent record is the same primitive as everywhere else,
       a cross-account CMC data-grant access, versioned and revocable;
-      revoking it tears down the app's refresh chain. Demonstrability
+      revoking it tears down the app's refresh chain. Withdrawal (§3)
+      reaches the app at once since open-pryv.io 2.0.0-rc.64: deleting
+      the grant also deletes the app's live sessions and the accesses
+      they created `[OE31]` (earlier releases let a live access token
+      run out its lifetime, up to `oauth.accessTokenTTL`, one hour by
+      default). A partial withdrawal reaches it too: since rc.68 a
+      narrowed grant re-cuts every live session at once, and since
+      rc.70 the accesses a session created are narrowed with it, or
+      deleted when nothing is left `[OSUB1]`, `[OSUB3]`. A re-consent
+      shows what the app already holds and sets the grant to exactly
+      what the user ticks, so it can narrow as well as widen; a change
+      of subject (username to pseudonym or back) must be acknowledged
+      and is recorded in `oauth.consent.granted` `[OCMP7]`, `[OCMP11]`.
+      A consent the server refused for its permissions is final and is
+      never completed later by a retry (rc.65) `[RQAS1]`. Only the
+      account holder's personal token may accept (rc.68). For clients
+      the operator registers through an OAuth extension (registry
+      clients, rc.68), the durable record is an app access
+      `oauth-grant:<clientId>` on the user's own account instead of a
+      CMC data-grant, with the same versioning and withdrawal (see
+      `context/cmc-consent-primitives.md`). Demonstrability
       rests on that data-grant + the signed offer material (the access
       + its version history), not on a separate event log.
 
@@ -2265,8 +2285,9 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion]
-    config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A]
+    docs: [customer-resources/auth-oauth2.md, customer-resources/adapter-routes.md]
+    config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount, oauth.audienceBoundSessions, oauth.stateKey, oauth.perUserIssuer, oauth.clientMetadataDocuments.mode, adapterRoutes]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -2347,11 +2368,21 @@ requirements:
           `[AL12]`), and a custom account field named `username` or
           `usernameChangeCount` is refused at boot so no account
           stream can expose the stored username to an aliased access
-          (`[SDB3]`, `[AL08]`). Limit: the alias hides the username,
-          it does not stop a holder who already suspects which account
-          it is from confirming the guess (the token also works under
-          the account's other names), so treat it as pseudonymisation
-          towards the holder, not as unlinkability against guessing.
+          (`[SDB3]`, `[AL08]`). Since open-pryv.io 2.0.0-rc.69
+          (`784a9a47`) an aliased access is accepted under its own alias
+          only (alias-bound addressing): presented under the username,
+          a former username or another alias of the account it answers
+          like an unknown token, on HTTP and socket.io, and a sign-in or
+          password reset at an alias gets one fixed answer before any
+          password check `[AL13]`, `[AL03]`, `[OPSE5]`, `[OPSE16]`,
+          `[OPSE17]`. So a holder who suspects which account it is can
+          no longer confirm the guess with the token, and two aliases
+          of one account cannot be tested against each other. Earlier
+          releases accepted the token under every name of the account;
+          accesses an aliased app created before rc.69 kept an endpoint
+          naming the username. OAuth2 clients registered with pairwise
+          subjects get such an alias per user and client (see the
+          delegated-app bullet).
         - Record-bound sign-in: IMPLEMENTED, since open-pryv.io
           2.0.0-rc.59 (release commit `927919ba`) an auth request that
           carries an external id in forced mode delivers the app's
@@ -2452,7 +2483,27 @@ requirements:
           exact-match redirect-URI validation (single loopback-port
           carve-out; fragment URIs rejected), curated-only client
           registration, and short-TTL access tokens paired with
-          single-use rotating refresh tokens.
+          single-use rotating refresh tokens. Since open-pryv.io
+          2.0.0-rc.64 to 2.0.0-rc.77: withdrawing or narrowing a
+          consent reaches the app's live tokens and the accesses it
+          created at once `[OE31]`, `[OSUB3]`; operator-registered
+          clients declare `public` or `pairwise` subjects, and a
+          pairwise app sees each user only as an alias, never the
+          username, in its tokens, its OpenID Connect id token and
+          introspection `[OPSE1]`, `[OXD08]`; apps and resource servers
+          can revoke and introspect tokens; a resource server can
+          exchange a user's token for its own, no wider, only for a
+          token issued for it `[OTX05]` (the replaced token stays usable
+          at the API unless `oauth.audienceBoundSessions: true`, default
+          `false`); client authentication by key is pinned to the key's
+          type and algorithm `[OCAK7]`; the consent flow's state is
+          signed with a per-core `oauth.stateKey`; and an authorization
+          for an account address, or at a per-user issuer
+          (`oauth.perUserIssuer`, opt-in), is bound to the account the
+          address names `[OPUE2]`, `[OPIU3]`. "Curated-only" holds while
+          `oauth.clientMetadataDocuments.mode` is `off` (the default):
+          with it on, a client may identify itself by a URL whose reach
+          your template sets (see `soc2.CC6.2`).
         - Delegate-account control: IMPLEMENTED, account delegation
           (`open-pryv.io/components/delegation/`) issues a delegate an
           owner-equivalent personal token over another account while
@@ -2589,7 +2640,21 @@ requirements:
           ranges, same grammar as `webhooks.allowedPrivateHosts`). A
           refused delivery is permanent: the trigger reports
           `cmc-handler-destination-refused` and it is not retried.
-          Keeping your own network's egress filtering stays yours.
+          The OAuth2 key sets (`jwks_uri`, rc.70) and client metadata
+          documents (rc.74) Pryv fetches go through the same guard,
+          https only, size, time and per-host bounded `[OCMD03B]`,
+          `[OCMD03G]`; a host listed in `cmc.allowedPrivateHosts` is
+          allowed for them too. Keeping your own network's egress
+          filtering stays yours.
+        - Adapter routes: CONFIGURABLE, off by default. With
+          `adapterRoutes` set (open-pryv.io 2.0.0-rc.73) the core
+          forwards `/adapter/<name>/…` to a sidecar you run without
+          authenticating the request, so the sidecar must authenticate
+          every request and check the token's audience; the core refuses
+          traversal paths, caps bodies and idle time, and since rc.75
+          names the addressed account in headers it sets itself (client
+          copies removed) `[ADRI09]`, `[ADRU3]`. See
+          `iso-27001.A.8.26`.
         - Regular testing (§1(d)): FILLED BY EXISTING PRIMITIVES.
           **Existing evidence (citable today)**:
             - **Multi-engine CI test matrix**: ~2351 tests on
