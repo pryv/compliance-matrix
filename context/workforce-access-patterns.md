@@ -204,11 +204,17 @@ anything.
    name data streams within what the patient's offer granted (never
    `*`, never a `:_cmc:` stream), the lifetime bounds
    (`cmc.memberAccess.minTtl` / `maxTtl`, default 60 s and 7 d; the
-   default lifetime `defaultTtl` is 24 h), a rate limit
-   (`ratePerMinute`, 30 per membership per minute) and one mint in
-   flight per membership and patient (`maxInFlightPerMembership`);
-   the rate limit and the in-flight lock are per worker process
-   `[GA12]`, `[GA15]`, `[CMCMA]`. Then, through the patient's grant,
+   default lifetime `defaultTtl` is 24 h), two budgets per membership
+   counted for the whole core (new member accesses: `mintBurst` 5000
+   at once, then `ratePerMinute` 1000 a minute; requests of any kind:
+   `askBurst` 10000, then `askRatePerMinute` 3000 a minute; asking
+   again for a live access spends no new-access budget; past either,
+   `429` with `Retry-After`; since 2.0.0-rc.79, before which every
+   ask counted, 30 per membership per minute per worker process) and
+   one mint in flight per membership
+   and patient (`maxInFlightPerMembership`, per worker process)
+   `[GA12]`, `[GA15]`, `[GA16]`, `[GA17]`, `[CMCMA]`. The budgets pace
+   a membership; what ends its reach is its expiry and its revocation. Then, through the patient's grant,
    it creates on the patient's core a `shared` child access with a
    server-derived name (`cmc-member--<member>--<hash>`) that never
    outlives the membership's own expiry `[GA14]`. The patient's core
