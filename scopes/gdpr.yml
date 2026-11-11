@@ -201,7 +201,7 @@ requirements:
     reviewed_at: "2026-06-19"
     pryv_primitives: [access, permissions, clientData, stream, audit, account-auto-deletion]
     functional_specs: [EVENT.BASE, STREAM.BASE]
-    config_keys: [account.autoDeletion.inactivity.defaultDays, account.autoDeletion.userOverride, account.autoDeletion.allowUserOptOut, account.autoDeletion.reminders.leadDays, account.autoDeletion.reminders.minNoticeDays, account.autoDeletion.dryRun, accessTracking.isActive]
+    config_keys: [account.autoDeletion.inactivity.defaultDays, account.autoDeletion.inactivity.countAppUse, account.autoDeletion.userOverride, account.autoDeletion.allowUserOptOut, account.autoDeletion.reminders.leadDays, account.autoDeletion.reminders.minNoticeDays, account.autoDeletion.dryRun, accessTracking.isActive]
     docs: [customer-resources/account-auto-deletion.md]
     tests: [GLHP, UZEV, ACXP2, ACXP3, ACXP8, ACXP10, ACXP19, ACAC1, ACAC2, ACAC7, ADSW8, ADSW9, ADSW13, ACST14, LGLU3, CVAD3]
     planned:
@@ -1160,7 +1160,7 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, event, account-auto-deletion]
     docs: [guides/consent.md, guides/privacy-by-design.md, customer-resources/account-auto-deletion.md]
-    config_keys: [account.autoDeletion.inactivity.defaultDays, services.email.enabled.accountDeletionScheduled, services.email.enabled.accountDeletionReminder]
+    config_keys: [account.autoDeletion.inactivity.defaultDays, account.autoDeletion.inactivity.countAppUse, services.email.enabled.accountDeletionScheduled, services.email.enabled.accountDeletionReminder]
     tests: [ACST1, ACST2, ACST15A, ACST15B, ACRM1]
     planned:
       - kind: feature
