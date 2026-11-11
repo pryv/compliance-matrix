@@ -281,10 +281,12 @@ requirements:
 
         Account auto-deletion, since open-pryv.io 2.0.0-rc.66
         (`8521c8d5`): an account is deleted at a date its holder
-        picks, or after a period without use of its personal and app
-        accesses (a sign-in counts, `[LGLU3]`; a delegate's use
+        picks, or after a period without use of its personal
+        accesses (a sign-in counts, `[LGLU3]`; a delegate's own token
         included, shared accesses never, `[ACAC1]`, `[ACAC2]`,
-        `[ACAC7]`). Two sources: the holder's own schedule (their
+        `[ACAC7]`; since 2.0.0-rc.81 app accesses count only with
+        `account.autoDeletion.inactivity.countAppUse`, default false,
+        `[ACST20]`). Two sources: the holder's own schedule (their
         erasure request, see Art.17), or your inactivity preset
         (`account.autoDeletion.inactivity.defaultDays`, default none).
         A preset is your storage-limitation rule: state the period and
@@ -1192,8 +1194,10 @@ requirements:
       (`account.autoDeletion.inactivity.defaultDays`), it is a
       retention period of your platform: your privacy notice states
       it, with what counts as use of an account (sign-ins and the use
-      of personal and app accesses, a delegate's included; shared
-      accesses never), as §2(a) requires. Pryv does not write that
+      of personal accesses, a delegate's own token included; app
+      accesses only where you set
+      `account.autoDeletion.inactivity.countAppUse`, since 2.0.0-rc.81;
+      shared accesses never), as §2(a) requires. Pryv does not write that
       notice. What Pryv tells the account holder directly: a
       confirmation mail on every change of their schedule, clearing
       included (the deadline, or that nothing is scheduled,

@@ -288,7 +288,9 @@ requirements:
       inactivity preset (`account.autoDeletion.inactivity.defaultDays`,
       default none) deletes plain accounts with an email address
       (`[ACST14]`) after that many days without use of their personal
-      and app accesses, its clock starting the day it first applies
+      accesses (app accesses too only with
+      `account.autoDeletion.inactivity.countAppUse`, since
+      2.0.0-rc.81, `[ACST20]`), its clock starting the day it first applies
       (`[ACXP2]`), after reminder mails (`[ACXP3]`) and at least 7 days
       after the first notice (`[ACXP8]`); the PII principal may also
       schedule their own account's deletion at a date or after a

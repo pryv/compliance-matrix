@@ -48,8 +48,10 @@ streams.** (Whole accounts: account auto-deletion, since
   audit row names such an access by id only.
 - Account inactivity is measured for account auto-deletion only
   (since 2.0.0-rc.66): the latest `lastUsed` of the account's
-  personal and app accesses, a sign-in recording `lastUsed`
-  (`[LGLU1]`..`[LGLU4]`, `[ACAC1]`..`[ACAC10]`); see below. Any
+  personal accesses (app accesses too only with
+  `account.autoDeletion.inactivity.countAppUse`, since 2.0.0-rc.81),
+  a sign-in recording `lastUsed` (`[LGLU1]`..`[LGLU4]`,
+  `[ACAC1]`..`[ACAC11]`, `[ACST20]`); see below. Any
   other inactivity measure (for example "last authentication
   time" from the audit log) is a custom query.
 
@@ -276,9 +278,13 @@ with reminder mails before. Two sources of a schedule:
   an address, group accounts or accounts under a delegation.
 
 **What counts as use:** the latest `lastUsed` of the account's
-`personal` and `app` accesses: a sign-in, every call made with its
-token, every call of an app the holder connected (including one
-that syncs on a schedule), every call of a delegate. `shared`
+`personal` accesses: a sign-in, every call made with its token or
+with a personal token of the holder, every call of a delegate with
+their own token. Since 2.0.0-rc.81 `app` accesses (an app the holder
+connected, an OAuth session, an app a delegate granted) count only
+with `account.autoDeletion.inactivity.countAppUse: true` (default
+false): an app syncing in the background does not keep an account
+alive. `shared`
 accesses never count (a doctor reading shared data does not keep an
 account alive), nor do failed sign-ins, webhooks or attachment
 downloads. Inactivity needs `accessTracking.isActive` (default on);

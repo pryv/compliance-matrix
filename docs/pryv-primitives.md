@@ -932,9 +932,11 @@ mails (open-pryv.io 2.0.0-rc.66, `8521c8d5`; per-core block
   not set it `[ACST5]`. A preset covers plain accounts with an email address on a
   core that sends mail, never group accounts or accounts under a delegation
   `[ACST14]`, and its clock starts the day it first applies `[ACXP2]`.
-- **Activity**: the latest `lastUsed` of the account's `personal` and `app`
-  accesses, a delegate's included; `shared` accesses never count; a sign-in
-  records `lastUsed` `[ACAC1]`, `[ACAC2]`, `[ACAC7]`, `[LGLU3]`. Needs
+- **Activity**: the latest `lastUsed` of the account's `personal` accesses, a
+  delegate's own token included; `app` accesses only with
+  `account.autoDeletion.inactivity.countAppUse` (default false, since
+  2.0.0-rc.81) `[ACST20]`; `shared` accesses never count; a sign-in records
+  `lastUsed` `[ACAC1]`, `[ACAC2]`, `[ACAC7]`, `[LGLU3]`. Needs
   `accessTracking.isActive` (a preset without it refuses the boot `[CVAD3]`).
 - **Notice**: confirmation mail on every change `[ACST15A]`, `[ACST15B]`;
   reminders at 60, 30, 7 and 1 days `[ACXP3]`; no deletion less than

@@ -2347,8 +2347,10 @@ scheduler + retention-rule definitions + legal-hold overrides.
 auto-deletion.** The answer below holds for releases before
 2.0.0-rc.66, and still holds for events and streams. For **whole
 accounts** it changed: an account is deleted at a date its holder
-picks, or after a period without use of its personal and app
-accesses, either by the holder's own schedule or by your inactivity
+picks, or after a period without use of its personal accesses
+(app accesses too only with
+`account.autoDeletion.inactivity.countAppUse`, since 2.0.0-rc.81),
+either by the holder's own schedule or by your inactivity
 preset (`account.autoDeletion.inactivity.defaultDays`, default
 none), with reminder mails, a 7-day minimum notice, a dry-run mode
 and the deletion guards of `auth.delete`. A preset is your retention
