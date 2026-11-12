@@ -586,11 +586,13 @@ requirements:
       the home core is named), never for a derived token; the derived
       session is a session of the same grant, no wider and no longer-lived
       than the token it replaces, and ends when that token's session is
-      deleted `[OTX05]`, `[OTXE04]`. While `oauth.audienceBoundSessions`
-      is `false` (the default; a later release is planned to make it
-      `true`), the token an app sent to such a resource server also works
-      directly at the API; set it to `true` to refuse it there
-      `[OTXE02]`. **Adapter routes** (rc.73, off unless
+      deleted `[OTX05]`, `[OTXE04]`. Since open-pryv.io 2.0.0-rc.82
+      `oauth.audienceBoundSessions` is `true` by default: the token an app
+      sent to such a resource server is refused directly at the API and
+      works only through that resource server's exchange `[OTXE02]`; an
+      operator may set `false` on a core whose resource servers do not
+      exchange yet (the boot log names the clients concerned; from rc.73
+      to rc.81 `false` was the default). **Adapter routes** (rc.73, off unless
       `adapterRoutes` is set) forward `/adapter/<name>/…` to a sidecar
       you run, with no authentication by the core: the sidecar must
       authenticate every request (see `iso-27001.A.8.26`).

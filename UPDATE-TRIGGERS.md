@@ -2490,8 +2490,8 @@ and [Adapter routes](https://pryv.github.io/customer-resources/adapter-routes/)
   `[OREG17]`.
 - **Removed `oauth.requireAppAccountMfa`** (rc.71): never enforced.
 - **Token exchange** (RFC 8693, rc.73): `--can-exchange`,
-  `oauth.audienceBoundSessions` (default `false`, a later release is planned
-  to default it to `true`), `oauth.token.exchanged` /
+  `oauth.audienceBoundSessions` (default `false` from rc.73 to rc.81, `true`
+  since rc.82), `oauth.token.exchanged` /
   `oauth.token.exchange_refused` `[OTX03]`, `[OTX05]`, `[OTXE02]`,
   `[OTXE04]`, `[OTXE10]`.
 - **Adapter routes** (rc.73): `adapterRoutes` (default `{}`), unauthenticated
@@ -2569,8 +2569,8 @@ only before `07b6d3b6`). Walked without change:
 - **Privacy by default** (`gdpr.Art.25`): every new switch defaults to the
   narrower behaviour (`mode: off`, `perUserIssuer: false`, adapter routes
   off, registry default-forbidden features, the metadata template's
-  `subjectType: pairwise`); `audienceBoundSessions: false` is the one wider
-  default, disclosed on the access-control rows and in Section C.
+  `subjectType: pairwise`); `audienceBoundSessions` was the one wider
+  default (`false`, rc.73 to rc.81) and is `true` since rc.82.
 B.1 (address aliases), B.8 (token classes) and B.11 (config keys) carry
 pointers to this entry. B.2, B.3, B.5, B.6, B.10: none.
 
@@ -3008,7 +3008,12 @@ ships the fix.
 
 | Added | Where | Gap | Remove when |
 |---|---|---|---|
-| 2026-11-09 | `hipaa-security.164.312(a)(1)`, `iso-27001.A.5.15`, `gdpr.Art.32` (delegated-app bullet), B.9 | `oauth.audienceBoundSessions` defaults to `false` (open-pryv.io 2.0.0-rc.73 to rc.77): a token an app sent to a resource server also works directly at the API unless the operator sets `true` | the release that defaults it to `true`: rewrite each clause as the default, name the release |
+| | | (none open) | |
+
+Discharged: the 2026-11-09 clause on `oauth.audienceBoundSessions`
+defaulting to `false` (open-pryv.io 2.0.0-rc.73 to rc.81; in
+`hipaa-security.164.312(a)(1)`, `iso-27001.A.5.15`, `gdpr.Art.32` and
+B.9), rewritten as the default in 2.0.0-rc.82 `[OTXE02]` (2026-11-12).
 
 Discharged: the 2026-10-26 clause on external ids missing from the
 per-user backup (observed on open-pryv.io 2.0.0-rc.58 and rc.59; in

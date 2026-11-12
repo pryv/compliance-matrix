@@ -106,9 +106,10 @@ requirements:
       `[AL13]`. An authorization for an account address is bound to the
       signed-in account `[OPUE2]`. Token exchange gives a resource server
       a token no wider than the one it replaces, only for a token issued
-      for one of its audiences `[OTX05]`; with
-      `oauth.audienceBoundSessions: true` the replaced token is refused
-      at the API (default `false`) `[OTXE02]`. Detail on
+      for one of its audiences `[OTX05]`; the replaced token is refused
+      at the API by default since open-pryv.io 2.0.0-rc.82
+      (`oauth.audienceBoundSessions: true`; an operator may set `false`)
+      `[OTXE02]`. Detail on
       `hipaa-security.164.312(a)(1)`.
 
       **Delegate-account token class.** Account delegation

@@ -2497,9 +2497,11 @@ requirements:
           introspection `[OPSE1]`, `[OXD08]`; apps and resource servers
           can revoke and introspect tokens; a resource server can
           exchange a user's token for its own, no wider, only for a
-          token issued for it `[OTX05]` (the replaced token stays usable
-          at the API unless `oauth.audienceBoundSessions: true`, default
-          `false`); client authentication by key is pinned to the key's
+          token issued for it `[OTX05]` (since open-pryv.io 2.0.0-rc.82
+          the replaced token is refused at the API by default,
+          `oauth.audienceBoundSessions: true` `[OTXE02]`; an operator may
+          set `false` on a core whose resource servers do not exchange
+          yet); client authentication by key is pinned to the key's
           type and algorithm `[OCAK7]`; the consent flow's state is
           signed with a per-core `oauth.stateKey`; and an authorization
           for an account address, or at a per-user issuer
