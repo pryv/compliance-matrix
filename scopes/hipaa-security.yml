@@ -84,7 +84,7 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, audit, CMC]
     config_keys: [cmc.retryLoop.enabled, cmc.memberAccess.maxTtl, cmc.memberAccess.sweepIntervalMs]
-    tests: [AA02, ACCP, LG20, CMCGA, CMCMR, GA20, GA21, GA22, GA23, GA40, GA41]
+    tests: [AA02, ACCP, LG20, CMCGA, CMCMR, GA20, GA21, GA22, GA23, GA40, GA41, MA32]
     overview: |
       Workforce access to ePHI is mediated by Pryv accesses. Termination
       is a single API call (`accesses.delete`) which immediately revokes
@@ -149,7 +149,11 @@ requirements:
       `cmc.memberAccess.maxTtl`). Retries and the periodic pass need
       `cmc.retryLoop.enabled`, `true` by default since this release;
       set to `false`, a warning is logged at boot and a residual stays
-      until the access expires. When the group account itself is
+      until the access expires. The sweep and the periodic pass read the
+      whole ledger since open-pryv.io 2.0.0-rc.79 `[MA32]`; earlier
+      releases read at most 100,000 ledger records per group account
+      (with a warning in the log), so on a larger group an access beyond
+      them lasted until its own expiry. When the group account itself is
       deleted, its members' accesses are deleted on the patient cores
       before the erasure, and no record is kept `[GA40]`. Terminating
       such a member is no longer your code's job; deciding who may join
@@ -522,8 +526,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation, CMC]
-    config_keys: [cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl, cmc.memberAccess.ratePerMinute, cmc.memberAccess.maxInFlightPerMembership, cmc.memberAccess.allowNameOnly, cmc.retryLoop.enabled, oauth.clientRevokeCheckSeconds, oauth.audienceBoundSessions, adapterRoutes]
-    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10, MAAC, CMCGA, CMCMA, GA01, GA10, GA11, GA12, GA14, GA15, GA24, GA31, MB10, MB12, MB13, CNRP1, CNRP6, CNRP7, DSC05, ASA1, ASA2, ASA3, ASA6, CNM2B, RQ32, SMV1, SMV4, OE31, OSUB1, OSUB3, ACSW1, ACSW2, OACR1, OACR2, AL13, OPSE5, OPUE2, OPAL2, ORF1, OTX05, OTXE04, OTXE02]
+    config_keys: [cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl, cmc.memberAccess.ratePerMinute, cmc.memberAccess.mintBurst, cmc.memberAccess.askRatePerMinute, cmc.memberAccess.askBurst, cmc.memberAccess.maxInFlightPerMembership, cmc.memberAccess.allowNameOnly, cmc.retryLoop.enabled, oauth.clientRevokeCheckSeconds, oauth.audienceBoundSessions, adapterRoutes]
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10, MAAC, CMCGA, CMCMA, GA01, GA10, GA11, GA12, GA14, GA15, GA16, GA17, MA20, MA22, GA24, GA31, MB10, MB12, MB13, CNRP1, CNRP6, CNRP7, DSC05, ASA1, ASA2, ASA3, ASA6, CNM2B, RQ32, SMV1, SMV4, OE31, OSUB1, OSUB3, ACSW1, ACSW2, OACR1, OACR2, AL13, OPSE5, OPUE2, OPAL2, ORF1, OTX05, OTXE04, OTXE02]
     overview: |
       Per-stream permissions are enforced at every API call; an access
       can read or write only the streams its `permissions[]` lists, at
@@ -698,10 +702,19 @@ requirements:
       relationship under the member's team streams, only for named
       data streams within what the patient's offer granted (never
       `*`, never a `:_cmc:` stream), with a lifetime within per-core
-      bounds and never beyond the membership's own expiry, at most
-      `cmc.memberAccess.ratePerMinute` asks per membership a minute
-      and one mint at a time per membership and patient (both per
-      worker process) `[GA12]`, `[GA14]`, `[GA15]`, `[CMCMA]`. The
+      bounds and never beyond the membership's own expiry, and one mint
+      at a time per membership and patient (per worker process)
+      `[GA12]`, `[GA14]`, `[GA15]`, `[CMCMA]`. Two budgets per
+      membership, counted for the whole core, pace the asks: new member
+      accesses (`cmc.memberAccess.mintBurst` 5000, then `ratePerMinute`
+      1000 a minute) and requests of any kind (`askBurst` 10000, then
+      `askRatePerMinute` 3000 a minute, by default); asking
+      again for a live access spends no new-access budget, and past
+      either budget the ask is answered `429` with `Retry-After`
+      (open-pryv.io 2.0.0-rc.79; before it, every ask counted against
+      `ratePerMinute`, per worker process) `[GA16]`, `[GA17]`, `[MA20]`,
+      `[MA22]`. The budgets pace a membership, they do not narrow its
+      reach: what ends it is its expiry and its revocation. The
       patient's core refuses anything beyond the grant, and accepts
       from a delegable grant only the exact member stamp, which it
       completes itself `[MB10]`, `[MB12]`. The access cannot manage

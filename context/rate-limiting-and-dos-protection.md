@@ -178,6 +178,19 @@ Rows whose `detail` should call out the operator-side responsibility
   core (`services.mfa.methods.sms.sendLimits.perCorePerHour`, default
   100, the toll-fraud cost cap) `[MSSL1]`, `[MSSL11]`;
   `webhooks.test` once per webhook interval `[WHTT1]`.
+- **Per-membership budgets, CMC group accounts** (2.0.0-rc.79): the
+  member accesses a group's core mints on patient accounts
+  (`consent/member-access-cmc`) are paced per membership, counted for
+  the whole core: new accesses (`cmc.memberAccess.mintBurst`, default
+  5000, then `ratePerMinute`, 1000 a minute) and requests of any kind
+  (`askBurst`, 10000, then `askRatePerMinute`, 3000 a minute); past
+  either, `429 too-many-attempts` with `Retry-After` `[GA16]`, `[GA17]`,
+  `[MA20]`, `[MA22]`. The request budget bounds the work a runaway
+  member client causes on the group's core; neither budget limits
+  which patients a membership reaches (its expiry and revocation do).
+  An `info` log line (`cmc/memberMintBudget`) marks a membership that
+  falls below half its new-access burst, for operators who alert on
+  bulk minting.
 - **Resource bounds**: `events.get` `limit` / `skip` within 0..100000
   and PostgreSQL results streamed through a cursor `[EGLV1]`,
   `[EGLC1]`; uploads limited to one event part and `uploads.maxFiles`

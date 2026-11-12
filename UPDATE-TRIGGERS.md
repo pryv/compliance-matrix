@@ -2625,9 +2625,10 @@ keys a client cannot set). Walked without change:
   `clientData` as the record, which still holds; the OAuth detail lives on
   `gdpr.Art.7`.
 The CMC member-access budgets of rc.79 (new `cmc:memberAccess:*` keys) are
-recorded in `context/workforce-access-patterns.md`, not in this entry.
-B.1, B.8, B.11: no entry (no new method, token class or config key for
-these two changes).
+recorded in `context/workforce-access-patterns.md` and walked under B.11
+("Walked 2026-11-12 for open-pryv.io 2.0.0-rc.79, CMC member-access
+budgets"), not in this entry. B.1, B.8: no entry (no new method or token
+class for these two changes).
 
 ### B.10 Observability emitted-surface changes
 
@@ -3038,6 +3039,69 @@ index row per minted OAuth2 session (`oauth-at/<hash>`, user id, client and
 core, no token, no username; rc.68) and metadata-document client rows
 (rc.74); no row claims against their absence. Backup: address aliases are
 carried like any alias (rc.76); no backup row changed.
+
+**Walked 2026-11-12 for open-pryv.io 2.0.0-rc.79, CMC member-access
+budgets** (tag `2.0.0-rc.79`, commit `61805f71`; released and deployed). No
+Section A slug, no `planned:` chip, no tier shift; `reviewed_at` left
+unchanged. What shipped:
+- **New keys** `cmc.memberAccess.mintBurst` (default 5000),
+  `cmc.memberAccess.askRatePerMinute` (3000) and `cmc.memberAccess.askBurst`
+  (10000); **`cmc.memberAccess.ratePerMinute`** goes from 30 to 1000 and now
+  counts new member accesses only. Each membership has two token buckets,
+  counted for the whole core (in the core-local `cluster_kv` shared by its
+  workers, no longer per worker process): new member accesses (`mintBurst`,
+  then `ratePerMinute`) and requests of any kind, re-asks included
+  (`askBurst`, then `askRatePerMinute`; raised to the new-access budget, with
+  a log line, when set lower). Asking again for a live access, or an ask
+  that fails, gives its new-access token back `[GA16]`, `[GA17]`, `[MA20]`,
+  `[MA22]`, `[MA25]`, `[MA42]`.
+- **Response**: a spent budget answers `429 too-many-attempts` with
+  `Retry-After` and `error.data.retryAfterSeconds` instead of `400`
+  (`error.data.id` unchanged, `cmc-member-access-rate-limited`) `[GA16]`,
+  `[MA40]`; `Access-Control-Expose-Headers` is `API-Version, Retry-After`.
+- **Fixes**: a failed `events.create` after the gate releases the in-flight
+  lock and the token `[GA1A]`; a re-ask after an expired, settled access
+  deletes the expired access of that name and mints again `[GA1B]`; the
+  member ledger is read whole (earlier releases read at most 100,000 records
+  per group account, so the sweep could miss accesses beyond them, each
+  bounded by its own expiry) `[MA32]`.
+- One `info` log line (`cmc/memberMintBudget`) when a membership falls below
+  half its new-access burst.
+
+| Scope | Ref | What changed | Tests added | Config keys added |
+|---|---|---|---|---|
+| hipaa-security | 164.312(a)(1) | member access bounds: the per-worker `ratePerMinute` ask limit replaced by the two core-wide budgets, `429` with `Retry-After`; budgets pace, expiry and revocation end the reach | `GA16`, `GA17`, `MA20`, `MA22` | `cmc.memberAccess.mintBurst`, `askRatePerMinute`, `askBurst` |
+| hipaa-security | 164.308(a)(3)(ii)(C) | sweep reads the whole ledger since rc.79; the 100,000-record ceiling of earlier releases stated | `MA32` | |
+
+Also updated: `context/rate-limiting-and-dos-protection.md` (new bullet,
+per-membership budgets, among the in-code budgets);
+`context/workforce-access-patterns.md` already described the budgets.
+Walked without change:
+- **Access control and least privilege, other rows**
+  (`iso-27001.A.5.15`, `iso-27001.A.5.18`, `iso-27001.A.8.2`,
+  `iso-27001.A.8.3`, `hipaa-security.164.308(a)(4)(ii)(B)` / `(C)`,
+  `soc2.CC6.2`, `soc2.CC6.3`, `gdpr.Art.25`, `gdpr.Art.29`,
+  `gdpr.Art.32`): those describing member accesses state what one may
+  reach (membership, offer, grant, lifetime, revocation), never its rate,
+  and A.8.2, A.8.3 and Art.25 do not describe them; the budgets pace a
+  membership and narrow nothing it reaches. `iso-27001.A.5.15` keeps its
+  lifetime keys only.
+- **Termination and attribution, other rows** (`iso-27001.A.6.5`,
+  `hipaa-security.164.312(a)(2)(i)`, `hipaa-security.164.312(b)`): A.6.5
+  derives from `hipaa-security.164.308(a)(3)(ii)(C)`, which carries the
+  ledger note, and its residual bound (the access's expiry) still holds;
+  member stamp and mint records unchanged.
+- **Network services** (`iso-27001.A.8.21`): it names examples of the
+  in-code budgets and points to `context/rate-limiting-and-dos-protection.md`
+  for the full list, which gains the bullet.
+- **Monitoring** (`iso-27001.A.8.16`, `soc2.CC7.2`): one operational `info`
+  log line; no row lists Pryv's log lines.
+- **Response headers** (`soc2.CC6.1`, OAuth CORS policy): exposing
+  `Retry-After` to cross-origin readers widens no access; the OAuth-only
+  CORS policy is unchanged.
+Transport, application-security, platform DB and backup rows: not affected
+(the budget counters live in the core-local `cluster_kv`, not in the
+platform DB; no backup content changes).
 
 ## Section C: Maintenance reminders
 
