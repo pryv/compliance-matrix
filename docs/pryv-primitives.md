@@ -207,6 +207,12 @@ Free-form structured metadata slot present on accesses, streams, and
 events.
 
 - **Free-form**: arbitrary JSON. Implementer-defined schema.
+- **Server-owned keys on accesses**: a few keys are written by Pryv and
+  cannot be set or changed by a client: `clientData.oauth` on OAuth2 grants
+  and sessions (including `clientData.oauth.client`, the app's name and
+  origin, on every operator-registered client's since open-pryv.io
+  2.0.0-rc.80 `[OCMP22]`, `[OCMDE15]`), the CMC member stamp `clientData.cmc` and the delegation
+  marker `clientData.delegation`.
 - **Versioned**: on accesses, included in every version snapshot (see
   `access`). On events, included in event version history.
 - **Compliance role**: the carrier for legally-binding metadata that the

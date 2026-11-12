@@ -881,7 +881,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [accesses.deletionRecords.retentionDays]
-    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3]
+    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22]
     planned:
       - kind: feature
         summary: "Chained / signed audit log strengthens tamper-resistance evidence"
@@ -942,8 +942,11 @@ requirements:
       user's token for its own, naming both clients); `oauth.consent.
       refused` with its reason (`permission-level-conflict`,
       `wrong-core`, `audience-account-mismatch`, `audience-not-listed`,
-      and with `oauth.perUserIssuer` on, `issuer-account-mismatch`), no
-      username in the payload `[OPUE2]`, `[OPIU3]`. In syslog (no user
+      `address-alias-held` since rc.79 (the owner consenting at one of
+      their address aliases another app's grant holds, formerly reported
+      as `audience-account-mismatch`), and with `oauth.perUserIssuer` on,
+      `issuer-account-mismatch`), no username or alias in the payload
+      `[OPUE2]`, `[OPUE22]`, `[OPIU3]`. In syslog (no user
       resolved): `oauth.token.introspected` (which resource server asked
       about which client's token, never the token) `[OXI06]`,
       `oauth.token.exchange_refused` with its reason (an unauthenticated

@@ -2574,6 +2574,61 @@ only before `07b6d3b6`). Walked without change:
 B.1 (address aliases), B.8 (token classes) and B.11 (config keys) carry
 pointers to this entry. B.2, B.3, B.5, B.6, B.10: none.
 
+**Walked 2026-11-12 for open-pryv.io 2.0.0-rc.79 and 2.0.0-rc.80** (tags
+rc.79 `61805f71`, rc.80 `26f07a8e`; both released and deployed). No Section A
+slug, no `planned:` chip, no tier shift; `reviewed_at` left unchanged. What
+shipped:
+- **`address-alias-held`** (rc.79): the account owner consenting at one of
+  their address aliases that another app's grant holds is refused `403
+  access_denied` with `reason: address-alias-held` at
+  `/oauth2/authorize/offer` and `/accept`, audited under
+  `oauth.consent.refused` with that reason (no alias in the audit row),
+  instead of `audience-account-mismatch`. The refusal itself is not new
+  (the alias was already held), only its reason; every other case keeps
+  `audience-account-mismatch`, so another account learns nothing; the owner
+  already sees the holding app in `account.addressAliases.list` (`heldBy`,
+  rc.76) `[OPUE22]`, `[OPUE9]`, `[OPUE17]`.
+- **Registry client stamp** (rc.80): the consent grant and every session of
+  an operator-registered client carry `clientData.oauth.client = { name?,
+  origin: "operator" }` (the name the operator registered, never one from a
+  request); a metadata-document client's stamp (since rc.74, `{ name?, host,
+  url }`) gains `origin: "metadata-document"`. Server-owned, refused by
+  `accesses.update`; re-stamped at the next consent (grant) and refresh
+  (session); a derived session (token exchange) carries none
+  `[OCMP22]`, `[OREG12]`, `[OCMD13]`, `[OCMDE15]`.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.7 | registry clients' consent record names the app (`clientData.oauth.client`, server-owned) | `OCMP22`, `OREG12`, `OCMDE15` |
+| gdpr | Art.15 | recipients that are OAuth2 apps are named by Pryv on the subject's accesses | `OCMP22`, `OCMDE15` |
+| hipaa-security | 164.312(b) | `address-alias-held` added to the `oauth.consent.refused` reasons; no alias in the payload | `OPUE22` |
+
+Also updated: `context/cmc-consent-primitives.md` (registry clients' record
+names the app) and `docs/pryv-primitives.md` (`clientData`: the server-owned
+keys a client cannot set). Walked without change:
+- **Access control and identity** (`hipaa-security.164.312(a)(1)`,
+  `iso-27001.A.5.15`, `iso-27001.A.5.16`): an address alias held by one
+  app's grant was refused to another app before rc.79 as well; only the
+  reason the owner reads changed.
+- **Audit, other rows** (`iso-27001.A.8.15`, `soc2.P6.2`, `gdpr.Art.30`):
+  A.8.15 lists reasons "including" and points to
+  `hipaa-security.164.312(b)` for the full list; P6.2 and Art.30 name the
+  `oauth.*` family, not its reasons.
+- **Alias rows** (`gdpr.Art.32` alias-bound addressing, `soc2.CC6.3`
+  alias deletion `[OPAL4]`, `iso-27001.A.8.11`): no change to what an
+  aliased token answers or to alias withdrawal.
+- **Client identity and issuance** (`soc2.CC6.2`, `hipaa-security.164.312(d)`):
+  the stamp is a record of the app on the user's side, not a credential;
+  registration and vetting unchanged.
+- **Consent rows elsewhere** (`soc2` privacy criteria, `iso-27701`,
+  `hipaa-privacy`, `pipeda`, `swiss-nlpd`): they cite the access +
+  `clientData` as the record, which still holds; the OAuth detail lives on
+  `gdpr.Art.7`.
+The CMC member-access budgets of rc.79 (new `cmc:memberAccess:*` keys) are
+recorded in `context/workforce-access-patterns.md`, not in this entry.
+B.1, B.8, B.11: no entry (no new method, token class or config key for
+these two changes).
+
 ### B.10 Observability emitted-surface changes
 
 **Where the work lives**: `open-pryv.io`

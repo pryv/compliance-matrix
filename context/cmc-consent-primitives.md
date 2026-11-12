@@ -225,8 +225,15 @@ created (rc.70). The session minted at consent is written by the system
 (`createdBy: system`), so the consent is recorded by `oauth.consent.granted`
 plus the grant's own create or update row, not by an `accesses.create` row.
 A client identified by a client metadata document (rc.74, opt-in) gets its
-reach from the operator's template, never from the document. See
-`UPDATE-TRIGGERS.md` B.9 (walk of 2026-11-09).
+reach from the operator's template, never from the document. The record
+names the app: the grant and every session carry `clientData.oauth.client`,
+`{ name?, origin: "operator" }` for a client the operator registered (since
+rc.80; the registered name, never one from a request) and `{ name?, host,
+url, origin: "metadata-document" }` for a metadata-document client (since
+rc.74, `origin` since rc.80). The stamp is written by the server and refused
+by `accesses.update`; a grant made before rc.80 gains it at its next consent,
+its sessions at their next refresh. See `UPDATE-TRIGGERS.md` B.9 (walks of
+2026-11-09 and 2026-11-12).
 
 Evidence surface: OAuth2 authorization activity is in the audit trail since
 open-pryv.io `07b6d3b6` (`oauth.*` events: consent shown / granted / refused

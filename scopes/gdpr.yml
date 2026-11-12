@@ -478,7 +478,7 @@ requirements:
     reviewed_at: "2026-07-18"
     pryv_primitives: [access, permissions, clientData, CMC, event, delegation]
     docs: [guides/consent.md, customer-resources/auth-oauth2.md]
-    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11, MAAC, GA10, GA24, GA30, MB10, HR25, DH25, RQ20, RQ21, RQ22, RQ23, CIR26, CIR27, HR41, RQ33, RQ32, OE31, OSUB1, OSUB3, OCMP7, OCMP11, RQAS1]
+    tests: [AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11, MAAC, GA10, GA24, GA30, MB10, HR25, DH25, RQ20, RQ21, RQ22, RQ23, CIR26, CIR27, HR41, RQ33, RQ32, OE31, OSUB1, OSUB3, OCMP7, OCMP11, RQAS1, OCMP22, OREG12, OCMDE15]
     config_keys: [cmc.retryLoop.enabled, cmc.allowedPrivateHosts]
     overview: |
       The access Pryv mints when your user grants permission IS your
@@ -701,7 +701,15 @@ requirements:
       clients, rc.68), the durable record is an app access
       `oauth-grant:<clientId>` on the user's own account instead of a
       CMC data-grant, with the same versioning and withdrawal (see
-      `context/cmc-consent-primitives.md`). Demonstrability
+      `context/cmc-consent-primitives.md`). Since open-pryv.io
+      2.0.0-rc.80 that grant and every session of it also name the app
+      in `clientData.oauth.client` (`{ name?, origin: "operator" }`,
+      the name the operator registered, never one taken from a
+      request; a client metadata document's stamp carries its host and
+      URL with `origin: "metadata-document"`), written by the server and
+      refused by `accesses.update`, so the record shows which app the
+      consent went to. A grant made before rc.80 gains it at its next
+      consent `[OCMP22]`, `[OREG12]`, `[OCMDE15]`. Demonstrability
       rests on that data-grant + the signed offer material (the access
       + its version history), not on a separate event log.
 
@@ -1291,7 +1299,7 @@ requirements:
     pryv_primitives: [access, stream, event, audit, account-backup-tool]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     config_keys: [accesses.deletionRecords.retentionDays]
-    tests: [AA01, EGSQ, UZEV]
+    tests: [AA01, EGSQ, UZEV, OCMP22, OCMDE15]
     overview: |
       Your subject, holding a personal token, reads everything via the
       standard Pryv API, events, streams, accesses (with full history),
@@ -1316,6 +1324,15 @@ requirements:
         - `webhooks.get`: webhook subscriptions
         - `GET /events/<id>/series`: HF data points per series-event
       Attachments downloadable via the events API.
+
+      Recipients that are OAuth2 apps are named by Pryv itself: the
+      grant and sessions of an operator-registered client carry
+      `clientData.oauth.client` (`name`, `origin: "operator"`, since
+      open-pryv.io 2.0.0-rc.80), as those of a client metadata document
+      do (`name`, `host`, `url`, since rc.74), written by the server and
+      not changeable by any client, so the subject's `accesses.get`
+      names the app, not only its `oauth-grant:<clientId>` access name
+      `[OCMP22]`, `[OCMDE15]`.
 
       `pryv-account-backup` v0.6.0 (shipped 2026-06-15; preceded by
       v0.4.0 2026-05-27 + v0.5.0 2026-06-13) covers, via its CLI flavour,
