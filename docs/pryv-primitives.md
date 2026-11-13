@@ -19,7 +19,11 @@ A grant of permission to act on a user's data.
   `cuid` until first update, then `"<cuid>:<serial>"`. See
   [`../context/access-versioning.md`](../context/access-versioning.md).
 - **Carries**: `permissions[]` (per-stream + level), `clientData` (free-form
-  metadata), `name`, expiry, telemetry counters.
+  metadata), `name`, expiry, telemetry counters (returned to the account
+  owner as `usage`, approximate lifetime call counts per method, since
+  open-pryv.io 2.0.0-rc.84 `[AUG1]`, `[AUG3]`), an `integrity` checksum
+  (verifiable on the returned form also after an update since 2.0.0-rc.84
+  `[AIWF]`; `usage` is not part of it).
 - **Compliance role**: the access IS the durable, versioned consent /
   authorization contract. `clientData` can carry the consent text shown +
   the lawful-basis + the purposes + retention metadata. Permissions enforce

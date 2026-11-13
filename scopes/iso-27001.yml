@@ -529,7 +529,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [logs.file, logs.fileSync]
-    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1, OXN02, OXI06, OTX03, OCMDE13, OPIU3, AUAB3]
+    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1, OXN02, OXI06, OTX03, OCMDE13, OPIU3, AUAB3, AUG1, AUG3]
     planned:
       - kind: feature
         summary: "Chained / signed audit log adds the software-side tamper-resistance signal A.8.15 expects"
@@ -561,6 +561,16 @@ requirements:
       requests are not audited by the core. Since rc.77 a streamed
       answer the client stopped reading is logged as an error
       (`client-closed-request`), not a success `[AUAB3]`. Full list on
+      `hipaa-security.164.312(b)`.
+
+      **Analysis by the account owner (open-pryv.io 2.0.0-rc.84).**
+      The owner's `accesses.get` reports, per access, approximate
+      lifetime call counts by method (`usage`; never returned to an app
+      or shared caller) `[AUG1]`, `[AUG3]`, and the reference account
+      app (app-web-user-account 0.34.0) adds a linkable, filterable
+      Audit trail tab over the account's audit log. This helps your
+      users review their own activity; the operator-side analysis
+      (review cadence, alerting) stays yours. Detail on
       `hipaa-security.164.312(b)`.
 
       "Stored, protected" caveat, the audit log is append-only by

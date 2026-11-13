@@ -894,7 +894,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [accesses.deletionRecords.retentionDays]
-    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22]
+    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F]
     planned:
       - kind: feature
         summary: "Chained / signed audit log strengthens tamper-resistance evidence"
@@ -1028,6 +1028,25 @@ requirements:
       `system.extIdHolds` used by forced-mode sign-ins (open-pryv.io
       2.0.0-rc.59), both reads that name no account.
 
+      **The account owner's examination (open-pryv.io 2.0.0-rc.84).**
+      `accesses.get` and `accesses.getOne` return to the owner's
+      personal token (or a delegate's personal access), on each access
+      and each deletion record, `usage`: approximate lifetime call
+      counts per method, summed as reads, writes, session and other
+      calls; a batch counts as its inner calls `[AUG1]`, `[AUG2]`. App
+      and shared callers never receive it `[AUG3]`; it needs
+      `accessTracking.isActive` (on by default). The counts are written
+      after each reply and are a summary: the per-call record is the
+      audit log, where a batch is one `callBatch` row beside the rows of
+      its inner calls `[QK5F]`. The reference account app
+      (app-web-user-account 0.34.0) shows the counts and the last error
+      on each access's Activity card, and an Audit trail tab lists every
+      audited call on the account, linkable and filtered by app (the
+      OAuth grant and its sessions), access, date or kind of call, each
+      row naming the access that made it, a revoked one included (app
+      tests `[ACTV]`, `[TRLP]`), so the owner can examine the activity
+      on their account without an operator.
+
   - ref: 164.312(c)(1)
     title: Integrity, standard
     text: |
@@ -1085,7 +1104,7 @@ requirements:
     draft: true
     pryv_primitives: [event, audit]
     config_keys: [integrity.algorithm]
-    tests: [WNWM, CVIA1]
+    tests: [WNWM, CVIA1, AIWF, AIWG, AIWK, AIWM, AIWN, AIWR, AIWS, AIWU, AIWW, AIWZ]
     planned:
       - kind: feature
         summary: "Chained / signed audit log authenticates audit data (row moves F:Evidence|Low → F:Evidence|Med)"
@@ -1122,6 +1141,29 @@ requirements:
       away from `md5` / `sha1` leaves the events and accesses written
       before with values that no longer match (`bin/integrity-check.js`
       reports them).
+
+      **Accesses, and the configured algorithm (open-pryv.io
+      2.0.0-rc.84).** An access carries the same kind of checksum. Since
+      2.0.0-rc.84 it verifies on the form the API returns, also after an
+      update (composite `id` and `modifiedBy`), on `accesses.update`,
+      `accesses.get`, `accesses.getOne` (current and older versions,
+      `includeHistory`) and deletion records `[AIWF]`, `[AIWG]`,
+      `[AIWK]`, `[AIWM]` (a copy returned without its token, as a
+      deletion record is, verifies once a holder of the token restores
+      it `[AIWN]`); before, the value of an updated access was
+      computed on the stored form and a client could not verify it. The
+      upgrade recomputes the stored values once (a PostgreSQL migration,
+      a one-shot pass on SQLite), rewriting a row only when it holds the
+      previous form's value; anything else is left for
+      `bin/integrity-check.js` to report `[AIWR]`, `[AIWS]`, `[AIWU]`.
+      The owner-only `usage` counters are not part of it: a client
+      strips them before hashing, as it does `lastUsed` `[AIWW]`. The
+      storage-layer event checksum and every check by
+      `bin/integrity-check.js` now use `integrity.algorithm` (they used
+      sha256 whatever the setting) `[AIWZ]`; with `sha512`, events
+      written before 2.0.0-rc.84 by that path are reported, not
+      recomputed. Run the migration before trusting the check when
+      `migrations.autoRunOnStart` is `false`.
 
       Audit-log tamper resistance itself is **voluntarily missing
       today**: rows are append-only by convention in the audit-write

@@ -1298,8 +1298,8 @@ requirements:
     draft: true
     pryv_primitives: [access, stream, event, audit, account-backup-tool]
     functional_specs: [EVENT.BASE, STREAM.BASE]
-    config_keys: [accesses.deletionRecords.retentionDays]
-    tests: [AA01, EGSQ, UZEV, OCMP22, OCMDE15]
+    config_keys: [accesses.deletionRecords.retentionDays, accessTracking.isActive]
+    tests: [AA01, EGSQ, UZEV, OCMP22, OCMDE15, AUG1, AUG3, AUG4]
     overview: |
       Your subject, holding a personal token, reads everything via the
       standard Pryv API, events, streams, accesses (with full history),
@@ -1333,6 +1333,20 @@ requirements:
       not changeable by any client, so the subject's `accesses.get`
       names the app, not only its `oauth-grant:<clientId>` access name
       `[OCMP22]`, `[OCMDE15]`.
+
+      How much each recipient used its grant: since open-pryv.io
+      2.0.0-rc.84 the subject's `accesses.get` and `accesses.getOne`
+      return, on each access and each deletion record, a `usage` object:
+      approximate lifetime call counts per API method, also summed as
+      reads, writes, session and other calls `[AUG1]`, `[AUG2]`,
+      `[AUG4]`. Only the account owner's personal token (or a delegate's
+      personal access) receives it; an app or shared access never sees
+      the counts of other accesses `[AUG3]`. The counts need
+      `accessTracking.isActive` (on by default) `[AUG6]`. They summarise;
+      the audit log stays the record of each call. The reference account
+      app (app-web-user-account 0.34.0) shows them on each access's
+      Activity card, with a link to an Audit trail tab filtered by app,
+      access, date or kind of call.
 
       `pryv-account-backup` v0.6.0 (shipped 2026-06-15; preceded by
       v0.4.0 2026-05-27 + v0.5.0 2026-06-13) covers, via its CLI flavour,

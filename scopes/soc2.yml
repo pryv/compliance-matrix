@@ -1574,12 +1574,15 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [account-backup-tool, access, event, stream, audit]
-    tests: [AA01, EGSQ, UZEV]
+    tests: [AA01, EGSQ, UZEV, AUG1, AUG3]
     derives_from: [gdpr.Art.15, hipaa-privacy.164.524, iso-27701.A.7.3.4]
     overview: |
       Subject access is subject-runnable: the data subject holds their
       own credentials, so events.get / streams.get return their data
-      directly, and the pryv-account-backup CLI produces a complete
+      directly (since open-pryv.io 2.0.0-rc.84 their accesses.get also
+      reports how much each access was used, as approximate lifetime
+      call counts that only the owner receives `[AUG1]`, `[AUG3]`; see
+      gdpr.Art.15), and the pryv-account-backup CLI produces a complete
       portable export, account, profiles, app profiles, streams,
       accesses (incl. revoked / expired + opt-in per-access version
       history), events (chunked + incremental), audit log, HF series
@@ -1656,7 +1659,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream, access]
-    tests: [AT01, AT51, AT61, OE07, OTX03, OTXE10, OXI06]
+    tests: [AT01, AT51, AT61, OE07, OTX03, OTXE10, OXI06, AUG1, AUG3, AUG4]
     derives_from: [hipaa-privacy.164.528, gdpr.Art.30]
     overview: |
       Every disclosure is a read against a shared / CMC access, and the
@@ -1675,7 +1678,12 @@ requirements:
       (`oauth.token.introspected`, rc.69) `[OXI06]`. The audit-event-stream can
       surface the same record into the subject's own streams. This is
       the technical disclosure register; how long you retain it is your
-      policy.
+      policy. Since open-pryv.io 2.0.0-rc.84 the account owner also gets,
+      per access and per deletion record, approximate lifetime call
+      counts by method (`usage` on `accesses.get`, never returned to an
+      app or shared caller) `[AUG1]`, `[AUG3]`, `[AUG4]`: a summary of
+      how much each recipient used its grant, not a substitute for the
+      per-call record, which stays the audit log.
 
   - ref: P6.3
     title: P6.3, Record of detected unauthorized disclosures
@@ -1773,7 +1781,12 @@ requirements:
       (who holds a grant). The audit-event-stream can expose this to the
       subject directly. Packaging it into a subject-facing report on
       request is your workflow; the underlying record is complete and
-      attributable.
+      attributable. The reference account app (app-web-user-account
+      0.34.0) gives the subject a self-service view of it: an Audit trail
+      tab, linkable and filtered by app, access, date or kind of call,
+      each row naming the access that made it (a revoked one included),
+      and per-access lifetime call counts read from open-pryv.io
+      2.0.0-rc.84 or later (app tests `[ACTV]`, `[TRLP]`).
 
   - ref: P7.1
     title: P7.1, Data quality, accuracy, completeness, relevance

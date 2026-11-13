@@ -1864,6 +1864,80 @@ listed under B.9; DSAR, rectification, erasure and restriction families
 walked without change (address aliases are deleted with the account like
 any alias).
 
+**Walked 2026-11-13 for open-pryv.io 2.0.0-rc.84** (tag `2.0.0-rc.84`,
+commit `d059c8c2`; released and deployed the same day) and the reference
+account app app-web-user-account 0.34.0 (same day). No Section A slug and
+no `planned:` chip involved (none queued on the rows below; the
+`AUDIT-LOG-CHAINING` chips on the audit and integrity rows are about the
+audit log's own tamper evidence and stay); no tier shift; `reviewed_at`
+left unchanged. What shipped:
+- **New response field on existing methods, owner only**: `accesses.get`
+  and `accesses.getOne` return `usage: { total, reads, writes, session,
+  other, byMethod }` (approximate lifetime call counts, written after each
+  reply; a batch counts its inner calls) on each access and deletion
+  record, and on the `getOne` head, to a personal access (the owner's or a
+  delegate's) only; app and shared callers never get it; absent when
+  `accessTracking.isActive` is off; read-only (refused at creation and
+  update); not part of the access `integrity` `[AUG1]`..`[AUG8]`,
+  `[AUGS]`, `[AUGC]`, `[ACUS1]`, `[ACUS2]`. History snapshots no longer
+  expose the raw `calls` counters `[AUG5]`. Audit side: a batch is one
+  `callBatch` row beside its inner rows `[QK5F]`. The account app shows
+  the counts on an Activity card per access and adds a linkable Audit
+  trail tab (`/account/audit`, filters `app`, `access`, `from`, `to`,
+  `kind`, `action`), app tests `[ACTV]`, `[TRLP]` (prose only: the
+  validator resolves open-pryv.io codes).
+- **Access integrity fix**: the `integrity` of an updated access verifies
+  on the API's returned form (it did not since the composite-id format);
+  stored values recomputed once at upgrade (PostgreSQL migration, SQLite
+  one-shot pass; a row is rewritten only when it holds the previous
+  form's value); `compute()` and `bin/integrity-check.js` honour
+  `integrity.algorithm` `[AIWA]`, `[AIWB]` (`[AIWF]`..`[AIWZ]`,
+  `[AIWQ]`).
+- **New config key** `account.storageUsed.intervalHours` (B.11 below).
+
+| Scope | Ref | What changed | Tests added | Config keys added |
+|---|---|---|---|---|
+| gdpr | Art.15 | detail: per-access `usage` for the subject (owner only, deletion records included), summary vs audit record, account app Activity card and Audit trail tab | `AUG1`, `AUG3`, `AUG4` | `accessTracking.isActive` |
+| soc2 | P5.1 | overview: the subject's `accesses.get` reports per-access call counts | `AUG1`, `AUG3` | |
+| soc2 | P6.2 | overview: per-access counts for the owner, a summary of each recipient's use, not a substitute for the audit log | `AUG1`, `AUG3`, `AUG4` | |
+| soc2 | P6.7 | overview: the account app's Audit trail tab and per-access counts as a self-service view of the accounting | none (app codes in prose) | |
+| hipaa-security | 164.312(b) | new "account owner's examination" paragraph: `usage`, batch counting, the account app's Activity card and Audit trail tab | `AUG1`, `AUG2`, `AUG3`, `QK5F` | |
+| iso-27001 | A.8.15 | new "analysis by the account owner" paragraph; operator-side analysis stays the operator's | `AUG1`, `AUG3` | |
+| hipaa-security | 164.312(c)(2) | new "accesses, and the configured algorithm" paragraph: access checksum verifiable after an update since rc.84, one-time recompute, `usage` outside the hash, `integrity.algorithm` honoured by the event checksum and the check | `AIWF`, `AIWG`, `AIWK`, `AIWM`, `AIWN`, `AIWR`, `AIWS`, `AIWU`, `AIWW`, `AIWZ` | |
+
+Also updated: `docs/pryv-primitives.md` (`access`: owner-visible
+`usage`, checksum verifiable after an update),
+`context/access-versioning.md` (counters as `usage`, snapshots without
+counters, new section "Integrity of an access version").
+
+Walked without change:
+- **DSAR, other rows** (`hipaa-privacy.164.524`, `ccpa.1798.110`,
+  `pipeda.Principle.4.9`, `swiss-nlpd.Art.25`, `gdpr.Art.20`):
+  "the subject reads everything via the standard API, accesses
+  included" still holds and the detail sits on `gdpr.Art.15` (which
+  `ccpa.1798.110` derives from); `usage` is server-derived usage metadata,
+  not data the subject provided, so nothing new to port.
+- **Accounting of disclosures** (`hipaa-privacy.164.528`,
+  `164.528(b)`): the row describes the audit log as the substrate and
+  derives the §528 subset (TPO excluded) itself; lifetime counts carry
+  no date, purpose or TPO split, so they add no accounting field. The self-service view is recorded on `soc2.P6.7`.
+- **Records of processing** (`gdpr.Art.30`): register derivation from
+  accesses and the audit trail unchanged.
+- **Access control** (`hipaa-security.164.312(a)(1)`, `soc2.CC6.1`,
+  `soc2.CC6.3`): no new grant path; `usage` is withheld from app and
+  shared callers, which still read their own counters through
+  `getAccessInfo`.
+- **Rectification, erasure, restriction**: not touched (`usage` is
+  read-only and goes with the access).
+- **Integrity, other rows** (`hipaa-security.164.312(c)(1)`,
+  `soc2.PI1.4`, `soc2.PI1.5`, `gdpr.Art.32` §1(b) / "Integrity of stored
+  records", `iso-27001.A.8.15`): they describe event integrity, the audit
+  row's event checksum and concurrent writes; none claims that an
+  access's checksum is client-verifiable, so the fix is recorded on
+  `hipaa-security.164.312(c)(2)` only.
+B.2, B.3, B.4 (no new primitive: `access`, `audit` extended), B.5, B.6,
+B.8 (no token-class change on a consent-bearing method), B.9, B.10: none.
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
@@ -3102,6 +3176,21 @@ Walked without change:
 Transport, application-security, platform DB and backup rows: not affected
 (the budget counters live in the core-local `cluster_kv`, not in the
 platform DB; no backup content changes).
+
+**Walked 2026-11-13 for open-pryv.io 2.0.0-rc.84** (full record under
+B.1, same date). New key **`account.storageUsed.intervalHours`** (default
+`24`, `0` turns the job off, a value that is not a number >= 0 stops the
+boot): the core now computes `account.get` `storageUsed` itself, for its
+own accounts, about 15 minutes after boot and then at that interval
+(before, the figure stayed zero unless the operator scheduled
+`bin/nightly`). Not a security property: no row cites `storageUsed`, so
+no `config_keys:` added and no row changed. The access integrity
+recompute is a one-time storage migration (PostgreSQL) or first-start
+pass (SQLite), recorded on `hipaa-security.164.312(c)(2)` under B.1; no
+response header, platform DB or backup change. Transport,
+application-security, availability / integrity (`gdpr.Art.32` §1(b),
+`iso-27001.A.8.14` / `A.8.22`, `soc2.A1.2`) and backup rows: walked
+without change.
 
 ## Section C: Maintenance reminders
 
