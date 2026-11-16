@@ -328,6 +328,14 @@ Filed under internal backlog slug `BOILER-JSON-LOG-FORMAT`
 
 ### `BUILTIN-STORE-OVERRIDE` (DX-only: no matrix row updates)
 
+**Status (2026-11-16): merged to open-pryv.io `master` in `5f80f886`, not yet
+released (ships with the next tag).** `custom:dataStores` entries now accept
+`override: true`, which replaces the built-in store of the same id; a colliding
+entry without it no longer reaches `*` permissions.
+`context/audit-archival-via-custom-datastore.md` Flavour B is updated with the
+config snippet. No row change: no matrix row claims that `*` never reaches the
+account or audit stores.
+
 **Where the work lives**: `open-pryv.io`
 (`components/mall/src/index.ts` register-order change +
 `config-validation` schema addition).
