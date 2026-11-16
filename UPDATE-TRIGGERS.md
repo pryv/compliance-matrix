@@ -1938,6 +1938,54 @@ Walked without change:
 B.2, B.3, B.4 (no new primitive: `access`, `audit` extended), B.5, B.6,
 B.8 (no token-class change on a consent-bearing method), B.9, B.10: none.
 
+**Walked 2026-11-16 for open-pryv.io master `f228b13a` (unreleased at the
+walk; expected in 2.0.0-rc.85: fix the version in the rows below if the tag
+differs)** and app-web-user-account main `4b2f419` (unreleased). No Section A
+slug and no `planned:` chip involved (the `AUDIT-LOG-CHAINING` chips are about
+tamper evidence and stay); no tier shift; `reviewed_at` left unchanged. What
+changed:
+- **New API method** `audit.getSummary` (`GET /{username}/audit/summary`,
+  https://github.com/pryv/open-pryv.io/issues/169): the audited calls of the
+  account counted per `hour` / `day` / `week` over `fromTime`..`toTime`, in an
+  IANA `timezone`, optionally for 1 to 50 `accessIds` (a composite
+  `<id>:<serial>` counts one version), as dense buckets `{ time, total, reads,
+  writes, session, other, errors }`; the batch envelope is not counted; same
+  method classes as the rc.84 `usage` `[ASM1]`, `[ASM2]`, `[ASM3]`, `[ASMC]`,
+  `[ASM8]`. Personal callers only (owner or delegate), app and shared
+  refused, a read on the whole audit store included `[ASM4]`, `[ASM5]`;
+  `unavailable-method` when the audit trail is off `[ASM7]`; the call is
+  audited as a read `[ASM9]`; bounded work (budget, two concurrent reads, a
+  short queue, refused rather than partial) `[ASMB]`, `[ASME]`, `[ASMF]`.
+- **Reference account app**: the access page's Activity chart and a new
+  chart over a chosen period on the Audit trail tab are counted by the core,
+  with a fallback to counting `events.get` rows on older cores (app tests
+  `[ACT8]`, `[ACT9]`, `[TRSM]`, prose only).
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.15 | detail: activity over time for the subject (personal callers, account or chosen accesses) | `ASM1`, `ASM2`, `ASM3`, `ASM4` |
+| hipaa-security | 164.312(b) | "account owner's examination": counted over a period, batch envelope not counted, call audited, app charts | `ASM1`, `ASM2`, `ASM4`, `ASM9` |
+| iso-27001 | A.8.15 | "analysis by the account owner": counts per hour / day / week | `ASM1`, `ASM4` |
+| soc2 | P5.1 | overview: the subject's calls counted over a period | `ASM1`, `ASM4` |
+| soc2 | P6.2 | overview: when each recipient used its grant, still a summary of the record | `ASM2`, `ASM3` |
+| soc2 | P6.7 | overview: the account app's charts over a chosen period (next app release) | none (app codes in prose) |
+
+Walked without change:
+- **Accounting of disclosures** (`hipaa-privacy.164.528`, `164.528(b)`): the
+  counts carry dates but no purpose, recipient data scope or TPO split, so the
+  row's derivation from the audit log is unchanged; the self-service view is
+  on `soc2.P6.7`.
+- **DSAR, other rows** (`hipaa-privacy.164.524`, `ccpa.1798.110`,
+  `pipeda.Principle.4.9`, `swiss-nlpd.Art.25`, `gdpr.Art.20`): the summary is
+  derived from the audit log the subject already reads; nothing new to port.
+- **Access control** (`hipaa-security.164.312(a)(1)`, `soc2.CC6.1`,
+  `soc2.CC6.3`): no new grant path; the method is refused to app and shared
+  callers.
+- **Rectification, erasure, restriction, integrity**: not touched (read-only,
+  computed on demand, nothing stored).
+B.2, B.3, B.4 (no new primitive), B.5, B.6, B.8, B.9, B.10, B.11 (no new
+config key): none.
+
 ### B.2: New event-type formats (`data-types` repo)
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May

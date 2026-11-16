@@ -1299,7 +1299,7 @@ requirements:
     pryv_primitives: [access, stream, event, audit, account-backup-tool]
     functional_specs: [EVENT.BASE, STREAM.BASE]
     config_keys: [accesses.deletionRecords.retentionDays, accessTracking.isActive]
-    tests: [AA01, EGSQ, UZEV, OCMP22, OCMDE15, AUG1, AUG3, AUG4]
+    tests: [AA01, EGSQ, UZEV, OCMP22, OCMDE15, AUG1, AUG3, AUG4, ASM1, ASM2, ASM3, ASM4]
     overview: |
       Your subject, holding a personal token, reads everything via the
       standard Pryv API, events, streams, accesses (with full history),
@@ -1346,7 +1346,13 @@ requirements:
       the audit log stays the record of each call. The reference account
       app (app-web-user-account 0.34.0) shows them on each access's
       Activity card, with a link to an Audit trail tab filtered by app,
-      access, date or kind of call.
+      access, date or kind of call. Over time: since open-pryv.io
+      2.0.0-rc.85 the same personal callers can call `audit.getSummary`,
+      which counts the audited calls per hour, day or week over a period
+      (reads, writes, session, other calls, errors), for the whole
+      account or for chosen accesses `[ASM1]`, `[ASM2]`, `[ASM3]`; app and
+      shared callers are refused `[ASM4]`. It is computed from the audit
+      log, which stays the record.
 
       `pryv-account-backup` v0.6.0 (shipped 2026-06-15; preceded by
       v0.4.0 2026-05-27 + v0.5.0 2026-06-13) covers, via its CLI flavour,

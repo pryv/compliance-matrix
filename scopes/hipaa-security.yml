@@ -894,7 +894,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [accesses.deletionRecords.retentionDays]
-    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F]
+    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9]
     planned:
       - kind: feature
         summary: "Chained / signed audit log strengthens tamper-resistance evidence"
@@ -1045,7 +1045,14 @@ requirements:
       OAuth grant and its sessions), access, date or kind of call, each
       row naming the access that made it, a revoked one included (app
       tests `[ACTV]`, `[TRLP]`), so the owner can examine the activity
-      on their account without an operator.
+      on their account without an operator. Since open-pryv.io
+      2.0.0-rc.85 the same callers can also have the audit log counted
+      over a period (`audit.getSummary`: calls per hour, day or week as
+      reads, writes, session, other calls and errors, for the account or
+      chosen accesses, a batch envelope not counted) `[ASM1]`, `[ASM2]`;
+      app and shared callers are refused `[ASM4]`, and the call is itself
+      audited `[ASM9]`. The account app's next release draws its Activity
+      chart and an Audit trail chart over a chosen period from it.
 
   - ref: 164.312(c)(1)
     title: Integrity, standard

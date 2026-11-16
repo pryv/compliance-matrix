@@ -1574,15 +1574,16 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [account-backup-tool, access, event, stream, audit]
-    tests: [AA01, EGSQ, UZEV, AUG1, AUG3]
+    tests: [AA01, EGSQ, UZEV, AUG1, AUG3, ASM1, ASM4]
     derives_from: [gdpr.Art.15, hipaa-privacy.164.524, iso-27701.A.7.3.4]
     overview: |
       Subject access is subject-runnable: the data subject holds their
       own credentials, so events.get / streams.get return their data
       directly (since open-pryv.io 2.0.0-rc.84 their accesses.get also
       reports how much each access was used, as approximate lifetime
-      call counts that only the owner receives `[AUG1]`, `[AUG3]`; see
-      gdpr.Art.15), and the pryv-account-backup CLI produces a complete
+      call counts that only the owner receives `[AUG1]`, `[AUG3]`, and
+      since rc.85 audit.getSummary counts their audited calls over a
+      period `[ASM1]`, `[ASM4]`; see gdpr.Art.15), and the pryv-account-backup CLI produces a complete
       portable export, account, profiles, app profiles, streams,
       accesses (incl. revoked / expired + opt-in per-access version
       history), events (chunked + incremental), audit log, HF series
@@ -1659,7 +1660,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [audit, audit-event-stream, access]
-    tests: [AT01, AT51, AT61, OE07, OTX03, OTXE10, OXI06, AUG1, AUG3, AUG4]
+    tests: [AT01, AT51, AT61, OE07, OTX03, OTXE10, OXI06, AUG1, AUG3, AUG4, ASM2, ASM3]
     derives_from: [hipaa-privacy.164.528, gdpr.Art.30]
     overview: |
       Every disclosure is a read against a shared / CMC access, and the
@@ -1683,7 +1684,10 @@ requirements:
       counts by method (`usage` on `accesses.get`, never returned to an
       app or shared caller) `[AUG1]`, `[AUG3]`, `[AUG4]`: a summary of
       how much each recipient used its grant, not a substitute for the
-      per-call record, which stays the audit log.
+      per-call record, which stays the audit log. Since rc.85
+      `audit.getSummary` gives the owner the same audit log counted per
+      hour, day or week for chosen accesses `[ASM2]`, `[ASM3]`: when each
+      recipient used its grant, still a summary of the record.
 
   - ref: P6.3
     title: P6.3, Record of detected unauthorized disclosures
@@ -1786,7 +1790,10 @@ requirements:
       tab, linkable and filtered by app, access, date or kind of call,
       each row naming the access that made it (a revoked one included),
       and per-access lifetime call counts read from open-pryv.io
-      2.0.0-rc.84 or later (app tests `[ACTV]`, `[TRLP]`).
+      2.0.0-rc.84 or later (app tests `[ACTV]`, `[TRLP]`). Its next
+      release adds charts of that activity over a chosen period, counted
+      by the core (`audit.getSummary`, open-pryv.io 2.0.0-rc.85; older
+      cores fall back to counting the audit rows in the app).
 
   - ref: P7.1
     title: P7.1, Data quality, accuracy, completeness, relevance

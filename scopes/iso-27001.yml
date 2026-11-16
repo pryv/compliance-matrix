@@ -529,7 +529,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [logs.file, logs.fileSync]
-    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1, OXN02, OXI06, OTX03, OCMDE13, OPIU3, AUAB3, AUG1, AUG3]
+    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1, OXN02, OXI06, OTX03, OCMDE13, OPIU3, AUAB3, AUG1, AUG3, ASM1, ASM4]
     planned:
       - kind: feature
         summary: "Chained / signed audit log adds the software-side tamper-resistance signal A.8.15 expects"
@@ -568,7 +568,10 @@ requirements:
       lifetime call counts by method (`usage`; never returned to an app
       or shared caller) `[AUG1]`, `[AUG3]`, and the reference account
       app (app-web-user-account 0.34.0) adds a linkable, filterable
-      Audit trail tab over the account's audit log. This helps your
+      Audit trail tab over the account's audit log. Since rc.85 the
+      owner can also have that log counted per hour, day or week over a
+      period (`audit.getSummary`, refused to app and shared callers)
+      `[ASM1]`, `[ASM4]`. This helps your
       users review their own activity; the operator-side analysis
       (review cadence, alerting) stays yours. Detail on
       `hipaa-security.164.312(b)`.
