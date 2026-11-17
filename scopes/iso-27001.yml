@@ -568,7 +568,7 @@ requirements:
       lifetime call counts by method (`usage`; never returned to an app
       or shared caller) `[AUG1]`, `[AUG3]`, and the reference account
       app (app-web-user-account 0.34.0) adds a linkable, filterable
-      Audit trail tab over the account's audit log. Since rc.85 the
+      Audit trail tab over the account's audit log. Since rc.86 the
       owner can also have that log counted per hour, day or week over a
       period (`audit.getSummary`, refused to app and shared callers)
       `[ASM1]`, `[ASM4]`. This helps your

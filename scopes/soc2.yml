@@ -1582,7 +1582,7 @@ requirements:
       directly (since open-pryv.io 2.0.0-rc.84 their accesses.get also
       reports how much each access was used, as approximate lifetime
       call counts that only the owner receives `[AUG1]`, `[AUG3]`, and
-      since rc.85 audit.getSummary counts their audited calls over a
+      since rc.86 audit.getSummary counts their audited calls over a
       period `[ASM1]`, `[ASM4]`; see gdpr.Art.15), and the pryv-account-backup CLI produces a complete
       portable export, account, profiles, app profiles, streams,
       accesses (incl. revoked / expired + opt-in per-access version
@@ -1684,7 +1684,7 @@ requirements:
       counts by method (`usage` on `accesses.get`, never returned to an
       app or shared caller) `[AUG1]`, `[AUG3]`, `[AUG4]`: a summary of
       how much each recipient used its grant, not a substitute for the
-      per-call record, which stays the audit log. Since rc.85
+      per-call record, which stays the audit log. Since rc.86
       `audit.getSummary` gives the owner the same audit log counted per
       hour, day or week for chosen accesses `[ASM2]`, `[ASM3]`: when each
       recipient used its grant, still a summary of the record.
@@ -1792,7 +1792,7 @@ requirements:
       and per-access lifetime call counts read from open-pryv.io
       2.0.0-rc.84 or later (app tests `[ACTV]`, `[TRLP]`). Its next
       release adds charts of that activity over a chosen period, counted
-      by the core (`audit.getSummary`, open-pryv.io 2.0.0-rc.85; older
+      by the core (`audit.getSummary`, open-pryv.io 2.0.0-rc.86; older
       cores fall back to counting the audit rows in the app).
 
   - ref: P7.1

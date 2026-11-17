@@ -1046,7 +1046,7 @@ requirements:
       row naming the access that made it, a revoked one included (app
       tests `[ACTV]`, `[TRLP]`), so the owner can examine the activity
       on their account without an operator. Since open-pryv.io
-      2.0.0-rc.85 the same callers can also have the audit log counted
+      2.0.0-rc.86 the same callers can also have the audit log counted
       over a period (`audit.getSummary`: calls per hour, day or week as
       reads, writes, session, other calls and errors, for the account or
       chosen accesses, a batch envelope not counted) `[ASM1]`, `[ASM2]`;

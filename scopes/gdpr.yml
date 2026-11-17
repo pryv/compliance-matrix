@@ -1347,7 +1347,7 @@ requirements:
       app (app-web-user-account 0.34.0) shows them on each access's
       Activity card, with a link to an Audit trail tab filtered by app,
       access, date or kind of call. Over time: since open-pryv.io
-      2.0.0-rc.85 the same personal callers can call `audit.getSummary`,
+      2.0.0-rc.86 the same personal callers can call `audit.getSummary`,
       which counts the audited calls per hour, day or week over a period
       (reads, writes, session, other calls, errors), for the whole
       account or for chosen accesses `[ASM1]`, `[ASM2]`, `[ASM3]`; app and

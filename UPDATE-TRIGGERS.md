@@ -1947,8 +1947,8 @@ B.2, B.3, B.4 (no new primitive: `access`, `audit` extended), B.5, B.6,
 B.8 (no token-class change on a consent-bearing method), B.9, B.10: none.
 
 **Walked 2026-11-16 for open-pryv.io master `f228b13a` (unreleased at the
-walk; expected in 2.0.0-rc.85: fix the version in the rows below if the tag
-differs)** and app-web-user-account main `4b2f419` (unreleased). No Section A
+walk; expected in 2.0.0-rc.86, rc.85 being a SQLite hotfix without it: fix
+the version in the rows below if the tag differs)** and app-web-user-account main `4b2f419` (unreleased). No Section A
 slug and no `planned:` chip involved (the `AUDIT-LOG-CHAINING` chips are about
 tamper evidence and stay); no tier shift; `reviewed_at` left unchanged. What
 changed:
