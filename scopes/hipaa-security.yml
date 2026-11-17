@@ -300,7 +300,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [backup-restore, backup-payload-encryption]
-    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCE2, BKIC1, BKIC2, BKIC3]
+    docs: [customer-resources/backup.md]
+    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCE2, BKIC1, BKIC2, BKIC3, BKSM1, BKSM2, BKSM3, BKSM4, BKSM5, BKSM6, BKSM7, BKSM8, BKLK1, BKLK2, BKIS1, BKIS2, BKIS3, BKDU1]
     overview: |
       `bin/backup.js` produces per-user backup files (account data,
       streams, accesses, profile, webhooks, events, attachments, audit,
@@ -327,6 +328,17 @@ requirements:
       Take a new full backup into a new directory and continue the
       incrementals from there. Full backups written by earlier releases
       are not affected.
+
+      **Three procedure points from open-pryv.io 2.0.0-rc.86.** A backup
+      written by 2.0.0-rc.86 or later restores with that release or
+      later: if you go back to an earlier release, start a new chain in
+      a new directory (a run an earlier release appends to the chain is
+      refused at restore) `[BKSM6]`. Keep each backup directory for the
+      backup only: a file the backup did not write is refused at restore,
+      and a backup refuses to start in a directory holding other files
+      `[BKSM7]`, `[BKSM8]`. With a recipient public key, sign the runs
+      (`--signing-key` at backup, `--signing-pubkey` at restore; detail
+      below), starting with a new full backup into a new directory.
     detail: |
       Per-user backup files are advantageous for HIPAA's "exact copies"
       language because the backup unit matches the natural protected-
@@ -370,7 +382,8 @@ requirements:
       Authenticity bound: recipient-key (hybrid) encryption gives
       confidentiality, not authenticity; whoever holds the public key and
       can write to your backup destination can produce a backup that
-      restores. Protect write access to the destination, and prefer
+      restores, unless the runs are signed (open-pryv.io 2.0.0-rc.86,
+      below). Protect write access to the destination, and prefer
       `--require-encrypted` on restore.
 
       **Incremental backups form a chain (open-pryv.io 2.0.0-rc.51).** A
@@ -392,10 +405,37 @@ requirements:
       the backup host still needs no private key to continue the chain
       `[BKIC3]`. Series emptied after a run stay empty on restore
       `[BKCE2]`. `--inspect <dir>` lists the runs and says whether the
-      directory is sound. The chain index and run manifests are checked
-      for consistency but not signed (the authenticity bound above
-      applies). Your backup-plan SOP should name the chain you restore
-      from and how long its runs are kept.
+      directory is sound. Up to 2.0.0-rc.85 the chain index and run
+      manifests are checked for consistency but not signed (the
+      authenticity bound above applies). Your backup-plan SOP should name
+      the chain you restore from and how long its runs are kept.
+
+      **Authenticated files and signed runs (open-pryv.io 2.0.0-rc.86).**
+      Each run's manifest lists every file of the run with its size and
+      SHA-256 hash and is bound to its run; a restore refuses a run with
+      a file added, removed, resized or changed, and a `chain.json` entry
+      that disagrees with the run's manifest (users, scope, snapshot
+      time) `[BKSM1]`, `[BKSM2]`, `[BKSM3]`. An encrypted file ends with
+      a marked final block and each block is tied to its file, its
+      position and its run, so a file cut at a block boundary, an empty
+      file left in place of a real one, or a file swapped between two
+      accounts is refused instead of restoring as valid. An account's
+      files are checked before anything of the account is written.
+      `--signing-key <ed25519 pem>` signs each run (`manifest.sig`);
+      given `--signing-pubkey`, a restore or `--inspect` requires every
+      run to be signed by that key `[BKSM4]`, `[BKIS1]`. With a recipient
+      public key and no signature, a writer holding that public key can
+      still replace a run, and the backup warns that it is not signed
+      `[BKSM5]`, `[BKIS2]`. `--inspect --verify-files` (with the backup's
+      secret) reads and checks every file without restoring `[BKIS3]`:
+      put it in your backup verification step. New passphrase backups
+      use a stronger key derivation (scrypt N = 2^17). Runs written by
+      earlier releases restore as before and are reported as "file list
+      not verified". A plaintext run's file table detects corruption,
+      not tampering. An account erased while a full backup runs is left
+      out of that run `[BKDU1]`, and two runs finishing together no
+      longer race on `chain.json` `[BKLK1]`, `[BKLK2]`. Operator page:
+      `customer-resources/backup` on the developer site.
     technical: |
       Backup chunking + integrity restored (see
       `open-pryv.io/CHANGELOG-v2-back.md`). Series namespace shared by
@@ -410,7 +450,11 @@ requirements:
       bundles. Backup options are CLI flags of `bin/backup.js`, not
       config keys. Encryption: `open-pryv.io/storages/interfaces/backup/BackupCipher.ts`
       (tests in `open-pryv.io/storages/test/backup-encryption.test.js`),
-      released in 2.0.0-rc.5 (commit `ea27bf35`).
+      released in 2.0.0-rc.5 (commit `ea27bf35`). File table, run
+      binding and signatures: `open-pryv.io/storages/interfaces/backup/FilesystemBackupWriter.ts`,
+      `FilesystemBackupReader.ts`, `chain.ts`, released in 2.0.0-rc.86
+      (tag commit `70e28786`); the block-level checks are tested by
+      `[BKAD1]` to `[BKAD6]` in `open-pryv.io/storages/test/`.
 
   - ref: 164.308(a)(7)(ii)(B)
     title: Disaster recovery plan, Required
@@ -422,7 +466,8 @@ requirements:
     draft: true
     pryv_primitives: [backup-restore, multi-core-mTLS, letsEncrypt-integration]
     config_keys: [cluster.discoveryEnabled, letsEncrypt.certRenewer]
-    tests: [BKSR, BUNDLEENC, BKIC1, BKIC2, BKC7, UASF1, UASF2]
+    docs: [customer-resources/backup.md]
+    tests: [BKSR, BUNDLEENC, BKIC1, BKIC2, BKC7, UASF1, UASF2, BKSM2, BKSM4, BKIS3, RSFC1, RSFC2, RSFC3, BNEV1]
     overview: |
       Two layers Pryv gives you, covering different data: (1) cold
       restore from `bin/backup.js --restore`, the only recovery path
@@ -473,6 +518,24 @@ requirements:
       restore replaces an account's file now reads the restored file
       `[UASF1]`, `[UASF2]`. Your drill should restore from a chain, not
       only from a full backup.
+
+      **What a restore checks before it writes (open-pryv.io
+      2.0.0-rc.86).** A restore refuses a run whose files were added,
+      removed, changed, cut short or swapped between accounts, and, given
+      `--signing-pubkey`, a run not signed by that key `[BKSM2]`,
+      `[BKSM4]`; `--inspect --verify-files` checks a whole backup without
+      restoring it `[BKIS3]`, so a damaged copy is found before the day
+      you need it. An account whose restore fails once its data is being
+      written (a database error, a full disk) is no longer left
+      half-restored: what was written is cleared and the account is
+      removed from the core's index and routing, so a new restore starts
+      clean; with `--overwrite`, an account that was on the core before
+      is left empty, and the restore's error is reported `[RSFC1]`,
+      `[RSFC2]`, `[RSFC3]`; your recovery procedure re-runs the restore
+      for each account it names. On a multi-core platform the
+      bootstrap bundle that rebuilds a core is authenticated with its
+      version, salt and nonce from 2.0.0-rc.86 on, and a joining core
+      must run that release or later to read it `[BNEV1]`.
 
   # ───────────────────────────────────────────────────────────────
   # §164.310 Physical Safeguards (framing only)
@@ -880,8 +943,15 @@ requirements:
       slug `E2E-ENCRYPTION` (proxy re-encryption); per-row impact in
       `proposals/e2e-encryption.md`.
     technical: |
-      AES-256-GCM at-rest module: `open-pryv.io/components/business/src/acme/AtRestEncryption.js`.
-      Bootstrap-bundle encryption: `BundleEncryption.js` (same component).
+      AES-256-GCM at-rest module: `open-pryv.io/components/business/src/acme/AtRestEncryption.ts`.
+      Bootstrap-bundle encryption: `open-pryv.io/components/business/src/bootstrap/BundleEncryption.ts`.
+      Since open-pryv.io 2.0.0-rc.86 both read a second envelope version
+      that authenticates its context (the at-rest row it is stored in;
+      the bundle's version, salt and nonce) with a pinned 16-byte tag
+      `[AREV1]`, `[BNEV1]`. Bundles are written in it from that release;
+      at-rest rows are still written in the first version, so a core of
+      the previous release keeps reading them, until a later release
+      switches the writes.
 
   - ref: 164.312(b)
     title: Audit controls, standard

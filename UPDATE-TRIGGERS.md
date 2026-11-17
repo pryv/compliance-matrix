@@ -3248,6 +3248,107 @@ application-security, availability / integrity (`gdpr.Art.32` §1(b),
 `iso-27001.A.8.14` / `A.8.22`, `soc2.A1.2`) and backup rows: walked
 without change.
 
+**Walked 2026-11-17 for open-pryv.io 2.0.0-rc.86, backup and envelope
+integrity** (tag `2.0.0-rc.86`, commit `70e28786`; released and deployed
+2026-11-17; `CHANGELOG-v2.md` `## 2.0.0-rc.86`, sections "Backup and
+restore: authenticated files, signed runs", "Cluster and configuration" and
+"Per-user storage: deleted accounts, closed handles, failed restores";
+public report `SECURITY-AUDIT.md` revision 25, "Fixed in 2.0.0-rc.86"; operator
+page `customer-resources/backup` on the developer site). No Section A slug
+and no `planned:` chip covered this work (the remaining chips are audit
+chaining, end-to-end encryption, MFA methods, config exposure and the account
+transfer), so none discharged; no tier shift; `reviewed_at` left unchanged.
+The release's other parts are walked elsewhere: `audit.getSummary` under B.1
+(2026-11-13 entry, corrected to rc.86), the `custom.dataStores`
+`override: true` fix under `BUILTIN-STORE-OVERRIDE` in Section A. No new
+config key: the new options are `bin/backup.js` flags (`--signing-key`,
+`--signing-key-passphrase` / `PRYV_BACKUP_SIGNING_KEY_PASSPHRASE`,
+`--signing-pubkey`, `--inspect --verify-files`), not configuration.
+What shipped:
+- **Backup file table and run binding**: each run's manifest lists every
+  file with its size and SHA-256 hash; a restore refuses a file added,
+  removed, resized or changed, a `chain.json` entry that disagrees with the
+  run's manifest, and a file the backup did not write (operating-system and
+  storage-appliance litter ignored with a notice); an account's files are
+  checked before anything of it is written; a backup refuses to start in a
+  directory holding other files `[BKSM1]` to `[BKSM3]`, `[BKSM7]`,
+  `[BKSM8]`, `[BKSM9]`, `[BKRS9]`.
+- **Bound blocks**: encrypted files of the new format end with a marked
+  final block, each block tied to its file, position and run (truncation at
+  a block boundary, an emptied file, a file swapped between accounts are
+  refused); first-format files still decrypt. `[BKAD1]` to `[BKAD6]`
+  (`open-pryv.io/storages/test/`, outside the validator's test glob: cited
+  in prose only).
+- **Signed runs**: `--signing-key` (Ed25519, `manifest.sig`),
+  `--signing-pubkey` at restore and `--inspect` makes every run's signature
+  mandatory; an unsigned recipient-key backup warns `[BKSM4]`, `[BKSM5]`,
+  `[BKIS1]`, `[BKIS2]` (`[BKDS1]` for the bundled script, prose only).
+- **Verification without restoring**: `--inspect --verify-files` `[BKIS3]`;
+  the bundled `decrypt-backup.mjs` applies the same checks
+  (`--ignore-damaged`, `--signing-pubkey`; `[BKDS2]` for its plaintext
+  mirror).
+- **Compatibility**: earlier runs restore as "file list not verified"; an
+  earlier release's run appended after a run of this release is refused; a
+  backup written by this release restores with this release or later
+  `[BKSM6]`. New passphrase backups: scrypt N = 2^17. `chain.json` lock
+  `[BKLK1]` to `[BKLK3]`.
+- **Per-user lifecycle**: an account erased during a full backup is left out
+  of it `[BKDU1]`; a failed restore no longer leaves an account half-restored
+  `[RSFC1]` to `[RSFC4]`.
+- **Envelopes**: at-rest envelopes (TLS and ACME keys, authenticator
+  secrets, observability credentials, transfer identities) READ in an
+  authenticated version 2, still WRITTEN in version 1 (the write switch is a
+  later release, which needs every core on rc.86 first) `[AREV1]` to
+  `[AREV3]`; the bootstrap bundle is written authenticated (version, salt,
+  nonce) and a joining core must run rc.86 or later `[BNEV1]`.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| hipaa-security | 164.308(a)(7)(ii)(A) | overview: three procedure points (format compatibility after a rollback, backup directory for the backup only, sign recipient-key runs); detail: authenticity bound now "unless signed", the "not signed" chain sentence limited to rc.85 and earlier, new paragraph "Authenticated files and signed runs"; technical: file-table code paths; `docs:` backup page | `BKSM1`..`BKSM8`, `BKLK1`, `BKLK2`, `BKIS1`..`BKIS3`, `BKDU1` |
+| hipaa-security | 164.308(a)(7)(ii)(B) | detail: "What a restore checks before it writes" (refusals, `--verify-files`, failed-restore cleanup, authenticated bootstrap bundle and the joining-core version); `docs:` backup page | `BKSM2`, `BKSM4`, `BKIS3`, `RSFC1`..`RSFC3`, `BNEV1` |
+| hipaa-security | 164.312(a)(2)(iv) | technical: module paths corrected (`.ts`, bootstrap path), envelope version 2 read, writes still version 1 | (prose only) |
+| iso-27001 | A.8.13 | overview: three policy points; detail: authenticity sentence, rc.85 bound, new paragraph "Authenticated files and signed runs" (`--verify-files` as the "regularly tested" step); `docs:` backup page | `BKSM1`..`BKSM8`, `BKIS1`..`BKIS3`, `BKDU1`, `RSFC1`, `RSFC3` |
+| iso-27001 | A.8.24 | overview: Ed25519 run signatures in the cryptography catalogue; new detail (backup format, scrypt N = 2^17, signing key pair in the key inventory, bundle and at-rest envelope versions) | `AREV1`, `AREV2`, `BNEV1`, `BKSM4` |
+| hds | Activity.5 | detail: "Outsourced copies you can check" (file table, signing against a destination writer, `--verify-files` after each transfer, appliance litter, compatibility); `docs:` backup page | `BKSM1`, `BKSM2`, `BKSM4`, `BKSM5`, `BKSM7`, `BKIS3` |
+| soc2 | A1.2 | detail: rc.86 change to plan for (rollback starts a new chain; file checks, signatures, failed-restore cleanup) | |
+| soc2 | PI1.5 | overview: the recoverable copy is checked for completeness and accuracy before use | `BKSM1`, `BKSM2`, `BKIS3` |
+| gdpr | Art.32 | Restoration bullet: file checks, optional run signatures, failed-restore cleanup | `BKSM2`, `BKSM4`, `RSFC1` |
+| gdpr | Art.17 | backup paragraph: an account erased during a full backup is left out of the run (no empty directory and databases re-created) | `BKDU1` |
+
+Also updated: `docs/pryv-primitives.md` (`backup-restore`: "Authenticated
+runs" and "Accounts erased or failing"; `backup-payload-encryption`:
+authenticity bound "unless signed", new "Bound blocks and signed runs";
+`encryption-at-rest-secrets`: key sources stated precisely (the TLS and ACME
+keys derive from `letsEncrypt.atRestKey`, not `auth.adminAccessKey`) and
+"Envelope versions"; `multi-core-mTLS`: authenticated bundle),
+`context/operator-backup-coverage.md` (header; "Integrity manifest" row
+rewritten, asymmetry now "symmetric in kind"; concurrency bullet; integrity
+bound limited to rc.85; new section "Authenticated files and signed runs";
+intentional-asymmetry bullet), `docs/implementer-faq.md` Q15 (authenticity
+paragraph; the signing key in key custody),
+`context/code-security-review-2026.md` (the rc.51 backup finding's second
+step shipped, report revision 25). **Correction** made in the same pass: the
+`encryption-at-rest-secrets` primitive named `auth.adminAccessKey` as the
+only key source.
+Walked without change:
+- **Backup and restore, other rows**: `soc2.A1.3` (recovery testing is the
+  operator's drill; `iso-27001.A.8.13` carries `--verify-files`),
+  `soc2.CC7.5`, `hipaa-security.164.310(d)(1)`, `iso-27001.A.7.10`
+  (backup media are the operator's; the rows cite per-user backup files and
+  their encryption, unchanged), `hipaa-security.164.312(c)(1)` /
+  `164.312(c)(2)` (stored-data integrity of events and accesses, not of
+  backup files).
+- **At-rest and transport cryptography**: `soc2.CC6.1`,
+  `hds.Activity.3.cryptography`, `diga.A1.2.1`, `hipaa-security.164.312(e)(*)`, `gdpr.Art.32` encryption
+  bullet (they state AES-256-GCM at rest for operator secrets and encrypted
+  bootstrap bundles, which still hold; no row claimed the envelope was bound
+  to its row, and no row is written in version 2 yet; tracked in Section C).
+- **Availability and integrity** (`gdpr.Art.32` §1(b), `iso-27001.A.8.14` /
+  `A.8.22`): no change to the platform DB or its integrity check.
+- **Not row-relevant**: the SQLite per-user handle fix (a call reaching a
+  database the server was closing answered `500`; `[SQXC]`), the
+  `--inspect` FAILED / UNKNOWN exit codes of pre-chain backups.
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check
@@ -3272,7 +3373,7 @@ ships the fix.
 
 | Added | Where | Gap | Remove when |
 |---|---|---|---|
-| | | (none open) | |
+| 2026-11-17 | `encryption-at-rest-secrets` primitive ("Envelope versions"), `iso-27001.A.8.24` detail, `hipaa-security.164.312(a)(2)(iv)` technical | at-rest envelopes (TLS and ACME keys, authenticator secrets, observability credentials, transfer identities) are read in the authenticated version 2 since open-pryv.io 2.0.0-rc.86 but still written in version 1, so no stored row is bound to its row yet | the release that writes version 2: rewrite each place as the written behaviour, with that release's name and test codes |
 
 Discharged: the 2026-11-09 clause on `oauth.audienceBoundSessions`
 defaulting to `false` (open-pryv.io 2.0.0-rc.73 to rc.81; in

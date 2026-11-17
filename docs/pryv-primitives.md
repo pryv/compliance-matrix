@@ -532,6 +532,28 @@ from a backup file.
   is reported `[BKAL1]`. The series an account still holds under a former
   username are exported too and restored under the username `[BKAL3]`.
   Backups written before list no aliases.
+- **Authenticated runs** (open-pryv.io 2.0.0-rc.86): each run's manifest
+  lists every file of the run with its size and SHA-256 hash and is
+  bound to its run; a restore refuses a run with a file added, removed,
+  resized or changed, a `chain.json` entry that disagrees with the run's
+  manifest, and a file the backup did not write (files that operating
+  systems and storage appliances create by themselves are ignored with a
+  notice); an account's files are checked before anything of it is
+  written. A backup refuses to start in a directory holding other files.
+  `--inspect` shows each run's file count and whether it is signed;
+  `--inspect --verify-files` reads and checks every file. Runs written
+  by earlier releases restore as before ("file list not verified"); a
+  run an earlier release appends after a run of this release is refused,
+  and a backup written by this release restores with this release or
+  later. Signatures: see `backup-payload-encryption`. Tests: `[BKSM1]`
+  to `[BKSM9]`, `[BKIS1]` to `[BKIS3]`, `[BKLK1]` to `[BKLK3]`,
+  `[BKRS9]`.
+- **Accounts erased or failing** (open-pryv.io 2.0.0-rc.86): an account
+  erased while a full backup runs is left out of the run `[BKDU1]`; an
+  account whose restore fails once its data is being written is cleared
+  and removed from the core's index (its routing row released), and one
+  that was on the core before an `--overwrite` restore is left empty
+  `[RSFC1]` to `[RSFC4]`.
 - **Compliance role**: data restorability (GDPR Art.32 §1(c)) +
   per-user erasure path for SQLite engine.
 
@@ -561,7 +583,7 @@ as before.
   an existing encrypted backup, but recipient-key (hybrid) encryption
   gives confidentiality, not authenticity: whoever holds the public key
   and can write to the backup destination can produce a backup that
-  restores. Since open-pryv.io 2.0.0-rc.47 a restore given a decryption
+  restores, unless the runs are signed (2.0.0-rc.86, below). Since open-pryv.io 2.0.0-rc.47 a restore given a decryption
   secret refuses a plaintext backup (`--require-encrypted` refuses one
   even without a secret); since 2.0.0-rc.50 a plaintext backup is
   announced on stderr and `--passphrase-file` keeps the passphrase out
@@ -572,9 +594,29 @@ as before.
   plus the current `decrypt-backup.mjs` and `RESTORE-README.md`; the
   chain keeps its key model (a wrong passphrase or another public key
   is refused before anything is written), and a recipient-key chain is
-  continued with the public key alone. The chain index and run
-  manifests are checked for consistency, not signed. Tests: `[BKC5]`,
-  `[BKCS1]`, `[BKIC3]`.
+  continued with the public key alone. Up to 2.0.0-rc.85 the chain index
+  and run manifests are checked for consistency, not signed. Tests:
+  `[BKC5]`, `[BKCS1]`, `[BKIC3]`.
+- **Bound blocks and signed runs** (open-pryv.io 2.0.0-rc.86): a second
+  file format whose header names the file, its run and its chain; each
+  block's authenticated data carries the header hash, the block index
+  and a final flag, and the last block is marked and required, so a file
+  cut at a block boundary, an emptied file, or a file presented under
+  another name or run is refused (files of the first format still
+  decrypt). `--signing-key <ed25519 pem>` signs each run (`manifest.sig`,
+  over the chain id, the run id and the manifest's hash); the full run
+  pins the chain as signed, and `--signing-pubkey` at restore, at
+  `--inspect` and in the bundled `decrypt-backup.mjs` requires every run
+  to be signed by that key. With a recipient public key and no signing
+  key the backup warns that it is not signed; a signed backup read
+  without `--signing-pubkey` warns that the signatures are not verified.
+  New passphrase backups derive their key with scrypt N = 2^17 (about
+  134 MiB once per run at restore). Residuals: an unsigned hybrid run,
+  and any run read without `--signing-pubkey`, is authenticated only
+  against someone without the data key; files a restore does not read
+  are not hashed (`--inspect --verify-files` does). Tests: `[BKSM4]`,
+  `[BKSM5]`, `[BKIS1]`, `[BKIS2]` (and `[BKAD1]` to `[BKAD6]`,
+  `[BKDS1]` in `open-pryv.io/storages/test/`).
 
 ### `account-backup-tool`
 
@@ -636,10 +678,21 @@ modules.
 
 AES-256-GCM encrypted storage for operator-supplied secrets in the
 platform DB (rqlite). HKDF-derived key from `auth.adminAccessKey`,
-per-key purpose label.
+per-key purpose label (TLS certificate and ACME account keys: from
+`letsEncrypt.atRestKey`).
 
 - **Compliance role**: protects secrets (Let's Encrypt account keys,
   observability provider licence keys, future CMC keys) at rest.
+- **Envelope versions** (open-pryv.io 2.0.0-rc.86): a second envelope
+  version authenticates the row that holds it (an envelope moved to
+  another row of the same purpose fails to decrypt) and pins a 16-byte
+  tag; 2.0.0-rc.86 reads both versions and still writes the first, so a
+  core of the previous release keeps reading every row during an upgrade
+  and after a rollback. A later release switches the writes; every core
+  of a platform must have run 2.0.0-rc.86 or later before it is
+  deployed. The version 2 envelope binds an authenticator (TOTP) secret
+  to its purpose key, not to its account. Tests: `[AREV1]` to
+  `[AREV3]`.
 
 ### `encryption-at-rest-user-data`
 
@@ -756,6 +809,10 @@ hostings (different countries / cloud regions / on-premise locations).
 
 Bootstrap CLI issues passphrase-encrypted bundles; new cores join over
 mTLS-protected Raft. PlatformDB pre-registration + DNS auto-publish.
+Since open-pryv.io 2.0.0-rc.86 a bundle's version, salt and nonce are
+authenticated with its content (pinned 16-byte tag); a joining core must
+run that release or later to read it, while bundles of earlier releases
+are still read `[BNEV1]`.
 
 - **Compliance role**: high availability (GDPR Art.32 §1(b) "ongoing
   CIA"); inter-core authentication separate from end-user auth.

@@ -1167,6 +1167,14 @@ requirements:
       restorable as of any run (`--through-run`); see
       `iso-27001.A.8.13`.
 
+      One open-pryv.io 2.0.0-rc.86 change to plan for: a backup written
+      by 2.0.0-rc.86 or later restores with that release or later, so a
+      rollback plan to an earlier release starts a new backup chain in a
+      new directory. The same release checks every file of a run against
+      the run's manifest before restoring it, optionally verifies an
+      Ed25519 signature per run, and no longer leaves an account
+      half-restored after a failed restore; see `iso-27001.A.8.13`.
+
   - ref: A1.3
     title: A1.3, Recovery plan testing
     text: |
@@ -1358,7 +1366,7 @@ requirements:
     draft: true
     pryv_primitives: [event, audit, backup-restore]
     derives_from: [hipaa-security.164.312(c)(1)]
-    tests: [BKSR, BKEV, BKC1, BKC2, BKC3]
+    tests: [BKSR, BKEV, BKC1, BKC2, BKC3, BKSM1, BKSM2, BKIS3]
     overview: |
       Storage integrity: event version history preserves prior states
       on a deployment with `versioning.forceKeepHistory: true` (off by
@@ -1375,7 +1383,12 @@ requirements:
       the full backup it continued and missed changes made while the
       previous run was in progress; since then each run is kept next to
       the full backup and the restore replays the whole chain `[BKC1]`,
-      `[BKC2]`, `[BKC3]`.
+      `[BKC2]`, `[BKC3]`. Since 2.0.0-rc.86 each run's manifest lists
+      every file with its size and hash, and a restore refuses a run with
+      a file added, removed, changed or cut short, so the recoverable
+      copy is checked for completeness and accuracy before it is used;
+      `--inspect --verify-files` runs the same check without restoring
+      `[BKSM1]`, `[BKSM2]`, `[BKIS3]`.
 
   # ───────────────────────────────────────────────────────────────
   # P1-P8, Privacy (additional category)

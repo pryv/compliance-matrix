@@ -413,7 +413,8 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [backup-restore, backup-payload-encryption, multi-core-mTLS, external-id-index]
-    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1, XIDB2, XIDB3, XIDB4, XIDBK1, XIDBK2, BKAL1, BKAL3]
+    docs: [customer-resources/backup.md]
+    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1, XIDB2, XIDB3, XIDB4, XIDBK1, XIDBK2, BKAL1, BKAL3, BKSM1, BKSM2, BKSM3, BKSM4, BKSM5, BKSM6, BKSM7, BKSM8, BKIS1, BKIS2, BKIS3, BKDU1, RSFC1, RSFC3]
     overview: |
       `bin/backup.js`
       produces per-user backup files, the only copy of user data Pryv
@@ -442,6 +443,15 @@ requirements:
       `DAMAGED` and `--restore` refuses it `[BKIC2]`, `[BKC6]`: take a
       new full backup into a new directory. Since 2.0.0-rc.51 the
       incrementals form a chain next to the full backup (detail below).
+
+      **From open-pryv.io 2.0.0-rc.86, write three points into your
+      backup policy.** A backup written by 2.0.0-rc.86 or later restores
+      with that release or later; after going back to an earlier
+      release, start a new chain in a new directory `[BKSM6]`. Keep each
+      backup directory for the backup only (a file the backup did not
+      write is refused at restore) `[BKSM7]`, `[BKSM8]`. Sign the runs of
+      a recipient-key backup (`--signing-key` / `--signing-pubkey`),
+      starting with a new full backup into a new directory.
     detail: |
       **Backup encryption is built in, opt-in** (open-pryv.io
       2.0.0-rc.5 onward). Without flags `bin/backup.js` writes
@@ -467,7 +477,8 @@ requirements:
       that the rule `[BKRE4]`), unsafe names and symbolic links `[BKRS1]`,
       `[BKRS4]`, reserved names `[BKRN1]` and a username another account
       now holds `[RSOW1]`. Recipient-key encryption gives confidentiality,
-      not authenticity: protect write access to the backup destination.
+      not authenticity: protect write access to the backup destination
+      (and, from 2.0.0-rc.86, sign the runs, below).
       See `context/operator-backup-coverage.md`.
 
       **Incremental chain (open-pryv.io 2.0.0-rc.51).** Each
@@ -485,8 +496,33 @@ requirements:
       restore does not re-create an account deleted between runs
       `[BKCU1]`, `[BKIC4]`. The A.8.13 "regularly tested" drill should
       include a chain restore and `--inspect` of the chain you rely on.
-      The chain index and run manifests are checked for consistency, not
-      signed.
+      Up to 2.0.0-rc.85 the chain index and run manifests are checked for
+      consistency, not signed.
+
+      **Authenticated files and signed runs (open-pryv.io 2.0.0-rc.86).**
+      Each run's manifest lists every file with its size and SHA-256
+      hash and is bound to its run; a restore refuses a file added,
+      removed, resized or changed and a `chain.json` entry that disagrees
+      with the run's manifest `[BKSM1]`, `[BKSM2]`, `[BKSM3]`. Encrypted
+      files end with a marked final block, each block tied to its file,
+      position and run, so truncation at a block boundary, an emptied
+      file or a file swapped between accounts is refused; an account's
+      files are checked before anything of it is written. Optional
+      Ed25519 run signatures (`--signing-key` at backup,
+      `--signing-pubkey` at restore and `--inspect`) close the
+      recipient-key bound above: given the public key, every run must be
+      signed by it `[BKSM4]`, `[BKIS1]`; an unsigned recipient-key backup
+      prints a warning `[BKSM5]`, `[BKIS2]`. For the "regularly tested"
+      element, `--inspect --verify-files` (with the backup's secret)
+      reads and checks every file without restoring `[BKIS3]`. New
+      passphrase backups use scrypt N = 2^17. Runs written by earlier
+      releases restore as before, reported as "file list not verified";
+      a plaintext run's file table detects corruption, not tampering. An
+      account erased during a full backup is left out of the run
+      `[BKDU1]`, and an account whose restore fails while its data is
+      written is cleared and removed from the core's index instead of
+      being left half-restored `[RSFC1]`, `[RSFC3]`. Operator page:
+      `customer-resources/backup` on the developer site.
 
       **External ids (open-pryv.io 2.0.0-rc.58).** The platform backup
       carries the external-id namespace rows with their salts; a restore
@@ -729,7 +765,7 @@ requirements:
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, backup-payload-encryption]
     config_keys: [letsEncrypt.atRestKey]
-    tests: [ACMEINT, ATRENC, BUNDLEENC]
+    tests: [ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, BNEV1, BKSM4]
     planned:
       - kind: feature
         summary: "End-to-end encryption adds a customer-key flow (CMEK / BYOK) to the cryptography catalogue"
@@ -745,9 +781,30 @@ requirements:
       (HKDF-derived per-key with purpose labels), AES-256-GCM
       (scrypt-derived) for bootstrap bundle encryption, per-file
       AES-256-GCM for `bin/backup.js` output when encryption is
-      requested. The operator's
+      requested, and, from open-pryv.io 2.0.0-rc.86, optional Ed25519
+      signatures of backup runs. The operator's
       cryptography policy (key custody, rotation cadence, algorithm
       choice for engine-side at-rest encryption) is layered on top.
+    detail: |
+      **Changes in open-pryv.io 2.0.0-rc.86.** Backups: encrypted files
+      carry authenticated data naming their file, run and chain, with a
+      marked final block; each run's manifest lists every file's
+      SHA-256 hash; `--signing-key` (Ed25519) signs each run and
+      `--signing-pubkey` makes the signature mandatory at restore
+      `[BKSM4]`; new passphrase backups derive their key with scrypt
+      N = 2^17. Add the signing key pair to your key inventory: the
+      private key stays on the backup host, the public key with the
+      restore secret. Bootstrap bundles: the version, salt and nonce are
+      authenticated, with a pinned 16-byte tag `[BNEV1]`. Keys stored
+      encrypted at rest (TLS and ACME keys, authenticator secrets,
+      observability credentials, transfer identities): a second
+      envelope version, bound to the row that holds it and with a
+      pinned tag, is read from this release `[AREV1]`, `[AREV2]`, but
+      rows are still written in the first version (no binding) so that a
+      core of the previous release can read them; a later release
+      switches the writes, and every core must have run 2.0.0-rc.86 or
+      later before it is deployed. The configured `letsEncrypt.atRestKey`
+      is unchanged.
 
   - ref: A.8.25
     title: A.8.25 Secure development lifecycle

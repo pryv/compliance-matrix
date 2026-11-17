@@ -103,7 +103,11 @@ describe them:
   overwrite the full backup they continue but form a chain, a directory damaged
   by an earlier release is refused on restore, and a restore no longer
   re-creates an account deleted between runs (rc.51); on SQLite a running core
-  follows an account file a restore replaced (rc.51).
+  follows an account file a restore replaced (rc.51). The second step of the
+  rc.51 backup finding, planned in the report since revision 1, shipped in
+  2.0.0-rc.86 (report revision 25, 2026-11-17, "Fixed in 2.0.0-rc.86"): every
+  file of a backup run authenticated, optional signed runs; the report lists
+  the backup residual risks that remain.
 - **Deletion and erasure**: the SQLite audit `keep` setting honoured (rc.46);
   account deletion ends the account's delegation and cross-account (CMC)
   relationships and erases high-frequency series under every name of the

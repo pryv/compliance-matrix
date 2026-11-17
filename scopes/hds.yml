@@ -147,7 +147,25 @@ requirements:
       given run with `--through-run` `[BKC1]`, `[BKC2]`, `[BKC5]`,
       `[BKIC1]`. Your retention schedule applies per chain: a run is only
       restorable with the full backup and every run before it.
-    tests: [BKSR, BKEV, BKVR, BKC1, BKC2, BKC5, BKIC1, BKIC2]
+
+      **Outsourced copies you can check (open-pryv.io 2.0.0-rc.86).**
+      Each run's manifest lists every file with its size and hash, and a
+      restore refuses a run whose files were added, removed, changed, cut
+      short or swapped between accounts `[BKSM1]`, `[BKSM2]`. With a
+      recipient public key, sign the runs (`--signing-key` at backup,
+      `--signing-pubkey` at restore): whoever can write to the outsourced
+      destination and holds the public key can otherwise replace a run
+      `[BKSM4]`, `[BKSM5]`. `--inspect --verify-files` checks every file
+      of a backup without restoring it, a check you can schedule after
+      each transfer to the backup host `[BKIS3]`. Keep the destination
+      directory for the backup only: a file the backup did not write is
+      refused at restore, while files that storage appliances create by
+      themselves (`@eaDir`, `.snapshot`, `.zfs`, ...) are ignored with a
+      notice `[BKSM7]`. A backup written by 2.0.0-rc.86 or later restores
+      with that release or later; runs written earlier restore as
+      before, reported as "file list not verified".
+    docs: [customer-resources/backup.md]
+    tests: [BKSR, BKEV, BKVR, BKC1, BKC2, BKC5, BKIC1, BKIC2, BKSM1, BKSM2, BKSM4, BKSM5, BKSM7, BKIS3]
 
   - ref: Activity.6
     title: Activity 6, Archival of health data

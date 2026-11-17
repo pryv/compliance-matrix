@@ -854,8 +854,21 @@ only, no user data), a `RESTORE-README.md` and a standalone
 `decrypt-backup.mjs`, so the key holder can recover the data
 without Pryv. Code: `open-pryv.io/storages/interfaces/backup/BackupCipher.ts`.
 
+**Authenticity (open-pryv.io 2.0.0-rc.86).** Encryption alone
+gives confidentiality: with a recipient public key, whoever holds
+that public key and can write to the destination could replace a
+run. Since 2.0.0-rc.86 each run's manifest lists every file with its
+size and hash, each encrypted block is tied to its file, position and
+run, and `--signing-key <ed25519 pem>` signs each run; a restore given
+`--signing-pubkey` refuses a run not signed by that key. Sign your
+recipient-key backups, starting with a new full backup into a new
+directory. New passphrase backups use a stronger scrypt setting
+(N = 2^17). See `context/operator-backup-coverage.md`, "Authenticated
+files and signed runs".
+
 **What stays yours:** choosing the key model, key custody (a lost
-private key or passphrase makes the backup unrecoverable),
+private key or passphrase makes the backup unrecoverable; the
+backup signing key, when you use one, is a key to keep too),
 transport, retention, offsite copies, and any extra layer you want
 on top (LUKS on the backup volume, S3 SSE-KMS with a customer-managed
 key, restic). If you run plaintext backups, that outer layer is

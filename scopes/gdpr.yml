@@ -1446,7 +1446,7 @@ requirements:
     pryv_primitives: [event, stream, backup-restore, external-id-index, account-auto-deletion]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27]
+    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1]
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -1527,7 +1527,10 @@ requirements:
       it restores it as of then, and `--inspect` lists the accounts deleted
       along the chain. Erasure reaches the chain only when you retire the
       runs that hold the account, so put chain retention in the same
-      rotation policy as the rest of your backups.
+      rotation policy as the rest of your backups. Since 2.0.0-rc.86 an
+      account erased while a full backup runs is left out of that run
+      (earlier releases backed it up empty and created its directory and
+      empty databases again on disk) `[BKDU1]`.
 
       Audit-log erasure converges across engines (since 2026-05-27,
       open-pryv.io master `891090d` + `853e1cb`). `auth.delete` now
@@ -2328,7 +2331,7 @@ requirements:
     pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion]
     docs: [customer-resources/auth-oauth2.md, customer-resources/adapter-routes.md]
     config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount, oauth.audienceBoundSessions, oauth.stateKey, oauth.perUserIssuer, oauth.clientMetadataDocuments.mode, adapterRoutes]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -2654,7 +2657,15 @@ requirements:
           backup also carries the account's external ids and a restore
           links them again `[XIDBK1]`; each blinded value in it can
           claim the id, so protect the backup as a credential store
-          (encrypt it).
+          (encrypt it). Since 2.0.0-rc.86 a restore checks every file
+          of a run against the run's manifest (size and hash) and
+          refuses a run with a file added, removed, changed, cut short
+          or swapped between accounts; an optional Ed25519 signature
+          per run (`--signing-key`, `--signing-pubkey`) authenticates a
+          recipient-key backup, which encryption alone does not
+          `[BKSM2]`, `[BKSM4]`; and an account whose restore fails while
+          its data is written is cleared instead of left half-restored
+          `[RSFC1]`.
         - Stored active content: IMPLEMENTED, an attachment whose
           declared type a browser executes or renders as a document
           (HTML, SVG and other XML, JavaScript) is served with
