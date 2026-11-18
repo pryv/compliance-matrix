@@ -12,8 +12,8 @@ requests per address, pending MFA sessions per account, batch,
 paging, upload and socket.io message sizes; 2.0.0-rc.50 added an
 invitation-check budget, a `webhooks.test` interval, a preview
 pixel cap and render concurrency, an SMS cost cap per core and a
-restart backoff for crashing workers; the release after 2.0.0-rc.86
-bounds password checks per API worker and, on PostgreSQL, the
+restart backoff for crashing workers; 2.0.0-rc.87 bounds password
+checks per API worker and, on PostgreSQL, the
 database time of an API request. The rc.47 and rc.50 budgets came
 out of the 2026 code-level security review (`code-security-review-2026.md`).
 Before 2.0.0-rc.47 the only in-process throttle was the per-account
@@ -203,8 +203,7 @@ Rows whose `detail` should call out the operator-side responsibility
   and render at most `eventFiles.previewsRenderConcurrency` at once
   `[PVPX1]`, `[PVRQ1]`; the embedded DNS bounds its TCP connections
   (`dns.tcpMaxConnections`, 2.0.0-rc.46).
-- **Password checks per API worker** (the release after
-  2.0.0-rc.86; unreleased when this note was updated, 2026-11-17).
+- **Password checks per API worker** (2.0.0-rc.87).
   Password hashing and verification, and OAuth client-secret
   verification, run at most `auth.passwordCheckConcurrency` at a time
   per API worker (default 2), with up to `auth.passwordCheckQueue`

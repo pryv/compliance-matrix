@@ -355,8 +355,8 @@ requirements:
       opened ends that session, so a failed login no longer holds one of
       those places until it expires `[MLSX1]`.
 
-      **Password checks under load (the release after open-pryv.io
-      2.0.0-rc.86; unreleased at this walk).** Password checks run at
+      **Password checks under load (open-pryv.io 2.0.0-rc.87).**
+      Password checks run at
       most `auth.passwordCheckConcurrency` at a time per API worker
       (default 2), `auth.passwordCheckQueue` waiting (default 50, at
       most 10 s). A check refused past that is not performed: sign-in,
@@ -1663,8 +1663,8 @@ requirements:
       metrics and scaling stay yours. See
       `context/rate-limiting-and-dos-protection.md`.
 
-      **Password checks and database time (the release after
-      open-pryv.io 2.0.0-rc.86; unreleased at this walk).** Password
+      **Password checks and database time (open-pryv.io
+      2.0.0-rc.87).** Password
       hashing and verification, OAuth client secrets included, run at
       most `auth.passwordCheckConcurrency` at a time per API worker
       (default 2), with up to `auth.passwordCheckQueue` calls waiting
@@ -1852,8 +1852,8 @@ requirements:
       only: behind your reverse proxy, list it there `[CEPI2]`. The
       embedded DNS server validates requests and bounds its TCP
       connections (`dns.tcpMaxConnections`, 2.0.0-rc.46) `[DNR01]`.
-      In the release after 2.0.0-rc.86 (unreleased at this walk),
-      password checks run a bounded number at a time per API worker
+      Since open-pryv.io 2.0.0-rc.87, password checks run a bounded
+      number at a time per API worker
       (`auth.passwordCheckConcurrency`, `auth.passwordCheckQueue`):
       past it the API answers `429 too-many-requests` and the OAuth
       endpoints `503 temporarily_unavailable`, both with

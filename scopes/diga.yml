@@ -407,7 +407,7 @@ requirements:
       unauthenticated entry points) and replaces a crashing worker after
       a growing delay instead of in a tight loop, so a single misbehaving
       client is less likely to make the service unavailable for others.
-      In the release after 2.0.0-rc.86 (unreleased at this walk), a flood
+      Since open-pryv.io 2.0.0-rc.87, a flood
       of password checks no longer stalls a worker's other requests
       (a bounded number run at a time, the rest refused with
       `Retry-After`), and on PostgreSQL a runaway database statement of an

@@ -3350,10 +3350,11 @@ Walked without change:
   `--inspect` FAILED / UNKNOWN exit codes of pre-chain backups.
 
 **Walked 2026-11-17 for two resource limits of open-pryv.io (unreleased at
-the walk; the release after 2.0.0-rc.86, which shipped without them)**:
+the walk; released in 2.0.0-rc.87, tag `2.0.0-rc.87`, commit `cca7face`,
+released and deployed 2026-11-18; rc.86 shipped without them)**:
 password checks on master `a63574b8`; PostgreSQL time limits on master
-`90ff4638`. The rows say "the release after open-pryv.io 2.0.0-rc.86": name
-the tag once it is cut. No Section A slug, no `planned:`
+`90ff4638`. The rows name open-pryv.io 2.0.0-rc.87 (updated 2026-11-18,
+when the tag was cut). No Section A slug, no `planned:`
 chip, no tier shift; `reviewed_at` left unchanged. What changed:
 - **Password checks: a bounded number at a time per API worker.** New keys
   `auth.passwordCheckConcurrency` (default 2, `0` disables) and

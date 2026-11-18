@@ -1343,8 +1343,8 @@ requirements:
       for the monitoring side.
 
       **A busy worker refuses a password check rather than guessing an
-      answer (the release after open-pryv.io 2.0.0-rc.86; unreleased at
-      this walk).** Password and OAuth client-secret checks run at most
+      answer (open-pryv.io 2.0.0-rc.87).** Password and OAuth
+      client-secret checks run at most
       `auth.passwordCheckConcurrency` at a time per API worker (default
       2), with `auth.passwordCheckQueue` calls waiting (default 50, at
       most 10 s). A call refused past that is not checked: the API
@@ -1943,8 +1943,8 @@ requirements:
       `limit_req_zone` per-IP caps on `/auth/login`. (Before 2.0.0-rc.47
       Pryv did not throttle passwords in-process.)
 
-      **A busy refusal is not a failed attempt** (the release after
-      open-pryv.io 2.0.0-rc.86; unreleased at this walk). When the API
+      **A busy refusal is not a failed attempt** (open-pryv.io
+      2.0.0-rc.87). When the API
       worker's password checks are all taken
       (`auth.passwordCheckConcurrency`, `auth.passwordCheckQueue`), a
       sign-in is refused without checking the password: `429
