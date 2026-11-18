@@ -12,8 +12,10 @@ requests per address, pending MFA sessions per account, batch,
 paging, upload and socket.io message sizes; 2.0.0-rc.50 added an
 invitation-check budget, a `webhooks.test` interval, a preview
 pixel cap and render concurrency, an SMS cost cap per core and a
-restart backoff for crashing workers. These came out of the 2026
-code-level security review (`code-security-review-2026.md`).
+restart backoff for crashing workers; the release after 2.0.0-rc.86
+bounds password checks per API worker and, on PostgreSQL, the
+database time of an API request. The rc.47 and rc.50 budgets came
+out of the 2026 code-level security review (`code-security-review-2026.md`).
 Before 2.0.0-rc.47 the only in-process throttle was the per-account
 MFA backoff (2.0.0-rc.27). See "What is in Pryv-side scope today"
 below; the edge recipes remain the recommended front.
@@ -201,6 +203,41 @@ Rows whose `detail` should call out the operator-side responsibility
   and render at most `eventFiles.previewsRenderConcurrency` at once
   `[PVPX1]`, `[PVRQ1]`; the embedded DNS bounds its TCP connections
   (`dns.tcpMaxConnections`, 2.0.0-rc.46).
+- **Password checks per API worker** (the release after
+  2.0.0-rc.86; unreleased when this note was updated, 2026-11-17).
+  Password hashing and verification, and OAuth client-secret
+  verification, run at most `auth.passwordCheckConcurrency` at a time
+  per API worker (default 2), with up to `auth.passwordCheckQueue`
+  calls waiting (default 50, at most 10 s). Past that the call is
+  refused without checking anything: the API answers `429
+  too-many-requests` with `Retry-After: 5`, the OAuth token,
+  introspection and revocation endpoints `503 temporarily_unavailable`
+  with `Retry-After: 5` `[CLIM2]`, `[PCLM1]`, `[OPCL2]`, `[OPCL3]`. A
+  refusal is not a failed attempt: no tally, no delay, never
+  `invalid-credentials` or `invalid_client` `[PCLM2]`. It bounds the
+  CPU and thread pool a flood of password checks can take from the
+  other requests of the worker; it does not limit who may try. Keep
+  the concurrency below the thread pool size (`UV_THREADPOOL_SIZE`,
+  16 in the Docker image, 4 otherwise; the boot warns otherwise);
+  `0` disables it.
+- **Database time per API request, PostgreSQL** (same release; on by
+  default). A statement issued while serving an API, HFS or previews
+  request is stopped after
+  `storages.engines.postgresql.statementTimeoutMs` (default 30000 ms)
+  and a transaction left idle is closed after
+  `idleInTransactionTimeoutMs` (default 60000 ms); the request answers
+  `503 api-unavailable` (no `Retry-After`: the statement was rolled
+  back) and logs one warning line with the statement text, never its
+  parameters. Streamed reads are limited per batch of rows, so a long
+  download is not cut. Account deletion, the background jobs, boot-time
+  schema work, `system.checkPlatformIntegrity` and the command-line
+  tools are not limited; they run on a small separate pool (up to 2
+  more connections per pool: leave the headroom in `max_connections`).
+  `0` switches a limit off. It bounds a runaway or orphaned statement
+  and how long one request holds a connection, not many slow requests
+  in a row. Tests: storage engine `[PGLM1]`..`[PGLM5]`,
+  `[PGSS1]`..`[PGSS4]`, `[PGSI1]`..`[PGSI4]`, `[PGSX1]`, `[PGSX2]`;
+  `[UNXS1]`..`[UNXS4]`, `[MNSC1]`..`[MNSC3]`, `[STMC1]`, `[STMC2]`.
 - **Recovery**: a worker that keeps crashing is replaced after a
   delay doubling up to 30 s (2.0.0-rc.50) `[WRBO1]`.
 

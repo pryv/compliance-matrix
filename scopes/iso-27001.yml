@@ -306,8 +306,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams]
-    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, services.mfa.methods.sms.sendLimits, services.mfa.sessions.maxPendingPerUser]
-    tests: [MFAA, MA15A, MA15C, MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1, MLSX1, MACC2]
+    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, services.mfa.methods.sms.sendLimits, services.mfa.sessions.maxPendingPerUser, auth.passwordCheckConcurrency, auth.passwordCheckQueue]
+    tests: [MFAA, MA15A, MA15C, MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1, MLSX1, MACC2, PCLM1, PCLM2, PCLM3, OPCL2]
     planned:
       - kind: enhancement
         summary: "Reference TOTP / WebAuthn plugins + AAL-tier mapping doc strengthen the A.8.5 evidence chain"
@@ -354,6 +354,19 @@ requirements:
       `[MCPU1]`; since 2.0.0-rc.51 a login refused after its MFA session
       opened ends that session, so a failed login no longer holds one of
       those places until it expires `[MLSX1]`.
+
+      **Password checks under load (the release after open-pryv.io
+      2.0.0-rc.86; unreleased at this walk).** Password checks run at
+      most `auth.passwordCheckConcurrency` at a time per API worker
+      (default 2), `auth.passwordCheckQueue` waiting (default 50, at
+      most 10 s). A check refused past that is not performed: sign-in,
+      password change and reset, `mfa.recover`, the MFA step-up and
+      registration answer `429 too-many-requests` with `Retry-After`,
+      never `invalid-credentials`, and the refusal neither counts on the
+      account's failed-password tally nor delays the account `[PCLM1]`,
+      `[PCLM2]`; a refused registration leaves the name and email free
+      to retry `[PCLM3]`. OAuth client-secret checks answer `503
+      temporarily_unavailable`, never `invalid_client` `[OPCL2]`.
 
       **Single-use codes and safe configuration.** A TOTP code is
       consumed with a storage compare-and-set (open-pryv.io `43293101`,
@@ -1622,8 +1635,8 @@ requirements:
     draft: true
     pryv_primitives: [observability-provider, multi-core-mTLS]
     docs: [customer-resources/rate-limiting.md]
-    config_keys: [limits.batch.maxTotalItems, uploads.maxFiles, socketIO.maxMessageBytes, eventFiles.previewsMaxInputPixels, eventFiles.previewsRenderConcurrency]
-    tests: [CEDB5, CEDB6, EGLV1, EGLC1, MPLM3, MPLD1, SION1, SION4, PVPX1, PVRQ1, WRBO1]
+    config_keys: [limits.batch.maxTotalItems, uploads.maxFiles, socketIO.maxMessageBytes, eventFiles.previewsMaxInputPixels, eventFiles.previewsRenderConcurrency, auth.passwordCheckConcurrency, auth.passwordCheckQueue, storages.engines.postgresql.statementTimeoutMs, storages.engines.postgresql.idleInTransactionTimeoutMs]
+    tests: [CEDB5, CEDB6, EGLV1, EGLC1, MPLM3, MPLD1, SION1, SION4, PVPX1, PVRQ1, WRBO1, CLIM1, CLIM2, CLIM3, CLIB2, PCLM1, PCLM2, STMC1, MNSC1, UNXS1]
     overview: |
       Pryv-side capacity
       surfaces: per-core observability metrics (memory, CPU, latency,
@@ -1649,6 +1662,32 @@ requirements:
       `[WRBO1]`. These protect capacity; sizing the cores, watching the
       metrics and scaling stay yours. See
       `context/rate-limiting-and-dos-protection.md`.
+
+      **Password checks and database time (the release after
+      open-pryv.io 2.0.0-rc.86; unreleased at this walk).** Password
+      hashing and verification, OAuth client secrets included, run at
+      most `auth.passwordCheckConcurrency` at a time per API worker
+      (default 2), with up to `auth.passwordCheckQueue` calls waiting
+      (default 50, at most 10 s); beyond that the call is refused
+      before anything is checked, so a flood of password checks no
+      longer takes the worker's CPU and thread pool from attachments,
+      webhook lookups and compression for every account `[CLIM1]`,
+      `[CLIM2]`, `[CLIM3]`, `[CLIB2]`, `[PCLM1]`, `[PCLM2]`. On
+      PostgreSQL, a statement issued while serving an API request is
+      stopped after `storages.engines.postgresql.statementTimeoutMs`
+      (default 30 s) and a transaction left idle is closed after
+      `idleInTransactionTimeoutMs` (default 60 s); the request answers
+      `503 api-unavailable` and one warning line is logged. A streamed
+      read is limited per batch of rows, so a long download is not cut.
+      Account deletion, background jobs, boot-time schema work,
+      `system.checkPlatformIntegrity` and the command-line tools run
+      unlimited on a small separate pool: each PostgreSQL pool of a
+      worker may open up to 2 more connections, so leave that headroom
+      in `max_connections` (tests `[PGSS1]`, `[PGSI1]`, `[PGSI2]`,
+      `[STMC1]`, `[MNSC1]`). Both apply to the workers of the clustered
+      server (`bin/master.js`). They bound how long one request holds a
+      connection and how much CPU password checks take; many slow
+      requests in a row are still for your edge layer to limit.
 
   - ref: A.8.14
     title: A.8.14 Redundancy of information processing facilities
@@ -1780,8 +1819,8 @@ requirements:
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, observability-provider]
     derives_from: [iso-27001.A.8.20]
     docs: [customer-resources/rate-limiting.md]
-    config_keys: [auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections]
-    tests: [CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01]
+    config_keys: [auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue]
+    tests: [CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2]
     overview: |
       Pryv's external
       network surface is the TLS-terminating HTTPS API + the embedded
@@ -1813,6 +1852,14 @@ requirements:
       only: behind your reverse proxy, list it there `[CEPI2]`. The
       embedded DNS server validates requests and bounds its TCP
       connections (`dns.tcpMaxConnections`, 2.0.0-rc.46) `[DNR01]`.
+      In the release after 2.0.0-rc.86 (unreleased at this walk),
+      password checks run a bounded number at a time per API worker
+      (`auth.passwordCheckConcurrency`, `auth.passwordCheckQueue`):
+      past it the API answers `429 too-many-requests` and the OAuth
+      endpoints `503 temporarily_unavailable`, both with
+      `Retry-After`, and the refusal is never a failed attempt
+      `[CLIM2]`, `[PCLM1]`, `[PCLM2]`; on PostgreSQL the database work
+      of an API request is time-limited (see A.8.6).
       These budgets do not replace an edge layer for volumetric
       traffic, per-token request rates and WAF rules. Full rationale +
       operator mitigation patterns:

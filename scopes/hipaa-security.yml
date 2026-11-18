@@ -1264,8 +1264,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams, delegation]
-    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds, oauth.signingKeys, oauth.idTokenTTL, oauth.stateKey, oauth.perUserIssuer]
-    tests: [MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3]
+    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds, oauth.signingKeys, oauth.idTokenTTL, oauth.stateKey, oauth.perUserIssuer, auth.passwordCheckConcurrency, auth.passwordCheckQueue]
+    tests: [MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3, CLIB2, PCLM1, PCLM2, OPCL2, OPCL3, OPCL4]
     planned:
       - kind: enhancement
         summary: "Reference MFA plugins (TOTP / WebAuthn) + primitive-catalogue doc surface the pluggability"
@@ -1341,6 +1341,24 @@ requirements:
       over socket.io, and every password hash carries its own salt. Tests
       `[CEPB1]`, `[CEPI1]`, `[CEDB1]`, `[PWSL1]`. See §164.308(a)(5)(ii)(C)
       for the monitoring side.
+
+      **A busy worker refuses a password check rather than guessing an
+      answer (the release after open-pryv.io 2.0.0-rc.86; unreleased at
+      this walk).** Password and OAuth client-secret checks run at most
+      `auth.passwordCheckConcurrency` at a time per API worker (default
+      2), with `auth.passwordCheckQueue` calls waiting (default 50, at
+      most 10 s). A call refused past that is not checked: the API
+      answers `429 too-many-requests` with `Retry-After`, never
+      `invalid-credentials`, and the refusal neither counts on the
+      account's failed-password tally nor delays it `[CLIB2]`,
+      `[PCLM1]`, `[PCLM2]`. The OAuth token, introspection and
+      revocation endpoints answer `503 temporarily_unavailable` with
+      `Retry-After`, never `invalid_client` (the uniform refusal below
+      stays the answer to a failed client authentication) `[OPCL2]`,
+      `[OPCL3]`. A refresh, client-credentials or token-exchange request
+      can be retried as is; an authorization code is single-use, so a
+      refused code exchange spends it and revokes its access, and the
+      client starts a new authorization `[OPCL4]`.
 
       **A second authentication path, OAuth2.** Beyond the token +
       MFA stack above, Pryv can authenticate delegated apps through a
@@ -1893,8 +1911,8 @@ requirements:
     draft: true
     pryv_primitives: [audit, observability-provider, MFA]
     derives_from: [iso-27001.A.8.15]
-    config_keys: [services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, http.trustedProxies]
-    tests: [AT01, AT02, AT51, MA12A, MBKF1, CEPB1, CEPI1, CEPI2, CEDB1]
+    config_keys: [services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, http.trustedProxies, auth.passwordCheckConcurrency, auth.passwordCheckQueue]
+    tests: [AT01, AT02, AT51, MA12A, MBKF1, CEPB1, CEPI1, CEPI2, CEDB1, PCLM1, PCLM2]
     docs: [customer-resources/rate-limiting.md#fail2ban]
     overview: |
       Login + authentication-
@@ -1924,6 +1942,18 @@ requirements:
       exceed N auth failures in T minutes, plus reverse-proxy
       `limit_req_zone` per-IP caps on `/auth/login`. (Before 2.0.0-rc.47
       Pryv did not throttle passwords in-process.)
+
+      **A busy refusal is not a failed attempt** (the release after
+      open-pryv.io 2.0.0-rc.86; unreleased at this walk). When the API
+      worker's password checks are all taken
+      (`auth.passwordCheckConcurrency`, `auth.passwordCheckQueue`), a
+      sign-in is refused without checking the password: `429
+      too-many-requests` with `Retry-After`, an error id distinct from
+      the `too-many-attempts` of the delay above. It does not count on
+      the account's tally and does not delay the account `[PCLM1]`,
+      `[PCLM2]`. A monitoring rule that counts failed logins should key
+      on `invalid-credentials` and `too-many-attempts`, not on every
+      429.
 
       **The second factor has its own tally.** Since open-pryv.io
       2.0.0-rc.27 Pryv enforces a per-account backoff on failed MFA

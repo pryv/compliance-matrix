@@ -3349,6 +3349,80 @@ Walked without change:
   database the server was closing answered `500`; `[SQXC]`), the
   `--inspect` FAILED / UNKNOWN exit codes of pre-chain backups.
 
+**Walked 2026-11-17 for two resource limits of open-pryv.io (unreleased at
+the walk; the release after 2.0.0-rc.86, which shipped without them)**:
+password checks on master `a63574b8`; PostgreSQL time limits on master
+`90ff4638`. The rows say "the release after open-pryv.io 2.0.0-rc.86": name
+the tag once it is cut. No Section A slug, no `planned:`
+chip, no tier shift; `reviewed_at` left unchanged. What changed:
+- **Password checks: a bounded number at a time per API worker.** New keys
+  `auth.passwordCheckConcurrency` (default 2, `0` disables) and
+  `auth.passwordCheckQueue` (default 50; at most 10 s of waiting); both
+  integers >= 0 or the boot refuses the config, a concurrency not below the
+  thread pool size warns (boot and `bin/check-config.js`). Password hashing
+  and verification and OAuth client-secret verification take a slot; past
+  slots and queue the call is refused before anything is checked. **New
+  error answers on existing methods**: `auth.login`,
+  `account.changePassword`, the password reset, `mfa.recover`, the MFA
+  step-up by password and `auth.register` answer `429 too-many-requests`
+  with `Retry-After: 5`; the OAuth token endpoint (client secret),
+  introspection and revocation answer `503 temporarily_unavailable` with
+  `Retry-After: 5`. A refusal is never a failed attempt (no tally, no delay,
+  never `invalid-credentials` or `invalid_client`); a refused code exchange
+  spends the single-use code and revokes its access; a refused registration
+  leaves name and email free. API workers of the clustered server only;
+  command-line tools never limited. Tests: utils `[CLIM1]`..`[CLIM5]`,
+  `[CLIB1]`, `[CLIB2]`; oauth2 `[OPCL1]`..`[OPCL4]`; api-server
+  `[PCLM1]`..`[PCLM3]`, `[PCLC1]`, `[PCLC2]`, `[PCLH1]`, `[PCLH2]`,
+  `[CKPC1]`, `[CKPC2]`.
+- **PostgreSQL: time limits on the database work of API requests** (on by
+  default). New keys `storages.engines.postgresql.statementTimeoutMs`
+  (default 30000) and `storages.engines.postgresql.idleInTransactionTimeoutMs`
+  (default 60000), `0` switches either off, integers >= 0 or the boot refuses
+  the config, a non-zero value below 1000 warns. They apply to the pools of
+  the request-serving workers (API, HFS, previews) of `bin/master.js`;
+  streamed reads are limited per batch; erasure (self-service, admin,
+  auto-deletion), background jobs, boot DDL, the command-line tools and
+  `system.checkPlatformIntegrity` run unlimited on a separate pool of up to 2
+  connections per pool. **New error answer**: a stopped statement answers
+  `503 api-unavailable` (no `Retry-After`) and logs one warning line with
+  the statement text, never its parameters. Tests: storage engine
+  `[PGLM1]`..`[PGLM5]`, `[PGSS1]`..`[PGSS4]`, `[PGSI1]`..`[PGSI4]`,
+  `[PGSX1]`, `[PGSX2]`, `[PGSB3]`; errors `[UNXS1]`..`[UNXS4]`; utils
+  `[PROL1]`, `[PROL2]`; api-server `[MNSC1]`..`[MNSC3]`, `[STMC1]`,
+  `[STMC2]`, `[CKPT1]`..`[CKPT3]`. Merged to open-pryv.io master `90ff4638`
+  on the day of the walk: `STMC1`, `MNSC1` and `UNXS1` are in the `tests:` of
+  `iso-27001.A.8.6`; the storage-engine codes live in
+  `open-pryv.io/storages/`, outside the validator's test glob, and stay in
+  prose.
+
+| Scope | Ref | What changed | Tests added | Config keys added |
+|---|---|---|---|---|
+| iso-27001 | A.8.6 | new detail paragraph: password checks per worker, PostgreSQL statement and idle-transaction limits, the unlimited maintenance work and its connection headroom, `503 api-unavailable` | `CLIM1`, `CLIM2`, `CLIM3`, `CLIB2`, `PCLM1`, `PCLM2`, `STMC1`, `MNSC1`, `UNXS1` (storage-engine codes in prose) | `auth.passwordCheckConcurrency`, `auth.passwordCheckQueue`, `storages.engines.postgresql.statementTimeoutMs`, `storages.engines.postgresql.idleInTransactionTimeoutMs` |
+| iso-27001 | A.8.21 | in-code budgets list: password checks per worker (429 / 503, never a failed attempt), database time pointer to A.8.6 | `CLIM2`, `PCLM1`, `PCLM2` | `auth.passwordCheckConcurrency`, `auth.passwordCheckQueue` |
+| iso-27001 | A.8.5 | new paragraph "Password checks under load": the methods that answer 429, not a failed attempt, registration retry, OAuth 503 | `PCLM1`, `PCLM2`, `PCLM3`, `OPCL2` | `auth.passwordCheckConcurrency`, `auth.passwordCheckQueue` |
+| hipaa-security | 164.312(d) | new paragraph: busy refusal instead of a check; OAuth token, introspection and revocation 503, `invalid_client` kept for failed client authentication; retry semantics per grant, code spent | `CLIB2`, `PCLM1`, `PCLM2`, `OPCL2`, `OPCL3`, `OPCL4` | `auth.passwordCheckConcurrency`, `auth.passwordCheckQueue` |
+| hipaa-security | 164.308(a)(5)(ii)(C) | new paragraph: a busy refusal is not a failed attempt, `too-many-requests` distinct from `too-many-attempts`, monitoring rules key on the failure ids | `PCLM1`, `PCLM2` | `auth.passwordCheckConcurrency`, `auth.passwordCheckQueue` |
+| diga | A1.4.3 | detail: password checks no longer stall other requests, runaway statements stopped | (none) | (row has none) |
+
+Also updated: `context/rate-limiting-and-dos-protection.md` (intro; two new
+bullets among the in-code budgets, with the keys, answers and test codes).
+Walked without change:
+- **Capacity, derived rows** (`soc2.A1.1`): derives from `iso-27001.A.8.6`
+  and carries no detail of its own.
+- **Availability / integrity** (`gdpr.Art.32` §1(b), `iso-27001.A.8.14` /
+  `A.8.22`, `soc2.A1.2`): they describe cluster topology, platform DB
+  integrity and backups; none claims anything about request time or
+  password-check load.
+- **Monitoring** (`iso-27001.A.8.16`, `soc2.CC7.2`): one warning line per
+  stopped statement; no row lists Pryv's log lines.
+- **Erasure** (`gdpr.Art.17` and the B.1 family): account deletion is
+  exempt from the limit, so no erasure claim changes.
+Transport, response-header (no new header: `Retry-After` is already sent
+by the earlier budgets), platform DB and backup rows: not affected
+(backup and restore are command-line tools, never limited). B.1 (no new
+method; new error answers recorded here), B.2 to B.10: none.
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check
