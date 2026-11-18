@@ -392,7 +392,7 @@ requirements:
     pryv_primitives: [event, stream, backup-restore, account-auto-deletion]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.inactivity.defaultDays]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [USAD, DLN1, DLN4, DLLW1, ACXP3, ACXP8, ADSW8, ADSW19]
+    tests: [USAD, DLN1, DLN4, DLLW1, ACXP3, ACXP8, ADSW8, ADSW19, URB2, RCRG1, RCRG3, RCRG6]
     overview: |
       Per-user erasure: `system.users.delete` removes the user's data
       from the live store. Engine-dependent backup behaviour (SQLite
@@ -414,6 +414,20 @@ requirements:
       notice (`[ACXP8]`) before, through the same erasure as
       `system.users.delete`, guards included (`[ADSW8]`); an erasure
       interrupted halfway is completed at a later pass (`[ADSW19]`).
+
+      Unfinished registrations (the release after open-pryv.io
+      2.0.0-rc.87; merged, unreleased at this walk). Rows a failed or
+      interrupted registration left behind are no longer required by
+      any account: a failed registration's compensation now removes
+      its account fields on PostgreSQL too `[URB2]`, and
+      `bin/reconcile-user-cores.js --registrations` lists, per core,
+      account fields under an id the users index lacks and indexed
+      accounts with no password, and deletes only with `--apply`
+      (orphan ids holding account fields alone, older than the grace;
+      a named account through the account deletion's erasure)
+      `[RCRG1]`, `[RCRG3]`; the default username pass releases the
+      email a stale name held on the platform `[RCRG6]`. See
+      gdpr.Art.5 §1(e) for the safeguards.
 
   - ref: A.8.13
     title: A.8.13 Information backup

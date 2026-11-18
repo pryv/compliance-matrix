@@ -203,7 +203,7 @@ requirements:
     functional_specs: [EVENT.BASE, STREAM.BASE]
     config_keys: [account.autoDeletion.inactivity.defaultDays, account.autoDeletion.inactivity.countAppUse, account.autoDeletion.userOverride, account.autoDeletion.allowUserOptOut, account.autoDeletion.reminders.leadDays, account.autoDeletion.reminders.minNoticeDays, account.autoDeletion.dryRun, accessTracking.isActive]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [GLHP, UZEV, ACXP2, ACXP3, ACXP8, ACXP10, ACXP19, ACAC1, ACAC2, ACAC7, ADSW8, ADSW9, ADSW13, ACST14, LGLU3, CVAD3]
+    tests: [GLHP, UZEV, ACXP2, ACXP3, ACXP8, ACXP10, ACXP19, ACAC1, ACAC2, ACAC7, ADSW8, ADSW9, ADSW13, ACST14, LGLU3, CVAD3, URB2, RCRG1, RCRG2, RCRG3, RCRG5, RCRG6, RCRG7, MCUR1, MCUR2]
     planned:
       - kind: feature
         summary: "Account transfer to a beneficiary (release after the deletion one): §1(c) minimisation of the beneficiary's data (email required; name and date of birth optional, encrypted, erased with the transfer)"
@@ -307,6 +307,40 @@ requirements:
         job. See `context/data-retention-operator-owned.md`,
         "Account-level auto-deletion", and the operator page
         `customer-resources/account-auto-deletion`.
+
+        Leftovers of unfinished registrations (the release after
+        open-pryv.io 2.0.0-rc.87; merged, unreleased at this walk). A
+        registration that fails, or whose process dies midway, can
+        leave personal data that no finished account owns: account
+        fields (the email included) under an id the users index lacks,
+        an indexed account with no password, or an email still
+        reserved on the platform for a name that never got its
+        account. From that release a failed registration's
+        compensation removes its account fields on PostgreSQL too
+        (earlier, a failed first registration in a freshly started
+        worker kept them, email included, with no owner) `[URB2]`. For
+        what an earlier failure or a crash left, run
+        `bin/reconcile-user-cores.js --registrations` on each core. It
+        only reports unless given `--apply`; it clears an orphan id
+        (PostgreSQL) only when the id holds account fields alone, no
+        erasure record, and is older than `--grace` (default 24 hours)
+        `[RCRG1]`, `[RCRG2]`; it erases an indexed account with no
+        password (both engines) only when you name it with `--user-id`
+        and it still passes every check, through the account
+        deletion's erasure, recorded in the erasure ledger and
+        resumable `[RCRG3]`, `[RCRG5]`, keeping the platform rows of a
+        name another core holds now `[MCUR2]`; an empty users index
+        facing account rows is refused (exit 3) `[RCRG7]`. The default
+        username pass of the same tool now releases the email and
+        other unique values a stale name held, before its routing row
+        `[RCRG6]`, `[MCUR1]`. Run both as a dry run first: a name whose
+        account is missing for another reason (a partly lost users
+        index) loses its reserved email too. The pass's own log lines
+        carry ids and counts, never an email or field value; the
+        account erasure it runs logs the account name, as every
+        account erasure does.
+        Procedure: open-pryv.io `INSTALL.md`, "Unfinished
+        registrations".
       - Data minimisation, planned with the account transfer (the
         release after the deletion one; implemented, not released): a
         holder may name a beneficiary who receives control of the
@@ -1446,7 +1480,7 @@ requirements:
     pryv_primitives: [event, stream, backup-restore, external-id-index, account-auto-deletion]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1]
+    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3]
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -1619,6 +1653,16 @@ requirements:
       If you erased accounts on earlier releases after a username
       change or through an alias, check the series storage for
       leftovers under the former names.
+
+      Personal data left by a failed or interrupted registration can
+      sit under no finished account, out of reach of
+      `system.users.delete`. From the release after open-pryv.io
+      2.0.0-rc.87, `bin/reconcile-user-cores.js --registrations`
+      clears such account fields and, when you name it, erases an
+      indexed account left without a password through the account
+      deletion's erasure `[RCRG1]`, `[RCRG3]`; use it when such a
+      person asks for erasure. Details and safeguards under Art.5
+      §1(e).
     technical: |
       Tested via `[USAD]`
       (`open-pryv.io/components/api-server/test/deletion-seq.test.js`,

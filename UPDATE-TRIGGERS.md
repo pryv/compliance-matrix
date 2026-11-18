@@ -3424,6 +3424,83 @@ by the earlier budgets), platform DB and backup rows: not affected
 (backup and restore are command-line tools, never limited). B.1 (no new
 method; new error answers recorded here), B.2 to B.10: none.
 
+**Walked 2026-11-18 for unfinished registrations (unreleased at the walk;
+the release after open-pryv.io 2.0.0-rc.87, which shipped without them)**:
+operator pass on master `9024b4c6`; registration without a PostgreSQL
+transaction and the compensation fix on master `4ac4f637`, both merged
+2026-11-18. The rows say "the release after open-pryv.io 2.0.0-rc.87":
+name the tag once it is cut. No Section A slug, no `planned:` chip, no
+tier shift; `reviewed_at` left unchanged. No new config key, response
+header or API method. What changed:
+- **Registration compensation** (`4ac4f637`): registration and account
+  update open no database transaction (on PostgreSQL it covered none of
+  their writes while its client sat idle, so as many registrations in
+  flight as pool connections stalled the pool), and a failed
+  registration's compensation now removes its account-store rows on
+  PostgreSQL (a failed first registration in a freshly started worker
+  kept its account fields, email included, with no owner) `[URB2]`,
+  `[URT1]`.
+- **New operator pass** `bin/reconcile-user-cores.js --registrations`
+  (`usersRepository.reconcileUnfinishedRegistrations`): reports by
+  default, deletes only with `--apply`. Account-store rows
+  (`account_fields`, `passwords`, `store_key_values`, PostgreSQL) under
+  an id the users index lacks are cleared only when they hold account
+  fields alone, no erasure record, older than `--grace` (default 24
+  hours), read again before the delete `[RCRG1]`, `[RCRG2]`. Indexed
+  accounts with no password (both engines) are erased with the account
+  deletion's erasure (trigger `unfinished-registration`, recorded in the
+  erasure ledger, resumable; the core's auto-deletion sweep completes a
+  stopped one) only when named with `--user-id` and passing every check
+  (no data beyond fields and one access, no erasure record, grace,
+  settle, index re-read) `[RCRG3]`..`[RCRG5]`, `[RCRG10]`, `[MCUR2]`;
+  a login on such an account answers invalid credentials `[RCRG8]`. An
+  empty users index facing account rows is refused (exit 3) `[RCRG7]`;
+  the bin's flag rules `[RCRG9]`. Log lines carry ids and counts, never
+  a username, email or value (the operator's report names indexed
+  accounts by username).
+- **Platform DB**: the default username pass (`reconcileUserCoreMap`)
+  now deletes the unique and indexed rows (a reserved email) a stale
+  self-routed name owns before its routing row
+  (`Platform.deleteUserRowsByPreHashedUsername`, also called by
+  `deleteUser`), counted in `platformRowsReleased`, dry run included
+  `[RCRG6]`, `[MCUR1]`. A name routed to the core whose account is
+  missing for another reason loses its reserved email too: the dry run
+  comes first.
+- Docs: open-pryv.io `INSTALL.md` "Unfinished registrations";
+  `CHANGELOG-v2-back.md` `## Unreleased`.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.5 | §1(e) storage limitation: new paragraph "Leftovers of unfinished registrations" (compensation fix, the pass and its safeguards, the username pass releasing the email, dry run first, log lines) | `URB2`, `RCRG1`, `RCRG2`, `RCRG3`, `RCRG5`, `RCRG6`, `RCRG7`, `MCUR1`, `MCUR2` |
+| gdpr | Art.17 | detail: data of a failed registration may sit under no account, out of reach of `system.users.delete`; the pass answers such an erasure request, pointer to Art.5 §1(e) | `RCRG1`, `RCRG3` |
+| iso-27001 | A.8.10 | detail: new paragraph "Unfinished registrations", pointer to gdpr.Art.5 §1(e) | `URB2`, `RCRG1`, `RCRG3`, `RCRG6` |
+
+Walked without change:
+- **Erasure, derived and sibling rows** (`ccpa.1798.105`,
+  `iso-27701.A.7.4.5`, `pipeda.Principle.4.5`, `swiss-nlpd.Art.6`,
+  `soc2.P4.3`, `soc2.C1.2`, `hipaa-security.164.310(d)(1)`): they
+  describe the erasure of an account a subject or the operator addresses,
+  and retention policy; none claims anything about failed registrations,
+  and the erasure the pass uses is the account deletion's, unchanged.
+  The `account-auto-deletion` primitive already states that an
+  interrupted erasure completes later; `context/data-retention-operator-owned.md`
+  lists background loops, and the pass is an operator-run tool, not one.
+- **Integrity** (`gdpr.Art.32` §1(b), `iso-27001.A.8.14` / `A.8.22`): the
+  platform DB integrity check is unchanged; releasing a stale name's
+  unique rows is cleanup, not a check.
+- **Capacity** (`iso-27001.A.8.6`, `soc2.A1.1`): the idle registration
+  transaction is gone, so registrations no longer hold a second pool
+  connection; no row claimed registration throughput, and A.8.6's
+  PostgreSQL time limits are unchanged. `iso-27001.A.8.5` `[PCLM3]`
+  (a refused registration leaves name and email free) still holds.
+- **Backup** (`iso-27001.A.8.13`, `hipaa-security.164.308(a)(7)(ii)(A)` /
+  `(B)`): no backup content change. A restore in flight looks like an
+  account with no password until it writes the password; it holds streams
+  or events, which the pass's checks refuse.
+- **Monitoring** (`iso-27001.A.8.16`, `soc2.CC7.2`): no row lists Pryv's
+  log lines.
+B.1 (no new method), B.2 to B.10: none.
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check
