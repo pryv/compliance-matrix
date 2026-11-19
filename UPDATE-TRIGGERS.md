@@ -2819,7 +2819,7 @@ its integrations table, plus vendor-naming in
 **No tier shifts.** `gdpr.Art.28` stays `facilitated`: the posture is
 strengthened, not newly covered. The prose passages that describe only
 the subprocessor relationship and "default disabled"
-(`hipaa-security.164.314(a)(2)(ii)(B)`, the `gdpr.Art.28` DPO-visibility
+(`hipaa-security.164.314(a)(2)(i)(B)`, then keyed `(a)(2)(ii)(B)`, the `gdpr.Art.28` DPO-visibility
 note, `swiss-nlpd.Art.9`) remain accurate unchanged.
 
 **Config keys**: `observability.otlp.endpoint` plus the PlatformDB rows

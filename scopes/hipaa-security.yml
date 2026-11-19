@@ -1658,6 +1658,29 @@ requirements:
       Mapping this Article to the existing technical-safeguards rows
       is the `derives_from` chain.
 
+  - ref: 164.314(a)(2)(i)(B)
+    title: BAC content, extend safeguards to subcontractors
+    text: |
+      Business associate contract must provide that the business
+      associate will, in accordance with §164.308(b)(2), ensure that
+      any subcontractors that create, receive, maintain, or transmit
+      ePHI on its behalf agree to comply with the applicable
+      requirements of this subpart by entering into a contract or
+      other arrangement that complies with this section. Applied down
+      the chain by §164.314(a)(2)(iii) (contracts between a business
+      associate and its subcontractor).
+    coverage: out-of-scope
+    draft: true
+    overview: |
+      Subcontracting chains are contractual; no software role. The
+      only built-in subprocessor Pryv-the-software carries is the
+      observability-provider adapter (default disabled); when enabled,
+      the BA's subcontractor list adds the observability provider as
+      a sub-processor under both HIPAA-Security §164.314(a)(2)(i)(B)
+      and GDPR Art.28(4). (Listed as §164.314(a)(2)(ii)(B) until
+      2026-11-19: that paragraph is "other arrangements" and has no
+      subcontractor clause.)
+
   - ref: 164.314(a)(2)(i)(C)
     title: BAC content, report security incidents
     text: |
@@ -1677,23 +1700,6 @@ requirements:
       messaging substrate when both sides run Pryv, otherwise the
       report channel is email / API / portal at the BA's choice.
       The audit log supplies the forensic evidence the report cites.
-
-  - ref: 164.314(a)(2)(ii)(B)
-    title: BAC content, extend safeguards to subcontractors
-    text: |
-      Where applicable, business associate must ensure that any
-      subcontractors that create, receive, maintain, or transmit ePHI
-      on its behalf agree to comply with applicable requirements via
-      a written contract.
-    coverage: out-of-scope
-    draft: true
-    overview: |
-      Subcontracting chains are contractual; no software role. The
-      only built-in subprocessor Pryv-the-software carries is the
-      observability-provider adapter (default disabled); when enabled,
-      the BA's subcontractor list adds the observability provider as
-      a sub-processor under both HIPAA-Security §164.314(a)(2)(ii)(B)
-      and GDPR Art.28(4).
 
   # ───────────────────────────────────────────────────────────────
   # §164.316 Policies and procedures and documentation requirements
