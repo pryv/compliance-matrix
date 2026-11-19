@@ -3501,6 +3501,51 @@ Walked without change:
   log lines.
 B.1 (no new method), B.2 to B.10: none.
 
+**Walked 2026-11-19 for the at-rest envelope write switch (unreleased at
+the walk; the release after open-pryv.io 2.0.0-rc.87, which shipped
+without it)**: merged on master `e74e7721` 2026-11-19. The rows say "the
+release after open-pryv.io 2.0.0-rc.87": name the tag once it is cut,
+then move the Section C clause on envelope versions to Discharged. No
+Section A slug, no `planned:` chip, no tier shift; `reviewed_at` left
+unchanged. No new config key, response header or API method (the
+`envelopeVersion` option of the certificate renewer is code, not
+configuration). What changed:
+- **Writes switched**: keys stored encrypted at rest (TLS and ACME
+  account keys, authenticator secrets, observability credentials,
+  transfer identities) are written in envelope version 2, bound to the row
+  that holds it, tag pinned; version 1 stays readable, and is written only
+  on explicit request `[AREV1]` to `[AREV3]`. Rows already stored are
+  rewritten when written again (the ACME account key once, at its next
+  check).
+- **Upgrade contract**: every core of a platform must run 2.0.0-rc.86 or
+  later before the release is deployed on any of them; going back to
+  2.0.0-rc.86 or rc.87 stays possible, going back to an earlier release
+  is not without restoring the rows (`CHANGELOG-v2.md` `## Unreleased`).
+- **Restore under another user id**: the account-transfer identity, bound
+  to its account in version 2, is re-bound to the new id `[RSER16]`
+  (the account transfer is itself unreleased).
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| hipaa-security | 164.312(a)(2)(iv) | technical: at-rest rows written in version 2 from the release after rc.87 (rc.86 and rc.87 still write version 1) | `AREV3` |
+| iso-27001 | A.8.24 | detail: same, with the upgrade contract | `AREV3` |
+
+Also updated: `docs/pryv-primitives.md` (`encryption-at-rest-secrets`,
+"Envelope versions": the write switch, the rollback bound, the restore
+re-bind).
+Walked without change:
+- **At-rest and transport cryptography** (`soc2.CC6.1`,
+  `hds.Activity.3.cryptography`, `diga.A1.2.1`,
+  `hipaa-security.164.312(e)(*)`, `gdpr.Art.32` encryption bullet): they
+  state AES-256-GCM at rest for operator secrets, which still holds; none
+  named the envelope version.
+- **Backup** (`iso-27001.A.8.13`, `hipaa-security.164.308(a)(7)(ii)(A)` /
+  `(B)`): the backup format is unchanged; the re-bind applies only to a
+  restore with `remapUserId`.
+- **Not row-relevant**: the test harness's integrity check now runs once
+  per test file and at the end of the run (no product change).
+B.1 (no new method), B.2 to B.10: none.
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check
@@ -3525,7 +3570,7 @@ ships the fix.
 
 | Added | Where | Gap | Remove when |
 |---|---|---|---|
-| 2026-11-17 | `encryption-at-rest-secrets` primitive ("Envelope versions"), `iso-27001.A.8.24` detail, `hipaa-security.164.312(a)(2)(iv)` technical | at-rest envelopes (TLS and ACME keys, authenticator secrets, observability credentials, transfer identities) are read in the authenticated version 2 since open-pryv.io 2.0.0-rc.86 but still written in version 1, so no stored row is bound to its row yet | the release that writes version 2: rewrite each place as the written behaviour, with that release's name and test codes |
+| 2026-11-17 | `encryption-at-rest-secrets` primitive ("Envelope versions"), `iso-27001.A.8.24` detail, `hipaa-security.164.312(a)(2)(iv)` technical | at-rest envelopes (TLS and ACME keys, authenticator secrets, observability credentials, transfer identities) are read in the authenticated version 2 since open-pryv.io 2.0.0-rc.86 but still written in version 1, so no stored row is bound to its row yet | the release that writes version 2: rewrite each place as the written behaviour, with that release's name and test codes. Rewritten 2026-11-19 as "the release after open-pryv.io 2.0.0-rc.87" (merged on master `e74e7721`, B.11 walk of that date): at its tag, name it in the three places and move this clause to Discharged |
 
 Discharged: the 2026-11-09 clause on `oauth.audienceBoundSessions`
 defaulting to `false` (open-pryv.io 2.0.0-rc.73 to rc.81; in

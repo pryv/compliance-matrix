@@ -792,7 +792,7 @@ requirements:
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, backup-payload-encryption]
     config_keys: [letsEncrypt.atRestKey]
-    tests: [ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, BNEV1, BKSM4]
+    tests: [ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, AREV3, BNEV1, BKSM4]
     planned:
       - kind: feature
         summary: "End-to-end encryption adds a customer-key flow (CMEK / BYOK) to the cryptography catalogue"
@@ -826,12 +826,14 @@ requirements:
       encrypted at rest (TLS and ACME keys, authenticator secrets,
       observability credentials, transfer identities): a second
       envelope version, bound to the row that holds it and with a
-      pinned tag, is read from this release `[AREV1]`, `[AREV2]`, but
-      rows are still written in the first version (no binding) so that a
-      core of the previous release can read them; a later release
-      switches the writes, and every core must have run 2.0.0-rc.86 or
-      later before it is deployed. The configured `letsEncrypt.atRestKey`
-      is unchanged.
+      pinned tag, is read from this release `[AREV1]`, `[AREV2]`;
+      2.0.0-rc.86 and rc.87 still write rows in the first version (no
+      binding) so that a core of the previous release can read them. The
+      release after open-pryv.io 2.0.0-rc.87 writes version 2 `[AREV3]`:
+      every core must have run 2.0.0-rc.86 or later before it is
+      deployed, and going back to a release before 2.0.0-rc.86 is not
+      possible without restoring the rows. The configured
+      `letsEncrypt.atRestKey` is unchanged.
 
   - ref: A.8.25
     title: A.8.25 Secure development lifecycle

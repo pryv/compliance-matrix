@@ -898,7 +898,7 @@ requirements:
     draft: true
     pryv_primitives: [encryption-at-rest-user-data, encryption-at-rest-secrets, letsEncrypt-integration]
     config_keys: [CEV_ENABLED, letsEncrypt.atRestKey, storages.engines.postgresql.ssl]
-    tests: [ACMEINT, BUNDLEENC, CERTUTILS]
+    tests: [ACMEINT, BUNDLEENC, CERTUTILS, AREV3]
     planned:
       - kind: feature
         summary: "End-to-end (server-blind) encryption via proxy re-encryption brings CMEK / BYOK to the Pryv layer"
@@ -949,9 +949,9 @@ requirements:
       that authenticates its context (the at-rest row it is stored in;
       the bundle's version, salt and nonce) with a pinned 16-byte tag
       `[AREV1]`, `[BNEV1]`. Bundles are written in it from that release;
-      at-rest rows are still written in the first version, so a core of
-      the previous release keeps reading them, until a later release
-      switches the writes.
+      at-rest rows from the release after open-pryv.io 2.0.0-rc.87
+      `[AREV3]` (2.0.0-rc.86 and rc.87 still write them in the first
+      version, so a core of the previous release keeps reading them).
 
   - ref: 164.312(b)
     title: Audit controls, standard
