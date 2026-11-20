@@ -19,7 +19,9 @@ running at once per account, per access and per socket.io connection,
 socket.io connections per access and per account, the nesting and
 size of call parameters, the depth and size of an account's stream
 tree, the stream ids of one event, idle connections, streamed audit
-reads per access and the mail a caller can make a core send. The
+reads per access and the mail a caller can make a core send, and, on
+a multi-core platform, caches routing lookups per process and limits
+the embedded DNS's lookup answers per client network. The
 rc.47 and rc.50 budgets came
 out of the 2026 code-level security review (`code-security-review-2026.md`).
 Before 2.0.0-rc.47 the only in-process throttle was the per-account
@@ -340,6 +342,33 @@ Rows whose `detail` should call out the operator-side responsibility
   registration mails). The per-address code budget reads the client
   address through `http.trustedProxies` like the others: behind a
   shared address (clinic or campus NAT) raise it.
+- **Routing lookups and DNS answers, multi-core** (same release; on by
+  default, `0` turns each off). Which core hosts a username used to be
+  read from the platform database at its most expensive consistency
+  level for every `/{username}/*` request (the `421 wrong-core` check)
+  and every embedded-DNS answer for `<username>.<domain>`: requests or
+  forged UDP queries for random names each cost a cluster-wide read.
+  Each process now caches the answer, a found mapping for
+  `cluster.userCoreCache.positiveTtlMs` (default 30000 ms) and an
+  unknown name for `cluster.userCoreCache.negativeTtlMs` (default
+  5000 ms); concurrent misses for one name share one read, a failed
+  read caches nothing `[PUCC1]`..`[PUCC7]`. Uniqueness checks
+  (registration, renames) never use the cache; an account moved to
+  another core can be routed to its former core for up to 30 s, a name
+  just registered can be unknown for up to 5 s. The cached read is
+  rqlite `linearizable` (no Raft log entry per read) `[RQRC5]`. The
+  embedded DNS answers at most `dns.responseRateLimit.perSecond` UDP
+  queries that need a platform lookup (`<core>.<domain>`,
+  `<username>.<domain>`, found or not) a second per client network
+  (default 20, per /24 IPv4 or /56 IPv6, all names counted together,
+  not per identical answer as BIND's response rate limiting does).
+  Past it the answers are dropped except every
+  `dns.responseRateLimit.slip`-th (default 2), sent truncated so a real
+  resolver retries over TCP; a refused query costs no lookup and is
+  logged ("UDP lookup answer(s) refused by dns.responseRateLimit")
+  `[DRRL1]`..`[DRRL5]`. Other names (apex, static, service, hosted
+  sites) and TCP are not limited by it `[DRRL6]`; TCP stays bounded by
+  `dns.tcpMaxConnections`.
 - **Recovery**: a worker that keeps crashing is replaced after a
   delay doubling up to 30 s (2.0.0-rc.50) `[WRBO1]`.
 

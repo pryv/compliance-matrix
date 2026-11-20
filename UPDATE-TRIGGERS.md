@@ -386,6 +386,16 @@ cuts an idle connection itself (keep the proxy's read timeout and the core's idl
 timeout above the slowest call) (developer-site work, outside this repo; B.11 walk
 of 2026-11-20). No chip involved.
 
+**Trigger fired (2026-11-20, routing lookups):** the same release limits the
+embedded DNS's UDP answers that need a platform lookup per client network
+(`dns.responseRateLimit.perSecond` 20 a second per /24 or /56, every
+`slip`-th refused answer sent truncated so a real resolver retries over TCP)
+and caches routing lookups per process. If the page covers the embedded DNS,
+its in-code budgets table needs a row for this limit, with the note that a
+public resolver sending many clients' queries from one network meets it first
+(developer-site work, outside this repo; B.11 walk of 2026-11-20, routing
+lookups). No chip involved.
+
 **Where the work lives**: the developer site (`dev-site2`, customer resources).
 Q6 outcome, voluntarily missing at Pryv layer; ship reference configs.
 
@@ -3746,6 +3756,91 @@ Walked without change:
   and where it goes are unchanged; only how many a caller can trigger.
 Transport, platform DB and backup rows: not affected. B.1 (no new method;
 new error answers recorded here), B.2 to B.10: none.
+
+**Walked 2026-11-20 (routing lookups) (unreleased at the walk; the
+release after open-pryv.io 2.0.0-rc.87)**: open-pryv.io feature commits
+`c7bdd4c6` and `0b77aa01` (review fixes), merged to master as
+`6152036a` (2026-11-20). Same release as the two walks above: the rows say "the
+release after open-pryv.io 2.0.0-rc.87" or "same release"; name the tag
+once it is cut. The validator passes against `6152036a`. No Section A
+slug, no `planned:` chip, no tier shift; `reviewed_at` left unchanged. No
+new API method, error answer or response header. It answers the audit
+finding that every unauthenticated multi-core request and every
+embedded-DNS query cost an uncached strong rqlite read, with no DNS
+response rate limit. What changed:
+- **Routing cache**: new keys `cluster.userCoreCache.positiveTtlMs`
+  (default 30000) and `cluster.userCoreCache.negativeTtlMs` (default
+  5000), per process, `0` turns either off. The wrong-core check (`421
+  wrong-core`) and the embedded DNS answer for `<username>.<domain>` keep
+  a found mapping 30 s and an unknown name 5 s; concurrent misses share
+  one read, a failed read or one that overlapped this process's own
+  user-core write is not cached, a name over 100 characters is never
+  cached `[PUCC1]`..`[PUCC7]`. Uniqueness checks (registration, renames)
+  never use the cache. Accepted staleness: an account moved to another
+  core can be routed to its former core for up to 30 s, a name just
+  registered can be unknown for up to 5 s, on another core and on another
+  process of the same core (the embedded DNS runs in the master process,
+  registrations in the API workers).
+- **Read level**: the cached routing read is rqlite `linearizable`
+  instead of `strong` (same freshness, no Raft log entry per read); the
+  other reads of the mapping stay `strong` `[RQRC1]`, `[RQRC5]`. It fails
+  while the cluster has no leader, as before. An external rqlited
+  (`storages.engines.rqlite.external`) must support `linearizable`; the
+  bundled rqlite is 10.6.0.
+- **Empty rqlite result**: a `strong` or `linearizable` read that rqlite
+  answers with no result (no leader yet) is now an error instead of "no
+  such row", so a taken name no longer reads as free during an election
+  `[RQRC6]`.
+- **DNS response rate limit**: new keys `dns.responseRateLimit.perSecond`
+  (default 20) and `dns.responseRateLimit.slip` (default 2). UDP answers
+  that need a platform lookup (`<core>.<domain>`, `<username>.<domain>`,
+  found or not) per client network (/24 IPv4, /56 IPv6), all names
+  counted together; past it dropped except every `slip`-th, sent
+  truncated (TC=1); a refused query costs no lookup and is logged
+  `[DRRL1]`..`[DRRL5]`. Apex, static, service and hosted-site names and
+  TCP are not limited by it `[DRRL6]`.
+
+| Scope | Ref | What changed | Tests added | Config keys added |
+|---|---|---|---|---|
+| iso-27001 | A.8.6 | new detail paragraph: routing lookups cached per process, accepted staleness, uniqueness checks uncached, pointer to the DNS limit (A.8.21) and the read level (A.8.14) | `PUCC1`, `PUCC2`, `PUCC4`, `PUCC6`, `PUCC7`, `DRRL5` | `cluster.userCoreCache.positiveTtlMs`, `cluster.userCoreCache.negativeTtlMs` |
+| iso-27001 | A.8.21 | embedded DNS sentence: response rate limit per client network, slip, lookup answers only, resolver sizing note | `DRRL1`, `DRRL2`, `DRRL5`, `DRRL6` | `dns.responseRateLimit.perSecond`, `dns.responseRateLimit.slip` |
+| iso-27001 | A.8.14 | new detail paragraph: routing read `linearizable`, empty result at `strong` / `linearizable` an error, external rqlited requirement | `PUCC6` (storage engine tests `RQRC5`, `RQRC6` cited in the prose only: the validator reads component tests) | `storages.engines.rqlite.external` (row had none) |
+| diga | A1.4.3 | detail: routing lookups cached and DNS lookup answers limited on a multi-core platform | (none) | (row has none) |
+
+Also updated: `context/rate-limiting-and-dos-protection.md` (intro; new
+bullet among the in-code budgets, "Routing lookups and DNS answers,
+multi-core", with keys, defaults and test codes);
+`context/core-affinity-architecture.md` (the `user-core/<username>` entry
+now says the wrong-core check and the embedded DNS read it, cached per
+process, with the staleness bound); Section A `RATE-LIMITING-RECIPES`
+(trigger noted for the developer-site page).
+Walked without change:
+- **Capacity, derived rows** (`soc2.A1.1`): derives from `iso-27001.A.8.6`
+  and carries no detail of its own.
+- **Network services, other rows** (`iso-27001.A.8.20`, `A.8.22`): TLS,
+  Raft mutual TLS and the closed rqlite HTTP port are unchanged; the
+  `linearizable` read travels the same way as `strong`.
+- **Availability / integrity** (`gdpr.Art.32` §1(b), `soc2.A1.2`,
+  `hipaa-security.164.308(a)(7)(ii)(B)`): topology, replication and
+  backups unchanged; the election behaviour is recorded on
+  `iso-27001.A.8.14`, from which `soc2.A1.2` derives.
+- **Registration and uniqueness** (`gdpr.Art.5` rows on unfinished
+  registrations, reconcile tool): uniqueness pre-checks keep `strong` and
+  never use the cache.
+- **Account transfer and rename** (`gdpr` rows on the planned account
+  transfer): the transfer is implemented and not released; when it is,
+  its rows should say that routing to the former core can last up to
+  30 s after the move (`positiveTtlMs`). Renames are uniqueness-checked
+  uncached; an old name can still route to its core for up to 30 s, where
+  it no longer exists.
+- **Platform DB personal data** (`PLATFORMDB-PII-HASHING` rows,
+  `context/core-affinity-architecture.md` "What PlatformDB carries"): the
+  cache is per-process memory, never written anywhere; nothing new is
+  stored in the platform DB.
+- **Monitoring** (`iso-27001.A.8.16`): the refusal log line is a new
+  operator signal but no row lists DNS log lines.
+Transport and backup rows: not affected. B.1 (no new method or error
+answer), B.2 to B.10: none.
 
 ## Section C: Maintenance reminders
 
