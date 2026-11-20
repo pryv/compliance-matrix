@@ -3014,6 +3014,27 @@ deletion's erasure `[RCRG1]`, `[RCRG3]`; use it when such a
 person asks for erasure. Details and safeguards under Art.5
 §1(e).
 
+CMC retry rows left by erasures on earlier releases. Before
+open-pryv.io 2.0.0-rc.72, an account erased while one of its
+consent operations was still running could be left with a CMC
+retry row (`cmc-internal/retry-cmc`), invisible through the API
+and never processed, holding a counterparty's invite URL with its
+token. Since rc.72 nothing is written for an account that is
+erased or whose erasure has started, but rows written before stay.
+From the release after open-pryv.io 2.0.0-rc.87,
+`bin/reconcile-user-cores.js --cmc-retries` lists them on
+PostgreSQL (rows under an id the users index does not hold) and,
+with `--apply`, deletes the rows of an id that holds nothing else
+(no account field, password, other event, stream, access, profile
+or webhook) and has no erasure record, re-checked in the delete itself
+`[RCCR1]`, `[RCCR2]`; an empty users index facing such rows is
+refused, nothing deleted `[RCCR3]`. It replaces the manual query
+given in the rc.72 notes: run it once on each PostgreSQL core that
+erased accounts before rc.72, never as part of an upgrade. On
+SQLite such a row stays in the erased account's directory, kept
+only with `audit.onUserDelete: keep`: the files there other than
+the `audit-*` ones are leftovers you may remove.
+
 **Technical**
 
 Tested via `[USAD]`
@@ -3025,7 +3046,7 @@ auth/delete.ts` (middleware registration).
 
 **Evidence**
 
-- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3
+- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3
 - docs: customer-resources/account-auto-deletion.md
 - config keys: storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass
 - primitives: event, stream, backup-restore, external-id-index, account-auto-deletion
@@ -3854,7 +3875,20 @@ Per-aspect:
     accesses an aliased app created before rc.69 kept an endpoint
     naming the username. OAuth2 clients registered with pairwise
     subjects get such an alias per user and client (see the
-    delegated-app bullet).
+    delegated-app bullet). The rows Pryv keys on a client address
+    or an email (in the platform database: failed-password and
+    password-reset budgets per address, the `/reg/access` creation
+    budget, registration email challenges, verification-mail send
+    slots; in each core's cluster store: the per-address budgets of
+    the unauthenticated lookup routes and the mail budgets) are
+    keyed by an HMAC-SHA256 under a key derived from
+    `auth.adminAccessKey` from the release after open-pryv.io
+    2.0.0-rc.87 `[SKHA1]`..`[SKHA4]`; earlier releases used a
+    plain SHA-256, which a listing of the platform database
+    reverses by running candidate addresses or a mailing list
+    through it. The keyed hash holds against whoever reads the
+    rows without the admin key; a holder of that key can still
+    test candidates.
   - Record-bound sign-in: IMPLEMENTED, since open-pryv.io
     2.0.0-rc.59 (release commit `927919ba`) an auth request that
     carries an external id in forced mode delivers the app's
@@ -4198,7 +4232,7 @@ Per-aspect:
 
 **Evidence**
 
-- tests: HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1
+- tests: HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3
 - docs: customer-resources/auth-oauth2.md, customer-resources/adapter-routes.md
 - config keys: hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount, oauth.audienceBoundSessions, oauth.stateKey, oauth.perUserIssuer, oauth.clientMetadataDocuments.mode, adapterRoutes
 - primitives: permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion
@@ -7942,6 +7976,19 @@ can be retried as is; an authorization code is single-use, so a
 refused code exchange spends it and revokes its access, and the
 client starts a new authorization `[OPCL4]`.
 
+**A chosen access token cannot be short (the release after
+open-pryv.io 2.0.0-rc.87).** Since the bearer of a valid token is
+authenticated, a short token is a guessable one. `accesses.create`
+with an explicit `token` refuses one shorter than 16 characters,
+measured after slugification, with `400
+invalid-parameters-format` `[TKMN1]`; omit `token` to get a
+generated one (24 characters). Tokens already issued are not
+re-checked, whatever their length. From the same release, the
+tokens Pryv generates (access, personal and password-reset
+tokens) are drawn from the system's secure random source
+(`node:crypto`), never from a non-cryptographic fallback, in the
+same shape as before `[SCTK2]`, `[SCTK3]`.
+
 **A second authentication path, OAuth2.** Beyond the token +
 MFA stack above, Pryv can authenticate delegated apps through a
 standards-based OAuth2 authorization-code + PKCE flow
@@ -8042,7 +8089,7 @@ open-pryv.io 2.0.0-rc.23.
 
 **Evidence**
 
-- tests: MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3, CLIB2, PCLM1, PCLM2, OPCL2, OPCL3, OPCL4
+- tests: MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3, CLIB2, PCLM1, PCLM2, OPCL2, OPCL3, OPCL4, TKMN1, SCTK2, SCTK3
 - config keys: services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds, oauth.signingKeys, oauth.idTokenTTL, oauth.stateKey, oauth.perUserIssuer, auth.passwordCheckConcurrency, auth.passwordCheckQueue
 - primitives: access, MFA, system-streams, delegation
 - context notes: delegation-model
@@ -8080,7 +8127,12 @@ LE certificate replication uses rqlite keyspace `tls-cert/<host>` +
 `tls-acme-account`; rotation triggers `https.Server.setSecureContext`
 via cluster IPC for live key swap without downtime. The cluster CA
 lives outside the LE chain, operator-rooted, used only between
-cores.
+cores. From the release after open-pryv.io 2.0.0-rc.87, a newly
+created cluster CA may sign end-entity certificates only
+(`pathlen:0`) `[CLCX1]`, and each node certificate is marked as an
+end entity for TLS server and client authentication, so a core's
+key cannot vouch for another peer `[CLCX2]`, `[CLCX3]`; existing
+CAs and certificates are unchanged.
 
 **Webhook delivery is signal-only.** Outbound webhook POSTs
 from Pryv carry a notification that something changed, not
@@ -8139,7 +8191,7 @@ allows TLS 1.2 and 1.3. Checked against open-pryv.io 2.0.0-rc.34.
 
 **Evidence**
 
-- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22, OCMD03B, OCMD03G, ADRC03, ADRI13
+- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22, OCMD03B, OCMD03G, ADRC03, ADRI13, CLCX1, CLCX2, CLCX3
 - config keys: http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cluster.allowInsecurePeerUrl, cmc.allowedPrivateHosts, adapterRoutes
 - primitives: letsEncrypt-integration, multi-core-mTLS, shared-secrets
 - context notes: webhooks-signal-only
@@ -9442,9 +9494,32 @@ enrolment without its secrets and refuses writes to it
 that both fail at the provider keep the enrolment that was pending
 before them `[MACC2]`.
 
+**Access tokens chosen by the caller (the release after
+open-pryv.io 2.0.0-rc.87).** A token is a bearer credential.
+`accesses.create` with an explicit `token` refuses one shorter
+than 16 characters, measured after slugification (what is
+stored), with `400 invalid-parameters-format` `[TKMN1]`; a token
+Pryv generates (the `token` omitted) has 24 characters. Existing
+accesses keep their tokens whatever their length: list the
+accesses your integrations created with chosen tokens if you need
+to replace short ones.
+
+**Tokens Pryv generates come from the secure random source (the
+release after open-pryv.io 2.0.0-rc.87).** Access tokens (the
+`token` omitted), personal (session) tokens, password-reset tokens
+and the default token of a cross-account (CMC) access are drawn
+from `node:crypto` directly, with no bias between symbols
+`[SCTK1]`, `[SCTK2]`, `[SCTK3]`. Before, they came from an id
+library that falls back to a non-cryptographic source
+(`Math.random`) on a platform without a crypto API, so their
+strength depended on that detection at run time. The shape is
+unchanged (24 lowercase letters and digits, a letter first):
+clients that check the format see no difference, and tokens
+already issued stay valid. Record ids keep their own generator.
+
 **Evidence**
 
-- tests: MFAA, MA15A, MA15C, MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1, MLSX1, MACC2, PCLM1, PCLM2, PCLM3, OPCL2
+- tests: MFAA, MA15A, MA15C, MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1, MLSX1, MACC2, PCLM1, PCLM2, PCLM3, OPCL2, TKMN1, SCTK1, SCTK2, SCTK3
 - config keys: services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, services.mfa.methods.sms.sendLimits, services.mfa.sessions.maxPendingPerUser, auth.passwordCheckConcurrency, auth.passwordCheckQueue
 - primitives: access, MFA, system-streams
 
@@ -9498,9 +9573,20 @@ a named account through the account deletion's erasure)
 email a stale name held on the platform `[RCRG6]`. See
 gdpr.Art.5 §1(e) for the safeguards.
 
+CMC retry rows left by erasures before open-pryv.io 2.0.0-rc.72
+(the release after open-pryv.io 2.0.0-rc.87). Each holds a
+counterparty's invite URL with its token and is no longer required
+by any account. `bin/reconcile-user-cores.js --cmc-retries` lists
+them on PostgreSQL and deletes them only with `--apply`, for an id
+that holds nothing else and has no erasure record `[RCCR1]`,
+`[RCCR2]`; an empty users index facing such rows is refused
+`[RCCR3]`. It replaces the manual query of the rc.72 notes; on
+SQLite such rows stay in the erased account's kept directory. See
+gdpr.Art.17.
+
 **Evidence**
 
-- tests: USAD, DLN1, DLN4, DLLW1, ACXP3, ACXP8, ADSW8, ADSW19, URB2, RCRG1, RCRG3, RCRG6
+- tests: USAD, DLN1, DLN4, DLLW1, ACXP3, ACXP8, ADSW8, ADSW19, URB2, RCRG1, RCRG3, RCRG6, RCCR1, RCCR2, RCCR3
 - docs: customer-resources/account-auto-deletion.md
 - config keys: storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.inactivity.defaultDays
 - primitives: event, stream, backup-restore, account-auto-deletion
@@ -9871,9 +9957,22 @@ the grammar of `webhooks.allowedPrivateHosts`; checked at boot)
 `[PFR3]`. Webhook deliveries apply the same address rules. Egress
 filtering on your network stays yours.
 
+**Inter-core certificates (the release after open-pryv.io
+2.0.0-rc.87).** A newly created cluster CA is a CA that may sign
+end-entity certificates only (`basicConstraints CA:TRUE,
+pathlen:0`; key usage limited to signing certificates and CRLs)
+`[CLCX1]`. The node certificate a core receives when it joins is
+marked as an end entity (`CA:FALSE`), for digital signature and
+TLS server and client authentication only, so a node's key cannot
+sign a certificate another core would accept `[CLCX2]`,
+`[CLCX3]`; the core id, hostname and address given for it must be
+plain DNS names and an IP address `[CLCX4]`. Certificates already
+issued and existing CAs are unchanged: a cluster created on an
+earlier release keeps its CA and the node certificates it issued.
+
 **Evidence**
 
-- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC, HSHT, PFR1, PFR2, PFR3, PFR4, CO22
+- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC, HSHT, PFR1, PFR2, PFR3, PFR4, CO22, CLCX1, CLCX2, CLCX3, CLCX4
 - config keys: http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, hostedSites.<name>.hsts, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl
 - primitives: letsEncrypt-integration, multi-core-mTLS
 
@@ -9922,9 +10021,23 @@ deployed, and going back to a release before 2.0.0-rc.86 is not
 possible without restoring the rows. The configured
 `letsEncrypt.atRestKey` is unchanged.
 
+**Changes in the release after open-pryv.io 2.0.0-rc.87.** Random
+secrets: the bearer tokens Pryv generates (access, personal and
+password-reset tokens, the default token of a cross-account
+access) are drawn from `node:crypto` without bias, never from a
+`Math.random` fallback `[SCTK1]`, `[SCTK2]`; same 24-character
+shape, see A.8.5. Inter-core PKI: a newly created cluster CA
+carries `basicConstraints CA:TRUE, pathlen:0` and signs only
+certificates and CRLs `[CLCX1]`; node certificates state their
+purpose (end entity, digital signature, TLS server and client
+authentication) instead of leaving it to each verifier's defaults
+`[CLCX2]`, `[CLCX3]`, see A.8.20. Existing CAs and certificates are
+not reissued: record in your key inventory which clusters still
+run a CA created before this release.
+
 **Evidence**
 
-- tests: ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, AREV3, BNEV1, BKSM4
+- tests: ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, AREV3, BNEV1, BKSM4, SCTK1, SCTK2, CLCX1, CLCX2, CLCX3
 - config keys: letsEncrypt.atRestKey
 - primitives: letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, backup-payload-encryption
 
@@ -10260,6 +10373,20 @@ The boundary is recorded in
     `[XIDC1]`, `[XIDC7]`, `[XIDG1]`, `[XIDN4]`. Key custody is
     yours: every holder of `K_namespace` can look up and claim ids
     of that namespace.
+  - Client addresses and emails in the keys Pryv stores its
+    abuse budgets and registration email challenges under
+    (failed-password and password-reset budgets per address,
+    the `/reg/access` creation budget, the email challenge rows
+    and verification-mail slots in the platform database; the
+    per-address budgets of the unauthenticated lookup routes and
+    the mail budgets in each core's cluster store) are an
+    HMAC-SHA256 under a key derived from
+    `auth.adminAccessKey` from the release after open-pryv.io
+    2.0.0-rc.87 `[SKHA1]`..`[SKHA4]`. Earlier releases stored a
+    plain SHA-256, which a listing of the platform database
+    reverses by enumerating addresses or running a mailing list
+    through it; the keyed hash leaves that to holders of the
+    admin key.
   - Static masking for non-prod environments + field-level
     encryption at the schema layer are both implementer
     concerns today; end-to-end encryption
@@ -10271,7 +10398,7 @@ The boundary is recorded in
 
 **Evidence**
 
-- tests: XIDC1, XIDC7, XIDG1, XIDN4, AL13, OPSE5
+- tests: XIDC1, XIDC7, XIDG1, XIDN4, AL13, OPSE5, SKHA1, SKHA2, SKHA3, SKHA4
 - primitives: randomAlias, stream, system-streams, event, external-id-index
 - context notes: data-masking-projection-vs-transformation
 
@@ -10613,9 +10740,19 @@ is never placed in the redirect URL, and the federated login is
 gated so an external identity cannot claim an account whose email
 was never inbox-proved.
 
+**Strength of chosen access tokens.** From the release after
+open-pryv.io 2.0.0-rc.87, a token chosen by the caller of
+`accesses.create` must have at least 16 characters after
+slugification, or the call is refused `[TKMN1]`; tokens already
+issued are unchanged. From the same release, the tokens Pryv
+generates (access, personal and password-reset tokens; 24
+characters, as before) are drawn from the system's secure random
+source, never from a non-cryptographic fallback `[SCTK2]`,
+`[SCTK3]`. See A.8.5.
+
 **Evidence**
 
-- tests: ORET1, ORL04, ORL12, OCAK14, OCAK2, OCAK7, OCAK23, OXK01, OXSK1, CKOC2
+- tests: ORET1, ORL04, ORL12, OCAK14, OCAK2, OCAK7, OCAK23, OXK01, OXSK1, CKOC2, TKMN1, SCTK2, SCTK3
 - config keys: oauth.refreshRetireGraceSeconds, oauth.signingKeys, oauth.stateKey, sso.stateKey
 - primitives: system-streams, MFA, encryption-at-rest-secrets, shared-secrets
 

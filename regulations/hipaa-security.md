@@ -1433,6 +1433,19 @@ can be retried as is; an authorization code is single-use, so a
 refused code exchange spends it and revokes its access, and the
 client starts a new authorization `[OPCL4]`.
 
+**A chosen access token cannot be short (the release after
+open-pryv.io 2.0.0-rc.87).** Since the bearer of a valid token is
+authenticated, a short token is a guessable one. `accesses.create`
+with an explicit `token` refuses one shorter than 16 characters,
+measured after slugification, with `400
+invalid-parameters-format` `[TKMN1]`; omit `token` to get a
+generated one (24 characters). Tokens already issued are not
+re-checked, whatever their length. From the same release, the
+tokens Pryv generates (access, personal and password-reset
+tokens) are drawn from the system's secure random source
+(`node:crypto`), never from a non-cryptographic fallback, in the
+same shape as before `[SCTK2]`, `[SCTK3]`.
+
 **A second authentication path, OAuth2.** Beyond the token +
 MFA stack above, Pryv can authenticate delegated apps through a
 standards-based OAuth2 authorization-code + PKCE flow
@@ -1533,7 +1546,7 @@ open-pryv.io 2.0.0-rc.23.
 
 **Evidence**
 
-- tests: MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3, CLIB2, PCLM1, PCLM2, OPCL2, OPCL3, OPCL4
+- tests: MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3, CLIB2, PCLM1, PCLM2, OPCL2, OPCL3, OPCL4, TKMN1, SCTK2, SCTK3
 - config keys: services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds, oauth.signingKeys, oauth.idTokenTTL, oauth.stateKey, oauth.perUserIssuer, auth.passwordCheckConcurrency, auth.passwordCheckQueue
 - primitives: access, MFA, system-streams, delegation
 - context notes: delegation-model
@@ -1571,7 +1584,12 @@ LE certificate replication uses rqlite keyspace `tls-cert/<host>` +
 `tls-acme-account`; rotation triggers `https.Server.setSecureContext`
 via cluster IPC for live key swap without downtime. The cluster CA
 lives outside the LE chain, operator-rooted, used only between
-cores.
+cores. From the release after open-pryv.io 2.0.0-rc.87, a newly
+created cluster CA may sign end-entity certificates only
+(`pathlen:0`) `[CLCX1]`, and each node certificate is marked as an
+end entity for TLS server and client authentication, so a core's
+key cannot vouch for another peer `[CLCX2]`, `[CLCX3]`; existing
+CAs and certificates are unchanged.
 
 **Webhook delivery is signal-only.** Outbound webhook POSTs
 from Pryv carry a notification that something changed, not
@@ -1630,7 +1648,7 @@ allows TLS 1.2 and 1.3. Checked against open-pryv.io 2.0.0-rc.34.
 
 **Evidence**
 
-- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22, OCMD03B, OCMD03G, ADRC03, ADRI13
+- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22, OCMD03B, OCMD03G, ADRC03, ADRI13, CLCX1, CLCX2, CLCX3
 - config keys: http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cluster.allowInsecurePeerUrl, cmc.allowedPrivateHosts, adapterRoutes
 - primitives: letsEncrypt-integration, multi-core-mTLS, shared-secrets
 - context notes: webhooks-signal-only
