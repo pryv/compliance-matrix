@@ -1,0 +1,2296 @@
+# HIPAA Security Rule (HIPAA-Security)
+
+- Scope id: `hipaa-security` (regulation)
+- Jurisdiction: US
+- Version: 45 CFR Part 164 Subpart C (as amended through the HITECH 2013 Omnibus Final Rule) (2013-01-25)
+- Official text: https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-C
+- Requirements: 41 (9 implemented, 8 configurable, 16 facilitated, 8 out-of-scope)
+- Browse: https://pryv.github.io/compliance-matrix/#/scope/hipaa-security
+
+## HIPAA-Security 164.308(a)(1)(i): Security Management Process, standard
+
+Coverage: facilitated · effort saved: low · mode: evidence · draft
+
+Requirement: Implement policies and procedures to prevent, detect, contain, and
+correct security violations.
+
+**What Pryv does for you**
+
+The Security Management
+Process is a programme you run as the covered entity / business
+associate, risk analysis, risk-management decisions, sanctions,
+activity review. Pryv supplies the technical raw material
+(audit log, system-level observability) that several of those
+activities draw on, particularly the §164.308(a)(1)(ii)(D)
+Information System Activity Review specification. The umbrella
+programme itself remains yours to define and run.
+
+**Detail**
+
+The four implementation specifications under (a)(1)(ii), risk
+analysis (R), risk management (R), sanction policy (R), and
+information system activity review (R), each have their own row
+where the Pryv contribution is more direct. This row covers the
+umbrella standard itself: a written, maintained programme.
+
+**Evidence**
+
+- primitives: audit, observability-provider
+
+## HIPAA-Security 164.308(a)(1)(ii)(D): Information system activity review, Required
+
+Coverage: implemented · effort saved: high · draft
+
+Requirement: Implement procedures to regularly review records of information
+system activity, such as audit logs, access reports, and security
+incident tracking reports.
+
+**What Pryv does for you**
+
+Every API call is captured by Pryv's per-user audit log; the
+`audit.get` method exposes it for periodic review. Observability
+(opt-in telemetry emitter) gives system-level activity reports for
+the infrastructure side. The "regular review" cadence is your written
+procedure.
+
+**Detail**
+
+Audit records carry timestamp, user, access reference (accessId +
+accessSerial), API method, key request fields, success / error.
+This is the raw material for both routine review (who accessed what,
+when) and incident-driven investigation. The audit-event-stream
+optional channel surfaces audit records into the subject's own
+streams, useful when the subject participates in review.
+
+**Technical**
+
+Audit storage: per-user SQLite in
+`open-pryv.io/components/audit/`. Access method: `audit.get`. Tests
+live under `open-pryv.io/components/audit/test/`.
+
+**Evidence**
+
+- tests: AT01, AT02, AT03, AT51
+- primitives: audit, audit-event-stream, observability-provider
+
+## HIPAA-Security 164.308(a)(3)(ii)(C): Termination procedures, Addressable
+
+Coverage: implemented · effort saved: high · draft
+
+Requirement: Implement procedures for terminating access to electronic protected
+health information when employment ends or workforce role changes.
+
+**What Pryv does for you**
+
+Workforce access to ePHI is mediated by Pryv accesses. Termination
+is a single API call (`accesses.delete`) which immediately revokes
+the token. The audit log proves the termination instant. For
+role-change scenarios, `accesses.update` narrows permissions without
+full revocation, preserving the version history of the change.
+
+**Detail**
+
+The "Addressable" status means you must implement it, document why
+not, or implement an equivalent. The Pryv primitives give you the
+"implement it" path directly:
+  - Full termination: `accesses.delete` revokes the token immediately
+    and snapshots the prior state into the access history.
+  - Role change / narrowing: `accesses.update` with reduced
+    `permissions` keeps the same access identity but enforces the
+    new scope from the version bump onward.
+  - Audit chain: every subsequent API call would fail authentication
+    (after delete) or fall outside the new scope (after update),
+    producing a verifiable termination boundary.
+  - Expiry-driven termination: A `shared` access managed by an app
+    access can no longer outlive it (it inherits the app access's
+    expiry at creation, clearing that expiry is refused, and
+    authentication refuses a never-expiring shared access once its
+    app access has expired, `5d609bfa`), and a webhook stops
+    firing and becomes `inactive` once its access has expired
+    (`3394b95f`), both in open-pryv.io 2.0.0-rc.23.
+
+For workforce-scale deployments (e.g., hospital with 100+ staff),
+Pryv composes with two patterns covered in
+`context/workforce-access-patterns.md` (a third, for teams sharing
+one account, follows):
+  - Group access + `callerId` (auth header
+    `Authorization: <TOKEN> <CALLERID>`), termination = removing
+    the individual from the external IdP / IGA group, no Pryv-
+    side action; audit trail preserves the individual identity
+    via the recorded caller id.
+  - Seed access + sub-access derivation, termination =
+    `accesses.delete` on the individual's sub-access while the
+    seed + sibling sub-accesses remain untouched.
+Roles + groups are deliberately outside Pryv; the external IdP
+is the source of truth.
+
+**Group accounts over CMC** (open-pryv.io 2.0.0-rc.53, release
+commit `61fb28dd`, https://github.com/pryv/open-pryv.io/issues/158).
+For a team that shares one account and reaches patient data
+through cross-account consent, each member holds a membership on
+the group account and short-lived accesses of their own on each
+patient account, minted by the group's core. However the
+membership ends (an administrator revokes it, the member leaves,
+the membership access is deleted or expires, the delegate who
+approved it is detached, the group account is deleted), the
+group's core deletes those accesses on every patient account
+through the patient's grant, reads each one back, and records the
+outcome per patient (`deleted`, `absent` or `residual`) on a
+server-written `consent/member-revoke-cmc` event naming the member
+`[GA20]`, `[GA21]`, `[GA22]`, `[GA23]`. Narrowing a membership
+(fewer teams, or a team stream deleted for good) removes only the
+accesses outside what it still covers `[GA41]`. A residual (a
+patient core unreachable or refusing) is retried by the retry
+loop, then by the periodic ledger pass
+(`cmc.memberAccess.sweepIntervalMs`), and lasts at most until the
+access's own expiry (24 h by default, 7 d at most,
+`cmc.memberAccess.maxTtl`). Retries and the periodic pass need
+`cmc.retryLoop.enabled`, `true` by default since this release;
+set to `false`, a warning is logged at boot and a residual stays
+until the access expires. The sweep and the periodic pass read the
+whole ledger since open-pryv.io 2.0.0-rc.79 `[MA32]`; earlier
+releases read at most 100,000 ledger records per group account
+(with a warning in the log), so on a larger group an access beyond
+them lasted until its own expiry. When the group account itself is
+deleted, its members' accesses are deleted on the patient cores
+before the erasure, and no record is kept `[GA40]`. Terminating
+such a member is no longer your code's job; deciding who may join
+stays yours. Code: `open-pryv.io/components/cmc/src/memberSweep.ts`,
+`handleMemberRevoke.ts`,
+`components/api-server/src/methods/helpers/cmcMemberSweep.ts`;
+unit tests `[CMCMR]`. See `context/workforce-access-patterns.md`,
+Pattern 3.
+
+**Evidence**
+
+- tests: AA02, ACCP, LG20, CMCGA, CMCMR, GA20, GA21, GA22, GA23, GA40, GA41, MA32
+- config keys: cmc.retryLoop.enabled, cmc.memberAccess.maxTtl, cmc.memberAccess.sweepIntervalMs
+- primitives: access, permissions, audit, CMC
+- context notes: workforce-access-patterns
+
+## HIPAA-Security 164.308(a)(4)(ii)(B): Access authorization, Addressable
+
+Coverage: implemented · effort saved: high · draft
+
+Requirement: Implement policies and procedures for granting access to ePHI
+through, for example, access to a workstation, transaction,
+program, process, or other mechanism.
+
+**What Pryv does for you**
+
+Granting access to ePHI in Pryv means minting an access with
+explicit per-stream permissions. The technical authorization
+decision is enforced at every API call. Documentation of the
+authorization rationale lives in `access.clientData` next to the
+grant itself, so the "why" travels with the "what".
+
+**Detail**
+
+Access grants are creation events on the `accesses` collection,
+with `permissions[]` listing the streamId + level tuples the
+grantee may exercise. `clientData` carries free-form metadata
+such as the workforce-role label, the granting administrator,
+the business reason. Together these form a per-grant record
+satisfying both the technical control and the documentation
+half of the standard.
+
+**Group accounts over CMC** (open-pryv.io 2.0.0-rc.53, release
+commit `61fb28dd`, https://github.com/pryv/open-pryv.io/issues/158).
+A member of a team sharing one account is authorized by a consent
+act: the member writes a membership request
+(`consent/request-cmc` with `request.membership: true`) on their
+own account, and an administrator of the group (the owner, or a
+delegate of the group account) accepts it and picks the team
+streams. The resulting membership access records who approved it
+(`clientData.cmc.membership.approvedBy`: the delegate and the
+delegation, or `null` for the owner) and what the member asked
+for (`requestedScopes`) `[GA01]`, `[MB30]`, `[MB32]`. The server
+limits what a membership may ask for, at write and again at
+accept: team streams under `:_cmc:apps:*` only (never the inbox,
+the chat or collector streams, nor `*`), `read` or `contribute`,
+no feature permission, never delegable
+(`cmc-membership-permissions-invalid`) `[GA02]`, `[MB31]`; a
+delegate cannot approve a membership requested from their own
+account `[MB34]`. Each access the member then gets on a patient
+account is issued only through that membership and within the
+patient's consent (see 164.312(a)(1)). See
+`context/workforce-access-patterns.md`, Pattern 3.
+
+**Evidence**
+
+- tests: AA01, ACCP, CMCMB, GA01, GA02, MB30, MB31, MB32, MB34
+- primitives: access, permissions, clientData, stream, CMC
+- context notes: workforce-access-patterns
+
+## HIPAA-Security 164.308(a)(4)(ii)(C): Access establishment and modification, Addressable
+
+Coverage: implemented · effort saved: high · draft
+
+Requirement: Implement policies and procedures that, based upon the entity's
+access authorization policies, establish, document, review, and
+modify a user's right of access to a workstation, transaction,
+program, or process.
+
+**What Pryv does for you**
+
+The access lifecycle (create / read / update / delete) is first-
+class in Pryv. `accesses.update` writes a tamper-evident snapshot
+of the prior version into history on every modification, giving
+you the documented review trail this standard expects.
+
+**Detail**
+
+Modification semantics:
+  - `accesses.create`: establishes a new grant (see (a)(4)(ii)(B)).
+  - `accesses.get ?includeHistory=true`: review the version chain.
+  - `accesses.update`: modify permissions / clientData; bumps
+    `serial`, snapshots the old head into history.
+  - `accesses.delete`: termination (see (a)(3)(ii)(C)).
+Every step appears in the audit log, with the timestamp and
+acting administrator's identity preserved.
+
+**Group accounts over CMC** (open-pryv.io 2.0.0-rc.53, release
+commit `61fb28dd`, https://github.com/pryv/open-pryv.io/issues/158).
+For a team sharing one account, a member's right of access is
+established by a membership the group's administrator accepts
+`[GA01]`, modified by updating that membership access (removing
+teams, or deleting a team stream for good, deletes the member's
+patient accesses that fall outside what remains) `[MR27]`,
+`[MR33]`, `[GA41]`, and reviewed from the group account: the
+membership accesses (a revoked one stays readable as a deletion
+record with `includeDeletions`) `[GA22]`, the member's access
+requests (`consent/member-access-cmc`) and the server-written
+sweep records (`consent/member-revoke-cmc`, with the outcome per
+patient and any residual) each name the member. A member cannot
+change or delete these records; the owner can `[GA42]`. See
+`context/workforce-access-patterns.md`, Pattern 3.
+
+**Evidence**
+
+- tests: AA01, AA02, ACCP, GF33, CMCMR, GA01, GA22, GA41, GA42, MR27, MR33
+- primitives: access, permissions, audit, CMC
+- context notes: workforce-access-patterns
+
+## HIPAA-Security 164.308(a)(5)(ii)(D): Password management, Addressable
+
+Coverage: configurable · effort saved: medium · draft
+
+Requirement: Procedures for creating, changing, and safeguarding passwords.
+
+**What Pryv does for you**
+
+Pryv stores credentials on a privileged `system-stream`, separate
+from ordinary content. Password rules (complexity, rotation) are
+operator-configured. Adding `services.mfa.mode` raises the
+authentication strength beyond a password alone, see §164.312(d).
+
+**Detail**
+
+Password is one possible factor; MFA via the `mfa.*` API methods
+(authenticator-app TOTP by default since open-pryv.io 2.0.0-rc.14
+`[MA15B]`, `[MA10A]`, SMS supported `[MA3A]`) is the second factor
+when enabled. Recovery flows live alongside (`mfa.recover`) so an
+account is not lost when a device is `[MA7A]`. The implementer chooses whether MFA is required
+universally or per-role.
+
+An operator may also enable federated sign-in through an external
+OpenID Connect provider (`sso.*`, beta, off by default). It is gated
+so an external identity cannot take over an account whose email was
+never inbox-proved, and the minted session token is never carried in
+a URL (delivered to the auth app via a one-time shared secret). MFA,
+when active, is still enforced on the federated path.
+
+**Evidence**
+
+- tests: MA15B, MA10A, MA3A, MA7A
+- config keys: services.mfa.mode, auth.passwordRules, sso.enabled
+- primitives: system-streams, MFA, access
+
+**Planned changes**
+
+- enhancement: Reference TOTP / WebAuthn plugins reduce dependence on SMS-OTP for the second factor
+
+## HIPAA-Security 164.308(a)(7)(ii)(A): Data backup plan, Required
+
+Coverage: implemented · effort saved: high · draft
+
+Requirement: Establish and implement procedures to create and maintain retrievable
+exact copies of electronic protected health information.
+
+**What Pryv does for you**
+
+`bin/backup.js` produces per-user backup files (account data,
+streams, accesses, profile, webhooks, events, attachments, audit,
+high-frequency series). `--restore` rebuilds a user from a backup
+file. The backup procedure ("when, where, how often") is yours to
+schedule; the underlying primitive is shipped.
+
+**Take a new backup after upgrading to open-pryv.io 2.0.0-rc.34
+or later.** Earlier backups carry no high-frequency series data
+on any series engine, with no warning: backup and restore
+addressed each user's series under a different key than the one
+the series are stored under. Since 2.0.0-rc.34 the series are
+exported and restored, series move between any two series engines
+(InfluxDB backups could not be restored before), and the backup
+manifest's `coreVersion` reports the core's release.
+
+**If you ever ran `bin/backup.js --incremental` before
+open-pryv.io 2.0.0-rc.51, check those backup directories.** An
+incremental run overwrote the full backup it continued, and a
+restore of such a directory reported success while restoring only
+the last delta: it is not a retrievable exact copy and cannot be
+repaired. `node bin/backup.js --inspect <dir>` reports it
+`DAMAGED` and `--restore` now refuses it `[BKIC2]`, `[BKC6]`.
+Take a new full backup into a new directory and continue the
+incrementals from there. Full backups written by earlier releases
+are not affected.
+
+**Three procedure points from open-pryv.io 2.0.0-rc.86.** A backup
+written by 2.0.0-rc.86 or later restores with that release or
+later: if you go back to an earlier release, start a new chain in
+a new directory (a run an earlier release appends to the chain is
+refused at restore) `[BKSM6]`. Keep each backup directory for the
+backup only: a file the backup did not write is refused at restore,
+and a backup refuses to start in a directory holding other files
+`[BKSM7]`, `[BKSM8]`. With a recipient public key, sign the runs
+(`--signing-key` at backup, `--signing-pubkey` at restore; detail
+below), starting with a new full backup into a new directory.
+
+**Detail**
+
+Per-user backup files are advantageous for HIPAA's "exact copies"
+language because the backup unit matches the natural protected-
+health-information unit (the subject). They also play well with
+the §164.310(d) media controls (you can encrypt + transport a
+single subject's backup file).
+
+**Backup encryption is built in, opt-in.** By default
+`bin/backup.js` writes plaintext (gzip-compressed) files. With
+`--recipient-pubkey <pem>` (recommended: a random per-backup data
+key is RSA-OAEP-wrapped to your public key, so the backup host
+holds no secret that can decrypt its own output) or
+`--encrypt-passphrase` / `PRYV_BACKUP_PASSPHRASE` (scrypt-derived
+key), every file is encrypted with per-file authenticated
+AES-256-GCM before it reaches the destination disk, and the
+backup carries a cleartext `encryption.json` envelope (crypto
+headers only), a `RESTORE-README.md` and a standalone
+`decrypt-backup.mjs`, so the key holder can recover it without
+Pryv. `--restore` takes `--private-key` or
+`--decrypt-passphrase`. Available since open-pryv.io 2.0.0-rc.5.
+Losing the key or passphrase makes the backup unrecoverable:
+key custody is yours, and so are volume- or bucket-level
+encryption (LUKS, S3 SSE-KMS, ...) if you add it on top.
+Document the chosen key model in your backup-plan SOP for
+§164.308(a)(7)(ii)(A).
+
+**Backup handling hardened (open-pryv.io 2.0.0-rc.47 to
+2.0.0-rc.50).** A backup written without a key model prints a
+warning that it is plaintext (it holds every account's data, access
+tokens included) `[BKPW1]`; `--passphrase-file` reads the passphrase
+from a file, so it shows neither in the process list nor in shell
+history `[BKPF1]`; backups are written with directories `0700` and
+files `0600` (2.0.0-rc.49). A restore refuses, before writing
+anything: a plaintext backup when a decryption secret was given
+(`--allow-plaintext` overrides, `--require-encrypted` refuses
+plaintext even without a secret) `[BKRE1]`, `[BKRE4]`; user ids or
+usernames that are not one safe file name, symbolic links where the
+backup keeps its data `[BKRS1]`, `[BKRS4]`; names the platform
+routes itself `[BKRN1]`; and a single-user restore onto a username
+another account now holds, even with `--overwrite` `[RSOW1]`.
+Authenticity bound: recipient-key (hybrid) encryption gives
+confidentiality, not authenticity; whoever holds the public key and
+can write to your backup destination can produce a backup that
+restores, unless the runs are signed (open-pryv.io 2.0.0-rc.86,
+below). Protect write access to the destination, and prefer
+`--require-encrypted` on restore.
+
+**Incremental backups form a chain (open-pryv.io 2.0.0-rc.51).** A
+`--incremental` run writes only its own `incrementals/<runId>/`
+directory and the run index `chain.json`; no file of an earlier run
+is rewritten `[BKC1]`. A restore applies the full backup, then every
+run in order, newer versions and deletions replacing older ones
+`[BKC2]`, `[BKIC1]`; `--through-run <runId>` restores the chain as
+of a given run, a chain with a missing or reordered run is refused
+`[BKC7]`, and two overlapping runs into the same directory leave the
+first in the chain and the second aside `[BKCC1]`. A run's window
+starts at the previous run's snapshot time, so changes made while
+that run was in progress are no longer lost `[BKC3]`, and the
+deletion of streams, accesses and webhooks is carried `[BKC4]`.
+Each run of an encrypted backup has its own envelope and key, keeps
+the chain's key model (a wrong secret is refused before anything is
+written) and carries the current `decrypt-backup.mjs` and
+`RESTORE-README.md` `[BKC5]`, `[BKCS1]`; with a recipient public key
+the backup host still needs no private key to continue the chain
+`[BKIC3]`. Series emptied after a run stay empty on restore
+`[BKCE2]`. `--inspect <dir>` lists the runs and says whether the
+directory is sound. Up to 2.0.0-rc.85 the chain index and run
+manifests are checked for consistency but not signed (the
+authenticity bound above applies). Your backup-plan SOP should name
+the chain you restore from and how long its runs are kept.
+
+**Authenticated files and signed runs (open-pryv.io 2.0.0-rc.86).**
+Each run's manifest lists every file of the run with its size and
+SHA-256 hash and is bound to its run; a restore refuses a run with
+a file added, removed, resized or changed, and a `chain.json` entry
+that disagrees with the run's manifest (users, scope, snapshot
+time) `[BKSM1]`, `[BKSM2]`, `[BKSM3]`. An encrypted file ends with
+a marked final block and each block is tied to its file, its
+position and its run, so a file cut at a block boundary, an empty
+file left in place of a real one, or a file swapped between two
+accounts is refused instead of restoring as valid. An account's
+files are checked before anything of the account is written.
+`--signing-key <ed25519 pem>` signs each run (`manifest.sig`);
+given `--signing-pubkey`, a restore or `--inspect` requires every
+run to be signed by that key `[BKSM4]`, `[BKIS1]`. With a recipient
+public key and no signature, a writer holding that public key can
+still replace a run, and the backup warns that it is not signed
+`[BKSM5]`, `[BKIS2]`. `--inspect --verify-files` (with the backup's
+secret) reads and checks every file without restoring `[BKIS3]`:
+put it in your backup verification step. New passphrase backups
+use a stronger key derivation (scrypt N = 2^17). Runs written by
+earlier releases restore as before and are reported as "file list
+not verified". A plaintext run's file table detects corruption,
+not tampering. An account erased while a full backup runs is left
+out of that run `[BKDU1]`, and two runs finishing together no
+longer race on `chain.json` `[BKLK1]`, `[BKLK2]`. Operator page:
+`customer-resources/backup` on the developer site.
+
+**Technical**
+
+Backup chunking + integrity restored (see
+`open-pryv.io/CHANGELOG-v2-back.md`). Series namespace shared by
+backup, restore, account deletion and the series server:
+`open-pryv.io/components/business/src/series/namespace.ts`
+(2.0.0-rc.34). `[BKSR]` runs series through backup and restore in
+each test matrix (PostgreSQL or SQLite base, with the default or
+the InfluxDB series engine), `[BKEV]` the events store round trip,
+`[BKVR]` the manifest version; `just test-backup-roundtrip`
+(`open-pryv.io/tools/backup-roundtrip/`) backs a seeded user up
+and restores it PostgreSQL to SQLite and back, comparing the
+bundles. Backup options are CLI flags of `bin/backup.js`, not
+config keys. Encryption: `open-pryv.io/storages/interfaces/backup/BackupCipher.ts`
+(tests in `open-pryv.io/storages/test/backup-encryption.test.js`),
+released in 2.0.0-rc.5 (commit `ea27bf35`). File table, run
+binding and signatures: `open-pryv.io/storages/interfaces/backup/FilesystemBackupWriter.ts`,
+`FilesystemBackupReader.ts`, `chain.ts`, released in 2.0.0-rc.86
+(tag commit `70e28786`); the block-level checks are tested by
+`[BKAD1]` to `[BKAD6]` in `open-pryv.io/storages/test/`.
+
+**Evidence**
+
+- tests: BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCE2, BKIC1, BKIC2, BKIC3, BKSM1, BKSM2, BKSM3, BKSM4, BKSM5, BKSM6, BKSM7, BKSM8, BKLK1, BKLK2, BKIS1, BKIS2, BKIS3, BKDU1
+- docs: customer-resources/backup.md
+- primitives: backup-restore, backup-payload-encryption
+
+## HIPAA-Security 164.308(a)(7)(ii)(B): Disaster recovery plan, Required
+
+Coverage: configurable · effort saved: low · draft
+
+Requirement: Establish (and implement as needed) procedures to restore any loss
+of data.
+
+**What Pryv does for you**
+
+Two layers Pryv gives you, covering different data: (1) cold
+restore from `bin/backup.js --restore`, the only recovery path
+for user data; (2) a multi-core cluster replicates the platform
+DB (user-to-core index, shared settings, certificates) over rqlite
+Raft with cluster-CA mTLS, so losing one core does not lose the
+platform's control plane. User data is not replicated between
+cores: each user lives on one home core, so if that core's
+storage is lost, its users' data comes back only from your
+backups (or from replication you run under the storage engine,
+e.g. PostgreSQL streaming replication). You compose them per your
+RTO / RPO.
+
+**Detail**
+
+Cluster topology is documented in the dev-site customer-resources
+guides. The bootstrap CLI (`bin/bootstrap.js new-core`) issues an
+encrypted bundle with the cluster CA + rqlite TLS material; the
+joining core boots via `bin/master.js --bootstrap`. Lets-Encrypt
+certificates replicate across the cluster via rqlite keys, so a
+surviving core can serve TLS without re-issuing.
+
+**Platform DB recovery (open-pryv.io 2.0.0-rc.34).** The bundled
+rqlite is 10.5.1: its snapshot store is crash-safe (under 9.x a
+node killed while taking a snapshot could later restore stale
+pages into its copy of the platform DB), its snapshot files are
+checksummed, and a node stops on a node-local SQLite error
+instead of diverging silently. The first start on 10.x converts
+the rqlite data directory one way, so put the upgrade in your
+recovery plan: back up every node (`/db/backup` plus an archive
+of the data directory taken while the core is stopped), check the
+snapshot store, and upgrade the nodes of a cluster back to back;
+a rollback to an older release needs that archived directory.
+Procedure: `open-pryv.io/INSTALL.md`, "Upgrading the bundled
+rqlite (9.x to 10.x)".
+
+**Restore your series too.** Operator backups taken before
+open-pryv.io 2.0.0-rc.34 carry no high-frequency series data, so
+a restore from them loses every series point; take a new backup
+after upgrading (see 164.308(a)(7)(ii)(A)).
+
+**Restore from an incremental chain (open-pryv.io 2.0.0-rc.51).**
+`--restore` rebuilds user data as of the latest run of a
+`bin/backup.js` chain, or as of an earlier run with
+`--through-run <runId>`, which gives your recovery plan a restore
+point per run `[BKIC1]`, `[BKC7]`. A chain is refused when a run is
+missing or reordered, and a directory damaged by an incremental run
+of an earlier release is refused unless you pass
+`--allow-incomplete` `[BKIC2]`. On SQLite, a core running while a
+restore replaces an account's file now reads the restored file
+`[UASF1]`, `[UASF2]`. Your drill should restore from a chain, not
+only from a full backup.
+
+**What a restore checks before it writes (open-pryv.io
+2.0.0-rc.86).** A restore refuses a run whose files were added,
+removed, changed, cut short or swapped between accounts, and, given
+`--signing-pubkey`, a run not signed by that key `[BKSM2]`,
+`[BKSM4]`; `--inspect --verify-files` checks a whole backup without
+restoring it `[BKIS3]`, so a damaged copy is found before the day
+you need it. An account whose restore fails once its data is being
+written (a database error, a full disk) is no longer left
+half-restored: what was written is cleared and the account is
+removed from the core's index and routing, so a new restore starts
+clean; with `--overwrite`, an account that was on the core before
+is left empty, and the restore's error is reported `[RSFC1]`,
+`[RSFC2]`, `[RSFC3]`; your recovery procedure re-runs the restore
+for each account it names. On a multi-core platform the
+bootstrap bundle that rebuilds a core is authenticated with its
+version, salt and nonce from 2.0.0-rc.86 on, and a joining core
+must run that release or later to read it `[BNEV1]`.
+
+**Evidence**
+
+- tests: BKSR, BUNDLEENC, BKIC1, BKIC2, BKC7, UASF1, UASF2, BKSM2, BKSM4, BKIS3, RSFC1, RSFC2, RSFC3, BNEV1
+- docs: customer-resources/backup.md
+- config keys: cluster.discoveryEnabled, letsEncrypt.certRenewer
+- primitives: backup-restore, multi-core-mTLS, letsEncrypt-integration
+
+## HIPAA-Security 164.310: Physical Safeguards, standard (framing)
+
+Coverage: facilitated · effort saved: low · mode: awareness · draft
+
+Requirement: Implement policies and procedures to limit physical access to
+electronic information systems and the facility or facilities in
+which they are housed, while ensuring that properly authorized
+access is allowed.
+
+**What Pryv does for you**
+
+Physical safeguards (facility
+access, workstation security, device and media controls) are
+properties of the hosting environment, not of the Pryv software
+itself. Pryv contributes two things: the data-residency
+primitive lets you bind a user's data to a specific hosting
+(so you can certify the physical environment for that data
+explicitly), and operator-supplied secrets are AES-256-GCM
+encrypted at rest so that a stolen disk doesn't leak the keys
+themselves.
+
+**Detail**
+
+For each implementation specification under §164.310 ((a)(1) facility
+access controls, (b) workstation use, (c) workstation security,
+(d) device and media controls), the controls are physical and
+operational. Pryv's posture: the operator chooses + documents the
+hosting environment; for multi-hosting deployments, `data-residency`
+lets you certify the physical layer differently per region. Per-
+user backup files (see §164.308(a)(7)(ii)(A)) are the unit of
+device-and-media-controls transfer when you need to move a single
+subject's ePHI off-host.
+
+**Evidence**
+
+- primitives: data-residency, encryption-at-rest-secrets
+
+## HIPAA-Security 164.312(a)(1): Access control, standard
+
+Coverage: implemented · effort saved: high · draft
+
+Requirement: Implement technical policies and procedures for electronic
+information systems that maintain ePHI to allow access only to
+those persons or software programs that have been granted access
+rights as specified in §164.308(a)(4).
+
+**What Pryv does for you**
+
+Per-stream permissions are enforced at every API call; an access
+can read or write only the streams its `permissions[]` lists, at
+the level granted. There is no "bypass on trust" path, the
+enforcement is the API surface, not a downstream policy layer.
+System streams (account, password, MFA) sit on a separately
+controlled namespace.
+
+**Detail**
+
+The standard's four implementation specifications below each map
+to a distinct Pryv concern. The standard itself is the umbrella:
+the technical control system that prevents access by anyone /
+anything not granted it.
+
+**Cross-user isolation caveat:** the "no bypass on trust path"
+property holds at the API surface. The strength of the
+underlying isolation depends on the chosen storage engine,
+SQLite gives physical per-user-file isolation; PG gives
+logical app-code-enforced isolation against shared tables.
+See `context/per-engine-isolation.md` for the per-engine
+breakdown + operator mitigation patterns (PG row-level
+security, per-schema, per-account-DB, per-tenant deployments).
+
+**Scope-gated OAuth2 grants.** The delegated-app access path
+(OAuth2 authorization-code + PKCE,
+`open-pryv.io/components/oauth2/`, open-pryv.io 2.0.0-rc.8)
+inherits the same permission enforcement: an authorization-code
+grant references exactly one consent offer and mints an app
+access whose `permissions[]` are the user's granted subset of
+that offer; it can touch nothing outside them. Presented
+redirect URIs are validated by exact string match (loopback-port
+carve-out only; fragment-bearing URIs rejected,
+`open-pryv.io/components/oauth2/src/clientRegistry.ts`), so an
+issued authorization code cannot be diverted to an unregistered
+callback.
+
+**What an OAuth2 grant can reach (open-pryv.io 2.0.0-rc.64 to
+2.0.0-rc.77).** Withdrawing a consent deletes the app's live
+sessions and the accesses they created at once (rc.64; earlier, a
+live token ran out its lifetime) `[OE31]`; narrowing it re-cuts
+every live session (rc.68) and the accesses a session created
+(rc.70) `[OSUB1]`, `[OSUB3]`. No app, shared or consent-derived
+access can write account fields (rc.65) `[ACSW1]`, `[ACSW2]`. A
+consent for an operator-registered client can never grant
+account or system streams, `*` or `manage`, and by default its
+sessions cannot create accesses or webhooks or share secrets
+(`accessCreation`, `webhooks`, `secretSharing` forbidden unless the
+operator allows them per client) `[OACR1]`, `[OACR2]`. An aliased
+session is accepted under its alias only (rc.69) `[AL13]`,
+`[OPSE5]`. An authorization for an account address
+(`https://{username}.<host>/…`, rc.75) is bound to the signed-in
+account: another account's address is refused before anything is
+written `[OPUE2]`; address aliases (rc.76) are created, listed and
+deleted with the personal token only `[OPAL2]`. A suspended client,
+or one under review after the operator changed its registration
+(rc.71), is refused at every OAuth2 step and on the data API within
+`oauth.clientRevokeCheckSeconds` (default 30 s) `[ORF1]`.
+**Token exchange** (RFC 8693, rc.73): only a client registered
+`--can-exchange` may trade a user's token for its own, only for a
+token issued for one of its registered audiences (checked before
+the home core is named), never for a derived token; the derived
+session is a session of the same grant, no wider and no longer-lived
+than the token it replaces, and ends when that token's session is
+deleted `[OTX05]`, `[OTXE04]`. Since open-pryv.io 2.0.0-rc.82
+`oauth.audienceBoundSessions` is `true` by default: the token an app
+sent to such a resource server is refused directly at the API and
+works only through that resource server's exchange `[OTXE02]`; an
+operator may set `false` on a core whose resource servers do not
+exchange yet (the boot log names the clients concerned; from rc.73
+to rc.81 `false` was the default). **Adapter routes** (rc.73, off unless
+`adapterRoutes` is set) forward `/adapter/<name>/…` to a sidecar
+you run, with no authentication by the core: the sidecar must
+authenticate every request (see `iso-27001.A.8.26`).
+
+**Delegate-account token class.** Account delegation
+(`open-pryv.io/components/delegation/`) adds a delegate token:
+an owner-equivalent personal token one account holds over
+another. It is still bound by the same per-stream permission
+surface, but its defining access-control property is the
+teardown rule, a delegate can never remove a delegation, and
+dissolving one requires a genuine login on the controlled
+account (a personal token with no forge-protected delegation
+marker; the marker is forge-guarded on create and update). The
+`:_delegation:*` namespace is plugin-owned and guarded end to
+end (no user create/write/delete, internal subtree read-guarded
+and excluded from wildcard reads), and each delegate's actions
+are audited on the controlled account. See
+`context/delegation-model.md`.
+
+**Plugin-managed and account streams, by every spelling of an
+id** (open-pryv.io 2.0.0-rc.56). The guards of the delegation
+namespace, of the plugin-managed regions of the cross-account
+(CMC) namespace and of the account fields (the primary email,
+written only through `account.update`; non-editable and hidden
+fields; level caps on account-stream permissions) judge the
+stream an id resolves to, whatever store-prefixed spelling a
+request uses, for every token, the owner's included, and refuse
+creating a stream under, or moving one into, a plugin-managed
+parent `[CNRP1]`, `[CNRP6]`, `[CNRP7]`, `[DSC05]`, `[ASA1]`,
+`[ASA2]`, `[ASA3]`, `[ASA6]`. The CMC retry worker acts only on
+records the server wrote `[CNM2B]`, `[RQ32]`. Before this
+release a store-prefixed spelling was not recognised by these
+guards, so the separation of the system and plugin namespaces
+held only for requests using the canonical ids; in particular an
+access holding `contribute` on the email field could change the
+primary email through the events API.
+
+**Moving a stream** (open-pryv.io 2.0.0-rc.56). An app or shared
+access moving a stream needs manage rights on every stream of the
+moved subtree, trashed ones included `[SMV1]`, `[SMV4]`; before
+it, a child granted to that access at a lower level moved along
+into the target parent's inherited permissions, reaching accesses
+that had not been granted it.
+
+**Apps granted access through a delegation.** When a delegate
+grants a software program access to the controlled account, the
+program receives an ordinary `app` access bound to the requested
+permissions, never the owner-equivalent token. The server stamps
+it with a lineage attribute no client can set, change or remove
+(`clientData.delegation.kind: 'delegated-child'`) `[DCH01]`,
+`[DCH03]`, and removing the delegate deletes every access granted
+through the delegation, at any depth, and nothing else `[DCH12]`.
+In open-pryv.io 2.0.0-rc.23. The same rule covers a cross-account
+(CMC) data grant a delegate accepts for the controlled account
+(open-pryv.io 2.0.0-rc.30): the grant carries the lineage
+attribute and `access-info` names the delegate `[DCH15]`, the
+accept event records the approving delegate, server-stamped and
+not client-settable `[DCH16]`, and the detach deletes the grant
+before it answers, the requester being notified by
+`consent/revoke-cmc` `[DCH18]`. When such a data grant is
+delegable (`request.accessType: 'app'`), the detach, like every
+other CMC withdrawal path (`consent/revoke-cmc`, the reference
+account app, the requester withdrawing, account deletion), also
+deletes the accesses the requester derived from it, since
+open-pryv.io 2.0.0-rc.52 (`96af58ad`) `[MAAC]`,
+`[CMCHS-APPGRANT]`, `[GA24]`; on earlier releases they stayed
+valid until their own expiry, and `bin/access-scope-audit.js`
+lists any left behind. The one exception is explicit:
+since open-pryv.io 2.0.0-rc.31 the individual, detaching the
+delegate through a genuine login, may keep named CMC data grants
+that delegate gave (`keepAccessIds`); a kept grant loses the
+lineage attribute and becomes the individual's own `[DCH21]`, a
+list naming any other access is refused whole before any change
+`[DCH23]`, and every other access granted through the delegation
+is deleted as before. Grant paths that still cannot
+record the lineage (OAuth2 consent, publishing a CMC offer,
+widening a CMC grant) refuse a delegation-derived token
+`[DCH17]`, `[OE27]`.
+
+**Cross-account relationship accesses are bounded by the
+negotiated channels.** Since open-pryv.io 2.0.0-rc.38 (merge
+`7aab1e85`) a cross-account (CMC) relationship whose consent
+excludes chat gives neither relationship access a chat permission
+and creates no chat stream `[CN62]`, `[CN63]`, and the
+counterparty's access is refused (`403`, `cmc-chat-disabled`) if
+it writes a chat directly; alerts are refused the same way when
+system messaging is off (`cmc-system-messaging-disabled`)
+`[CN65]`, `[CH07]`, `[CH10]`. Relationships accepted earlier keep
+their chat stream; the refusal applies to them when their recorded
+features exclude chat.
+
+**Member accesses of a group account** (open-pryv.io 2.0.0-rc.53,
+release commit `61fb28dd`,
+https://github.com/pryv/open-pryv.io/issues/158). A team sharing
+one account lets each member obtain, from the group's core, a
+short-lived `shared` access on a patient account, derived from
+the patient's delegable grant (`consent/member-access-cmc`; the
+access's endpoint is returned once in the `events.create`
+answer, never stored, logged or retried) `[GA10]`, `[GA11]`.
+Three bounds apply. The group's core issues it only to a
+membership access (personal and delegate tokens are refused
+too, `cmc-member-access-not-member`), only for a patient
+relationship under the member's team streams, only for named
+data streams within what the patient's offer granted (never
+`*`, never a `:_cmc:` stream), with a lifetime within per-core
+bounds and never beyond the membership's own expiry, and one mint
+at a time per membership and patient (per worker process)
+`[GA12]`, `[GA14]`, `[GA15]`, `[CMCMA]`. Two budgets per
+membership, counted for the whole core, pace the asks: new member
+accesses (`cmc.memberAccess.mintBurst` 5000, then `ratePerMinute`
+1000 a minute) and requests of any kind (`askBurst` 10000, then
+`askRatePerMinute` 3000 a minute, by default); asking
+again for a live access spends no new-access budget, and past
+either budget the ask is answered `429` with `Retry-After`
+(open-pryv.io 2.0.0-rc.79; before it, every ask counted against
+`ratePerMinute`, per worker process) `[GA16]`, `[GA17]`, `[MA20]`,
+`[MA22]`. The budgets pace a membership, they do not narrow its
+reach: what ends it is its expiry and its revocation. The
+patient's core refuses anything beyond the grant, and accepts
+from a delegable grant only the exact member stamp, which it
+completes itself `[MB10]`, `[MB12]`. The access cannot manage
+accesses, cannot outlive the grant and expires (24 h by default,
+60 s to 7 d, `cmc.memberAccess.*`); when the patient withdraws
+on any path it is deleted with the grant `[GA24]`. A membership
+access is not exempt from the personal-token gate, so it cannot
+accept consents or widen grants on the group's behalf `[GA01]`.
+An app token may delete only the `shared` accesses it created
+`[GA31]`, and no update can remove the plugin's record
+(`clientData.cmc`) from an access `[MB13]`. Code:
+`open-pryv.io/components/cmc/src/handleMemberAccess.ts`,
+`memberAccessHooks.ts`, `memberMintRegistry.ts`,
+`memberLedger.ts`. See `context/workforce-access-patterns.md`,
+Pattern 3.
+
+**Evidence**
+
+- tests: AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10, MAAC, CMCGA, CMCMA, GA01, GA10, GA11, GA12, GA14, GA15, GA16, GA17, MA20, MA22, GA24, GA31, MB10, MB12, MB13, CNRP1, CNRP6, CNRP7, DSC05, ASA1, ASA2, ASA3, ASA6, CNM2B, RQ32, SMV1, SMV4, OE31, OSUB1, OSUB3, ACSW1, ACSW2, OACR1, OACR2, AL13, OPSE5, OPUE2, OPAL2, ORF1, OTX05, OTXE04, OTXE02
+- config keys: cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl, cmc.memberAccess.ratePerMinute, cmc.memberAccess.mintBurst, cmc.memberAccess.askRatePerMinute, cmc.memberAccess.askBurst, cmc.memberAccess.maxInFlightPerMembership, cmc.memberAccess.allowNameOnly, cmc.retryLoop.enabled, oauth.clientRevokeCheckSeconds, oauth.audienceBoundSessions, adapterRoutes
+- primitives: access, permissions, system-streams, delegation, CMC
+- context notes: per-engine-isolation, delegation-model, workforce-access-patterns
+
+## HIPAA-Security 164.312(a)(2)(i): Unique user identification, Required
+
+Coverage: implemented · effort saved: high · draft
+
+Requirement: Assign a unique name and/or number for identifying and tracking
+user identity.
+
+**What Pryv does for you**
+
+Every Pryv account has a unique username + cuid; every access
+derived from it carries a unique access id (cuid) and version
+serial. Audit records cite the (accessId, accessSerial) tuple,
+so each tracked action ties back to a unique identity.
+
+**Detail**
+
+Where several people share one access (a group token), the
+per-person identifier is the `callerId` your app forwards with
+each call, a label Pryv records but does not authenticate; see
+`context/workforce-access-patterns.md`, Pattern 1.
+
+**Group accounts over CMC** (open-pryv.io 2.0.0-rc.53, release
+commit `61fb28dd`, https://github.com/pryv/open-pryv.io/issues/158).
+For a team sharing one account that reaches patient data through
+cross-account consent, each member signs in to their own Pryv
+account and reads a patient's data under an access of their own,
+whose `clientData.cmc` names the member and the group: the group's
+core sends only the member's identity, and the patient's core
+stores it beside the group identity, the grant id, the scope and
+the app code copied from the authenticated grant; any other
+`clientData.cmc` is refused (`cmc-member-stamp-invalid`,
+`cmc-clientdata-cmc-forbidden`) `[GA10]`, `[MB10]`, `[MB11]`,
+`[MB12]`. The patient's audit then identifies the member by a
+unique access tied to a unique account, without a forwarded
+label. Against a patient core older than 2.0.0-rc.53, which
+refuses the stamp, the group's core mints the access with the
+member in its name only and reports `attribution: 'name-only'`,
+while `cmc.memberAccess.allowNameOnly` is `true` (the default for
+now) `[GA13]`; set it to `false` to refuse such mints. See
+`context/workforce-access-patterns.md`, Pattern 3.
+
+**Technical**
+
+Account model: see `open-pryv.io/components/business/src/users/`.
+Access ids are cuids; composite ids `<cuid>:<serial>` appear once
+`accesses.update` is exercised (see `context/access-versioning.md`).
+
+**Evidence**
+
+- tests: AA01, UZEV, GA10, GA13, MB10, MB11, MB12
+- config keys: cmc.memberAccess.allowNameOnly
+- primitives: access, audit, system-streams, CMC
+- context notes: workforce-access-patterns, access-versioning
+
+## HIPAA-Security 164.312(a)(2)(ii): Emergency access procedure, Required
+
+Coverage: configurable · effort saved: medium · draft
+
+Requirement: Establish (and implement as needed) procedures for obtaining
+necessary ePHI during an emergency.
+
+**What Pryv does for you**
+
+The operator-held admin access key (`auth.adminAccessKey`) is the
+break-glass mechanism: it grants administrative reads not
+requiring an ordinary user's consent. You document the
+circumstances under which it may be exercised and the audit-trail
+review that must follow.
+
+**Detail**
+
+The admin access key is operator-side and rotates only at
+operator-supplied cadence, treat it as a privileged credential
+under custody controls equivalent to a root password. Every API
+call made under the admin key is audited like any other, so
+post-emergency review is concrete.
+
+**Evidence**
+
+- tests: LG20, GF33
+- config keys: auth.adminAccessKey
+- primitives: access, system-streams
+
+## HIPAA-Security 164.312(a)(2)(iii): Automatic logoff, Addressable
+
+Coverage: configurable · effort saved: high · draft
+
+Requirement: Implement electronic procedures that terminate an electronic
+session after a predetermined time of inactivity.
+
+**What Pryv does for you**
+
+Two configurables: personal-token session lifetime
+(`auth.sessionMaxAge`) and per-access expiry (`access.expires`).
+The latter is per-grant (the access is automatically inert after
+the timestamp passes), useful for clinical-workflow accesses
+whose validity is bounded by the case.
+
+**Detail**
+
+Note that HIPAA's "automatic logoff" is workstation-centric in
+origin (workforce members stepping away from a terminal). In a
+Pryv-mediated workflow, the analogous control is the validity
+window of the access token. Combining `auth.sessionMaxAge` (for
+interactive workforce sessions) with per-grant `access.expires`
+(for app-driven background processes) covers both shapes.
+
+**Evidence**
+
+- tests: AA02, ACCP
+- config keys: auth.sessionMaxAge, access.expires
+- primitives: access, permissions
+
+## HIPAA-Security 164.312(a)(2)(iv): Encryption and decryption, Addressable
+
+Coverage: configurable · effort saved: high · draft
+
+Requirement: Implement a mechanism to encrypt and decrypt ePHI.
+
+**What Pryv does for you**
+
+The "mechanism to encrypt and decrypt ePHI" is delivered as
+switch-on Pryv software. User PHI/PII at rest (events,
+attachments, series, audit, platform DB) is encrypted by the
+`container-encrypted-volume` companion
+(`encryption-at-rest-user-data`), layered onto the image, it
+mounts an encrypted volume on boot so the application stores
+ciphertext at rest. The operator enables it (`CEV_ENABLED`) and
+chooses a key source. Pryv additionally encrypts operator-supplied
+secrets at rest (AES-256-GCM, HKDF-derived) and provides
+TLS-in-transit via the built-in ACME integration.
+
+**Detail**
+
+`container-encrypted-volume` (v0.1.0, shipped 2026-06-23) provisions
+and mounts a LUKS-encrypted volume inside the container and points
+the data roots at it, verified end-to-end (an event written through
+the API is unreadable in the stopped container file). Pluggable
+backend (LUKS reference + gocryptfs) and key provider (`env` /
+`file` / `exec` / `clevis` for TPM2·Tang·PKCS#11 / `aws-kms`
+envelope). With an identity-bound provider no copyable key is held;
+key custody is intrinsic to the control, not a Pryv gap. Rotation
+uses LUKS key-slots (no bulk re-encrypt). Volume encryption also
+grounds the breach-notification safe harbor (NIST SP 800-111).
+Coverage is `configurable`, Pryv's software performs the encryption
+once enabled, a step above the operator-implements-it tier. Caveats:
+an external PostgreSQL data dir and remote object storage (S3) are
+outside the mount (encrypt operator-side / via bucket SSE); LUKS
+needs `--privileged`. See `proposals/container-encrypted-volume.md`.
+
+The platform-secret at-rest encryption (Let's Encrypt account keys,
+observability tokens, cluster bootstrap bundles) remains on by
+default (`encryption-at-rest-secrets`).
+
+Longer-term direction: end-to-end encryption where the server never
+holds plaintext, research direction tracked under internal backlog
+slug `E2E-ENCRYPTION` (proxy re-encryption); per-row impact in
+`proposals/e2e-encryption.md`.
+
+**Technical**
+
+AES-256-GCM at-rest module: `open-pryv.io/components/business/src/acme/AtRestEncryption.ts`.
+Bootstrap-bundle encryption: `open-pryv.io/components/business/src/bootstrap/BundleEncryption.ts`.
+Since open-pryv.io 2.0.0-rc.86 both read a second envelope version
+that authenticates its context (the at-rest row it is stored in;
+the bundle's version, salt and nonce) with a pinned 16-byte tag
+`[AREV1]`, `[BNEV1]`. Bundles are written in it from that release;
+at-rest rows from the release after open-pryv.io 2.0.0-rc.87
+`[AREV3]` (2.0.0-rc.86 and rc.87 still write them in the first
+version, so a core of the previous release keeps reading them).
+
+**Evidence**
+
+- tests: ACMEINT, BUNDLEENC, CERTUTILS, AREV3
+- config keys: CEV_ENABLED, letsEncrypt.atRestKey, storages.engines.postgresql.ssl
+- primitives: encryption-at-rest-user-data, encryption-at-rest-secrets, letsEncrypt-integration
+
+**Planned changes**
+
+- feature: End-to-end (server-blind) encryption via proxy re-encryption brings CMEK / BYOK to the Pryv layer
+
+## HIPAA-Security 164.312(b): Audit controls, standard
+
+Coverage: implemented · effort saved: high · draft
+
+Requirement: Implement hardware, software, and/or procedural mechanisms that
+record and examine activity in information systems that contain
+or use ePHI.
+
+**What Pryv does for you**
+
+Pryv's per-user audit log records every API method invocation,
+timestamp, user, access reference, method, success / error. The
+`audit.get` API method surfaces it for examination. The optional
+audit-event-stream channel additionally emits audit records into
+the subject's own streams, so the subject (and any access they
+authorise) can examine the history.
+
+**Detail**
+
+Audit storage uses SQLite directly (not the engine-agnostic mall
+layer), to keep the audit path independent of the data path. This
+decouples integrity of the log from issues in the primary engine.
+
+Audit row content is data-minimal **by construction**: action +
+source (transport + ip) + URL query + access ref + optional
+integrity hash of the affected event. The request body is never
+stored. Consequence: an auditor reviewing the §164.312(b) log
+sees *who did what when* without the log itself becoming a
+second copy of PHI, favourable under §164.502(b) minimum-
+necessary review. See `docs/pryv-primitives.md` audit entry.
+
+One scoping nuance: `events.get` content-query conditions sent
+over HTTP GET are part of the URL query, so the **search
+values** your apps submit (which may reference PHI, e.g. a
+diagnosis code) are recorded as-is, deliberately, since the
+search criteria are the auditable action. Tier the audit log's
+protection accordingly. See
+`context/content-query-audit-semantics.md`.
+
+Since open-pryv.io `07b6d3b6`, the OAuth2 authorization server
+records its own activity in the same audit pipeline (`oauth.*`
+events): consent lifecycle (shown / granted / refused),
+authorization-code exchange including replay attempts, and token
+lifecycle (issued per grant type / refreshed / revoked /
+reuse-detected). User-resolved events land in the subject's
+per-user trail (`[OE07]` proves rows in `:_audit:`); the
+pre-identification ones (consent shown / refused, code replay)
+go to syslog. A detected refresh-token replay additionally
+revokes the whole token chain and records both the detection
+and the resulting revocation (open-pryv.io `829f7238`), so the
+§164.312(b) trail covers delegated-app authorization activity,
+not just data access. Federated sign-in (SSO, beta) emits into the
+same pipeline: `sso.login` (user-resolved, in the account's trail)
+and `sso.refused` (pre-identification: no-account / unproved email /
+mint failure, syslog), so an attempted account takeover through an
+external identity is itself auditable.
+
+**OAuth2 audit additions (open-pryv.io 2.0.0-rc.66 to
+2.0.0-rc.77).** In the subject's trail: `oauth.nonce.reused` (an
+OpenID Connect nonce presented twice, never the nonce itself)
+`[OXN02]`; `oauth.token.exchanged` (a resource server traded the
+user's token for its own, naming both clients); `oauth.consent.
+refused` with its reason (`permission-level-conflict`,
+`wrong-core`, `audience-account-mismatch`, `audience-not-listed`,
+`address-alias-held` since rc.79 (the owner consenting at one of
+their address aliases another app's grant holds, formerly reported
+as `audience-account-mismatch`), and with `oauth.perUserIssuer` on,
+`issuer-account-mismatch`), no username or alias in the payload
+`[OPUE2]`, `[OPUE22]`, `[OPIU3]`. In syslog (no user
+resolved): `oauth.token.introspected` (which resource server asked
+about which client's token, never the token) `[OXI06]`,
+`oauth.token.exchange_refused` with its reason (an unauthenticated
+caller is not audited) `[OTX03]`, and `oauth.client.
+metadata_fetched` / `metadata_refused` for client metadata
+documents, sampled per host and reason, never the document body
+`[OCMDE13]`. Refresh tokens are named by a hash since rc.69
+`[ORL12]`. Since rc.68 the session minted at consent is written by
+the system, so the consent shows as `oauth.consent.granted` plus
+the grant's own create or update row, no longer as an
+`accesses.create` row. Not audited: requests on adapter routes
+(the sidecar audits them) and the `421` answers for an account
+served by another core (warning log only). The three address-alias
+methods (rc.76) are audited like any API call `[OPAL2]`.
+**Correction, rc.77:** a streamed answer (for example `events.get`)
+that the client stopped reading was recorded as a success; it is
+now recorded as an error with id `client-closed-request`. The call
+was always in the trail; only its outcome was wrong `[AUAB3]`.
+
+Account delegation extends the per-record attribution: a record
+produced by a delegate token, or by an app access a delegate
+granted on the controlled account, carries
+`content.delegation = { delegateUsername, delegateHostSlug }`, so
+an app acting for a controlled account is traceable on that
+account's trail to the person who authorized it `[DCH05]` (the
+app-grant case is in open-pryv.io 2.0.0-rc.23; see `context/delegation-model.md`).
+
+**Group accounts over CMC** (open-pryv.io 2.0.0-rc.53, release
+commit `61fb28dd`, https://github.com/pryv/open-pryv.io/issues/158).
+When a member of a team sharing one account reads a patient's
+data, the patient's trail records the member's own access id, an
+access whose creator is the group's grant and whose
+server-stamped `clientData.cmc` names the member and the group
+`[GA10]`. Since this release every CMC and delegation teardown is
+the `accesses.delete` deletion, so a member access (or a grant)
+that is gone stays readable by name as a deletion record
+(`accesses.get` with `includeDeletions`) and the audit rows that
+cite it can still be resolved `[GA22]`, `[GA30]`. That holds
+while the deletion record is kept: by default until the account
+is deleted; since open-pryv.io 2.0.0-rc.56 you may have them
+purged after `accesses.deletionRecords.retentionDays`, past which
+an audit row shows such an access by id only `[ADP1]`, `[ADR5]`.
+Set it no shorter than your audit-review and retention needs
+(see 164.316(b)(2)(i)). The reference
+account app's audit page shows such an access as "<member
+access> via <grant name>", deleted accesses included, from its
+first release after 0.21.0 (app-web-user-account). On the
+group's trail, each member access asked for
+(`consent/member-access-cmc`, written through the member's own
+membership access, with the server-owned outcome) and each sweep
+at offboarding (`consent/member-revoke-cmc`, server-written) is
+an event naming the member `[GA20]`, `[MA41]`. See
+`context/workforce-access-patterns.md`, Pattern 3.
+
+**External ids** (`external-id-index` primitive). The account's
+own claims, replacements and releases are audited on its trail
+like any API call (open-pryv.io 2.0.0-rc.58). From 2.0.0-rc.60 an administrator's
+release of an id (`POST /system/admin/ext-id/release`, admin key)
+is recorded twice: the admin call itself without a user (syslog),
+and an `account.externalIds.adminRelease` entry in the trail of
+the account that held the id, with the namespace and the
+administrator's reason, when audit is active `[XIDAR1]`. The
+blinded value is in neither, nor in any log line `[XIDG1]`. Not
+audited, like `auth.cores`: the unauthenticated lookup
+`auth.extIdCores` and the core-to-core holder answer
+`system.extIdHolds` used by forced-mode sign-ins (open-pryv.io
+2.0.0-rc.59), both reads that name no account.
+
+**The account owner's examination (open-pryv.io 2.0.0-rc.84).**
+`accesses.get` and `accesses.getOne` return to the owner's
+personal token (or a delegate's personal access), on each access
+and each deletion record, `usage`: approximate lifetime call
+counts per method, summed as reads, writes, session and other
+calls; a batch counts as its inner calls `[AUG1]`, `[AUG2]`. App
+and shared callers never receive it `[AUG3]`; it needs
+`accessTracking.isActive` (on by default). The counts are written
+after each reply and are a summary: the per-call record is the
+audit log, where a batch is one `callBatch` row beside the rows of
+its inner calls `[QK5F]`. The reference account app
+(app-web-user-account 0.34.0) shows the counts and the last error
+on each access's Activity card, and an Audit trail tab lists every
+audited call on the account, linkable and filtered by app (the
+OAuth grant and its sessions), access, date or kind of call, each
+row naming the access that made it, a revoked one included (app
+tests `[ACTV]`, `[TRLP]`), so the owner can examine the activity
+on their account without an operator. Since open-pryv.io
+2.0.0-rc.86 the same callers can also have the audit log counted
+over a period (`audit.getSummary`: calls per hour, day or week as
+reads, writes, session, other calls and errors, for the account or
+chosen accesses, a batch envelope not counted) `[ASM1]`, `[ASM2]`;
+app and shared callers are refused `[ASM4]`, and the call is itself
+audited `[ASM9]`. The account app's next release draws its Activity
+chart and an Audit trail chart over a chosen period from it.
+
+**socket.io calls running at the same time (fix, the release after
+open-pryv.io 2.0.0-rc.87).** Every call on one socket.io connection
+used to share one context, so two calls running at once could swap
+their method id: the audit row (and the access usage count) of one
+call could name the other call's method. Each call now runs with
+its own context and is audited under its own method `[SKMC]`.
+
+**Evidence**
+
+- tests: AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC
+- config keys: accesses.deletionRecords.retentionDays
+- primitives: audit, audit-event-stream, external-id-index
+- context notes: content-query-audit-semantics, delegation-model, workforce-access-patterns
+
+**Planned changes**
+
+- feature: Chained / signed audit log strengthens tamper-resistance evidence
+
+## HIPAA-Security 164.312(c)(1): Integrity, standard
+
+Coverage: facilitated · effort saved: medium · mode: primitive · draft
+
+Requirement: Implement policies and procedures to protect ePHI from improper
+alteration or destruction.
+
+**What Pryv does for you**
+
+Integrity is multi-
+layered: write authorization gated by `permissions`, event
+versioning preserves the prior value on every update (on a
+deployment with `versioning.forceKeepHistory: true`; the default
+keeps no event history), audit
+pins the (who, when, via which access) attribution, and
+`bin/backup.js` provides the recovery path if a destruction
+event needs to be reversed. The standard's overall programmatic
+obligation is yours; the technical substrate is Pryv's.
+
+**Detail**
+
+Concurrent writes (open-pryv.io 2.0.0-rc.38, merge `461f3c4c`):
+an `events.update`, a trash (`events.delete`; a shared-secret event
+is trashed by compare-and-set instead) or an attachment
+deletion is applied onto the event as stored at write time, so a
+top-level field written meanwhile (by the server or another
+client) that the request did not change is kept rather than
+silently overwritten with the copy the request read; `clientData`
+keys merge onto the stored map `[ESR1]`..`[ESR4]`, `[ESR6A]`. The
+built-in PostgreSQL and SQLite stores do the read-merge-write
+atomically: a row lock (`SELECT ... FOR UPDATE`) on PostgreSQL, an
+immediate transaction on SQLite, whose lock-wait is pinned by a
+test `[UEA1]`; a custom data store that does not implement
+it gets a read then an update. A request that sends `content`
+still replaces the content whole: two clients editing the same
+event's content concurrently is last-writer-wins, which your app
+resolves if it matters.
+
+**Evidence**
+
+- tests: ESR1, ESR2, ESR3, ESR4, ESR6A
+- primitives: event, audit, permissions, backup-restore
+
+**Planned changes**
+
+- feature: Chained / signed audit log enforces log integrity at the primitive layer
+
+## HIPAA-Security 164.312(c)(2): Mechanism to authenticate ePHI, Addressable
+
+Coverage: facilitated · effort saved: low · mode: evidence · draft
+
+Requirement: Implement electronic mechanisms to corroborate that ePHI has not
+been altered or destroyed in an unauthorized manner.
+
+**What Pryv does for you**
+
+Every event carries an integrity hash (SHA-256 by default,
+SHA-512 optional, on by default; an unkeyed checksum, see detail),
+and the audit row of each create or update records that hash
+with the event's key and the access that performed the write,
+anchoring the change to an authenticated actor `[WNWM]`: an
+event whose stored state no longer hashes to the value its last
+audited create or update recorded was changed since by
+something other than an audited create or update: a trash or an
+attachment deletion (audited, but the row records no new hash),
+a server-internal stamp, or an alteration at the storage layer.
+"What was
+the original?" needs the prior versions, which Pryv keeps only
+when you set `versioning.forceKeepHistory: true` (off by
+default; see `context/event-history.md`). Tamper
+detection beyond this (e.g., end-to-end content hashing under
+a customer-held key) is on the implementer or an extension.
+
+**Detail**
+
+**What the integrity value proves (open-pryv.io 2.0.0-rc.50).** It
+is an unkeyed checksum, not a signature: it detects corruption, and
+a change made outside the API is visible only by comparing against
+the hash the audit row recorded, which itself sits in storage a
+sufficiently privileged party can also rewrite. The release notes now
+call it a "checksum" for that reason. `integrity.algorithm` accepts
+`sha256` (default) and `sha512` only: `md5` and `sha1` refuse the boot
+and `bin/check-config.js` reports them `[CVIA1]`. Switching a core
+away from `md5` / `sha1` leaves the events and accesses written
+before with values that no longer match (`bin/integrity-check.js`
+reports them).
+
+**Accesses, and the configured algorithm (open-pryv.io
+2.0.0-rc.84).** An access carries the same kind of checksum. Since
+2.0.0-rc.84 it verifies on the form the API returns, also after an
+update (composite `id` and `modifiedBy`), on `accesses.update`,
+`accesses.get`, `accesses.getOne` (current and older versions,
+`includeHistory`) and deletion records `[AIWF]`, `[AIWG]`,
+`[AIWK]`, `[AIWM]` (a copy returned without its token, as a
+deletion record is, verifies once a holder of the token restores
+it `[AIWN]`); before, the value of an updated access was
+computed on the stored form and a client could not verify it. The
+upgrade recomputes the stored values once (a PostgreSQL migration,
+a one-shot pass on SQLite), rewriting a row only when it holds the
+previous form's value; anything else is left for
+`bin/integrity-check.js` to report `[AIWR]`, `[AIWS]`, `[AIWU]`.
+The owner-only `usage` counters are not part of it: a client
+strips them before hashing, as it does `lastUsed` `[AIWW]`. The
+storage-layer event checksum and every check by
+`bin/integrity-check.js` now use `integrity.algorithm` (they used
+sha256 whatever the setting) `[AIWZ]`; with `sha512`, events
+written before 2.0.0-rc.84 by that path are reported, not
+recomputed. Run the migration before trusting the check when
+`migrations.autoRunOnStart` is `false`.
+
+Audit-log tamper resistance itself is **voluntarily missing
+today**: rows are append-only by convention in the audit-write
+code path, but there is no software-side hash chain or
+signature. Integrity rests on the operator's filesystem
+posture (immutable mounts, append-only flags, file-integrity
+monitoring, out-of-band SIEM forwarding).
+
+Future direction: chained / signed audit log (per-row prev_hash
++ periodic operator-signed checkpoints). Tracked under internal
+backlog slug `AUDIT-LOG-CHAINING` and
+`proposals/audit-log-chaining.md`. When shipped, this row
+moves from `F: Evidence | Low` to `F: Evidence | Med`.
+
+**Evidence**
+
+- tests: WNWM, CVIA1, AIWF, AIWG, AIWK, AIWM, AIWN, AIWR, AIWS, AIWU, AIWW, AIWZ
+- config keys: integrity.algorithm
+- primitives: event, audit
+- context notes: event-history
+
+**Planned changes**
+
+- feature: Chained / signed audit log authenticates audit data (row moves F:Evidence|Low → F:Evidence|Med)
+
+## HIPAA-Security 164.312(d): Person or entity authentication, standard
+
+Coverage: implemented · effort saved: high · draft
+
+Requirement: Implement procedures to verify that a person or entity seeking
+access to ePHI is the one claimed.
+
+**What Pryv does for you**
+
+Authentication is mediated by the access-token primitive: the
+bearer of a valid token has been authenticated. Strength of
+that authentication is layered, username + password by default;
+MFA via `mfa.*` API methods when `services.mfa.mode` is set.
+Recovery paths preserve account ownership when a second-factor
+device is lost.
+
+**Detail**
+
+**MFA is pluggable.** The `Service` base class
+(`components/business/src/mfa/Service.ts`) defines
+`challenge()` + `verify()` methods; two subclasses ship
+(`ChallengeVerifyService`, `SingleService`) targeting
+HTTP-callable external providers (SMS). An
+operator can plug in any provider matching the
+challenge/verify shape via `services.mfa` config (Twilio Authy,
+Auth0 MFA, Duo Web push, …) without writing code, or extend
+`Service` to implement any in-process method. Since open-pryv.io
+2.0.0-rc.14 (`b606b328`) an in-process authenticator-app factor
+(TOTP, RFC 6238, secrets encrypted at rest) is built in and is
+the default method; SMS stays supported.
+
+NIST AAL framing: the achievable AAL depends on which method
+is configured. SMS-only is AAL1 under NIST SP 800-63B Rev 3.
+TOTP + push or WebAuthn-based providers reach AAL2. The
+remaining WebAuthn plugin is tracked under
+internal backlog slug `MFA-MODERN-METHODS` (matrix-side mirror
+at `proposals/mfa-modern-methods.md`); the broader OAuth2
+auth-stack modernisation arc subsumes this work.
+
+MFA is opt-in per operator; once enabled, it can be required
+at login, at sensitive operations, or both. The MFA tests
+(`components/api-server/test/mfa.test.js`) exercise the activate
+`[MA3A]`, `[MA10A]`, confirm `[MA4A]`, challenge `[MA5B]`, verify
+`[MA5A]`, `[MA11A]`, deactivate `[MA6A]`, `[MA13B]` and recover
+`[MA7A]` paths, for the SMS and the TOTP method.
+
+**Second-factor guessing is throttled by Pryv itself (open-pryv.io
+2.0.0-rc.27).** A per-account backoff, not a lockout (open-pryv.io
+`6231a37c`, default in `aa445c43`): after
+`services.mfa.attempts.backoff.freeFailures` failed second factors
+(default 3) within `perAccountWindowSeconds` (default 900 s), each
+further failure delays the next attempt by `baseSeconds` (default
+2 s), doubling up to `maxSeconds` (default 300 s). During the delay
+`mfa.verify` / `mfa.confirm` / `mfa.challenge` answer 429
+`too-many-attempts` with `Retry-After`, and a code sent during the
+delay is neither checked nor counted, so guessing stays slow while
+someone who only holds the password cannot lock the real user out.
+A success clears the tally; `backoff.maxSeconds: 0` turns it off
+(for example when you throttle at the edge instead). The `attempts`
+block is platform-wide: set the same values on every core. The
+per-session ceiling (5 attempts) also counts parallel attempts
+correctly (`1d91696c`). A TOTP code is consumed with a storage
+compare-and-set (`43293101`, `6231a37c`), so concurrent verifies of
+one code release exactly one token, and impossible `services.mfa`
+settings refuse the boot (`214b0b2b`). The former lockout keys
+(`attempts.perAccount`, `attempts.lockoutSeconds`) are no longer
+read; a boot warning names them. Tests: `[MA12A]`-`[MA12K]`,
+`[MBKF1]`-`[MBKF3]`, `[PCS1]`, `[MCHK1]`.
+
+**Password guessing is slowed the same way (open-pryv.io
+2.0.0-rc.47).** Failed passwords on sign-in, password change, the
+MFA step-up and `mfa.recover` share a per-account delay
+(`auth.passwordAttempts`, never a lockout) and a per-client-address
+budget counted across all cores (`auth.passwordAttempts.perIp`);
+the methods that take a password are refused inside batch calls and
+over socket.io, and every password hash carries its own salt. Tests
+`[CEPB1]`, `[CEPI1]`, `[CEDB1]`, `[PWSL1]`. See §164.308(a)(5)(ii)(C)
+for the monitoring side.
+
+**A busy worker refuses a password check rather than guessing an
+answer (open-pryv.io 2.0.0-rc.87).** Password and OAuth
+client-secret checks run at most
+`auth.passwordCheckConcurrency` at a time per API worker (default
+2), with `auth.passwordCheckQueue` calls waiting (default 50, at
+most 10 s). A call refused past that is not checked: the API
+answers `429 too-many-requests` with `Retry-After`, never
+`invalid-credentials`, and the refusal neither counts on the
+account's failed-password tally nor delays it `[CLIB2]`,
+`[PCLM1]`, `[PCLM2]`. The OAuth token, introspection and
+revocation endpoints answer `503 temporarily_unavailable` with
+`Retry-After`, never `invalid_client` (the uniform refusal below
+stays the answer to a failed client authentication) `[OPCL2]`,
+`[OPCL3]`. A refresh, client-credentials or token-exchange request
+can be retried as is; an authorization code is single-use, so a
+refused code exchange spends it and revokes its access, and the
+client starts a new authorization `[OPCL4]`.
+
+**A second authentication path, OAuth2.** Beyond the token +
+MFA stack above, Pryv can authenticate delegated apps through a
+standards-based OAuth2 authorization-code + PKCE flow
+(`open-pryv.io/components/oauth2/`, shipped in open-pryv.io
+2.0.0-rc.8). PKCE is mandatory (S256 only,
+`code_challenge_methods_supported: ['S256']` in
+`open-pryv.io/components/oauth2/src/wellKnown.ts`); access tokens
+are short-lived (`oauth.accessTokenTTL`, default 1 h) and refresh
+tokens rotate single-use with a sliding TTL bounded by an
+absolute cap (`oauth.refreshTokenTTL` /
+`oauth.refreshTokenAbsoluteTTL`). Correction (2026-11-09): earlier
+versions of this row said that `oauth.requireAppAccountMfa`
+(default true) made an app account enrol MFA before driving the
+OAuth2 write surface. That setting was never enforced and was
+removed in open-pryv.io 2.0.0-rc.71 (a core where it is still set
+logs a warning at boot). The second factor protects the account
+holder's own sign-in, which is what grants consent; the app itself
+authenticates as a client, as below.
+
+**Client authentication and identity tokens (open-pryv.io
+2.0.0-rc.68 to 2.0.0-rc.77).** Operator-registered clients
+(`bin/oauth-client.js create-registry`, curated, `--subject-type`
+mandatory) authenticate at `/oauth2/token` and `/oauth2/revoke`
+with `none` (public, PKCE), a client secret or `private_key_jwt`;
+`/oauth2/introspect` takes confidential clients registered
+`--can-introspect` only. Assertions are verified only with a key of their
+own type and pinned algorithms (`ES256`, `ES384`, `RS256` since
+rc.74, `RS384`), a key set of several keys needs a `kid` on every
+key and on the assertion, and a `jwks_uri` is fetched as a guarded
+outbound call (https only, private addresses refused, size and time
+bounded) `[OCAK2]`, `[OCAK7]`, `[OCAK23]`, `[OTPA1]`, `[OTPA3]`; a
+secret rotation may keep the previous secret valid for at most 30
+days `[OCAK14]`. Every refusal is one uniform `invalid_client`.
+OpenID Connect is on when `oauth.signingKeys` lists a key (RS256,
+per core, YAML only): the id token's `sub` is the user's internal
+id or a pairwise alias, never the username, its `nonce` is
+accepted once per client platform-wide, and since rc.70 its
+`auth_time` is the user's last completed sign-in (password,
+password and second factor, or identity provider); `max_age` and
+`prompt` are not honoured `[OXD01]`, `[OXD04]`, `[OXN01]`,
+`[OREG17]`. The browser state of the consent flow is signed with a
+per-core `oauth.stateKey` (required since rc.70 when a consent page
+is configured; the admin-key fallback is gone), so the admin key no
+longer lets anyone forge consent state `[OXSK1]`, `[OREG16]`.
+With `oauth.perUserIssuer` (rc.77, opt-in, default off) each
+account host is its own issuer: codes, refresh tokens, id tokens
+and client assertions are bound to that host, and only the account
+the host names can consent there (`issuer-account-mismatch` in the
+audit trail) `[OPIS4]`, `[OPIS5]`, `[OPIS6]`, `[OPIU3]`.
+
+**Sender-constrained tokens (DPoP).** A delegated app may opt into
+RFC 9449 DPoP: it proves possession of a client-held key on each
+request, and the token is bound to that key's thumbprint (issued
+`token_type: DPoP`). A token stolen in transit or from storage is
+then useless without the private key, it materially strengthens
+"the entity seeking access is the one claimed" for bearer tokens.
+Opt-in and additive (Bearer clients are unchanged). The proof's
+freshness window is `oauth.dpop.clockSkewSeconds` (default 120 s);
+DEPLOYMENT NOTE: DPoP binds to the client-facing request URI, so a
+deployment accepting it must sit behind a proxy that overwrites the
+X-Forwarded-Host / -Proto headers. Server-side landed in open-pryv.io
+`9a874599`; the client side ships in the `pryv` JS library 3.10.0
+(`SignedConnection`, `OAuth2Client` with `dpop: true`).
+
+**Operator key revocation.** When a bound key is compromised, you
+revoke it platform-wide by its RFC 7638 thumbprint
+(`bin/oauth-client.js revoke-key <jkt> --yes`): every token bound
+to the key, including refresh rotations attempted after the
+revoke, is rejected on all cores within
+`oauth.dpop.keyRevokeCheckSeconds` (default 30 s), and the token
+endpoint refuses to mint for it. An advisory per-client key
+inventory (`list-keys`) shows what a revocation will hit before
+you run it (open-pryv.io `4c0a5ade`).
+
+**Delegate tokens authenticate AS the controlled account.** With
+account delegation (`open-pryv.io/components/delegation/`), a
+delegate holds a session-backed, owner-equivalent personal token
+that authenticates as the controlled account, but the two are
+never conflated: `accessInfo` exposes an additive `delegation`
+field naming the acting delegate, and audit attributes each
+delegate's actions on the controlled account (same-core +
+cross-core). Authentication as the account is revocable by the
+one party who can genuinely log in to it: detach is gated on a
+personal token carrying no forge-protected delegation marker (the
+marker is forge-guarded for every token class), so no delegate
+can impersonate a genuine login or block a takeover. See
+`context/delegation-model.md`.
+
+The same field identifies an app acting for a controlled account:
+an app access a delegate granted reports `delegation` with
+`grantedVia: 'app'` and the delegate's identity, from a
+server-stamped attribute no client can forge `[DCH02]`, `[DCH03]`.
+The auth-request result's own `delegation` block is a display
+hint only; `accessInfo` is the authoritative answer. An access
+granted through a delegation cannot pass for a genuine login
+either: it cannot detach the delegation `[DCH11]`. In
+open-pryv.io 2.0.0-rc.23.
+
+**Evidence**
+
+- tests: MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3, CLIB2, PCLM1, PCLM2, OPCL2, OPCL3, OPCL4
+- config keys: services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds, oauth.signingKeys, oauth.idTokenTTL, oauth.stateKey, oauth.perUserIssuer, auth.passwordCheckConcurrency, auth.passwordCheckQueue
+- primitives: access, MFA, system-streams, delegation
+- context notes: delegation-model
+
+**Planned changes**
+
+- enhancement: Reference MFA plugins (TOTP / WebAuthn) + primitive-catalogue doc surface the pluggability
+
+## HIPAA-Security 164.312(e)(1): Transmission security, standard
+
+Coverage: configurable · effort saved: medium · draft
+
+Requirement: Implement technical security measures to guard against unauthorized
+access to ePHI that is being transmitted over an electronic
+communications network.
+
+**What Pryv does for you**
+
+You choose where TLS terminates, and you must choose. The core
+serves HTTPS when you configure it to: a certificate at
+`http.ssl.keyFile` / `http.ssl.certFile`, issued and auto-renewed
+by the built-in ACME integration when `letsEncrypt.enabled` is
+set. Without that configuration it serves plain HTTP (the default
+`http.ip` is 127.0.0.1) and your reverse proxy terminates TLS
+(`open-pryv.io/INSTALL.md`, "Running behind nginx";
+`open-pryv.io/docs/nginx-ingress-sample.conf`). Between cores,
+Raft traffic runs over mutual TLS on a cluster-private CA once
+`bin/bootstrap.js` has written `storages.engines.rqlite.tls`; with
+the default `tls: null` it is plain TCP (single core, or a
+VPN-protected cluster).
+
+**Detail**
+
+LE certificate replication uses rqlite keyspace `tls-cert/<host>` +
+`tls-acme-account`; rotation triggers `https.Server.setSecureContext`
+via cluster IPC for live key swap without downtime. The cluster CA
+lives outside the LE chain, operator-rooted, used only between
+cores.
+
+**Webhook delivery is signal-only.** Outbound webhook POSTs
+from Pryv carry a notification that something changed, not
+the changed data itself. Receivers fetch the current state via
+authenticated GET back to Pryv (same access-token-protected
+paths as any other read). No PHI / PII / tokens transit the
+webhook surface; the transmission-security attack surface
+narrows accordingly. See `context/webhooks-signal-only.md` for
+the full design rationale + operational caveats (TLS-on-
+delivery, retry semantics, poison-pill protection).
+
+**Calls to a counterparty** (open-pryv.io 2.0.0-rc.56).
+Cross-account consent deliveries, which carry the endpoint of a
+data grant, and the other calls Pryv makes to URLs a counterparty
+supplies (chat, revocations, scope updates, delegation and OAuth
+revocation notices) are refused over plain `http:` unless
+`cluster.allowInsecurePeerUrl` is set (meant for development and
+test clusters) `[PFR4]`, and refused toward a loopback, private,
+link-local or otherwise reserved address unless it is listed in
+`cmc.allowedPrivateHosts` `[PFR1]`, `[CO22]`. Earlier releases
+applied neither check to these calls. The OAuth2 key sets
+(`jwks_uri`, open-pryv.io 2.0.0-rc.70) and client metadata
+documents (2.0.0-rc.74) are fetched over https only, whatever
+`cluster.allowInsecurePeerUrl` says `[OCMD03B]`, `[OCMD03G]`.
+Requests forwarded on adapter routes (2.0.0-rc.73) go to the
+`upstream` you configure; Pryv warns at boot when it is `http:` to
+a non-local address, since that traffic, credentials included,
+travels in clear: use `https:` or keep the sidecar on the host
+`[ADRC03]`, `[ADRI13]`.
+
+**Credential hand-off between parties.** TLS protects the pipe;
+the shared-secrets primitive
+(`open-pryv.io/components/shared-secrets/`) protects the
+credential travelling over it. Handing an access credential to a
+counterparty (e.g. inviting a care-team member) used to mean a
+URL-embedded token that lingers in browser history, referrer
+headers, and intermediary access logs after the TLS session ends.
+Instead, the counterparty receives a one-time random key:
+redeemable exactly once, mandatory expiry, hash-only server-side
+storage (the SHA-256 of the key's random half), optional
+passphrase / HMAC gate on redemption. An intercepted or logged
+link therefore never carries a live, replayable credential to
+ePHI. Expiry is enforced when someone reaches for the secret
+rather than by a background sweeper, so plan your own deletion
+pass if ePHI retention rules require expired payloads to be gone
+by a fixed deadline.
+
+**Technical**
+
+The core sets no TLS version or cipher options of its own
+(`open-pryv.io/components/api-server/src/server.ts`,
+`buildHttpsOptions`): Node.js defaults apply. On the Node 24 the
+Docker image runs, that is a TLS 1.2 floor, with TLS 1.3
+negotiated when the client supports it. The sample nginx vhost
+allows TLS 1.2 and 1.3. Checked against open-pryv.io 2.0.0-rc.34.
+
+**Evidence**
+
+- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22, OCMD03B, OCMD03G, ADRC03, ADRI13
+- config keys: http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cluster.allowInsecurePeerUrl, cmc.allowedPrivateHosts, adapterRoutes
+- primitives: letsEncrypt-integration, multi-core-mTLS, shared-secrets
+- context notes: webhooks-signal-only
+
+## HIPAA-Security 164.312(e)(2)(i): Integrity controls, Addressable
+
+Coverage: configurable · effort saved: medium · draft
+
+Requirement: Implement security measures to ensure that electronically
+transmitted ePHI is not improperly modified without detection
+until disposed of.
+
+**What Pryv does for you**
+
+Once TLS is in place (in the core or in your proxy, see
+164.312(e)(1)), every TLS record is integrity-protected, so
+modification in transit is detectable. The core does not enforce TLS on its own: without a
+configured certificate it serves plain HTTP, which is only safe
+behind your TLS-terminating proxy. Endpoint-to-endpoint integrity
+across multiple hops (e.g., proxy chains) requires your chain to
+preserve this property.
+
+**Evidence**
+
+- tests: ACMEINT, ACMEORCH
+- config keys: http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled
+- primitives: letsEncrypt-integration
+
+## HIPAA-Security 164.312(e)(2)(ii): Encryption, Addressable (transmission)
+
+Coverage: configurable · effort saved: medium · draft
+
+Requirement: Implement a mechanism to encrypt ePHI whenever deemed appropriate.
+
+**What Pryv does for you**
+
+Encryption in transit is a configuration you set, not a default.
+Two supported placements: the core terminates TLS itself
+(`http.ssl.keyFile` / `http.ssl.certFile`, with certificates
+issued and renewed by the built-in ACME integration when
+`letsEncrypt.enabled` is set), or your reverse proxy terminates
+TLS and the core serves plain HTTP behind it. Between cores, Raft
+traffic is mutual TLS once `bin/bootstrap.js` has written
+`storages.engines.rqlite.tls` (default `tls: null`, plain TCP).
+For ePHI, configure one of the two placements so no network hop
+carries plaintext.
+
+**Detail**
+
+With the default configuration (`letsEncrypt.enabled: false`, no
+`http.ssl.*`) the core serves plain HTTP on `http.ip` (127.0.0.1
+by default); keep it bound to the host your proxy runs on. The
+core sets no TLS version or cipher options of its own, so Node.js
+defaults apply (on the Node 24 the Docker image runs: a TLS 1.2
+floor, TLS 1.3 when the client supports it); at a proxy, the
+proxy's own settings apply (the sample nginx vhost allows TLS 1.2
+and 1.3). The TLS requirement holds at the transmission boundary,
+wherever you place that boundary.
+
+**HSTS behind a TLS-terminating proxy (open-pryv.io
+2.0.0-rc.34).** Sites the core hosts (`hostedSites`, e.g. the
+account web app) send `Strict-Transport-Security` by default
+only when the core itself terminates TLS, so behind a proxy they
+used to send none. Set `hostedSites.<name>.hsts: always` when your
+proxy terminates TLS and the site is HTTPS-only (browsers only
+honour the header received over HTTPS); `never` turns it off.
+The setting comes from configuration only (no `X-Forwarded-Proto`
+is trusted), an invalid value refuses the boot, and the value is
+`max-age=31536000` for that host only. In dnsLess mode the site
+shares the API's host, so the header covers that whole host. The
+core does not add HSTS to API answers on a separate API host: set
+it on your proxy if you want it there.
+
+**Evidence**
+
+- tests: ACMEINT, ACMEORCH, CERTUTILS, HSHT
+- config keys: http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, hostedSites.<name>.hsts
+- primitives: letsEncrypt-integration, multi-core-mTLS
+
+## HIPAA-Security 164.314(a)(1): Business associate contracts, standard
+
+Coverage: facilitated · effort saved: low · mode: storage · draft
+
+Requirement: Business associate contract or other arrangement between the
+covered entity and its business associate must meet the
+requirements of §164.314(a)(2).
+
+**What Pryv does for you**
+
+The BAA itself is a contract,
+the covered entity drafts it with legal counsel. What Pryv
+contributes when you operate as a business associate: the audit
+log makes "implement administrative, physical and technical
+safeguards" (§164.314(a)(2)(i)(A)) auditable per the BAA's
+specified terms; the access primitive bounds which subjects +
+which streams the BA may touch; CMC's cross-platform consent
+flow gives a structured channel for the §164.314(a)(2)(i)(C)
+breach-notification pipe between BA and CE.
+
+**Evidence**
+
+- derives from: gdpr.Art.28
+- primitives: access, audit, CMC
+
+## HIPAA-Security 164.314(a)(2)(i)(A): BAC content, implement safeguards reasonably and appropriately
+
+Coverage: facilitated · effort saved: high · mode: infrastructure · draft
+
+Requirement: Business associate contract must provide that the business
+associate will implement administrative, physical and technical
+safeguards that reasonably and appropriately protect ePHI.
+
+**What Pryv does for you**
+
+The BAA's "reasonable
+and appropriate safeguards" obligation is satisfied by the
+technical-safeguards programme already enumerated across
+§164.308 + §164.310 + §164.312. The BA cites the relevant
+Pryv-implemented rows when populating their BAA exhibit.
+Mapping this Article to the existing technical-safeguards rows
+is the `derives_from` chain.
+
+**Evidence**
+
+- derives from: hipaa-security.164.308(a)(1)(i), hipaa-security.164.312(a)(1), hipaa-security.164.312(e)(1)
+- primitives: access, permissions, audit, letsEncrypt-integration, encryption-at-rest-secrets, MFA, backup-restore
+
+## HIPAA-Security 164.314(a)(2)(i)(B): BAC content, extend safeguards to subcontractors
+
+Coverage: out-of-scope · draft
+
+Requirement: Business associate contract must provide that the business
+associate will, in accordance with §164.308(b)(2), ensure that
+any subcontractors that create, receive, maintain, or transmit
+ePHI on its behalf agree to comply with the applicable
+requirements of this subpart by entering into a contract or
+other arrangement that complies with this section. Applied down
+the chain by §164.314(a)(2)(iii) (contracts between a business
+associate and its subcontractor).
+
+**What Pryv does for you**
+
+Subcontracting chains are contractual; no software role. The
+only built-in subprocessor Pryv-the-software carries is the
+observability-provider adapter (default disabled); when enabled,
+the BA's subcontractor list adds the observability provider as
+a sub-processor under both HIPAA-Security §164.314(a)(2)(i)(B)
+and GDPR Art.28(4). (Listed as §164.314(a)(2)(ii)(B) until
+2026-11-19: that paragraph is "other arrangements" and has no
+subcontractor clause.)
+
+## HIPAA-Security 164.314(a)(2)(i)(C): BAC content, report security incidents
+
+Coverage: facilitated · effort saved: low · mode: evidence · draft
+
+Requirement: Business associate contract must provide that the business
+associate will report any security incident of which it becomes
+aware to the covered entity.
+
+**What Pryv does for you**
+
+Detection of a security
+incident is the BA's operational concern (audit-log review +
+observability). Reporting to the CE is the contractual flow.
+Pryv's CMC plugin provides a structured cross-account
+messaging substrate when both sides run Pryv, otherwise the
+report channel is email / API / portal at the BA's choice.
+The audit log supplies the forensic evidence the report cites.
+
+**Evidence**
+
+- primitives: audit, CMC, observability-provider
+
+## HIPAA-Security 164.316(a): Policies and procedures, standard
+
+Coverage: out-of-scope · draft
+
+Requirement: Implement reasonable and appropriate policies and procedures to
+comply with the standards, implementation specifications, or
+other requirements of this subpart.
+
+**What Pryv does for you**
+
+The policies-and-procedures programme is an organizational
+artefact owned by the covered entity / business associate's
+security officer. Pryv has no software role in drafting them.
+Pryv-side documentation (this matrix, CHANGELOGs, the QMS
+workstream) feeds the operator's policy work but doesn't
+substitute for it.
+
+## HIPAA-Security 164.316(b)(1): Documentation, Required
+
+Coverage: facilitated · effort saved: medium · mode: storage · draft
+
+Requirement: Maintain the policies and procedures implemented to comply with
+this subpart in written (which may be electronic) form; if an
+action, activity, or assessment is required by this subpart to
+be documented, maintain a written (which may be electronic)
+record of the action, activity, or assessment.
+
+**What Pryv does for you**
+
+Where the required record
+is operational (activity logs, assessment outputs), Pryv events
+on a designated `compliance/*` stream carry the documentation
+alongside the audit log's automatic operational record. Event
+versioning preserves the change history of policies-as-data
+once you set `versioning.forceKeepHistory: true` (off by
+default, in which case an update overwrites the previous
+revision: keep each revision as its own event instead);
+backup-restore preserves them across the §164.316(b)(2)
+retention window.
+
+**Evidence**
+
+- primitives: event, stream, audit, backup-restore
+
+## HIPAA-Security 164.316(b)(2)(i): Documentation, time limit, Required
+
+Coverage: facilitated · effort saved: low · mode: storage · draft
+
+Requirement: Retain the documentation required by §164.316(b)(1) for 6 years
+from the date of its creation or the date when it last was in
+effect, whichever is later.
+
+**What Pryv does for you**
+
+Six-year is a **minimum** retention period, not a maximum
+(the statute says "retain … for 6 years"; covered entities
+may retain indefinitely). Pryv's audit log persists by
+default; retention beyond the minimum + any operational
+pruning are operator-driven choices (operator schedules
+archival to cold storage per their policy). `bin/backup.js`
+produces the artefact the §164.316 retention rule attaches
+to.
+
+**Detail**
+
+**Minimum 6-year retention is the regulatory floor; there
+is no max.** Pryv never *requires* destruction at the 6-year
+mark, operators commonly retain indefinitely under
+GDPR Art.17(3)(b) "compliance with a legal obligation"
+lawful basis (the §164.316 retention itself, or sectoral
+regs) or Art.17(3)(e) "legal claims". The pressure to
+prune is operational (storage cost / DB performance over
+10B-row scales), not regulatory.
+
+**Tiering pattern for long-running deployments**: the audit
+log is exposed via the `@pryv/datastore` abstraction
+(`auditDataStore` registered as `_audit` in the Mall;
+`components/audit/src/datastore/auditDataStore.ts`). An
+operator wanting to tier hot recent rows + cold archived
+rows writes a custom `auditStorage` engine plugin (per
+`storages/engines/*/manifest.json`) that routes writes to
+a hot tier + reads to a union view across hot + cold.
+End users see one continuous log via `audit.getLogs`; the
+storage backing it is the operator's choice. Full pattern
+detail in
+`context/audit-archival-via-custom-datastore.md`.
+
+**Cascade with the Q8 erasure setting** (shipped 2026-05-27,
+open-pryv.io master `405b3a1`): the `audit.onUserDelete:
+keep` operator setting is the HIPAA-friendly path when a
+covered entity deletes a subject's account while needing to
+retain the audit. The retention obligation runs under a
+lawful basis separate from the deletion itself (HIPAA
+Privacy Rule §164.530(j) anchors documentation-retention
+independently of subject account state).
+
+Audit erasure on `auth.delete` now converges across engines
+(SQLite + PostgreSQL, open-pryv.io `891090d` + `853e1cb`):
+with `audit.onUserDelete: erase` (default), both engines
+reach zero audit rows for the deleted subject. With
+`keep`, both engines retain the audit since open-pryv.io
+2.0.0-rc.46: the PostgreSQL rows survive, and on SQLite the
+per-user audit database file stays at its path in the user
+directory, readable by user id, while everything else there is
+removed `[DKP1]`. Before 2.0.0-rc.46 the SQLite directory wipe
+erased it, so `keep` behaved like `erase` on SQLite: if you
+relied on `keep` there, audit of accounts deleted earlier is
+gone.
+
+**Access deletion records** (open-pryv.io 2.0.0-rc.56). The
+record of a deleted access is what lets an audit row name the
+access that acted. It is kept until the account is deleted unless
+you set `accesses.deletionRecords.retentionDays` above 0, in
+which case the master purges older ones once a day, whatever
+`audit.onUserDelete` says `[ADP1]`. The audit rows themselves are
+kept; past the purge they name such an access by id only. A
+retention shorter than six years shortens that attribution.
+
+**Account auto-deletion (open-pryv.io 2.0.0-rc.66, `8521c8d5`).**
+An account erased because its holder scheduled it, or because
+your inactivity preset applied, follows `audit.onUserDelete` like
+any account deletion: with the default `erase` its audit goes with
+it and a WARN log line before and after the erasure is what
+remains; with `keep` (and the audit active) the trail survives and
+an `account.autoDeletion.erase` row (username, trigger, whether
+the holder or your preset set the schedule, deadline, when the
+notices were sent) is written in it before the erasure starts
+(`[ADSW17]`). A covered entity that
+enables account auto-deletion keeps `audit.onUserDelete: keep`
+and keeps those log lines for the six-year period if they are
+part of its documentation.
+
+**Evidence**
+
+- tests: DKP1, ADP1, ADSW17
+- docs: customer-resources/account-auto-deletion.md
+- config keys: audit.onUserDelete, accesses.deletionRecords.retentionDays
+- primitives: backup-restore, audit, account-auto-deletion
+- context notes: audit-archival-via-custom-datastore
+
+## HIPAA-Security 164.316(b)(2)(iii): Documentation, updates, Required
+
+Coverage: facilitated · effort saved: low · mode: evidence · draft
+
+Requirement: Review documentation periodically, and update as needed, in
+response to environmental or operational changes affecting the
+security of the ePHI.
+
+**What Pryv does for you**
+
+Periodic review cadence is
+the operator's procedure. Pryv's contribution: when policies-
+as-data are stored as events on a `compliance/policies/*`
+stream, the audit log shows who updated which policy event and
+when, and, on a deployment with
+`versioning.forceKeepHistory: true` (off by default), the
+event-version chain also shows what changed.
+
+**Evidence**
+
+- primitives: event, audit
+
+## HIPAA-Security 164.308(a)(2): Assigned security responsibility, standard
+
+Coverage: out-of-scope · draft
+
+Requirement: Identify the security official who is responsible for the
+development and implementation of the policies and procedures
+required by this subpart.
+
+**What Pryv does for you**
+
+Security-official designation is HR / organizational. No software
+role. When the assigned official needs operational data, the
+audit log + observability + this matrix are the substrate they
+draw on.
+
+## HIPAA-Security 164.308(a)(5)(ii)(A): Security reminders, Addressable
+
+Coverage: out-of-scope · draft
+
+Requirement: Implement periodic security updates / reminders.
+
+**What Pryv does for you**
+
+Reminder cadence + content are organizational. Pryv has no role
+at the awareness-content layer.
+
+## HIPAA-Security 164.308(a)(5)(ii)(B): Protection from malicious software, Addressable
+
+Coverage: facilitated · effort saved: low · mode: infrastructure · draft
+
+Requirement: Implement procedures for guarding against, detecting, and
+reporting malicious software.
+
+**What Pryv does for you**
+
+Guarding against, detecting and reporting malicious software is
+mostly a host / endpoint / network-layer control: Pryv-the-software
+doesn't include AV, and your hosting environment carries that
+part. Pryv contributes one narrow guard on the files it stores:
+since open-pryv.io 2.0.0-rc.34 an attachment whose declared type
+a browser executes or renders as a document (HTML, SVG and other
+XML, JavaScript) is served in a sandbox (`Content-Security-Policy:
+sandbox; default-src 'none'`), so it cannot run script on the API
+origin. Pryv does not scan attachment content or refuse uploads by
+type: if ePHI workflows exchange files, scan them in your app or
+at your proxy, and keep the detection and reporting procedures in
+your security program. Same reasoning as ISO 27001 A.8.7.
+
+**Evidence**
+
+- tests: ACTY
+- derives from: iso-27001.A.8.7
+
+## HIPAA-Security 164.308(a)(5)(ii)(C): Log-in monitoring, Addressable
+
+Coverage: facilitated · effort saved: medium · mode: evidence · draft
+
+Requirement: Implement procedures for monitoring log-in attempts and reporting
+discrepancies.
+
+**What Pryv does for you**
+
+Login + authentication-
+failure events are captured in the audit log (per `auth.*` API
+method calls). Observability data aggregates rate + anomaly
+signals. The discrepancy-reporting cadence + threshold tuning
+are operator-side procedure.
+
+**Detail**
+
+**Pryv surfaces the events and slows password guessing; you
+choose the lockout policy.** Since open-pryv.io 2.0.0-rc.47 Pryv
+delays failed passwords itself, never locking an account:
+sign-in, `account.changePassword`, the MFA step-up by password
+and `mfa.recover` share a per-account tally (after
+`auth.passwordAttempts.freeFailures`, default 5, within 900 s,
+the next attempt waits from 2 s doubling up to 300 s, answered
+429 `too-many-attempts` with `Retry-After`) `[CEPB1]`, and a
+per-client-address budget counted across all cores
+(`auth.passwordAttempts.perIp.maxFailures`, default 30 per
+900 s, an IPv6 /64 counting as one address) `[CEPI1]`. The
+credential methods are refused inside batch calls and over
+socket.io, so every guess is one HTTP request your edge sees
+`[CEDB1]`. Behind a reverse proxy, list it in
+`http.trustedProxies`, or every client shares the proxy's
+address budget `[CEPI2]`. Locking accounts after N failures, and
+reporting discrepancies, stay your policy: operator pattern
+`fail2ban` watching the audit log and banning addresses that
+exceed N auth failures in T minutes, plus reverse-proxy
+`limit_req_zone` per-IP caps on `/auth/login`. (Before 2.0.0-rc.47
+Pryv did not throttle passwords in-process.)
+
+**A busy refusal is not a failed attempt** (open-pryv.io
+2.0.0-rc.87). When the API
+worker's password checks are all taken
+(`auth.passwordCheckConcurrency`, `auth.passwordCheckQueue`), a
+sign-in is refused without checking the password: `429
+too-many-requests` with `Retry-After`, an error id distinct from
+the `too-many-attempts` of the delay above. It does not count on
+the account's tally and does not delay the account `[PCLM1]`,
+`[PCLM2]`. A monitoring rule that counts failed logins should key
+on `invalid-credentials` and `too-many-attempts`, not on every
+429.
+
+**The second factor has its own tally.** Since open-pryv.io
+2.0.0-rc.27 Pryv enforces a per-account backoff on failed MFA
+attempts (open-pryv.io `6231a37c`, `aa445c43`;
+`services.mfa.attempts.backoff`, default: after 3 failures within
+15 minutes, delays doubling from 2 s up to 5 minutes, answered 429
+`too-many-attempts` with `Retry-After`). It is a delay, never a
+lockout: a success clears it and the real user waits at most
+`maxSeconds`. The counter lives on the account's home core. Tests
+`[MA12A]`-`[MA12K]`, `[MBKF1]`-`[MBKF3]`. See §164.312(d).
+
+Full operator-side rate-limiting framing:
+`context/rate-limiting-and-dos-protection.md`. Enforcement
+companion on the authentication endpoints: the reference nginx +
+fail2ban configuration (`customer-resources/rate-limiting.md`)
+limits password logins and MFA attempts per IP and bans an address
+after repeated failed logins.
+
+**Evidence**
+
+- tests: AT01, AT02, AT51, MA12A, MBKF1, CEPB1, CEPI1, CEPI2, CEDB1, PCLM1, PCLM2
+- docs: customer-resources/rate-limiting.md#fail2ban
+- config keys: services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, http.trustedProxies, auth.passwordCheckConcurrency, auth.passwordCheckQueue
+- derives from: iso-27001.A.8.15
+- primitives: audit, observability-provider, MFA
+- context notes: rate-limiting-and-dos-protection
+
+## HIPAA-Security 164.308(a)(6)(i): Security incident procedures, standard
+
+Coverage: facilitated · effort saved: medium · mode: evidence · draft
+
+Requirement: Implement policies and procedures to address security incidents.
+
+**What Pryv does for you**
+
+Incident-response procedure
+is the operator's organizational programme. Pryv contributes
+the detection + scoping data layer: audit log shows who
+accessed what; observability gives system-level anomaly
+signals; access primitives provide the containment mechanism
+(revoke or scope-down the implicated access). For
+substrate-vulnerability intake specifically (operator
+learning that the Pryv version they run has a confirmed
+vulnerability), the upstream's vulnerability disclosure
+program is the externally-facing channel: `SECURITY.md`
+publishes a coordinated disclosure policy (private GitHub
+Security Advisories flow + `security-dev@` mailbox + scope +
+SLA + safe harbor), and private vulnerability reporting is
+enabled on the published repositories.
+
+**Evidence**
+
+- docs: customer-resources/rate-limiting.md#verify-the-limits-fire
+- derives from: hipaa-security.164.308(a)(1)(i)
+- primitives: audit, observability-provider, access
+
+## HIPAA-Security 164.308(a)(7)(ii)(C): Emergency mode operation plan, Required
+
+Coverage: facilitated · effort saved: medium · mode: infrastructure · draft
+
+Requirement: Establish (and implement as needed) procedures to enable
+continuation of critical business processes for protection of
+the security of ePHI while operating in emergency mode.
+
+**What Pryv does for you**
+
+Pryv's HA primitives
+(multi-core cluster + Raft replication + cluster-CA mTLS)
+support continued operation when a single facility fails. The
+"critical business processes" definition + emergency-mode
+runbook are the operator's. See also Art.5+ of the Disaster
+Recovery row.
+
+**Evidence**
+
+- derives from: hipaa-security.164.308(a)(7)(ii)(A), hipaa-security.164.308(a)(7)(ii)(B)
+- primitives: multi-core-mTLS, backup-restore, letsEncrypt-integration
+
+## HIPAA-Security 164.308(a)(7)(ii)(D): Testing and revision procedures, Addressable
+
+Coverage: out-of-scope · draft
+
+Requirement: Implement procedures for periodic testing and revision of
+contingency plans.
+
+**What Pryv does for you**
+
+Contingency-plan testing is an operational drill. Pryv has no
+software role at the drill-execution layer. The drill's
+restoration-from-backup phase exercises Pryv primitives but
+the testing programme itself is the operator's.
+
+## HIPAA-Security 164.308(a)(8): Evaluation, standard
+
+Coverage: facilitated · effort saved: low · mode: evidence · draft
+
+Requirement: Perform a periodic technical and nontechnical evaluation in
+response to environmental or operational changes affecting the
+security of ePHI to ensure security policies and procedures meet
+the requirements of this subpart.
+
+**What Pryv does for you**
+
+Evaluation is the operator's
+cyclical assessment. Pryv-side inputs: audit log (control-
+effectiveness sample), observability (operational stability
+data), this matrix (control inventory to evaluate against),
+Pryv's test matrix (~2351 PG and SQLite, matched baseline, passing on every
+commit, concrete §164.308(a)(8) effectiveness evidence),
+Pryv's supply-chain pipeline (shipped in open-pryv.io
+`9e2ee7ff`: CI dependency-audit gate, per-release CycloneDX
+SBOM, cosign-signed images; the SBOM + latest scan output
+are citable periodic-evaluation artefacts), Pryv's vulnerability
+disclosure program + GHSA advisory history (coordinated
+disclosure policy published in `SECURITY.md`; private
+vulnerability reporting enabled on the published
+repositories), and the code-level security review of
+open-pryv.io (2026-06 to 2026-10, fixes in 2.0.0-rc.40 to
+2.0.0-rc.51, public report `SECURITY-AUDIT.md` published
+2026-10-14). The assessment write-up is operator-side.
+
+**Detail**
+
+**The 2026 security review is a technical-evaluation input you can
+cite for the platform layer.** The open-pryv.io maintainers ran a
+systematic code-level security review of the source (authentication
+and sessions, authorisation and tenant isolation, input handling,
+cryptography and secrets in logs, the admin / multi-core plane, the
+network-facing daemons, resource limits, deletion semantics), each
+finding confirmed by a second review before it was accepted and fixed
+with regression tests. The fixes shipped in open-pryv.io 2.0.0-rc.40
+to 2.0.0-rc.51 (October 2026); each release note lists what changed
+and the operator steps it needs. The public report,
+`SECURITY-AUDIT.md`
+(https://github.com/pryv/open-pryv.io/blob/master/SECURITY-AUDIT.md,
+published 2026-10-14), gathers the method, each finding with its
+severity, fix release and operator action, and the known residual
+risks; it is revised with every release that carries a security fix.
+Methodology, scope and the fix areas:
+`context/code-security-review-2026.md`.
+
+What stays yours under §164.308(a)(8): running a release that carries
+the fixes (2.0.0-rc.51 or later, with the operator steps of each
+release in between), and the evaluation itself. The review covered
+the code, not your deployment: your configuration, network exposure,
+added applications and procedures, and the "in response to
+environmental or operational changes" trigger, are evaluated by you.
+It was performed by the maintainers, not an independent assessor.
+
+**Evidence**
+
+- derives from: hipaa-security.164.316(b)(2)(iii)
+- primitives: audit, observability-provider
+- context notes: code-security-review-2026
+
+**Planned changes**
+
+- feature: Read-only effective-configuration endpoint supplies the technical baseline snapshot the periodic evaluation is measured against
+
+## HIPAA-Security 164.310(a)(1): Facility access controls, standard
+
+Coverage: out-of-scope · draft
+
+Requirement: Implement policies and procedures to limit physical access to
+its electronic information systems and the facility or facilities
+in which they are housed, while ensuring that properly authorized
+access is allowed.
+
+**What Pryv does for you**
+
+Facility access is physical. See the §164.310 framing row.
+
+**Evidence**
+
+- derives from: hipaa-security.164.310
+
+## HIPAA-Security 164.310(b): Workstation use, standard
+
+Coverage: out-of-scope · draft
+
+Requirement: Implement policies + procedures that specify the proper functions
+to be performed, the manner in which those functions are to be
+performed, and the physical attributes of the surroundings of a
+specific workstation or class of workstation that can access ePHI.
+
+**What Pryv does for you**
+
+Workstation use + physical attributes are facility / HR
+controls.
+
+**Evidence**
+
+- derives from: hipaa-security.164.310
+
+## HIPAA-Security 164.310(c): Workstation security, standard
+
+Coverage: out-of-scope · draft
+
+Requirement: Implement physical safeguards for all workstations that access
+ePHI, to restrict access to authorized users.
+
+**What Pryv does for you**
+
+Physical workstation security (screen locks, kensington locks,
+privacy filters) is endpoint-management scope.
+
+**Evidence**
+
+- derives from: hipaa-security.164.310
+
+## HIPAA-Security 164.310(d)(1): Device and media controls, standard
+
+Coverage: facilitated · effort saved: medium · mode: infrastructure · draft
+
+Requirement: Implement policies and procedures that govern the receipt and
+removal of hardware and electronic media that contain ePHI into
+and out of a facility, and the movement of these items within
+the facility.
+
+**What Pryv does for you**
+
+Pryv-side contribution
+at the media-controls layer: per-user backup files are the
+natural unit when an individual subject's ePHI moves off the
+production system (export, transfer, archive); operator-side
+at-rest encryption (LUKS / PG TDE) keeps the ePHI-on-media
+encrypted in motion + at rest. The physical movement procedure
+is the operator's.
+
+**Evidence**
+
+- derives from: hipaa-security.164.310
+- primitives: backup-restore, encryption-at-rest-secrets
+
+---
+
+This matrix describes the software's contribution to compliance. It is not legal advice and not a certification: implementer organisations remain responsible for their own GDPR, HIPAA, ISO, MDR or HDS posture. Rows marked draft are authored but not yet reviewed.
+Legend and other scopes: https://pryv.github.io/compliance-matrix/llms.txt

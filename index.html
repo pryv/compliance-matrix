@@ -3,15 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Compliance Matrix, open-pryv.io</title>
-    <!-- No site icon: an empty one keeps browsers from requesting /favicon.ico (404). -->
-    <link rel="icon" href="data:," />
-    <meta name="description" content="Browse the open-pryv.io compliance matrix, coverage of GDPR, HIPAA, ISO 27001/27701/13485, HDS, MDR, DiGA and more." />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-    <script type="module" crossorigin src="./assets/index-B7MAiIlP.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DY3V3zsb.css">
+    <title>Pryv Compliance Matrix</title>
+    <link rel="icon" href="./favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <meta name="description" content="How Pryv (open-pryv.io) covers GDPR, HIPAA, Swiss nLPD, CCPA, PIPEDA, DiGA, MDR, HDS, ISO 27001/27701/13485 and SOC 2, requirement by requirement: what the platform implements, makes configurable or facilitates, and what stays with the implementer." />
+    <link rel="alternate" type="text/plain" title="llms.txt" href="./llms.txt" />
+    <link rel="alternate" type="text/markdown" title="Full text" href="./llms-full.txt" />
+    <link rel="alternate" type="application/json" title="JSON" href="./compliance.json" />
+    <script type="module" crossorigin src="./assets/index-VzPu7XHA.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-fmq7jNMC.css">
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased">
-    <div id="root"></div>
+    <div id="root">
+      <noscript>
+        <h1>Pryv Compliance Matrix</h1>
+        <p>How Pryv (open-pryv.io) covers GDPR, HIPAA, Swiss nLPD, CCPA, PIPEDA, DiGA, MDR, HDS, ISO 27001/27701/13485 and SOC 2, requirement by requirement. This page needs JavaScript; the same content is available as text:</p>
+        <ul>
+          <li><a href="./llms.txt">llms.txt</a>: index for AI agents, with one Markdown file per regulation</li>
+          <li><a href="./llms-full.txt">llms-full.txt</a>: every regulation and requirement in one file</li>
+          <li><a href="./compliance.json">compliance.json</a>: the whole matrix as JSON</li>
+          <li><a href="https://github.com/pryv/compliance-matrix">Source on GitHub</a></li>
+        </ul>
+      </noscript>
+    </div>
   </body>
 </html>
