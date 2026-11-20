@@ -376,6 +376,16 @@ should be checked: past 32 calls in flight on one token, Pryv's own 429s mix wit
 nginx's (developer-site work, outside this repo; B.11 walk of 2026-11-19). No chip
 involved.
 
+**Trigger fired (2026-11-20):** the same release also closes an HTTP connection
+idle either way for `http.responseIdleTimeoutMs` (default 120 s), caps the stream
+tree, the stream ids of an event and streamed audit reads per access, and bounds
+the mail a caller can trigger (registration codes per client address, `429
+too-many-attempts`; an hourly breaker per core). The page's in-code budgets table
+needs rows for them, and its slow-client paragraph should say that the core now
+cuts an idle connection itself (keep the proxy's read timeout and the core's idle
+timeout above the slowest call) (developer-site work, outside this repo; B.11 walk
+of 2026-11-20). No chip involved.
+
 **Where the work lives**: the developer site (`dev-site2`, customer resources).
 Q6 outcome, voluntarily missing at Pryv layer; ship reference configs.
 
@@ -3630,6 +3640,110 @@ Walked without change:
   `context/webhooks-signal-only.md`): open connections are still dropped
   on revocation; within a burst of access changes the re-check may come
   up to one second later, and no row states a sub-second bound.
+Transport, platform DB and backup rows: not affected. B.1 (no new method;
+new error answers recorded here), B.2 to B.10: none.
+
+**Walked 2026-11-20 for stream tree, stalled readers and mail budgets
+(unreleased at the walk; the release after open-pryv.io 2.0.0-rc.87)**:
+open-pryv.io feature commit `c60bbce9`, review fixes `270425ed` and
+the audit-read wait `348c9292`, merged to master `348c9292`
+(2026-11-20). Same release as the walk of 2026-11-19 above: the rows
+say "the release after open-pryv.io 2.0.0-rc.87" or "same release";
+name the tag once it is cut. The validator passes against `348c9292`. No Section A slug, no `planned:`
+chip, no tier shift; `reviewed_at` left unchanged. No new API method or
+response header. Each cap is on by default and `0` turns it off; a cap
+refuses the write or call that would pass it, what an account already
+holds stays readable. What changed:
+- **Stream tree**: new keys `limits.streams.maxDepth` (default 32, a
+  root stream is level 1; on creation and on a move, the moved subtree
+  counts) and `limits.streams.maxPerAccount` (default 10000 in the
+  account's own store, trashed ones and built-in account streams
+  included, other data stores not counted). Past either,
+  `streams.create` / `streams.update`, and `accesses.create` /
+  `accesses.update` creating a stream from a permission's
+  `defaultName`, answer `400 invalid-operation` naming the limit (a
+  chain a few hundred levels deep used to fail stream creation with an
+  unexpected error). Soft limits: creates running at once can pass a
+  cap by a few streams. Tests `[STLM1]`..`[STLM3]`, `[STLM5]`,
+  `[STLM6]`.
+- **Stream ids per event**: new key `limits.events.maxStreamIds`
+  (default 100 distinct, duplicates count once); past it
+  `events.create` / `events.update` answer `400
+  invalid-parameters-format` `[STLM4]`.
+- **Idle connections**: new key `http.responseIdleTimeoutMs` (default
+  120000); an HTTP connection with no traffic either way for that long
+  is closed, so a client that stopped reading no longer holds its
+  database cursor and call slots. The timer runs on traffic: a call
+  silent server-side for longer is cut too (keep the value above the
+  slowest call and above the worker ingress's 60 s upstream timer).
+  socket.io websockets are not affected `[RIDL1]`, `[RIDL2]`.
+- **Streamed audit reads per access**: new keys
+  `limits.audit.maxConcurrentReadsPerAccess` (default 1 per worker)
+  and `limits.audit.maxReadWaitMs` (default 30000; `0` refuses at
+  once). A streamed read of `:_audit:` streams past the cap waits for a
+  slot, served oldest first, so parallel reads from one client run one
+  after the other and all succeed `[RIDL4]`, `[RIDL5]`; only a read
+  that gets no slot within the wait answers `429 too-many-requests`
+  `[RIDL3]`. This wait settles the concern raised during the walk that
+  the reference account app, which reads the audit log for several
+  Activity cards at once with one token, would get 429 on all but one
+  read: those reads now queue and succeed (`[RIDL4]` covers that
+  pattern).
+- **Mail a caller can trigger**: new keys
+  `account.emailVerification.registrationCodesPerIpPerHour` (default
+  10; past it `429 too-many-attempts`, `data.reason: 'ip-limit'`)
+  `[MLBG1]`; `account.emailVerification.addressesPerAccountPerDay`
+  (default 10 distinct addresses; past it an added address gets no mail
+  and `emails.resend` answers `429 too-many-attempts`, `data.reason:
+  'account-address-limit'`) `[MLBG2]`; `services.email.maxPerHour`
+  (default 500 per core and per hour, counted apart for registration
+  mails, codes and welcome, and account mails, verification and
+  password reset; past it that class is refused for the rest of the
+  hour, `429 too-many-requests` where the request waits for the mail,
+  the welcome mail skipped, one warning per worker) `[MLBG3]`..`[MLBG5]`.
+  Notices the platform sends on its own (deletion, MFA, transfer) are
+  not counted.
+- Not row-relevant: the welcome-mail system test runs with the breaker
+  off (test-only); a metered send whose delivery or callback throws is
+  logged and its callback called once, never an unhandled rejection
+  `[MLBG5]`.
+
+| Scope | Ref | What changed | Tests added | Config keys added |
+|---|---|---|---|---|
+| iso-27001 | A.8.6 | new detail paragraph: stream tree depth and count, stream ids per event, idle connections, one streamed audit read per access, hourly mail breaker per class | `STLM1`, `STLM2`, `STLM3`, `STLM4`, `STLM6`, `RIDL1`, `RIDL3`, `RIDL4`, `RIDL5`, `MLBG3` | `limits.streams.maxDepth`, `limits.streams.maxPerAccount`, `limits.events.maxStreamIds`, `http.responseIdleTimeoutMs`, `limits.audit.maxConcurrentReadsPerAccess`, `limits.audit.maxReadWaitMs`, `services.email.maxPerHour` |
+| iso-27001 | A.8.21 | in-code budgets list: idle connection timeout, registration codes per client address, verification mails per account, mail breaker per core | `RIDL1`, `MLBG1`, `MLBG2`, `MLBG3` | `http.responseIdleTimeoutMs`, `account.emailVerification.registrationCodesPerIpPerHour`, `account.emailVerification.addressesPerAccountPerDay`, `services.email.maxPerHour` |
+| hipaa-security | 164.312(b) | new paragraph: one streamed audit read at a time per access, further reads wait for a slot (oldest first) and succeed, 429 only past the wait | `RIDL3`, `RIDL4`, `RIDL5` | `limits.audit.maxConcurrentReadsPerAccess`, `limits.audit.maxReadWaitMs` |
+| diga | A1.4.3 | detail: stream tree and stream ids bounded, idle connections closed, caller-triggered mail capped | (none) | (row has none) |
+
+Also updated: `context/rate-limiting-and-dos-protection.md` (intro; the
+Node.js timeouts line now names the idle timeout; three new bullets
+among the in-code budgets: stream tree and stream ids per event,
+stalled readers, mail a caller can trigger, with keys, defaults,
+answers and test codes); Section A `RATE-LIMITING-RECIPES` (trigger
+noted for the developer-site page).
+Walked without change:
+- **Capacity, derived rows** (`soc2.A1.1`): derives from `iso-27001.A.8.6`
+  and carries no detail of its own.
+- **Authentication and MFA** (`iso-27001.A.8.5`,
+  `hipaa-security.164.308(a)(5)(ii)(C)`, `hipaa-security.164.312(d)`):
+  no password, attempt or second-factor budget changes; the mail breaker
+  is the e-mail counterpart of the per-core SMS cost cap those rows cite,
+  but it gates no sign-in. A password reset refused by the breaker
+  answers `429 too-many-requests`, distinct from `too-many-attempts`.
+- **Availability / integrity** (`gdpr.Art.32` §1(b), `iso-27001.A.8.14` /
+  `A.8.22`, `soc2.A1.2`): topology, platform DB integrity and backups;
+  none claims anything about stream tree size or idle connections.
+- **Application security** (`iso-27001.A.8.26`, `soc2.CC6.8`): they cite
+  examples of requirements Pryv implements (attachment sandboxing among
+  them); none states a stream tree or stream id bound,
+  and the new `400` answers are recorded on A.8.6.
+- **Audit, other rows** (`iso-27001.A.8.15`, `gdpr.Art.15` audit access,
+  `soc2.CC7.2`): every call is still audited and nothing is dropped from
+  the log; the read cap is recorded on `hipaa-security.164.312(b)`,
+  which carries the per-call detail (`iso-27001.A.8.15` points there).
+- **Mail sub-processor rows** (`gdpr` SMTP relay table,
+  `context/subprocessor-posture-and-data-flow.md`): what a mail carries
+  and where it goes are unchanged; only how many a caller can trigger.
 Transport, platform DB and backup rows: not affected. B.1 (no new method;
 new error answers recorded here), B.2 to B.10: none.
 

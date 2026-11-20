@@ -1655,8 +1655,8 @@ requirements:
     draft: true
     pryv_primitives: [observability-provider, multi-core-mTLS]
     docs: [customer-resources/rate-limiting.md]
-    config_keys: [limits.batch.maxTotalItems, uploads.maxFiles, socketIO.maxMessageBytes, eventFiles.previewsMaxInputPixels, eventFiles.previewsRenderConcurrency, auth.passwordCheckConcurrency, auth.passwordCheckQueue, storages.engines.postgresql.statementTimeoutMs, storages.engines.postgresql.idleInTransactionTimeoutMs, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection]
-    tests: [CEDB5, CEDB6, EGLV1, EGLC1, MPLM3, MPLD1, SION1, SION4, PVPX1, PVRQ1, WRBO1, CLIM1, CLIM2, CLIM3, CLIB2, PCLM1, PCLM2, STMC1, MNSC1, UNXS1, APLM1, APLM2, APLM3, APLM5, APLM9, SIOL1, SIOL3, SIOL5, SIOL6, SIOL8]
+    config_keys: [limits.batch.maxTotalItems, uploads.maxFiles, socketIO.maxMessageBytes, eventFiles.previewsMaxInputPixels, eventFiles.previewsRenderConcurrency, auth.passwordCheckConcurrency, auth.passwordCheckQueue, storages.engines.postgresql.statementTimeoutMs, storages.engines.postgresql.idleInTransactionTimeoutMs, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, limits.streams.maxDepth, limits.streams.maxPerAccount, limits.events.maxStreamIds, http.responseIdleTimeoutMs, limits.audit.maxConcurrentReadsPerAccess, limits.audit.maxReadWaitMs, services.email.maxPerHour]
+    tests: [CEDB5, CEDB6, EGLV1, EGLC1, MPLM3, MPLD1, SION1, SION4, PVPX1, PVRQ1, WRBO1, CLIM1, CLIM2, CLIM3, CLIB2, PCLM1, PCLM2, STMC1, MNSC1, UNXS1, APLM1, APLM2, APLM3, APLM5, APLM9, SIOL1, SIOL3, SIOL5, SIOL6, SIOL8, STLM1, STLM2, STLM3, STLM4, STLM6, RIDL1, RIDL3, RIDL4, RIDL5, MLBG3]
     overview: |
       Pryv-side capacity
       surfaces: per-core observability metrics (memory, CPU, latency,
@@ -1733,6 +1733,33 @@ requirements:
       connections at most once per second `[SIOL8]`. These are ceilings on
       concurrent work, not request rates: per-token request rates stay at
       your edge layer.
+
+      **Stream tree, stalled readers and mail (same release; on by
+      default, `0` turns each off).** A stream sits at most
+      `limits.streams.maxDepth` levels deep (default 32, a move counts the
+      moved subtree) and an account holds at most
+      `limits.streams.maxPerAccount` streams in its own store (default
+      10000, trashed ones included); past either the write answers `400
+      invalid-operation`, also when an access creates a stream from a
+      permission's `defaultName` `[STLM1]`, `[STLM2]`, `[STLM3]`,
+      `[STLM6]`. An event carries at most `limits.events.maxStreamIds`
+      distinct stream ids (default 100, `400 invalid-parameters-format`)
+      `[STLM4]`. What an account already holds stays readable. An HTTP
+      connection with no traffic either way for
+      `http.responseIdleTimeoutMs` (default 120 s) is closed, so a client
+      that stopped reading no longer holds a database cursor and call
+      slots `[RIDL1]`; keep it above your slowest call (websockets are
+      not affected). One access runs one streamed audit read at a time
+      per worker (`limits.audit.maxConcurrentReadsPerAccess`, default 1);
+      a further read waits for a slot, oldest first, up to
+      `limits.audit.maxReadWaitMs` (default 30 s), so parallel reads run
+      one after the other and succeed, and only a read left without a
+      slot past the wait answers `429 too-many-requests` `[RIDL3]`,
+      `[RIDL4]`, `[RIDL5]`. The mail
+      a caller can make a core send is capped per hour and per class
+      (`services.email.maxPerHour`, default 500, registration mails apart
+      from account mails) `[MLBG3]`; the per-address and per-account
+      mail budgets are on A.8.21.
 
   - ref: A.8.14
     title: A.8.14 Redundancy of information processing facilities
@@ -1864,8 +1891,8 @@ requirements:
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, observability-provider]
     derives_from: [iso-27001.A.8.20]
     docs: [customer-resources/rate-limiting.md]
-    config_keys: [auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection]
-    tests: [CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5]
+    config_keys: [auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, http.responseIdleTimeoutMs, account.emailVerification.registrationCodesPerIpPerHour, account.emailVerification.addressesPerAccountPerDay, services.email.maxPerHour]
+    tests: [CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5, RIDL1, MLBG1, MLBG2, MLBG3]
     overview: |
       Pryv's external
       network surface is the TLS-terminating HTTPS API + the embedded
@@ -1912,7 +1939,19 @@ requirements:
       per account, calls per connection and scopes per connection
       (`socketIO.max*`) `[APLM1]`, `[APLM3]`, `[APLM9]`, `[SIOL1]`,
       `[SIOL3]`, `[SIOL5]` (see A.8.6). They bound concurrent work, not
-      request rates.
+      request rates. The same release closes an HTTP connection idle
+      either way for `http.responseIdleTimeoutMs` (default 120 s), so a
+      stalled reader no longer holds its call's resources `[RIDL1]`, and
+      bounds the mail a caller can make a core send: registration codes
+      per client address
+      (`account.emailVerification.registrationCodesPerIpPerHour`, 10 an
+      hour, `429 too-many-attempts`) `[MLBG1]`, verification mails per
+      account to distinct addresses
+      (`account.emailVerification.addressesPerAccountPerDay`, 10 a day)
+      `[MLBG2]`, and an hourly breaker per core counted apart for
+      registration and account mails (`services.email.maxPerHour`, 500),
+      so a flood of registration codes cannot stop password resets
+      `[MLBG3]`. Notices the platform sends on its own are not counted.
       These budgets do not replace an edge layer for volumetric
       traffic, per-token request rates and WAF rules. Full rationale +
       operator mitigation patterns:

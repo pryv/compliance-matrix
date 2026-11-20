@@ -417,6 +417,12 @@ requirements:
       can hold only a bounded number of calls and connections at once on
       a worker (the extra ones answer `429 too-many-requests`), and
       overly nested or oversized call parameters are refused up front.
+      The same release bounds the depth and size of an account's stream
+      tree and the stream ids of one event, closes a connection a client
+      stopped reading after an idle timeout, and caps the mail a caller
+      can make a core send (registration codes per client address,
+      verification mails per account, an hourly breaker per core that
+      keeps password resets apart from registration codes).
       See `context/rate-limiting-and-dos-protection.md` and iso-27001
       A.8.6. An edge layer in front of the cores remains your part.
 
