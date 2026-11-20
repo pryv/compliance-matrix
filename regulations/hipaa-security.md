@@ -1178,10 +1178,23 @@ their method id: the audit row (and the access usage count) of one
 call could name the other call's method. Each call now runs with
 its own context and is audited under its own method `[SKMC]`.
 
+**Streamed audit reads per access (same release; on by default).**
+One access reads its audit log (`events.get` on `:_audit:` streams)
+one streamed read at a time per API worker
+(`limits.audit.maxConcurrentReadsPerAccess`, default 1, `0` turns it
+off). A read past it waits for a slot, oldest first, up to
+`limits.audit.maxReadWaitMs` (default 30000 ms; `0` refuses at
+once), so parallel reads from one client (an account app loading
+several Activity cards, say) run one after the other and all
+succeed `[RIDL4]`, `[RIDL5]`; only a read that gets no slot within
+the wait answers `429 too-many-requests` `[RIDL3]`. Nothing is
+dropped from the log; the cap bounds the small audit read pool a
+stalled reader could hold.
+
 **Evidence**
 
-- tests: AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC
-- config keys: accesses.deletionRecords.retentionDays
+- tests: AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC, RIDL3, RIDL4, RIDL5
+- config keys: accesses.deletionRecords.retentionDays, limits.audit.maxConcurrentReadsPerAccess, limits.audit.maxReadWaitMs
 - primitives: audit, audit-event-stream, external-id-index
 - context notes: content-query-audit-semantics, delegation-model, workforce-access-patterns
 

@@ -16,8 +16,11 @@ restart backoff for crashing workers; 2.0.0-rc.87 bounds password
 checks per API worker and, on PostgreSQL, the
 database time of an API request; the release after it caps the calls
 running at once per account, per access and per socket.io connection,
-socket.io connections per access and per account, and the nesting and
-size of call parameters. The rc.47 and rc.50 budgets came
+socket.io connections per access and per account, the nesting and
+size of call parameters, the depth and size of an account's stream
+tree, the stream ids of one event, idle connections, streamed audit
+reads per access and the mail a caller can make a core send. The
+rc.47 and rc.50 budgets came
 out of the 2026 code-level security review (`code-security-review-2026.md`).
 Before 2.0.0-rc.47 the only in-process throttle was the per-account
 MFA backoff (2.0.0-rc.27). See "What is in Pryv-side scope today"
@@ -122,8 +125,10 @@ Rows whose `detail` should call out the operator-side responsibility
 
 - HTTPS body size limits (Express body-parser defaults).
 - Connection timeouts at the Node.js HTTP server layer: Node's
-  defaults, not tuned by Pryv (set slow-client timeouts at the
-  proxy).
+  defaults, plus, from the release after 2.0.0-rc.87, an idle timeout
+  on HTTP connections (`http.responseIdleTimeoutMs`, see "Stalled
+  readers" below). Slow-client timeouts on requests still belong at
+  the proxy.
 - The Lets-Encrypt + bootstrap-bundle layers don't expose
   unauthenticated mutation endpoints; the public surface is small.
 - **Per-account MFA backoff** (open-pryv.io 2.0.0-rc.27, `6231a37c`,
@@ -277,6 +282,64 @@ Rows whose `detail` should call out the operator-side responsibility
   most once per second `[SIOL8]`.
   These caps bound concurrent work per worker, not request rates: per-token
   request rates on data routes stay at the edge.
+- **Stream tree and stream ids per event** (the release after
+  2.0.0-rc.87; on by default, `0` turns each off). A stream sits at
+  most `limits.streams.maxDepth` levels deep (default 32, a root
+  stream is level 1), on creation and on a move (the moved subtree
+  counts); an account holds at most `limits.streams.maxPerAccount`
+  streams in its own store (default 10000, trashed ones and its
+  built-in account streams included; streams of other data stores
+  are not counted). Past either `streams.create` / `streams.update`,
+  and `accesses.create` / `accesses.update` creating a stream from a
+  permission's `defaultName`, answer `400 invalid-operation` naming
+  the limit `[STLM1]`, `[STLM2]`, `[STLM3]`, `[STLM5]`, `[STLM6]`. An
+  event carries at most `limits.events.maxStreamIds` distinct stream
+  ids (default 100, duplicates count once); past it `events.create` /
+  `events.update` answer `400 invalid-parameters-format` `[STLM4]`. A
+  cap refuses the write; streams already stored stay
+  readable. Soft limits: creates running at once can pass a cap by a
+  few streams.
+- **Stalled readers** (same release; on by default, `0` turns each
+  off). An HTTP connection with no traffic either way for
+  `http.responseIdleTimeoutMs` (default 120000 ms) is closed, so a
+  client that stopped reading a response no longer holds its database
+  cursor and call slots for as long as it keeps the connection open
+  `[RIDL1]`. The timer runs on traffic: a call whose server-side work
+  sends nothing for longer is cut as well, so keep the value above
+  your slowest call; socket.io websocket connections are not
+  affected. One access runs at most
+  `limits.audit.maxConcurrentReadsPerAccess` streamed audit reads at
+  once per worker (default 1; `events.get` on `:_audit:` streams). A
+  read past it waits for a slot, served oldest first, up to
+  `limits.audit.maxReadWaitMs` (default 30000 ms; `0` refuses at
+  once): parallel reads from one client run one after the other and
+  all succeed `[RIDL4]`, `[RIDL5]`; only a read that gets no slot
+  within the wait answers `429 too-many-requests` `[RIDL2]`,
+  `[RIDL3]`.
+- **Mail a caller can trigger** (same release; on by default, `0`
+  turns each off). Registration codes (`auth.emailChallenge`) per
+  client address:
+  `account.emailVerification.registrationCodesPerIpPerHour` (default
+  10), past it `429 too-many-attempts` with `data.reason: 'ip-limit'`
+  `[MLBG1]`. Verification mails per account to distinct addresses:
+  `account.emailVerification.addressesPerAccountPerDay` (default 10;
+  an address already mailed that day is free), past it an address
+  added with `account.update` gets no mail (it is still added) and
+  `emails.resend` answers `429 too-many-attempts` with `data.reason:
+  'account-address-limit'` `[MLBG2]`. A breaker per core:
+  `services.email.maxPerHour` (default 500), counted separately for
+  registration mails (codes and welcome) and account mails
+  (verification and password reset), so a flood of registration codes
+  cannot stop password resets; past it the mails of that class are
+  refused for the rest of the hour (`429 too-many-requests` where the
+  request waits for the mail; the welcome mail is skipped) and each
+  API worker logs one warning `[MLBG3]`, `[MLBG4]`, `[MLBG5]`.
+  Notices the platform sends on its own (deletion reminders, MFA
+  changes, transfers) are not counted nor stopped. Size the breaker
+  above your busiest legitimate hour (a gated registration costs two
+  registration mails). The per-address code budget reads the client
+  address through `http.trustedProxies` like the others: behind a
+  shared address (clinic or campus NAT) raise it.
 - **Recovery**: a worker that keeps crashing is replaced after a
   delay doubling up to 30 s (2.0.0-rc.50) `[WRBO1]`.
 
