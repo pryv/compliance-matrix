@@ -11,6 +11,16 @@ import { GlobalCoverage } from './components/GlobalCoverage';
 import { ContextNoteList } from './components/ContextNoteList';
 import { ContextNoteDetail } from './components/ContextNoteDetail';
 import { Generate } from './components/Generate';
+import pryvLogo from './assets/pryv-logo.svg';
+
+const PRYV_WEBSITE = 'https://pryv.github.io/www/';
+const PRYV_DOCS = 'https://pryv.github.io/';
+
+const EXTERNAL_LINKS = [
+  { href: PRYV_DOCS, label: 'Docs' },
+  { href: './llms.txt', label: 'For agents' },
+  { href: 'https://github.com/pryv/compliance-matrix', label: 'Source' }
+];
 
 const NAV_TABS = [
   { to: '/', label: 'Regulations', end: true },
@@ -27,9 +37,14 @@ export default function App () {
     <div className='min-h-screen bg-slate-50'>
       <header className='border-b border-slate-200 bg-white'>
         <div className='max-w-6xl mx-auto px-6 py-3 flex items-center justify-between flex-wrap gap-2'>
-          <Link to='/' className='text-base font-semibold text-slate-800'>
-            open-pryv.io · Compliance Matrix
-          </Link>
+          <div className='flex items-center gap-3'>
+            <a href={PRYV_WEBSITE} title='Pryv website' className='shrink-0'>
+              <img src={pryvLogo} alt='Pryv' className='h-7 w-auto' />
+            </a>
+            <Link to='/' className='text-base font-semibold text-slate-800 hover:text-pryv-red'>
+              Compliance Matrix
+            </Link>
+          </div>
           <nav className='flex items-center gap-0.5 flex-wrap'>
             {NAV_TABS.map((t) => (
               <NavLink
@@ -39,21 +54,25 @@ export default function App () {
                 className={({ isActive }) =>
                   `px-2.5 py-1 rounded text-sm transition-colors ${
                     isActive
-                      ? 'bg-slate-100 text-slate-900 font-medium'
-                      : 'text-slate-500 hover:text-slate-700'
+                      ? 'bg-red-50 text-pryv-red font-medium'
+                      : 'text-slate-500 hover:text-slate-800'
                   }`}
               >
                 {t.label}
               </NavLink>
             ))}
-            <a
-              className='px-2.5 py-1 text-sm text-slate-500 hover:text-slate-700'
-              href='https://github.com/pryv/compliance-matrix'
-              target='_blank'
-              rel='noreferrer'
-            >
-              source ↗
-            </a>
+            <span className='mx-1 h-4 w-px bg-slate-200' aria-hidden='true' />
+            {EXTERNAL_LINKS.map((l) => (
+              <a
+                key={l.label}
+                className='px-2.5 py-1 text-sm text-slate-500 hover:text-pryv-red'
+                href={l.href}
+                target='_blank'
+                rel='noreferrer'
+              >
+                {l.label} ↗
+              </a>
+            ))}
           </nav>
         </div>
         <div className='bg-amber-50 border-t border-amber-200 text-xs text-amber-900'>
@@ -103,6 +122,14 @@ export default function App () {
           <span className='draft-badge'>draft</span> are authored but not yet reviewed. This matrix describes
           the software's contribution to compliance; implementer organizations remain responsible
           for their own GDPR / HIPAA / ISO / MDR / HDS posture.
+          <div className='mt-3 flex flex-wrap gap-x-4 gap-y-1'>
+            <a className='hover:text-pryv-red' href={PRYV_WEBSITE}>Pryv website</a>
+            <a className='hover:text-pryv-red' href={PRYV_DOCS}>Developer documentation</a>
+            <a className='hover:text-pryv-red' href='./llms.txt'>llms.txt</a>
+            <a className='hover:text-pryv-red' href='./llms-full.txt'>Full text</a>
+            <a className='hover:text-pryv-red' href='./compliance.json'>JSON</a>
+            <a className='hover:text-pryv-red' href='https://github.com/pryv/compliance-matrix'>Source (BSD-3-Clause)</a>
+          </div>
         </div>
       </footer>
     </div>

@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans Variable", ui-sans-serif, system-ui, sans-serif;
   --radius: 0.5rem;
+  /* Pryv brand (same values as pryv.com's design tokens) */
+  --color-pryv-red: #be2834;
+  --color-pryv-red-dark: #9e1f2a;
 }
 
 html, body, #root {

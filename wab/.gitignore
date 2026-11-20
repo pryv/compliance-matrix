@@ -11,6 +11,11 @@ public/compliance.sqlite
 public/sql-wasm.wasm
 public/sql-wasm-browser.wasm
 public/qms-template.json
+public/llms.txt
+public/llms-full.txt
+public/compliance.json
+public/regulations/
+public/context/
 
 # Logs
 *.log

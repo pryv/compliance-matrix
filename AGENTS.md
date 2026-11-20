@@ -19,8 +19,11 @@ proposals/      One file per planned/considered improvement, the evidence chain 
 docs/           Methodology: coverage taxonomy, effort axis, facilitation typology,
                 glossary, how-to-add-a-scope, implementer FAQ, pryv-primitives
 qms/            QMS documents (Pryv's own + implementer template)
-scripts/        build.js (YAML → dist/compliance.sqlite), validate.js (CI gate)
-wab/            Web app to browse the matrix (React + Vite)
+scripts/        build.js (YAML → dist/compliance.sqlite), validate.js (CI gate),
+                export-text.js (SQLite → dist/text/: llms.txt, llms-full.txt,
+                regulations/<id>.md, context/<id>.md, compliance.json)
+wab/            Web app to browse the matrix (React + Vite); its build also serves
+                dist/text/ next to the app
 UPDATE-TRIGGERS.md   Reverse index: shipped-code triggers → matrix rows to refresh
 ```
 
@@ -29,10 +32,15 @@ UPDATE-TRIGGERS.md   Reverse index: shipped-code triggers → matrix rows to ref
 ```bash
 npm install
 npm run validate      # schema + cross-reference checks (run before any commit)
-npm run build         # → dist/compliance.sqlite
+npm run build         # → dist/compliance.sqlite + dist/text/ (text and JSON exports)
 npm run build:all     # validate + build
 npm test              # script unit tests
 ```
+
+**Reading the published matrix as an agent:** the web app needs JavaScript, so read
+https://pryv.github.io/compliance-matrix/llms.txt instead. It links one Markdown file per
+regulation (`regulations/<id>.md`), the context notes, `llms-full.txt` (everything in one
+file) and `compliance.json`.
 
 ## The update contract: this is why you're probably here
 
