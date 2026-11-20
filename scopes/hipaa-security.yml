@@ -964,7 +964,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [accesses.deletionRecords.retentionDays]
-    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9]
+    tests: [AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC]
     planned:
       - kind: feature
         summary: "Chained / signed audit log strengthens tamper-resistance evidence"
@@ -1123,6 +1123,13 @@ requirements:
       app and shared callers are refused `[ASM4]`, and the call is itself
       audited `[ASM9]`. The account app's next release draws its Activity
       chart and an Audit trail chart over a chosen period from it.
+
+      **socket.io calls running at the same time (fix, the release after
+      open-pryv.io 2.0.0-rc.87).** Every call on one socket.io connection
+      used to share one context, so two calls running at once could swap
+      their method id: the audit row (and the access usage count) of one
+      call could name the other call's method. Each call now runs with
+      its own context and is audited under its own method `[SKMC]`.
 
   - ref: 164.312(c)(1)
     title: Integrity, standard

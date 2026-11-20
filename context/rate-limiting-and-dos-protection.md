@@ -14,7 +14,10 @@ invitation-check budget, a `webhooks.test` interval, a preview
 pixel cap and render concurrency, an SMS cost cap per core and a
 restart backoff for crashing workers; 2.0.0-rc.87 bounds password
 checks per API worker and, on PostgreSQL, the
-database time of an API request. The rc.47 and rc.50 budgets came
+database time of an API request; the release after it caps the calls
+running at once per account, per access and per socket.io connection,
+socket.io connections per access and per account, and the nesting and
+size of call parameters. The rc.47 and rc.50 budgets came
 out of the 2026 code-level security review (`code-security-review-2026.md`).
 Before 2.0.0-rc.47 the only in-process throttle was the per-account
 MFA backoff (2.0.0-rc.27). See "What is in Pryv-side scope today"
@@ -237,6 +240,43 @@ Rows whose `detail` should call out the operator-side responsibility
   in a row. Tests: storage engine `[PGLM1]`..`[PGLM5]`,
   `[PGSS1]`..`[PGSS4]`, `[PGSI1]`..`[PGSI4]`, `[PGSX1]`, `[PGSX2]`;
   `[UNXS1]`..`[UNXS4]`, `[MNSC1]`..`[MNSC3]`, `[STMC1]`, `[STMC2]`.
+- **Calls in progress per account and per access** (the release after
+  2.0.0-rc.87; on by default). Authenticated calls running at once on
+  an API worker (HTTP, socket.io, a batch counted once and its inner
+  calls not again) are capped per account
+  (`limits.requests.maxInflightPerUser`, default 64) and per access
+  (`limits.requests.maxInflightPerAccess`, default 32: half the
+  account's budget, so one shared token cannot keep the owner out).
+  Past either the call answers `429 too-many-requests` with
+  `Retry-After: 1` without running; clients retry the extra calls.
+  Calls without an access (`auth.login`, password reset) are not
+  counted; a streamed read counts until it has been sent (a result
+  never read is let go after 10 minutes, with a warning) `[APLM3]`,
+  `[APLM4]`, `[APLM5]`, `[APLM7]`, `[APLM8]`, `[APLM9]`. `0` disables
+  each.
+- **Shape of call parameters** (same release). Parameters nested
+  deeper than `limits.json.maxDepth` (default 64; the parameters object
+  is level 1) or holding an object with more than
+  `limits.json.maxObjectKeys` keys (default 10000) answer `400
+  invalid-parameters-format` before the method runs, so deeply nested
+  content no longer reaches recursive code `[APLM1]`, `[APLM2]`,
+  `[APLM6]`. `0` disables each.
+- **socket.io ceilings** (same release; per server process, `0` turns
+  each off). Connections per access (`socketIO.maxConnectionsPerAccess`,
+  default 20) and per account (`socketIO.maxConnectionsPerUser`,
+  default 100): past either a new connection is refused at the
+  handshake, `connect_error` carrying `data.id: 'too-many-requests'`; a
+  disconnect frees the slot `[SIOL1]`..`[SIOL4]`. Calls running at once
+  on one connection (`socketIO.maxInflightCallsPerConnection`, default
+  16): past it a call answers `too-many-requests` without running
+  `[SIOL5]`. Scopes per connection (`socketIO.maxScopesPerConnection`,
+  default 100): a `subscribe` past it is refused with
+  `invalid-operation` and adds none of its scopes; a scope key over 256
+  characters answers `invalid-parameters-format` `[SIOL6]`, `[SIOL7]`.
+  A burst of access changes re-checks an account's open connections at
+  most once per second `[SIOL8]`.
+  These caps bound concurrent work per worker, not request rates: per-token
+  request rates on data routes stay at the edge.
 - **Recovery**: a worker that keeps crashing is replaced after a
   delay doubling up to 30 s (2.0.0-rc.50) `[WRBO1]`.
 

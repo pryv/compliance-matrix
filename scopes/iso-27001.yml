@@ -592,7 +592,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [logs.file, logs.fileSync]
-    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1, OXN02, OXI06, OTX03, OCMDE13, OPIU3, AUAB3, AUG1, AUG3, ASM1, ASM4]
+    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1, OXN02, OXI06, OTX03, OCMDE13, OPIU3, AUAB3, AUG1, AUG3, ASM1, ASM4, SKMC]
     planned:
       - kind: feature
         summary: "Chained / signed audit log adds the software-side tamper-resistance signal A.8.15 expects"
@@ -623,7 +623,11 @@ requirements:
       `[OXI06]`, `[OTX03]`, `[OCMDE13]`, `[OPIU3]`. Adapter-route
       requests are not audited by the core. Since rc.77 a streamed
       answer the client stopped reading is logged as an error
-      (`client-closed-request`), not a success `[AUAB3]`. Full list on
+      (`client-closed-request`), not a success `[AUAB3]`. From the
+      release after rc.87, calls running at the same time on one
+      socket.io connection are each audited under their own method;
+      before, two such calls could swap their method id in the audit
+      row and the access usage counts `[SKMC]`. Full list on
       `hipaa-security.164.312(b)`.
 
       **Analysis by the account owner (open-pryv.io 2.0.0-rc.84).**
@@ -1651,8 +1655,8 @@ requirements:
     draft: true
     pryv_primitives: [observability-provider, multi-core-mTLS]
     docs: [customer-resources/rate-limiting.md]
-    config_keys: [limits.batch.maxTotalItems, uploads.maxFiles, socketIO.maxMessageBytes, eventFiles.previewsMaxInputPixels, eventFiles.previewsRenderConcurrency, auth.passwordCheckConcurrency, auth.passwordCheckQueue, storages.engines.postgresql.statementTimeoutMs, storages.engines.postgresql.idleInTransactionTimeoutMs]
-    tests: [CEDB5, CEDB6, EGLV1, EGLC1, MPLM3, MPLD1, SION1, SION4, PVPX1, PVRQ1, WRBO1, CLIM1, CLIM2, CLIM3, CLIB2, PCLM1, PCLM2, STMC1, MNSC1, UNXS1]
+    config_keys: [limits.batch.maxTotalItems, uploads.maxFiles, socketIO.maxMessageBytes, eventFiles.previewsMaxInputPixels, eventFiles.previewsRenderConcurrency, auth.passwordCheckConcurrency, auth.passwordCheckQueue, storages.engines.postgresql.statementTimeoutMs, storages.engines.postgresql.idleInTransactionTimeoutMs, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection]
+    tests: [CEDB5, CEDB6, EGLV1, EGLC1, MPLM3, MPLD1, SION1, SION4, PVPX1, PVRQ1, WRBO1, CLIM1, CLIM2, CLIM3, CLIB2, PCLM1, PCLM2, STMC1, MNSC1, UNXS1, APLM1, APLM2, APLM3, APLM5, APLM9, SIOL1, SIOL3, SIOL5, SIOL6, SIOL8]
     overview: |
       Pryv-side capacity
       surfaces: per-core observability metrics (memory, CPU, latency,
@@ -1704,6 +1708,31 @@ requirements:
       server (`bin/master.js`). They bound how long one request holds a
       connection and how much CPU password checks take; many slow
       requests in a row are still for your edge layer to limit.
+
+      **Per-account, per-access and per-connection ceilings (the release
+      after open-pryv.io 2.0.0-rc.87; on by default, per API worker, `0`
+      turns each off).** Authenticated calls running at once (HTTP, batch
+      counted once, socket.io) are capped per account
+      (`limits.requests.maxInflightPerUser`, default 64) and per access
+      (`limits.requests.maxInflightPerAccess`, default 32), so one shared
+      token cannot take its owner's whole budget; past either the call
+      answers `429 too-many-requests` with `Retry-After: 1` without running
+      `[APLM3]`, `[APLM5]`, `[APLM9]`. Calls without an access
+      (`auth.login`, password reset) are not counted. Parameters nested
+      deeper than `limits.json.maxDepth` (default 64) or with an object
+      holding more than `limits.json.maxObjectKeys` keys (default 10000)
+      answer `400 invalid-parameters-format` before the method runs
+      `[APLM1]`, `[APLM2]`. On socket.io: connections per access
+      (`socketIO.maxConnectionsPerAccess`, 20) and per account
+      (`socketIO.maxConnectionsPerUser`, 100), refused at the handshake
+      with `too-many-requests` `[SIOL1]`, `[SIOL3]`; calls running at once
+      on one connection (`socketIO.maxInflightCallsPerConnection`, 16)
+      `[SIOL5]`; scopes per connection (`socketIO.maxScopesPerConnection`,
+      100; refused with `invalid-operation`, the whole `subscribe` adds
+      nothing) `[SIOL6]`; a burst of access changes re-checks the open
+      connections at most once per second `[SIOL8]`. These are ceilings on
+      concurrent work, not request rates: per-token request rates stay at
+      your edge layer.
 
   - ref: A.8.14
     title: A.8.14 Redundancy of information processing facilities
@@ -1835,8 +1864,8 @@ requirements:
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, observability-provider]
     derives_from: [iso-27001.A.8.20]
     docs: [customer-resources/rate-limiting.md]
-    config_keys: [auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue]
-    tests: [CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2]
+    config_keys: [auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection]
+    tests: [CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5]
     overview: |
       Pryv's external
       network surface is the TLS-terminating HTTPS API + the embedded
@@ -1875,7 +1904,15 @@ requirements:
       endpoints `503 temporarily_unavailable`, both with
       `Retry-After`, and the refusal is never a failed attempt
       `[CLIM2]`, `[PCLM1]`, `[PCLM2]`; on PostgreSQL the database work
-      of an API request is time-limited (see A.8.6).
+      of an API request is time-limited (see A.8.6). From the release
+      after 2.0.0-rc.87, each API worker also caps the calls running at
+      once per account and per access (`limits.requests.*`, `429
+      too-many-requests`), the nesting and size of call parameters
+      (`limits.json.*`, `400`), and socket.io connections per access and
+      per account, calls per connection and scopes per connection
+      (`socketIO.max*`) `[APLM1]`, `[APLM3]`, `[APLM9]`, `[SIOL1]`,
+      `[SIOL3]`, `[SIOL5]` (see A.8.6). They bound concurrent work, not
+      request rates.
       These budgets do not replace an edge layer for volumetric
       traffic, per-token request rates and WAF rules. Full rationale +
       operator mitigation patterns:

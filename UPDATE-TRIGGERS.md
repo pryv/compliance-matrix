@@ -368,6 +368,14 @@ so the page's client-IP paragraph needs that refresh (developer-site work,
 outside this repo). The matrix rows were updated under `SECURITY-REVIEW-2026`;
 no chip involved.
 
+**Trigger fired (2026-11-19):** the release after open-pryv.io 2.0.0-rc.87 adds
+in-code ceilings per account, per access and per socket.io connection (`429
+too-many-requests`, `Retry-After: 1`) and on call parameter shape (`400`); the
+page's in-code budgets table needs rows for them, and its per-token load test
+should be checked: past 32 calls in flight on one token, Pryv's own 429s mix with
+nginx's (developer-site work, outside this repo; B.11 walk of 2026-11-19). No chip
+involved.
+
 **Where the work lives**: the developer site (`dev-site2`, customer resources).
 Q6 outcome, voluntarily missing at Pryv layer; ship reference configs.
 
@@ -3545,6 +3553,85 @@ Walked without change:
 - **Not row-relevant**: the test harness's integrity check now runs once
   per test file and at the end of the run (no product change).
 B.1 (no new method), B.2 to B.10: none.
+
+**Walked 2026-11-19 for per-account, per-access and per-connection limits
+(unreleased at the walk; the release after open-pryv.io 2.0.0-rc.87)**:
+open-pryv.io feature commit `e433ed3a`, merged to master `a29dbc93`
+(2026-11-19). The rows say "the
+release after open-pryv.io 2.0.0-rc.87": name the tag once it is cut. The
+validator passes against master `a29dbc93`. No Section A slug, no `planned:` chip, no tier
+shift; `reviewed_at` left unchanged. No new API method or response header
+(`Retry-After` is already sent by earlier budgets). Each ceiling is on by
+default, applies per API worker (socket.io: per server process), and `0`
+turns it off. What changed:
+- **Calls in progress per account and per access**: new keys
+  `limits.requests.maxInflightPerUser` (default 64) and
+  `limits.requests.maxInflightPerAccess` (default 32). Authenticated HTTP,
+  batch (counted once, inner calls not again) and socket.io calls running
+  at once; past either, **new error answer on every authenticated method**:
+  `429 too-many-requests` with `Retry-After: 1`, without running. Calls
+  without an access (`auth.login`, password reset) are not counted; a
+  streamed read counts until sent (released after 10 minutes if never
+  read, with a warning). Tests `[APLM3]`..`[APLM5]`, `[APLM7]`..`[APLM9]`.
+- **Shape of call parameters**: new keys `limits.json.maxDepth` (default
+  64; the parameters object is level 1) and `limits.json.maxObjectKeys`
+  (default 10000); past either, `400 invalid-parameters-format` before the
+  method runs (deeply nested content used to reach recursive code and
+  could fail with an unexpected error). Tests `[APLM1]`, `[APLM2]`,
+  `[APLM6]`.
+- **socket.io ceilings**: new keys `socketIO.maxConnectionsPerAccess`
+  (default 20) and `socketIO.maxConnectionsPerUser` (default 100), refused
+  at the handshake (`connect_error` with `data.id: 'too-many-requests'`)
+  `[SIOL1]`..`[SIOL4]`; `socketIO.maxInflightCallsPerConnection` (default
+  16), a call past it answered `too-many-requests` without running
+  `[SIOL5]`; `socketIO.maxScopesPerConnection` (default 100), a
+  `subscribe` past it refused with `invalid-operation`, all or nothing
+  (a scope prepared before a failing one is no longer kept), a scope key
+  over 256 characters refused with `invalid-parameters-format` `[SIOL6]`,
+  `[SIOL7]`. Access changes re-check an account's open connections at most
+  once per second (a burst costs one more pass at the end of that second)
+  `[SIOL8]`.
+- **socket.io per-call context (fix)**: calls running at once on one
+  connection shared one context and could swap their method id, so the
+  audit row and the access usage count of one call could name the other
+  call's method; each call now has its own context `[SKMC]`.
+- Not row-relevant: the test runner stops when a component's tests are
+  killed or its starter is gone; the nginx sample asks operators to keep
+  nginx patched (a core serving TLS itself runs no nginx).
+
+| Scope | Ref | What changed | Tests added | Config keys added |
+|---|---|---|---|---|
+| iso-27001 | A.8.6 | new detail paragraph: calls in progress per account and per access, parameter shape, socket.io connections, calls and scopes per connection, coalesced revalidation; concurrency, not request rates | `APLM1`, `APLM2`, `APLM3`, `APLM5`, `APLM9`, `SIOL1`, `SIOL3`, `SIOL5`, `SIOL6`, `SIOL8` | the eight keys above |
+| iso-27001 | A.8.21 | in-code budgets list: the new ceilings, pointer to A.8.6, "concurrent work, not request rates" | `APLM1`, `APLM3`, `APLM9`, `SIOL1`, `SIOL3`, `SIOL5` | the eight keys above |
+| iso-27001 | A.8.15 | detail: socket.io calls running at once audited under their own method (before: method id could be swapped) | `SKMC` | (none) |
+| hipaa-security | 164.312(b) | new paragraph: the socket.io per-call context fix, audit row and usage count | `SKMC` | (none) |
+| diga | A1.4.3 | detail: bounded calls and connections per account, access and connection, oversized parameters refused | (none) | (row has none) |
+
+Also updated: `context/rate-limiting-and-dos-protection.md` (intro; three
+new bullets among the in-code budgets, with keys, defaults, answers and
+test codes); Section A `RATE-LIMITING-RECIPES` (trigger noted for the
+developer-site page).
+Walked without change:
+- **Capacity, derived rows** (`soc2.A1.1`): derives from `iso-27001.A.8.6`
+  and carries no detail of its own.
+- **Log-in monitoring** (`hipaa-security.164.308(a)(5)(ii)(C)`,
+  `hipaa-security.164.312(d)`, `iso-27001.A.8.5`): calls without an access
+  (sign-in, password reset) are not counted, so no password or attempt
+  claim changes; the new `429 too-many-requests` is the same id as the
+  password-check refusal, distinct from `too-many-attempts`.
+- **Availability / integrity** (`gdpr.Art.32` §1(b), `iso-27001.A.8.14` /
+  `A.8.22`, `soc2.A1.2`): topology, platform DB integrity and backups;
+  none claims anything about per-account concurrency.
+- **Audit, other rows** (`gdpr.Art.5` §2, `soc2.CC7.2`, `iso-27001.A.8.16`):
+  they state that every call is audited, which held for the row's
+  existence; the method-id swap is recorded on `hipaa-security.164.312(b)`
+  and `iso-27001.A.8.15`, which carry the per-call detail.
+- **Revocation reaching socket.io** (`soc2.CC6.3` client revocation,
+  `context/webhooks-signal-only.md`): open connections are still dropped
+  on revocation; within a burst of access changes the re-check may come
+  up to one second later, and no row states a sub-second bound.
+Transport, platform DB and backup rows: not affected. B.1 (no new method;
+new error answers recorded here), B.2 to B.10: none.
 
 ## Section C: Maintenance reminders
 
