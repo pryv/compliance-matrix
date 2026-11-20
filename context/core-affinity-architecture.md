@@ -25,7 +25,14 @@ keyed across the cluster:
 
 - **`user-core/<username> → <core URL>`**: the lookup table the
   registration / `/reg/:uid/server` flow uses to tell a client
-  "user X lives on core Y, send your subsequent calls there".
+  "user X lives on core Y, send your subsequent calls there". The
+  wrong-core check of every `/{username}/*` request (`421
+  wrong-core`) and the embedded DNS read it too; from the release
+  after open-pryv.io 2.0.0-rc.87 each process caches that answer (30 s
+  for a found mapping, 5 s for an unknown name,
+  `cluster.userCoreCache.*`), so an account moved to another core can
+  be routed to its former core for up to 30 s. Uniqueness checks never
+  use the cache.
 - **`emailIndex/<email-hash> → <username>`**: uniqueness check
   enforced at registration so two users can't share an email.
 - **DNS records** for `<coreId>.<domain>` + subject CNAMEs.

@@ -456,7 +456,11 @@ tree and the stream ids of one event, closes a connection a client
 stopped reading after an idle timeout, and caps the mail a caller
 can make a core send (registration codes per client address,
 verification mails per account, an hourly breaker per core that
-keeps password resets apart from registration codes).
+keeps password resets apart from registration codes). On a
+multi-core platform, each process caches which core hosts a name
+and the embedded DNS limits its lookup answers per client network,
+so requests or forged DNS queries for random names no longer each
+cost a cluster-wide database read.
 See `context/rate-limiting-and-dos-protection.md` and iso-27001
 A.8.6. An edge layer in front of the cores remains your part.
 

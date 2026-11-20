@@ -1147,7 +1147,11 @@ tree and the stream ids of one event, closes a connection a client
 stopped reading after an idle timeout, and caps the mail a caller
 can make a core send (registration codes per client address,
 verification mails per account, an hourly breaker per core that
-keeps password resets apart from registration codes).
+keeps password resets apart from registration codes). On a
+multi-core platform, each process caches which core hosts a name
+and the embedded DNS limits its lookup answers per client network,
+so requests or forged DNS queries for random names no longer each
+cost a cluster-wide database read.
 See `context/rate-limiting-and-dos-protection.md` and iso-27001
 A.8.6. An edge layer in front of the cores remains your part.
 
@@ -10911,11 +10915,32 @@ a caller can make a core send is capped per hour and per class
 from account mails) `[MLBG3]`; the per-address and per-account
 mail budgets are on A.8.21.
 
+**Routing lookups on a multi-core platform (same release; on by
+default, `0` turns each off).** Which core hosts a username used to
+be read from the platform database, at its most expensive
+consistency level, for every `/{username}/*` request (the `421
+wrong-core` check) and every embedded-DNS answer for
+`<username>.<domain>`: a stream of requests or forged DNS queries
+for random names became a stream of cluster-wide reads. Each process
+now keeps the answer, a found mapping for
+`cluster.userCoreCache.positiveTtlMs` (default 30 s) and an unknown
+name for `cluster.userCoreCache.negativeTtlMs` (default 5 s);
+concurrent misses for one name share one read, a failed read caches
+nothing, and a name longer than any username is never cached
+`[PUCC1]`, `[PUCC2]`, `[PUCC4]`, `[PUCC6]`, `[PUCC7]`. Uniqueness
+checks (registration, renames) never use the cache. What it costs
+you: an account moved to another core can be routed to its former
+core for up to 30 s, and a name just registered can be unknown for
+up to 5 s, on another core and on another process of the same core.
+The embedded DNS also limits, per client network, the UDP answers
+that need a lookup (see A.8.21) `[DRRL5]`; the read level is on
+A.8.14.
+
 **Evidence**
 
-- tests: CEDB5, CEDB6, EGLV1, EGLC1, MPLM3, MPLD1, SION1, SION4, PVPX1, PVRQ1, WRBO1, CLIM1, CLIM2, CLIM3, CLIB2, PCLM1, PCLM2, STMC1, MNSC1, UNXS1, APLM1, APLM2, APLM3, APLM5, APLM9, SIOL1, SIOL3, SIOL5, SIOL6, SIOL8, STLM1, STLM2, STLM3, STLM4, STLM6, RIDL1, RIDL3, RIDL4, RIDL5, MLBG3
+- tests: CEDB5, CEDB6, EGLV1, EGLC1, MPLM3, MPLD1, SION1, SION4, PVPX1, PVRQ1, WRBO1, CLIM1, CLIM2, CLIM3, CLIB2, PCLM1, PCLM2, STMC1, MNSC1, UNXS1, APLM1, APLM2, APLM3, APLM5, APLM9, SIOL1, SIOL3, SIOL5, SIOL6, SIOL8, STLM1, STLM2, STLM3, STLM4, STLM6, RIDL1, RIDL3, RIDL4, RIDL5, MLBG3, PUCC1, PUCC2, PUCC4, PUCC6, PUCC7, DRRL5
 - docs: customer-resources/rate-limiting.md
-- config keys: limits.batch.maxTotalItems, uploads.maxFiles, socketIO.maxMessageBytes, eventFiles.previewsMaxInputPixels, eventFiles.previewsRenderConcurrency, auth.passwordCheckConcurrency, auth.passwordCheckQueue, storages.engines.postgresql.statementTimeoutMs, storages.engines.postgresql.idleInTransactionTimeoutMs, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, limits.streams.maxDepth, limits.streams.maxPerAccount, limits.events.maxStreamIds, http.responseIdleTimeoutMs, limits.audit.maxConcurrentReadsPerAccess, limits.audit.maxReadWaitMs, services.email.maxPerHour
+- config keys: limits.batch.maxTotalItems, uploads.maxFiles, socketIO.maxMessageBytes, eventFiles.previewsMaxInputPixels, eventFiles.previewsRenderConcurrency, auth.passwordCheckConcurrency, auth.passwordCheckQueue, storages.engines.postgresql.statementTimeoutMs, storages.engines.postgresql.idleInTransactionTimeoutMs, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, limits.streams.maxDepth, limits.streams.maxPerAccount, limits.events.maxStreamIds, http.responseIdleTimeoutMs, limits.audit.maxConcurrentReadsPerAccess, limits.audit.maxReadWaitMs, services.email.maxPerHour, cluster.userCoreCache.positiveTtlMs, cluster.userCoreCache.negativeTtlMs
 - primitives: observability-provider, multi-core-mTLS
 - context notes: rate-limiting-and-dos-protection
 
@@ -10951,8 +10976,23 @@ nodes upgraded back to back (followers first, never adding a node
 while versions are mixed): `open-pryv.io/INSTALL.md`, "Upgrading
 the bundled rqlite (9.x to 10.x)".
 
+**Routing reads (the release after open-pryv.io 2.0.0-rc.87).** The
+cached read of which core hosts a name (see A.8.6) asks rqlite for
+the `linearizable` level instead of `strong`: just as up to date,
+without a Raft log entry per read; the other reads of that mapping
+stay `strong` `[RQRC5]`. Like before, it fails while the cluster has
+no leader (rqlite waits up to 1 s by default). A `strong` or
+`linearizable` read that rqlite answers with no result (no leader
+yet) is now an error instead of "no such row", so during an
+election a taken name no longer reads as free, nor a known one as
+unknown `[RQRC6]`, and a failed read is not cached `[PUCC6]`. With
+`storages.engines.rqlite.external`, the rqlited you run must support
+the `linearizable` read level (the bundled one is 10.6.0).
+
 **Evidence**
 
+- tests: PUCC6
+- config keys: storages.engines.rqlite.external
 - derives from: iso-27001.A.5.23, hipaa-security.164.308(a)(7)(ii)(B)
 - primitives: multi-core-mTLS, backup-restore, letsEncrypt-integration
 
@@ -11091,6 +11131,21 @@ budgets read the client address through `http.trustedProxies`
 only: behind your reverse proxy, list it there `[CEPI2]`. The
 embedded DNS server validates requests and bounds its TCP
 connections (`dns.tcpMaxConnections`, 2.0.0-rc.46) `[DNR01]`.
+From the release after 2.0.0-rc.87 it also limits the UDP answers
+that need a platform lookup (`<core>.<domain>`,
+`<username>.<domain>`, found or not) to
+`dns.responseRateLimit.perSecond` a second per client network
+(default 20, per /24 IPv4 or /56 IPv6, all names counted together);
+past it the answers are dropped except every
+`dns.responseRateLimit.slip`-th (default 2), sent truncated so a
+real resolver retries over TCP, which a forged source address
+cannot. A refused query costs no lookup and is logged `[DRRL1]`,
+`[DRRL2]`, `[DRRL5]`; other names (apex, static, service, hosted
+sites) and TCP are not limited by it `[DRRL6]`. A public resolver
+sending many clients' queries from one network meets the limit
+first: past it, it retries, over TCP for the truncated answers, so
+size this limit and `dns.tcpMaxConnections` for your traffic.
+Routing lookups are cached per process (see A.8.6).
 Since open-pryv.io 2.0.0-rc.87, password checks run a bounded
 number at a time per API worker
 (`auth.passwordCheckConcurrency`, `auth.passwordCheckQueue`):
@@ -11130,9 +11185,9 @@ per workload profile, a load test proving the limits fire):
 
 **Evidence**
 
-- tests: CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5, RIDL1, MLBG1, MLBG2, MLBG3
+- tests: CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5, RIDL1, MLBG1, MLBG2, MLBG3, DRRL1, DRRL2, DRRL5, DRRL6
 - docs: customer-resources/rate-limiting.md
-- config keys: auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, http.responseIdleTimeoutMs, account.emailVerification.registrationCodesPerIpPerHour, account.emailVerification.addressesPerAccountPerDay, services.email.maxPerHour
+- config keys: auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, http.responseIdleTimeoutMs, account.emailVerification.registrationCodesPerIpPerHour, account.emailVerification.addressesPerAccountPerDay, services.email.maxPerHour, dns.responseRateLimit.perSecond, dns.responseRateLimit.slip
 - derives from: iso-27001.A.8.20
 - primitives: letsEncrypt-integration, multi-core-mTLS, observability-provider
 - context notes: rate-limiting-and-dos-protection
