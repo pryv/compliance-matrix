@@ -816,7 +816,12 @@ mTLS-protected Raft. PlatformDB pre-registration + DNS auto-publish.
 Since open-pryv.io 2.0.0-rc.86 a bundle's version, salt and nonce are
 authenticated with its content (pinned 16-byte tag); a joining core must
 run that release or later to read it, while bundles of earlier releases
-are still read `[BNEV1]`.
+are still read `[BNEV1]`. From the release after open-pryv.io
+2.0.0-rc.87, a newly created cluster CA is limited to end-entity
+certificates (`pathlen:0`, signs certificates and CRLs only) and node
+certificates state their purpose (end entity, digital signature, TLS
+server and client authentication) `[CLCX1]`..`[CLCX3]`; existing CAs and
+certificates are unchanged.
 
 - **Compliance role**: high availability (GDPR Art.32 §1(b) "ongoing
   CIA"); inter-core authentication separate from end-user auth.

@@ -471,6 +471,12 @@ hard requirement; not yet backlogged.
 
 Proposal: `proposals/platformdb-pii-hashing.md`.
 
+**Note (2026-11-20)**: keys outside `platform.piiMode` (per-address
+password and password-reset budgets, registration email challenge rows)
+moved from a plain SHA-256 to an HMAC-SHA256 under a key derived from
+`auth.adminAccessKey` in the release after open-pryv.io 2.0.0-rc.87;
+recorded in the B.11 walk of that date, no chip involved.
+
 ### `SUPPLY-CHAIN-SCANNING-PIPELINE`: SHIPPED
 
 **Shipped**: open-pryv.io master merge `9e2ee7ff` (feature
@@ -3841,6 +3847,156 @@ Walked without change:
   operator signal but no row lists DNS log lines.
 Transport and backup rows: not affected. B.1 (no new method or error
 answer), B.2 to B.10: none.
+
+**Walked 2026-11-20 for keyed address and email hashes, the chosen-token
+floor and the CMC retry-row sweep (unreleased at the walk; the release
+after open-pryv.io 2.0.0-rc.87)**: open-pryv.io `8fc11a4f`, review fixes
+`732bdd3b` and `22a992fd`, merged to master at `22a992fd`. The rows say "the release after open-pryv.io
+2.0.0-rc.87": name the tag once it is cut. The validator passes against
+that commit. No Section A slug and no `planned:` chip involved (no
+proposal mirrors this work); no tier shift; `reviewed_at` left
+unchanged. No new config key, response header or API method. What
+changed:
+- **Keyed hashes for stored keys**: the keys built from a client address
+  or an email (platform database: failed-password and password-reset
+  budgets per address, the `/reg/access` creation budget, registration
+  email challenges, verification-mail send slots; each core's cluster
+  store: per-address budgets of the unauthenticated lookup routes, mail
+  budgets) were a plain SHA-256, which a listing reverses by enumeration
+  or a mailing list. They are now an HMAC-SHA256 under a key derived
+  from `auth.adminAccessKey` (identical on every core, nothing to
+  configure) `[SKHA1]`..`[SKHA4]`. Upgrade: what is in flight is not
+  found under the new keys (budgets restart, at most one window of
+  extra attempts; a pending code, or a verified address not yet used,
+  is requested again; during a rolling upgrade cores on different
+  versions count an address separately).
+- **Chosen access tokens**: `accesses.create` with an explicit `token`
+  refuses one shorter than 16 characters after slugification (`400
+  invalid-parameters-format`) `[TKMN1]`. Behaviour change for an
+  integration that chooses short tokens; existing tokens unchanged.
+- **New operator tool**: `bin/reconcile-user-cores.js --cmc-retries
+  [--apply]` lists, and with `--apply` deletes, the CMC retry rows
+  (`cmc-internal/retry-cmc`, each holding a counterparty's invite URL
+  with its token) left under ids the users index does not hold by
+  erasures on releases before 2.0.0-rc.72; only for an id holding
+  nothing else (account fields and passwords included) and with no
+  erasure record, re-checked in the delete
+  `[RCCR1]`, `[RCCR2]`; an empty users index facing such rows is
+  refused (exit 3) unless `--force-empty-local` `[RCCR3]`; the bin's
+  flag rules `[RCCR4]`. PostgreSQL only; on SQLite the rows stay in the
+  erased account's directory (kept with `audit.onUserDelete: keep`). It
+  replaces the manual query given in the 2.0.0-rc.72 notes, which no
+  matrix row or context note had cited.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.17 | detail: new paragraph "CMC retry rows left by erasures on earlier releases" (residue before rc.72, the tool and its safeguards, SQLite leftovers) | `RCCR1`, `RCCR2`, `RCCR3` |
+| gdpr | Art.32 | pseudonymisation bullet: address and email keys of the platform database keyed by HMAC, what the key protects against | `SKHA1`, `SKHA3` |
+| iso-27001 | A.8.10 | detail: new paragraph on the CMC retry-row sweep, pointer to gdpr.Art.17 | `RCCR1`, `RCCR2`, `RCCR3` |
+| iso-27001 | A.8.11 | detail: new bullet, keyed hashes of client addresses and emails in stored keys | `SKHA1`, `SKHA2`, `SKHA3`, `SKHA4` |
+| iso-27001 | A.8.5 | detail: new paragraph "Access tokens chosen by the caller" (16-character floor, generated tokens, existing ones unchanged) | `TKMN1` |
+| iso-27001 | A.5.17 | detail: new paragraph "Strength of chosen access tokens", pointer to A.8.5 | `TKMN1` |
+| hipaa-security | 164.312(d) | detail: new paragraph, a chosen access token cannot be short | `TKMN1` |
+
+Also updated: `context/cross-border-platformdb-implications.md` (the
+`access-state/` keyspace row: email challenge rows and per-address
+budgets keyed by HMAC, plain SHA-256 before; personal-data class
+note); Section A `PLATFORMDB-PII-HASHING` (note on these keys, which sit
+outside `platform.piiMode`).
+Walked without change:
+- **Derived authentication rows** (`soc2.CC6.1`, derived from
+  `iso-27001.A.8.5`; `hipaa-security.164.308(a)(5)(ii)(D)` password
+  management): no row claimed a length or entropy for chosen tokens;
+  the floor is recorded on the rows that carry token detail.
+- **Cryptography** (`iso-27001.A.8.24`,
+  `hipaa-security.164.312(a)(2)(iv)`, `soc2.CC6.1`): they describe
+  encryption at rest and in transit; a keyed hash for store keys is
+  pseudonymisation, recorded on `gdpr.Art.32` and `iso-27001.A.8.11`.
+  `auth.adminAccessKey` was already the root of derived keys.
+- **Privacy by design, Swiss and ISO 27701 rows** (`gdpr.Art.25`,
+  `swiss-nlpd.Art.7` / `Art.8`, `iso-27701.A.7.4.5`, `iso-27701.A.7.4.9`):
+  none named the hashing of the platform database keys or the CMC
+  retry rows; the erasure they describe is the account deletion, unchanged.
+- **Cross-border rows** (`gdpr.Art.44`, `gdpr.Art.46`): the PlatformDB
+  keyspace they cite is the context note, updated above; the
+  pseudonymised rows remain personal data, so the Art.46 analysis holds.
+- **Erasure, derived and sibling rows** (`ccpa.1798.105`,
+  `pipeda.Principle.4.5`, `soc2.P4.3`, `hipaa-security.164.310(d)(1)`):
+  the account deletion is unchanged; the sweep is an operator-run tool
+  for residue of earlier releases, recorded on `gdpr.Art.17` and
+  `iso-27001.A.8.10`.
+- **CMC context** (`context/cmc-consent-primitives.md`): it carries no
+  erasure-residue text; no Section C known-gap clause named the manual
+  query.
+Transport, response-header and backup rows: not affected. B.1 (no new
+method; the new `invalid-parameters-format` refusal recorded here), B.2
+to B.10: none.
+
+**Walked 2026-11-20 for generated tokens from the crypto RNG and
+inter-core certificate extensions (unreleased at the walk; the release
+after open-pryv.io 2.0.0-rc.87)**: open-pryv.io `559c0ee0`, review
+fixes `f89460ed` and `e4eb4e36`, merged to master at `771503e3`. The
+rows say "the release after open-pryv.io
+2.0.0-rc.87": name the tag once it is cut. The validator passes
+against `771503e3` (the `SCTK*` / `CLCX*` codes resolve). No Section A slug and no `planned:` chip
+involved (no proposal mirrors this work); no tier shift; `reviewed_at`
+left unchanged. No new config key, response header or API method. What
+changed:
+- **Generated bearer secrets**: access tokens (the `token` omitted),
+  personal (session) tokens, password-reset tokens and the default token
+  of a cross-account (CMC) access are drawn from `node:crypto` directly
+  (rejection sampling, no bias between symbols), instead of an id
+  library that falls back to `Math.random` on a platform without a
+  crypto API. Same shape (24 lowercase letters and digits, a letter
+  first); tokens already issued unchanged; record ids keep their
+  generator `[SCTK1]`..`[SCTK3]`. The earlier walk today wrote 25
+  characters for a generated token on three rows; corrected to 24.
+- **Inter-core certificates**: a newly created cluster CA carries
+  `basicConstraints CA:TRUE, pathlen:0` and `keyUsage keyCertSign,
+  cRLSign` `[CLCX1]`; node certificates carry `CA:FALSE`, `keyUsage
+  digitalSignature` and extended key usage `serverAuth`, `clientAuth`
+  `[CLCX2]`, so a node key cannot sign a certificate a peer accepts
+  `[CLCX3]`; `issueNodeCert` refuses a core id or hostname that is not
+  DNS labels and an ip that is not an address `[CLCX4]`. Existing CAs
+  and certificates are not reissued.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| iso-27001 | A.8.5 | detail: generated token length corrected to 24; new paragraph "Tokens Pryv generates come from the secure random source" | `SCTK1`, `SCTK2`, `SCTK3` |
+| iso-27001 | A.5.17 | detail: "Strength of chosen access tokens" paragraph, generated tokens from the secure random source, 25 corrected to 24 | `SCTK2`, `SCTK3` |
+| iso-27001 | A.8.24 | detail: new paragraph "Changes in the release after open-pryv.io 2.0.0-rc.87" (random secrets, inter-core PKI, key inventory note) | `SCTK1`, `SCTK2`, `CLCX1`, `CLCX2`, `CLCX3` |
+| iso-27001 | A.8.20 | detail: new paragraph "Inter-core certificates" (CA path length, node certificate purpose, name and address checks) | `CLCX1`, `CLCX2`, `CLCX3`, `CLCX4` |
+| hipaa-security | 164.312(d) | detail: chosen-token paragraph, generated length corrected to 24, generated tokens from `node:crypto` | `SCTK2`, `SCTK3` |
+| hipaa-security | 164.312(e)(1) | detail: cluster CA sentence extended (end-entity only CA, node certificate purpose) | `CLCX1`, `CLCX2`, `CLCX3` |
+
+Also updated: `docs/pryv-primitives.md` (`multi-core-mTLS`: the CA and
+node certificate extensions).
+Walked without change:
+- **Derived authentication rows** (`soc2.CC6.1`, derived from
+  `iso-27001.A.8.5` / `A.5.15` / `hipaa-security.164.312(a)(1)`;
+  `hipaa-security.164.308(a)(5)(ii)(D)` password management): no token
+  length or random source was stated; the change is recorded on the
+  rows that carry token detail.
+- **Identifiers** (`hipaa-security.164.312(a)(2)(i)`,
+  `context/access-versioning.md`, `docs/pryv-primitives.md` access
+  entry): they describe account and access ids as cuids, which is still
+  true; only bearer secrets changed generator.
+- **Encryption rows** (`hipaa-security.164.312(a)(2)(iv)`,
+  `hipaa-security.164.312(e)(2)(ii)`, `gdpr.Art.32`,
+  `hds.Activity.3.cryptography`, derived from `iso-27001.A.8.24`):
+  they state that Raft runs over mTLS on a cluster CA, still true; the
+  extensions are recorded on `iso-27001.A.8.20` / `A.8.24` and
+  `hipaa-security.164.312(e)(1)`.
+- **Transport and boundary rows** (`soc2.CC6.6`, `soc2.CC6.7`, derived
+  from `iso-27001.A.8.20` / `A.8.24` and `hipaa-security.164.312(e)`;
+  `iso-27001.A.8.21`; `diga.A1.2.1`; `hds.Activity.3`): they name the
+  inter-core mTLS surface without describing certificate content; no
+  claim changes.
+- **Context notes** (`context/core-affinity-architecture.md`,
+  `context/privacy-by-design-and-default.md`): they mention mTLS
+  between cores in passing, without certificate detail.
+Response-header, platform DB and backup rows: not affected. B.1 (no new
+method), B.2 to B.10: none.
 
 ## Section C: Maintenance reminders
 

@@ -1480,7 +1480,7 @@ requirements:
     pryv_primitives: [event, stream, backup-restore, external-id-index, account-auto-deletion]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3]
+    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3]
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -1663,6 +1663,27 @@ requirements:
       deletion's erasure `[RCRG1]`, `[RCRG3]`; use it when such a
       person asks for erasure. Details and safeguards under Art.5
       §1(e).
+
+      CMC retry rows left by erasures on earlier releases. Before
+      open-pryv.io 2.0.0-rc.72, an account erased while one of its
+      consent operations was still running could be left with a CMC
+      retry row (`cmc-internal/retry-cmc`), invisible through the API
+      and never processed, holding a counterparty's invite URL with its
+      token. Since rc.72 nothing is written for an account that is
+      erased or whose erasure has started, but rows written before stay.
+      From the release after open-pryv.io 2.0.0-rc.87,
+      `bin/reconcile-user-cores.js --cmc-retries` lists them on
+      PostgreSQL (rows under an id the users index does not hold) and,
+      with `--apply`, deletes the rows of an id that holds nothing else
+      (no account field, password, other event, stream, access, profile
+      or webhook) and has no erasure record, re-checked in the delete itself
+      `[RCCR1]`, `[RCCR2]`; an empty users index facing such rows is
+      refused, nothing deleted `[RCCR3]`. It replaces the manual query
+      given in the rc.72 notes: run it once on each PostgreSQL core that
+      erased accounts before rc.72, never as part of an upgrade. On
+      SQLite such a row stays in the erased account's directory, kept
+      only with `audit.onUserDelete: keep`: the files there other than
+      the `audit-*` ones are leftovers you may remove.
     technical: |
       Tested via `[USAD]`
       (`open-pryv.io/components/api-server/test/deletion-seq.test.js`,
@@ -2375,7 +2396,7 @@ requirements:
     pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion]
     docs: [customer-resources/auth-oauth2.md, customer-resources/adapter-routes.md]
     config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount, oauth.audienceBoundSessions, oauth.stateKey, oauth.perUserIssuer, oauth.clientMetadataDocuments.mode, adapterRoutes]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -2470,7 +2491,20 @@ requirements:
           accesses an aliased app created before rc.69 kept an endpoint
           naming the username. OAuth2 clients registered with pairwise
           subjects get such an alias per user and client (see the
-          delegated-app bullet).
+          delegated-app bullet). The rows Pryv keys on a client address
+          or an email (in the platform database: failed-password and
+          password-reset budgets per address, the `/reg/access` creation
+          budget, registration email challenges, verification-mail send
+          slots; in each core's cluster store: the per-address budgets of
+          the unauthenticated lookup routes and the mail budgets) are
+          keyed by an HMAC-SHA256 under a key derived from
+          `auth.adminAccessKey` from the release after open-pryv.io
+          2.0.0-rc.87 `[SKHA1]`..`[SKHA4]`; earlier releases used a
+          plain SHA-256, which a listing of the platform database
+          reverses by running candidate addresses or a mailing list
+          through it. The keyed hash holds against whoever reads the
+          rows without the admin key; a holder of that key can still
+          test candidates.
         - Record-bound sign-in: IMPLEMENTED, since open-pryv.io
           2.0.0-rc.59 (release commit `927919ba`) an auth request that
           carries an external id in forced mode delivers the app's
