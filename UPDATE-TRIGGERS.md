@@ -4143,6 +4143,83 @@ Walked without change:
   change.
 Response-header and platform DB rows: not affected. B.2 to B.10: none.
 
+**Walked 2026-11-21 for the 10-symbol email code and erasure
+completeness (unreleased at the walk; the release after open-pryv.io
+2.0.0-rc.87)**: open-pryv.io `b2a8e516`, `b690b744`, `30430fa5`, merged
+to master at `64307310`. The rows say "the release after open-pryv.io
+2.0.0-rc.87": name the tag once it is cut. The validator passes against
+`64307310` (the `ERMK*` / `PGUG*` / `CMCER*` codes resolve). No Section A
+slug and no `planned:` chip involved (no proposal mirrors this work); no
+tier shift; `reviewed_at` left unchanged. No new API method or config
+key; the erasure family (B.1) and backup behaviour (B.11) fire. What
+changed:
+- **Registration email codes**: the code `POST /reg/email-challenge`
+  mails has 10 symbols (about 50 bits), shown `XXXXX-XXXXX`, same
+  alphabet and attempt budgets; codes mailed before the upgrade still
+  verify `[EMCH1]`, `[EMCH20]`, `[EMCR5]`.
+- **SQLite keep-mode marker**: with `audit.onUserDelete: keep`, the
+  erasure leaves the account's directory with its `audit-*` files and
+  an `erased.json` marker (no username) only `[CMCER3]`, `[CMCER4]`;
+  while the marker is there no new file is created in the directory, in
+  every process and across restarts `[ERMK1]`..`[ERMK3]`; indexing the
+  id again (registration, every restore form) removes it
+  `[ERMK4]`, `[ERMK5]`, a refused index insert keeps it `[ERMK6]`.
+  Residual: one empty file in a millisecond window, no row.
+- **PostgreSQL unindexed-user guard**: a `BEFORE INSERT` trigger on
+  `events`, `streams`, `accesses`, `profile`, `webhooks`,
+  `account_fields`, `passwords`, `store_key_values` refuses a row for an
+  id the users index does not hold (SQLSTATE `PU001`), locking the index
+  entry so an insert in flight is seen by the data removal
+  `[PGUG1]`..`[PGUG4]`; registration indexes before its personal access
+  `[PGUG5]`; an erased account refused until restored `[PGUG6]`; such a
+  refusal answers `404` and logs at warn `[PGUG7]`, `[PGUG10]`; a
+  disabled or missing trigger is restored at boot `[PGUG8]`;
+  `event_streams` links are written only while their event exists
+  `[PGUG9]`; a write bypassing the CMC guard is refused `[CMCER6]`.
+  Session setting `pryv.unindexed_writes = 'allow'` for a data-only
+  `pg_restore`; rolling back needs the guard dropped first (SQL in the
+  release notes and on the developer site's backup page).
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.17 | detail: CMC retry-row sentence points at the marker; new paragraph "Work still running when the account is erased"; `docs:` + `customer-resources/backup.md` | `ERMK1`, `ERMK3`, `ERMK5`, `PGUG6`, `CMCER6` |
+| hipaa-security | 164.316(b)(2)(i) | detail: keep-mode paragraph, the kept directory holds the audit files and the marker only, nothing re-created next to the retained audit | `ERMK1`, `ERMK3` |
+| iso-27001 | A.8.10 | detail: new paragraph "Nothing stored after the deletion" | `ERMK1`, `ERMK3`, `PGUG6` |
+
+Cited in prose only, not in `tests:`: `[CMCER3]` / `[CMCER4]` are titles
+built from a table in `cmc-erased-account-writes.test.js`, so the
+bracketed code never appears literally. The validator now also reads
+the storage engines' tests (`storages/engines/*/test`), so `[PGUG1]`,
+`[PGUG3]` and `[PGUG9]` are in `tests:`.
+
+Also updated: `context/operator-backup-coverage.md` (new section
+"Erased accounts and restores": restore clears the marker, filesystem
+copies keep it, data-only `pg_restore` needs the setting or
+`--disable-triggers`).
+Walked without change:
+- **Erasure, derived and sibling rows** (`ccpa.1798.105`,
+  `pipeda.Principle.4.5`, `swiss-nlpd.Art.32`, `soc2.P4.3`,
+  `hipaa-security.164.310(d)(1)`): they state the deletion call and the
+  engine-dependent backup reach, still true, and defer to
+  `gdpr.Art.17` for completeness, where the guards are recorded.
+- **Email code** (`gdpr.Art.32`, `iso-27001.A.8.5`, `soc2.CC6.1`,
+  `context/rate-limiting-and-dos-protection.md`, Section A
+  `EMAIL-VERIFICATION`): no row or note states the code length or its
+  entropy; the budgets they cite are unchanged.
+- **Backup rows** (`iso-27001.A.8.13`, the `backup-restore` primitive):
+  `bin/backup.js` indexes an account before its data and is not
+  affected; the marker and the `pg_restore` note are recorded in the
+  context note.
+- **CMC context** (`context/cmc-consent-primitives.md`): it carries no
+  erasure-residue text; the CMC guard is unchanged, the storage refusal
+  behind it is recorded on `gdpr.Art.17`.
+- **Audit retention** (`context/audit-archival-via-custom-datastore.md`,
+  `context/data-retention-operator-owned.md`, `context/event-history.md`):
+  the audit under `keep` is read and written as before.
+Transport, response-header and platform DB rows: not affected. B.1 (no
+new method; the `404` for a refused late write recorded here), B.2 to
+B.10: none.
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check

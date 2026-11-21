@@ -48,7 +48,8 @@ const DEV_SITE_REQUIREMENTS = path.join(
 );
 const OPEN_PRYV_TEST_GLOB = path.join(
   WORKSPACE_ROOT,
-  'open-pryv.io/components/*/test/**/*.{js,ts}'
+  // Component tests and the storage engines' own tests (e.g. the PostgreSQL schema guards).
+  'open-pryv.io/{components,storages/engines}/*/test/**/*.{js,ts}'
 );
 const DEV_SITE_SRC = path.join(WORKSPACE_ROOT, 'dev-site/src');
 // The published developer site (pryv.github.io) is built from dev-site2; the
