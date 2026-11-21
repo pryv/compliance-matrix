@@ -365,7 +365,20 @@ cluster coordination (an account lives on one core).
    HIPAA §164.316(b)(2)(i) or any regime that keeps the audit under
    its own basis. With the default `erase`, your log retention is
    the record. An erasure interrupted half-way completes at the
-   next pass.
+   next pass. From the release after open-pryv.io 2.0.0-rc.87
+   (`83e14c94`) every erasure, scheduled or not, also leaves one
+   durable record in the platform database, the erasure ledger:
+   keyed hashes of the user id and username, dates, trigger, core,
+   no email or account data `[ERLG3]`, `[ERLG4]`, read with the
+   admin key (`GET /system/admin/erasures`,
+   `POST /system/admin/erasures/lookup`, `bin/erasures.js`) and
+   kept `accountErasure.ledger.retentionDays` (default 1825, `0`
+   keeps them) `[ERLT4]`. Every core purges the shared ledger with
+   its own value, so the shortest one set on any core applies: set
+   the same everywhere, at least as long as your longest backup
+   retention. It is the proof of erasure that no longer depends on
+   your log retention; the ledger itself is retained personal data
+   (pseudonymous), so its retention belongs in this policy too.
 7. **Backups** are unchanged: the engine-dependent backup tail
    above (and in GDPR Art.17) applies to a scheduled deletion as to
    any other.

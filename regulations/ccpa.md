@@ -48,7 +48,11 @@ depends on the chosen storage engine (SQLite per-user file vs
 PG row deletion), same notes as gdpr.Art.17 apply. Since
 open-pryv.io 2.0.0-rc.58 the deletion also releases the
 consumer's external ids (links to third-party record ids) at
-once, on the home core and in the platform index `[XIDD2]`. The
+once, on the home core and in the platform index `[XIDD2]`. From
+the release after open-pryv.io 2.0.0-rc.87 each deletion leaves a
+durable record without the consumer's data (the erasure ledger,
+see gdpr.Art.17), so you can confirm later that a consumer's
+account was deleted, and when `[ERLG4]`, `[ERLA4]`. The
 §1798.105(d) statutory exceptions (warranty, security, legal
 compliance, etc.) are your programmatic determination; if an
 exception applies you suppress the deletion and document why.
@@ -71,7 +75,7 @@ your own process outside it).
 
 **Evidence**
 
-- tests: USAD, XIDD2, ACST3, ACST10, ADSW8, ACRM1
+- tests: USAD, XIDD2, ACST3, ACST10, ADSW8, ACRM1, ERLG4, ERLA4
 - docs: customer-resources/account-auto-deletion.md
 - config keys: storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.enabled
 - derives from: gdpr.Art.17

@@ -1978,11 +1978,26 @@ enables account auto-deletion keeps `audit.onUserDelete: keep`
 and keeps those log lines for the six-year period if they are
 part of its documentation.
 
+**Erasure ledger (the release after open-pryv.io 2.0.0-rc.87,
+`83e14c94`).** Every account erasure leaves one durable record
+in the platform database (keyed hashes of the user id and
+username, dates, trigger, core, the `audit.onUserDelete` mode;
+no ePHI) `[ERLG3]`, `[ERLG4]`, whatever `audit.onUserDelete`
+says. Its default retention, `accountErasure.ledger.retentionDays:
+1825` (five years), is under the six-year floor: if these records
+are part of your documentation, set it to 2190 or more, or `0`
+(kept forever), on every core: each core purges the shared
+ledger with its own value, so the shortest one set applies
+`[ERLT4]`. Keep `accountErasure.ledger.hmacKey` set across
+admin-key rotations: records under an older key stay listed but
+no longer match a lookup by id or name (the lookup counts them)
+`[ERLA6]`.
+
 **Evidence**
 
-- tests: DKP1, ADP1, ADSW17, ERMK1, ERMK3
-- docs: customer-resources/account-auto-deletion.md
-- config keys: audit.onUserDelete, accesses.deletionRecords.retentionDays
+- tests: DKP1, ADP1, ADSW17, ERMK1, ERMK3, ERLG3, ERLG4, ERLT4, ERLA6
+- docs: customer-resources/account-auto-deletion.md, customer-resources/backup.md
+- config keys: audit.onUserDelete, accesses.deletionRecords.retentionDays, accountErasure.ledger.retentionDays, accountErasure.ledger.hmacKey
 - primitives: backup-restore, audit, account-auto-deletion
 - context notes: audit-archival-via-custom-datastore
 

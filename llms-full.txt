@@ -80,7 +80,11 @@ depends on the chosen storage engine (SQLite per-user file vs
 PG row deletion), same notes as gdpr.Art.17 apply. Since
 open-pryv.io 2.0.0-rc.58 the deletion also releases the
 consumer's external ids (links to third-party record ids) at
-once, on the home core and in the platform index `[XIDD2]`. The
+once, on the home core and in the platform index `[XIDD2]`. From
+the release after open-pryv.io 2.0.0-rc.87 each deletion leaves a
+durable record without the consumer's data (the erasure ledger,
+see gdpr.Art.17), so you can confirm later that a consumer's
+account was deleted, and when `[ERLG4]`, `[ERLA4]`. The
 §1798.105(d) statutory exceptions (warranty, security, legal
 compliance, etc.) are your programmatic determination; if an
 exception applies you suppress the deletion and document why.
@@ -103,7 +107,7 @@ your own process outside it).
 
 **Evidence**
 
-- tests: USAD, XIDD2, ACST3, ACST10, ADSW8, ACRM1
+- tests: USAD, XIDD2, ACST3, ACST10, ADSW8, ACRM1, ERLG4, ERLA4
 - docs: customer-resources/account-auto-deletion.md
 - config keys: storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.enabled
 - derives from: gdpr.Art.17
@@ -1622,8 +1626,8 @@ Per-principle breakdown, what Pryv does for you, what you do:
   `[RCRG1]`, `[RCRG2]`; it erases an indexed account with no
   password (both engines) only when you name it with `--user-id`
   and it still passes every check, through the account
-  deletion's erasure, recorded in the erasure ledger and
-  resumable `[RCRG3]`, `[RCRG5]`, keeping the platform rows of a
+  deletion's erasure, resumable through the record of the
+  erasure in progress `[RCRG3]`, `[RCRG5]`, keeping the platform rows of a
   name another core holds now `[MCUR2]`; an empty users index
   facing account rows is refused (exit 3) `[RCRG7]`. The default
   username pass of the same tool now releases the email and
@@ -1649,6 +1653,27 @@ Per-principle breakdown, what Pryv does for you, what you do:
   at that version → end-to-end accountability chain you can point
   auditors at.
 
+  Proof of erasure (the release after open-pryv.io 2.0.0-rc.87,
+  `83e14c94`). Every account erasure, whoever decided it, leaves
+  one durable record in the platform database, the erasure
+  ledger: keyed hashes of the user id and username, when the
+  erasure started and ended, its trigger, the core, the steps
+  done; no username, email or account data `[ERLG3]`, `[ERLG4]`.
+  An erasure never looks finished without it `[ERLG6]`. You
+  answer "was this account erased, and when?" with
+  `POST /system/admin/erasures/lookup` or `bin/erasures.js
+  --check`, and list erasures since a date with
+  `GET /system/admin/erasures` `[ERLA2]`, `[ERLA4]`. Records are
+  kept 1825 days by default
+  (`accountErasure.ledger.retentionDays`, `0` keeps them; the
+  shortest value set on any core applies to all) `[ERLT4]`. The
+  lookup counts the records under another key it cannot match
+  (`otherKeyRecords`): keep the ledger key across admin-key
+  rotations or the older proof can no longer be found by id or
+  name `[ERLA6]`. The hashes are pseudonymous personal data while
+  the key exists: name the ledger in your record of processing
+  (Art.30). See Art.17, "Proof of erasure and restores".
+
 **Technical**
 
 - Purpose limitation: enforcement in
@@ -1659,10 +1684,10 @@ Per-principle breakdown, what Pryv does for you, what you do:
 
 **Evidence**
 
-- tests: GLHP, UZEV, ACXP2, ACXP3, ACXP8, ACXP10, ACXP19, ACAC1, ACAC2, ACAC7, ADSW8, ADSW9, ADSW13, ACST14, LGLU3, CVAD3, URB2, RCRG1, RCRG2, RCRG3, RCRG5, RCRG6, RCRG7, MCUR1, MCUR2
+- tests: GLHP, UZEV, ACXP2, ACXP3, ACXP8, ACXP10, ACXP19, ACAC1, ACAC2, ACAC7, ADSW8, ADSW9, ADSW13, ACST14, LGLU3, CVAD3, URB2, RCRG1, RCRG2, RCRG3, RCRG5, RCRG6, RCRG7, MCUR1, MCUR2, ERLG3, ERLG4, ERLG6, ERLA2, ERLA4, ERLA6, ERLT4
 - specs: EVENT.BASE, STREAM.BASE
 - docs: customer-resources/account-auto-deletion.md
-- config keys: account.autoDeletion.inactivity.defaultDays, account.autoDeletion.inactivity.countAppUse, account.autoDeletion.userOverride, account.autoDeletion.allowUserOptOut, account.autoDeletion.reminders.leadDays, account.autoDeletion.reminders.minNoticeDays, account.autoDeletion.dryRun, accessTracking.isActive
+- config keys: account.autoDeletion.inactivity.defaultDays, account.autoDeletion.inactivity.countAppUse, account.autoDeletion.userOverride, account.autoDeletion.allowUserOptOut, account.autoDeletion.reminders.leadDays, account.autoDeletion.reminders.minNoticeDays, account.autoDeletion.dryRun, accessTracking.isActive, accountErasure.ledger.enabled, accountErasure.ledger.retentionDays
 - primitives: access, permissions, clientData, stream, audit, account-auto-deletion
 - samples: scheduled-retention-job
 - context notes: event-history, data-accuracy-structural-vs-semantic, data-retention-operator-owned, access-versioning
@@ -3066,6 +3091,63 @@ data-only `pg_restore`, rolling back): developer site
 `customer-resources/backup`, "Erased accounts on disk and in the
 database".
 
+Proof of erasure and restores (the release after open-pryv.io
+2.0.0-rc.87, `83e14c94`, https://github.com/pryv/open-pryv.io/issues/154).
+Each account erasure ends by writing one record in the
+platform database, the erasure ledger, kept after the account
+is gone: keyed hashes (HMAC-SHA256) of the user id and of the
+username, when the erasure started and ended, what decided it
+(`holder`, `admin`, `date`, `inactivity`, `transfer-fallback`,
+`unfinished-registration`, `ledger-replay`), the core, the
+steps done and the `audit.onUserDelete` mode; no username,
+email, access id or account data `[ERLG3]`, `[ERLG4]`. The
+rollback of a failed account creation writes none `[ERLG5]`;
+an unfinished erasure started by an earlier version is recorded
+with the trigger `unknown` `[ERLG9]`. A record that cannot be
+written fails the erasure, which the sweep completes, writing it
+once `[ERLG6]`; a later erasure of the same id replaces it
+`[ERLG7]` (a replayed one keeps the first erasure's date and
+trigger, `[ERLT3]`). With the admin key, on any core, you list
+the erasures since a date (`GET /system/admin/erasures`; a
+forwarder polling with `since` overlaps its windows, as records
+can arrive late) and check one by user id or username
+(`POST /system/admin/erasures/lookup`, a POST so the identifier
+stays out of URLs; the name held when erased, not its aliases)
+`[ERLA1]`..`[ERLA5]`, `[2CEL1]`, or use `bin/erasures.js`
+`[ERLT1]`, `[ERLT2]`. The lookup reports `otherKeyRecords`,
+records under another key it cannot match: when not 0,
+`erased: false` is not a proof `[ERLA6]`.
+`accountErasure.ledger.enabled: false` turns it off `[ERLG8]`.
+Records are kept `accountErasure.ledger.retentionDays` (default
+1825, `0` keeps them) `[ERLT4]`; every core purges the shared
+ledger with its own value, so the shortest one set on any core
+applies: set the same everywhere, at least as long as your
+longest backup retention.
+The ledger also keeps restores from undoing an erasure:
+`bin/backup.js --restore` refuses an account erased after its
+backup, whether the ledger records it (and no restore since)
+`[ERLR1]`, `[ERLR3]`, `[ERLR5]` or an erasure of it started on
+the core after the backup is still unfinished `[ERLR8]`; it is
+refused outright when the ledger key cannot be built `[ERLR7]`.
+`--restore-erased` restores such an account and marks its
+record restored, keeping it `[ERLR2]`, only once
+`--verify-integrity`, if given, kept the account `[ERLR6]`; a
+mark that fails makes the restore exit 4 `[ERLR9]`. The
+platform backup carries the ledger, merged at restore without
+removing anything `[ERLR4]`. After a restore of the storage
+itself (volume snapshot, database dump), run `bin/erasures.js
+--replay` (dry run, lists the ids) then `--replay --apply` on
+each such core to erase again the accounts it brought back
+`[ERLT3]`. Residuals: the hashes are pseudonymous personal data
+while the key exists (destroying the key makes them anonymous);
+a key change (an admin-key rotation without
+`accountErasure.ledger.hmacKey` set, or cores with different
+keys) disarms the lookup, the restore check and the replay for
+the records written before it, unless the old key is kept.
+Operator notes: developer site
+`customer-resources/backup`, "Proof of erasure: the erasure
+ledger".
+
 **Technical**
 
 Tested via `[USAD]`
@@ -3077,9 +3159,9 @@ auth/delete.ts` (middleware registration).
 
 **Evidence**
 
-- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, ERMK5, PGUG1, PGUG3, PGUG6, PGUG9, CMCER6
+- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, ERMK5, PGUG1, PGUG3, PGUG6, PGUG9, CMCER6, ERLG3, ERLG4, ERLG5, ERLG6, ERLG7, ERLG8, ERLG9, ERLA1, ERLA2, ERLA3, ERLA4, ERLA5, ERLA6, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT1, ERLT2, ERLT3, ERLT4
 - docs: customer-resources/account-auto-deletion.md, customer-resources/backup.md
-- config keys: storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass
+- config keys: storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass, accountErasure.ledger.enabled, accountErasure.ledger.retentionDays, accountErasure.ledger.hmacKey
 - primitives: event, stream, backup-restore, external-id-index, account-auto-deletion
 - samples: scheduled-retention-job
 - context notes: data-retention-operator-owned, code-security-review-2026
@@ -3782,6 +3864,18 @@ Register field → Pryv data source:
 Audit row → access ref (with serial) → consent state at that moment.
 Recoverable per data-subject + per-time-window + per-purpose.
 
+One processing of your own to list (the release after
+open-pryv.io 2.0.0-rc.87, `83e14c94`): the erasure ledger, one
+record per erased account kept after the account is gone, as
+proof of erasure (Art.5 §2, Art.17). It holds keyed hashes of
+the user id and username (pseudonymous personal data while the
+key exists), dates, trigger and core, no account content;
+purpose: proof of erasure and refusing to restore an erased
+account; retention: `accountErasure.ledger.retentionDays`
+(default 1825 days; the shortest value set on any core applies,
+so set the same everywhere); recipients: holders of the admin key
+`[ERLG4]`, `[ERLT4]`. See Art.17.
+
 **Technical**
 
 Audit data lives in per-user SQLite
@@ -3807,7 +3901,7 @@ not the subject's data. See
 
 **Evidence**
 
-- tests: UZEV, TJ8S, AA01
+- tests: UZEV, TJ8S, AA01, ERLG4, ERLT4
 - docs: customer-resources/audit-setup.md, guides/audit-logs.md
 - primitives: access, clientData, audit, CMC, data-residency
 - context notes: content-query-audit-semantics
@@ -8562,11 +8656,26 @@ enables account auto-deletion keeps `audit.onUserDelete: keep`
 and keeps those log lines for the six-year period if they are
 part of its documentation.
 
+**Erasure ledger (the release after open-pryv.io 2.0.0-rc.87,
+`83e14c94`).** Every account erasure leaves one durable record
+in the platform database (keyed hashes of the user id and
+username, dates, trigger, core, the `audit.onUserDelete` mode;
+no ePHI) `[ERLG3]`, `[ERLG4]`, whatever `audit.onUserDelete`
+says. Its default retention, `accountErasure.ledger.retentionDays:
+1825` (five years), is under the six-year floor: if these records
+are part of your documentation, set it to 2190 or more, or `0`
+(kept forever), on every core: each core purges the shared
+ledger with its own value, so the shortest one set applies
+`[ERLT4]`. Keep `accountErasure.ledger.hmacKey` set across
+admin-key rotations: records under an older key stay listed but
+no longer match a lookup by id or name (the lookup counts them)
+`[ERLA6]`.
+
 **Evidence**
 
-- tests: DKP1, ADP1, ADSW17, ERMK1, ERMK3
-- docs: customer-resources/account-auto-deletion.md
-- config keys: audit.onUserDelete, accesses.deletionRecords.retentionDays
+- tests: DKP1, ADP1, ADSW17, ERMK1, ERMK3, ERLG3, ERLG4, ERLT4, ERLA6
+- docs: customer-resources/account-auto-deletion.md, customer-resources/backup.md
+- config keys: audit.onUserDelete, accesses.deletionRecords.retentionDays, accountErasure.ledger.retentionDays, accountErasure.ledger.hmacKey
 - primitives: backup-restore, audit, account-auto-deletion
 - context notes: audit-archival-via-custom-datastore
 
@@ -9660,11 +9769,32 @@ marker only, and no new file is created there while the marker is
 present `[CMCER4]`, `[ERMK3]`. Residual: one empty SQLite file in a
 millisecond window, no row. See gdpr.Art.17.
 
+Record of each deletion (the release after open-pryv.io
+2.0.0-rc.87, `83e14c94`). Every account erasure leaves one
+record in the platform database, the erasure ledger: keyed
+hashes of the user id and username, when, what decided it, on
+which core, no account content `[ERLG3]`, `[ERLG4]`; the
+erasure is not finished until it is written `[ERLG6]`. It is
+your evidence that information was deleted when no longer
+required, read with the admin key (`GET /system/admin/erasures`,
+`POST /system/admin/erasures/lookup`, `bin/erasures.js`)
+`[ERLA2]`, `[ERLA4]`, `[ERLT1]`, and itself deleted after
+`accountErasure.ledger.retentionDays` (default 1825; every core
+purges the shared ledger with its own value, so the shortest one
+set applies) `[ERLT4]`. A restore of a backup no longer brings
+back an account deleted after it unless you pass
+`--restore-erased` `[ERLR1]`, `[ERLR8]`, and `bin/erasures.js
+--replay --apply` deletes again what a restore of the storage
+itself brought back `[ERLT3]`. A change of the ledger key
+disarms the lookup, the restore check and the replay for older
+records unless the old key is kept; the lookup counts them
+(`otherKeyRecords`) `[ERLA6]`. See gdpr.Art.17.
+
 **Evidence**
 
-- tests: USAD, DLN1, DLN4, DLLW1, ACXP3, ACXP8, ADSW8, ADSW19, URB2, RCRG1, RCRG3, RCRG6, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, PGUG1, PGUG6, PGUG9
-- docs: customer-resources/account-auto-deletion.md
-- config keys: storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.inactivity.defaultDays
+- tests: USAD, DLN1, DLN4, DLLW1, ACXP3, ACXP8, ADSW8, ADSW19, URB2, RCRG1, RCRG3, RCRG6, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, PGUG1, PGUG6, PGUG9, ERLG3, ERLG4, ERLG6, ERLA2, ERLA4, ERLA6, ERLT1, ERLT3, ERLT4, ERLR1, ERLR8
+- docs: customer-resources/account-auto-deletion.md, customer-resources/backup.md
+- config keys: storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.inactivity.defaultDays, accountErasure.ledger.retentionDays
 - primitives: event, stream, backup-restore, account-auto-deletion
 
 ### ISO 27001 A.8.13: A.8.13 Information backup
@@ -9817,9 +9947,37 @@ stays with it and is reported `[BKAL1]`. Series still held under a
 former username are exported and restored under the username
 `[BKAL3]`. Take a new backup after upgrading.
 
+**Erased accounts stay erased (the release after open-pryv.io
+2.0.0-rc.87, `83e14c94`).** A restore checks the erasure ledger
+(one durable record per erased account, see gdpr.Art.17): an
+account erased after its backup is not restored, whether the
+ledger records it (and no restore since) or an erasure of it
+started on the core after the backup is unfinished; an account
+that still exists gets the usual `--overwrite` refusal first. A
+whole restore lists the erased accounts under "Erased after this
+backup" and restores the others (exit code 3 when it restores
+nothing else), a `--user` restore of one fails `[ERLR1]`,
+`[ERLR3]`, `[ERLR8]`; a restore that cannot build the ledger key
+is refused `[ERLR7]`. `--restore-erased` restores the account
+and marks its record restored `[ERLR2]`, only once
+`--verify-integrity`, if given, kept it `[ERLR6]`; a mark that
+fails is listed and the restore exits 4 `[ERLR9]`. A chain dates
+each account by the newest run that holds it `[ERLR5]`. The
+platform backup carries the ledger and a restore merges it
+without removing anything `[ERLR4]`. Include in the drill: after
+restoring a core's storage itself (volume snapshot, database
+dump), `bin/erasures.js --replay` lists by id the accounts it
+brought back that were erased since, and `--apply` erases them
+again `[ERLT3]`; check the list first (an account behind an exit
+4 is in it). Keep `accountErasure.ledger.retentionDays` the same
+on every core (the shortest applies) and at least as long as
+your longest backup retention, and keep the ledger key across
+admin-key rotations: a purged record, or one under an older key,
+no longer stops a restore.
+
 **Evidence**
 
-- tests: BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1, XIDB2, XIDB3, XIDB4, XIDBK1, XIDBK2, BKAL1, BKAL3, BKSM1, BKSM2, BKSM3, BKSM4, BKSM5, BKSM6, BKSM7, BKSM8, BKIS1, BKIS2, BKIS3, BKDU1, RSFC1, RSFC3
+- tests: BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1, XIDB2, XIDB3, XIDB4, XIDBK1, XIDBK2, BKAL1, BKAL3, BKSM1, BKSM2, BKSM3, BKSM4, BKSM5, BKSM6, BKSM7, BKSM8, BKIS1, BKIS2, BKIS3, BKDU1, RSFC1, RSFC3, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT3
 - docs: customer-resources/backup.md
 - primitives: backup-restore, backup-payload-encryption, multi-core-mTLS, external-id-index
 - context notes: operator-backup-coverage
