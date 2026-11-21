@@ -4162,6 +4162,16 @@ Per-aspect:
     `[OCMD03G]`; a host listed in `cmc.allowedPrivateHosts` is
     allowed for them too. Keeping your own network's egress
     filtering stays yours.
+  - Webhook calls: IMPLEMENTED, signal-only (no personal data in
+    the body, see `context/webhooks-signal-only.md`) and, from the
+    release after open-pryv.io 2.0.0-rc.87, signed: a per-webhook
+    secret returned once by `webhooks.create` keys a
+    `Pryv-Signature` HMAC-SHA256 of a timestamp and the exact
+    body, so a receiver can refuse calls that do not come from
+    your platform without a secret in the webhook URL `[WHSG2]`,
+    `[WHSG5]`; `webhooks.rotateSecret` replaces the secret
+    `[WHSR1]`; webhooks created earlier stay unsigned
+    (`signed: false`) until rotated `[WHSG6]`.
   - Adapter routes: CONFIGURABLE, off by default. With
     `adapterRoutes` set (open-pryv.io 2.0.0-rc.73) the core
     forwards `/adapter/<name>/…` to a sidecar you run without
@@ -4232,11 +4242,11 @@ Per-aspect:
 
 **Evidence**
 
-- tests: HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3
+- tests: HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3, WHSG2, WHSG5, WHSG6, WHSR1
 - docs: customer-resources/auth-oauth2.md, customer-resources/adapter-routes.md
 - config keys: hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount, oauth.audienceBoundSessions, oauth.stateKey, oauth.perUserIssuer, oauth.clientMetadataDocuments.mode, adapterRoutes
-- primitives: permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion
-- context notes: workforce-access-patterns, delegation-model, code-security-review-2026
+- primitives: permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion, webhooks
+- context notes: workforce-access-patterns, delegation-model, webhooks-signal-only, code-security-review-2026
 
 **Planned changes**
 
@@ -8142,7 +8152,16 @@ paths as any other read). No PHI / PII / tokens transit the
 webhook surface; the transmission-security attack surface
 narrows accordingly. See `context/webhooks-signal-only.md` for
 the full design rationale + operational caveats (TLS-on-
-delivery, retry semantics, poison-pill protection).
+delivery, retry semantics, poison-pill protection). From the
+release after open-pryv.io 2.0.0-rc.87 the calls are also
+signed, so your receiver can check that a call comes from your
+platform: `webhooks.create` returns a per-webhook secret once
+`[WHSG5]`, every call (retries included) carries a
+`Pryv-Signature` header, an HMAC-SHA256 of a timestamp and the
+exact body `[WHSG2]`, `[WHSG3]`, and `webhooks.rotateSecret`
+replaces the secret `[WHSR1]`. Webhooks created before that
+release send unsigned calls (`signed: false`) until rotated
+`[WHSG6]`.
 
 **Calls to a counterparty** (open-pryv.io 2.0.0-rc.56).
 Cross-account consent deliveries, which carry the endpoint of a
@@ -8191,7 +8210,7 @@ allows TLS 1.2 and 1.3. Checked against open-pryv.io 2.0.0-rc.34.
 
 **Evidence**
 
-- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22, OCMD03B, OCMD03G, ADRC03, ADRI13, CLCX1, CLCX2, CLCX3
+- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22, OCMD03B, OCMD03G, ADRC03, ADRI13, CLCX1, CLCX2, CLCX3, WHSG2, WHSG3, WHSG5, WHSG6, WHSR1
 - config keys: http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cluster.allowInsecurePeerUrl, cmc.allowedPrivateHosts, adapterRoutes
 - primitives: letsEncrypt-integration, multi-core-mTLS, shared-secrets
 - context notes: webhooks-signal-only
@@ -9955,7 +9974,13 @@ peers on a private network, and a private `core.url` given as an
 IP, in `cmc.allowedPrivateHosts` (host names, IPs or CIDR ranges,
 the grammar of `webhooks.allowedPrivateHosts`; checked at boot)
 `[PFR3]`. Webhook deliveries apply the same address rules. Egress
-filtering on your network stays yours.
+filtering on your network stays yours. From the release after
+open-pryv.io 2.0.0-rc.87 webhook calls are signed with a
+per-webhook secret (`Pryv-Signature`, HMAC-SHA256 of a timestamp
+and the body), so the receivers on your side can refuse calls
+that do not come from the platform `[WHSG2]`, `[WHSR1]`; webhooks
+created earlier stay unsigned until `webhooks.rotateSecret`
+`[WHSG6]` (see `context/webhooks-signal-only.md`).
 
 **Inter-core certificates (the release after open-pryv.io
 2.0.0-rc.87).** A newly created cluster CA is a CA that may sign
@@ -9972,9 +9997,10 @@ earlier release keeps its CA and the node certificates it issued.
 
 **Evidence**
 
-- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC, HSHT, PFR1, PFR2, PFR3, PFR4, CO22, CLCX1, CLCX2, CLCX3, CLCX4
+- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC, HSHT, PFR1, PFR2, PFR3, PFR4, CO22, CLCX1, CLCX2, CLCX3, CLCX4, WHSG2, WHSG6, WHSR1
 - config keys: http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, hostedSites.<name>.hsts, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl
 - primitives: letsEncrypt-integration, multi-core-mTLS
+- context notes: webhooks-signal-only
 
 ### ISO 27001 A.8.24: A.8.24 Use of cryptography
 
@@ -10033,11 +10059,19 @@ purpose (end entity, digital signature, TLS server and client
 authentication) instead of leaving it to each verifier's defaults
 `[CLCX2]`, `[CLCX3]`, see A.8.20. Existing CAs and certificates are
 not reissued: record in your key inventory which clusters still
-run a CA created before this release.
+run a CA created before this release. Webhook signing: each
+webhook created from this release has its own secret (`whsec_`
+and 32 bytes from `node:crypto`) `[WHSG8]`, used as an
+HMAC-SHA256 key over a timestamp and the body of each call
+`[WHSG1]`. It is stored in clear with the webhook, like the
+access token, travels with server backups `[WHSR5]`, is shown to
+the client once, and is replaced with `webhooks.rotateSecret`
+(no overlap window); its custody on the receiving side is your
+integrators'.
 
 **Evidence**
 
-- tests: ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, AREV3, BNEV1, BKSM4, SCTK1, SCTK2, CLCX1, CLCX2, CLCX3
+- tests: ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, AREV3, BNEV1, BKSM4, SCTK1, SCTK2, CLCX1, CLCX2, CLCX3, WHSG1, WHSG8, WHSR5
 - config keys: letsEncrypt.atRestKey
 - primitives: letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, backup-payload-encryption
 
@@ -11257,7 +11291,14 @@ passwords per account and per client address across all cores
 (`auth.passwordAttempts`) `[CEPB1]`, `[CEPI1]`; credential
 methods refused inside batches and over socket.io `[CEDB1]`;
 live `/reg/access` requests per address
-(`access.maxLiveRequestsPerIp`) `[RAI1]`; batch, paging, upload
+(`access.maxLiveRequestsPerIp`) `[RAI1]`, a request nobody opens
+living `access.unopenedRequestTtl` (600 s) `[RAU1]`; from the
+release after 2.0.0-rc.87, with `access.openedOnlyByAuthPage`
+(default `false`) only the auth page's read (`?authPage=1`) opens
+a request, so an app polling at once no longer keeps every
+request alive for the hour `[RAU3]`, `[RAU4]`; turn it on once
+your auth page sends the flag (a courtesy flag anyone can add,
+the per-address budget unchanged); batch, paging, upload
 and socket.io message bounds `[CEDB5]`, `[EGLV1]`, `[MPLM3]`,
 `[SION4]`; and in 2.0.0-rc.50 an invitation-check budget
 `[IVCK1]`, a `webhooks.test` interval `[WHTT1]` and preview
@@ -11322,9 +11363,9 @@ per workload profile, a load test proving the limits fire):
 
 **Evidence**
 
-- tests: CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5, RIDL1, MLBG1, MLBG2, MLBG3, DRRL1, DRRL2, DRRL5, DRRL6
+- tests: CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, RAU1, RAU3, RAU4, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5, RIDL1, MLBG1, MLBG2, MLBG3, DRRL1, DRRL2, DRRL5, DRRL6
 - docs: customer-resources/rate-limiting.md
-- config keys: auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, http.responseIdleTimeoutMs, account.emailVerification.registrationCodesPerIpPerHour, account.emailVerification.addressesPerAccountPerDay, services.email.maxPerHour, dns.responseRateLimit.perSecond, dns.responseRateLimit.slip
+- config keys: auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, access.openedOnlyByAuthPage, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, http.responseIdleTimeoutMs, account.emailVerification.registrationCodesPerIpPerHour, account.emailVerification.addressesPerAccountPerDay, services.email.maxPerHour, dns.responseRateLimit.perSecond, dns.responseRateLimit.slip
 - derives from: iso-27001.A.8.20
 - primitives: letsEncrypt-integration, multi-core-mTLS, observability-provider
 - context notes: rate-limiting-and-dos-protection
@@ -14198,6 +14239,16 @@ Pryv fetches for OAuth2 clients, https only, size, time and
 per-host bounded `[OCMD03B]`, `[OCMD03G]`, `[OCMD03H]`; a host you
 list in `cmc.allowedPrivateHosts` is allowed for them too.
 
+Webhook calls leaving the boundary are signed from the release
+after open-pryv.io 2.0.0-rc.87: a per-webhook secret, returned
+once by `webhooks.create` and replaced by `webhooks.rotateSecret`,
+keys a `Pryv-Signature` HMAC-SHA256 of a timestamp and the body,
+so the receiving systems can refuse calls from anyone else
+`[WHSG2]`, `[WHSR1]`. Rotation follows the rules of
+`webhooks.update` (another app's access and a delegate barred
+from the webhook's full URL are refused) `[WHSR2]`, `[WHSR3]`;
+webhooks created earlier stay unsigned until rotated `[WHSG6]`.
+
 Inbound, adapter routes (open-pryv.io 2.0.0-rc.73, off unless
 `adapterRoutes` is set) open `/adapter/<name>/…` on every host the
 core serves and forward it to a sidecar you run, without
@@ -14212,7 +14263,7 @@ removed) or answers `421` for an account of another core
 
 **Evidence**
 
-- tests: ACMEINT, ACMEORCH, BUNDLEENC, PFR1, PFR2, PFR3, PFR5, CO22, OCMD03B, OCMD03G, OCMD03H, ADRI03, ADRI06, ADRI09, ADRU3, ADRU4
+- tests: ACMEINT, ACMEORCH, BUNDLEENC, PFR1, PFR2, PFR3, PFR5, CO22, OCMD03B, OCMD03G, OCMD03H, ADRI03, ADRI06, ADRI09, ADRU3, ADRU4, WHSG2, WHSG6, WHSR1, WHSR2, WHSR3
 - docs: customer-resources/adapter-routes.md
 - config keys: http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cmc.allowedPrivateHosts, adapterRoutes
 - derives from: iso-27001.A.8.20, hipaa-security.164.312(e)(1)
@@ -14768,12 +14819,16 @@ checksum of the affected event when a method mutates one, so
 output can be tied back to a verified state. Webhooks notify
 subscribers of change (signal-only, the receiver fetches the
 authoritative state via authenticated GET, so the delivered output
-is always the current canonical value). Delivery SLAs to your end
+is always the current canonical value); from the release after
+open-pryv.io 2.0.0-rc.87 each call is signed with a per-webhook
+secret, so the receiver can check where it comes from (see
+context/webhooks-signal-only.md). Delivery SLAs to your end
 recipients are your specification.
 
 **Evidence**
 
 - primitives: event, audit, webhooks
+- context notes: webhooks-signal-only
 
 ### SOC 2 PI1.5: PI1.5 Completeness and accuracy of stored information
 

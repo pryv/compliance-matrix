@@ -1599,7 +1599,16 @@ paths as any other read). No PHI / PII / tokens transit the
 webhook surface; the transmission-security attack surface
 narrows accordingly. See `context/webhooks-signal-only.md` for
 the full design rationale + operational caveats (TLS-on-
-delivery, retry semantics, poison-pill protection).
+delivery, retry semantics, poison-pill protection). From the
+release after open-pryv.io 2.0.0-rc.87 the calls are also
+signed, so your receiver can check that a call comes from your
+platform: `webhooks.create` returns a per-webhook secret once
+`[WHSG5]`, every call (retries included) carries a
+`Pryv-Signature` header, an HMAC-SHA256 of a timestamp and the
+exact body `[WHSG2]`, `[WHSG3]`, and `webhooks.rotateSecret`
+replaces the secret `[WHSR1]`. Webhooks created before that
+release send unsigned calls (`signed: false`) until rotated
+`[WHSG6]`.
 
 **Calls to a counterparty** (open-pryv.io 2.0.0-rc.56).
 Cross-account consent deliveries, which carry the endpoint of a
@@ -1648,7 +1657,7 @@ allows TLS 1.2 and 1.3. Checked against open-pryv.io 2.0.0-rc.34.
 
 **Evidence**
 
-- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22, OCMD03B, OCMD03G, ADRC03, ADRI13, CLCX1, CLCX2, CLCX3
+- tests: ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, SHS02, SHS12, SHS13, PFR1, PFR4, CO22, OCMD03B, OCMD03G, ADRC03, ADRI13, CLCX1, CLCX2, CLCX3, WHSG2, WHSG3, WHSG5, WHSG6, WHSR1
 - config keys: http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cluster.allowInsecurePeerUrl, cmc.allowedPrivateHosts, adapterRoutes
 - primitives: letsEncrypt-integration, multi-core-mTLS, shared-secrets
 - context notes: webhooks-signal-only

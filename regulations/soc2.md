@@ -807,6 +807,16 @@ Pryv fetches for OAuth2 clients, https only, size, time and
 per-host bounded `[OCMD03B]`, `[OCMD03G]`, `[OCMD03H]`; a host you
 list in `cmc.allowedPrivateHosts` is allowed for them too.
 
+Webhook calls leaving the boundary are signed from the release
+after open-pryv.io 2.0.0-rc.87: a per-webhook secret, returned
+once by `webhooks.create` and replaced by `webhooks.rotateSecret`,
+keys a `Pryv-Signature` HMAC-SHA256 of a timestamp and the body,
+so the receiving systems can refuse calls from anyone else
+`[WHSG2]`, `[WHSR1]`. Rotation follows the rules of
+`webhooks.update` (another app's access and a delegate barred
+from the webhook's full URL are refused) `[WHSR2]`, `[WHSR3]`;
+webhooks created earlier stay unsigned until rotated `[WHSG6]`.
+
 Inbound, adapter routes (open-pryv.io 2.0.0-rc.73, off unless
 `adapterRoutes` is set) open `/adapter/<name>/…` on every host the
 core serves and forward it to a sidecar you run, without
@@ -821,7 +831,7 @@ removed) or answers `421` for an account of another core
 
 **Evidence**
 
-- tests: ACMEINT, ACMEORCH, BUNDLEENC, PFR1, PFR2, PFR3, PFR5, CO22, OCMD03B, OCMD03G, OCMD03H, ADRI03, ADRI06, ADRI09, ADRU3, ADRU4
+- tests: ACMEINT, ACMEORCH, BUNDLEENC, PFR1, PFR2, PFR3, PFR5, CO22, OCMD03B, OCMD03G, OCMD03H, ADRI03, ADRI06, ADRI09, ADRU3, ADRU4, WHSG2, WHSG6, WHSR1, WHSR2, WHSR3
 - docs: customer-resources/adapter-routes.md
 - config keys: http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, cmc.allowedPrivateHosts, adapterRoutes
 - derives from: iso-27001.A.8.20, hipaa-security.164.312(e)(1)
@@ -1377,12 +1387,16 @@ checksum of the affected event when a method mutates one, so
 output can be tied back to a verified state. Webhooks notify
 subscribers of change (signal-only, the receiver fetches the
 authoritative state via authenticated GET, so the delivered output
-is always the current canonical value). Delivery SLAs to your end
+is always the current canonical value); from the release after
+open-pryv.io 2.0.0-rc.87 each call is signed with a per-webhook
+secret, so the receiver can check where it comes from (see
+context/webhooks-signal-only.md). Delivery SLAs to your end
 recipients are your specification.
 
 **Evidence**
 
 - primitives: event, audit, webhooks
+- context notes: webhooks-signal-only
 
 ## SOC 2 PI1.5: PI1.5 Completeness and accuracy of stored information
 
