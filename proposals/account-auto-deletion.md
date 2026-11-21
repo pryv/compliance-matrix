@@ -77,7 +77,8 @@ answer for the account level.)
   a grace or suspension state after the deadline, a per-account legal hold set by the operator
   (the only levers are the holder's own `never`, `allowUserOptOut`, or turning the preset off),
   an erasure ledger (backlog `COMPLIANCE-ERASURE-LEDGER`, open-pryv.io issue #154; the
-  `trigger` is passed to `eraseAccount` for it).
+  `trigger` is passed to `eraseAccount` for it). The ledger shipped later, in open-pryv.io
+  `83e14c94` (the release after 2.0.0-rc.87): see `proposals/erasure-ledger.md`.
 
 ### Second release: transfer to a beneficiary (implemented on a branch, not released)
 

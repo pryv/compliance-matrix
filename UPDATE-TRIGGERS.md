@@ -1456,6 +1456,50 @@ transfer release**: discharge the "transfer" chips (gdpr Art.5 second chip,
 Art.6, Art.13 second chip, Art.14, the transfer half of Art.32) and walk the
 delegation rows listed in the proposal (a controller can be set by a claim).
 
+### `ERASURE-LEDGER` (SHIPPED in open-pryv.io `83e14c94`, the release after 2.0.0-rc.87; no chip was queued; rows walked 2026-11-21)
+
+**Where the work lived**: `open-pryv.io` (https://github.com/pryv/open-pryv.io/issues/154).
+A durable record per erased account in the platform database (keyed
+hashes of the user id and username, dates, trigger, core, steps, audit
+mode; no personal content), written as the erasure's last step; admin
+routes `GET /system/admin/erasures` (`system.erasures.list`) and
+`POST /system/admin/erasures/lookup` (`system.erasures.get`); config
+`accountErasure.ledger.enabled` / `.retentionDays` (1825; the shortest
+set on any core applies) / `.hmacKey` (a key change disarms older
+records unless the old key is kept); `bin/backup.js --restore` refuses an
+account erased after its backup, or with an unfinished erasure started
+since, and fails closed without a ledger key (`--restore-erased`
+overrides; `restoredAt` stamped after a passing `--verify-integrity`; a
+failed stamp exits 4); platform backups carry the ledger;
+`bin/erasures.js` (`--list`, `--check`, `--replay [--apply]`, the replay
+listing ids and keeping `firstDeletedAt` / `firstTrigger`). The merge
+includes the fixes of an independent review. Test codes `[ERLG*]`,
+`[ERLA*]`, `[ERLR*]`, `[ERLT*]`
+(`components/api-server/test/erasure-ledger.test.js`) and `[2CEL1]`
+(`reg-2core-seq.test.js`).
+
+**Nothing to discharge**: the gap was recorded only as "not in scope of
+v1" in `proposals/account-auto-deletion.md`, with no `planned:` chip. The
+entry is created as shipped; the walk is recorded under B.11 ("Walked
+2026-11-21 for the erasure ledger"). Wording: "erasure ledger" now names
+this durable record only; the per-core `account_erasures` row is "the
+record of the erasure in progress" (reworded on `gdpr.Art.5` and in the
+B.11 unfinished-registrations record).
+
+| Scope | Ref | Outcome (applied) |
+|---|---|---|
+| gdpr | Art.5 | §2 accountability: proof of erasure paragraph; no tier shift |
+| gdpr | Art.17 | new paragraph "Proof of erasure and restores"; no tier shift |
+| gdpr | Art.30 | one register line for the ledger; no tier shift |
+| ccpa | 1798.105 | overview: deletion confirmable later; no tier shift |
+| iso-27001 | A.8.10 | new paragraph "Record of each deletion"; no tier shift |
+| iso-27001 | A.8.13 | restore refusal, ledger in platform backups, replay in the drill; no tier shift |
+| hipaa-security | 164.316(b)(2)(i) | ledger retention against the six-year floor; no tier shift |
+
+Proposal: `proposals/erasure-ledger.md` (Status: shipped in `83e14c94`).
+**When the tag is cut**: replace "the release after open-pryv.io
+2.0.0-rc.87" with the tag in the rows above and in the proposal.
+
 ## Section B: Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued
@@ -2051,6 +2095,14 @@ Walked without change:
   computed on demand, nothing stored).
 B.2, B.3, B.4 (no new primitive), B.5, B.6, B.8, B.9, B.10, B.11 (no new
 config key): none.
+
+**2026-11-21, erasure ledger (open-pryv.io `83e14c94`)**: new admin
+methods `system.erasures.list` (`GET /system/admin/erasures`) and
+`system.erasures.get` (`POST /system/admin/erasures/lookup`, answering
+`erased`, `erasures`, `keyId`, `otherKeyRecords`), admin key, audited
+without a user `[ERLA1]`..`[ERLA6]`. The erasure family fired;
+the walk and the rows are recorded under B.11 ("Walked 2026-11-21 for the
+erasure ledger") and Section A `ERASURE-LEDGER`.
 
 ### B.2: New event-type formats (`data-types` repo)
 
@@ -3506,8 +3558,9 @@ header or API method. What changed:
   fields alone, no erasure record, older than `--grace` (default 24
   hours), read again before the delete `[RCRG1]`, `[RCRG2]`. Indexed
   accounts with no password (both engines) are erased with the account
-  deletion's erasure (trigger `unfinished-registration`, recorded in the
-  erasure ledger, resumable; the core's auto-deletion sweep completes a
+  deletion's erasure (trigger `unfinished-registration`, resumable
+  through the record of the erasure in progress; the core's
+  auto-deletion sweep completes a
   stopped one) only when named with `--user-id` and passing every check
   (no data beyond fields and one access, no erasure record, grace,
   settle, index re-read) `[RCRG3]`..`[RCRG5]`, `[RCRG10]`, `[MCUR2]`;
@@ -4229,6 +4282,118 @@ Walked without change:
   the audit under `keep` is read and written as before.
 Transport, response-header and platform DB rows: not affected. B.1 (no
 new method; the `404` for a refused late write recorded here), B.2 to
+B.10: none.
+
+**Walked 2026-11-21 for the erasure ledger (unreleased at the walk; the
+release after open-pryv.io 2.0.0-rc.87)**: open-pryv.io `83e14c94`,
+https://github.com/pryv/open-pryv.io/issues/154. The rows say "the release
+after open-pryv.io 2.0.0-rc.87": name the tag once it is cut. Section A
+`ERASURE-LEDGER` created as shipped (no `planned:` chip existed); no tier
+shift; `reviewed_at` left unchanged. Triggers: B.1 (two new admin
+methods), B.11 (three new config keys, a new platform DB row family,
+backup and restore behaviour), a new operator tool. What changed:
+- **Durable record per erasure**: new last erasure step
+  `writeErasureLedger` writes platform KV row
+  `account-erasure/<userIdHash>` (`keyId`, `usernameHash`, `startedAt`,
+  `deletedAt`, `trigger`, `coreId`, `stepsCompleted`, `auditMode`,
+  `attempts`, `serverVersion`, optional `restoredAt`, `firstDeletedAt`,
+  `firstTrigger`), for the holder, admin, auto-deletion,
+  unfinished-registration and replay erasures `[ERLG3]`; trigger
+  `unknown` for an unfinished erasure of an earlier version `[ERLG9]`;
+  no username, id, email or account data in clear `[ERLG4]`; none for a
+  failed creation's rollback `[ERLG5]`; a failed write fails the erasure
+  and the sweep writes it once `[ERLG6]`; a second erasure replaces it
+  (after a restore marked it restored, as a new record `[ERLG7]`; a
+  replay keeps the first erasure's date and trigger `[ERLT3]`); off with
+  `enabled: false` `[ERLG8]`. One log line per record (`account erased`,
+  hash, trigger, core).
+- **New API methods** `system.erasures.list` (`GET
+  /system/admin/erasures?since&limit&after`, oldest first, `next` cursor;
+  a poller overlaps its `since` windows, records can arrive late) and
+  `system.erasures.get` (`POST /system/admin/erasures/lookup`, `userId` or
+  `username`, the name held when erased; answers `erased`, `erasures`,
+  `keyId`, `otherKeyRecords`), admin key, `404` without it, audited
+  without a user `[ERLA1]`..`[ERLA6]`; any core answers for an erasure
+  made on another `[2CEL1]`. No delete route.
+- **New config keys** `accountErasure.ledger.enabled` (`true`),
+  `.retentionDays` (1825; `0` keeps; boot warning under 365; every core
+  purges the shared ledger with its own value, so the shortest one set
+  applies) `[ERLT4]`, `[ERLT5]`, `.hmacKey` (base64 of 32 bytes, YAML
+  only; empty: derived from `auth.adminAccessKey`; records carry a
+  `keyId`; a key change disarms the lookup, the restore check and the
+  replay for older records unless the old key is kept, and they warn with
+  the count `[ERLA6]`).
+- **Platform DB and backup**: the platform backup now exports the
+  `account-erasure/` rows (it exported only the unique and indexed rows),
+  and a restore merges them, newer erasure wins, nothing removed
+  `[ERLR4]`. **Behaviour change of `bin/backup.js --restore`**: an account
+  erased after its backup is not restored, whether the ledger records it
+  (and no restore since) or an erasure of it started on the core after
+  the backup is unfinished (a plain restore used to withdraw it); an
+  account that still exists gets the `--overwrite` refusal first (whole
+  restore: listed, others restored, exit 3 when nothing else; `--user`:
+  fails) `[ERLR1]`, `[ERLR3]`, `[ERLR8]`; refused when the ledger key
+  cannot be built `[ERLR7]`; `--restore-erased` restores and stamps
+  `restoredAt` `[ERLR2]` only after a passing `--verify-integrity`
+  `[ERLR6]`, a failed stamp is listed and exits 4 (new code) `[ERLR9]`;
+  chains dated per account `[ERLR5]`; a restore check on one core refuses
+  an account erased on another `[2CEL1]`.
+- **New tool** `bin/erasures.js` (`--list`, `--check`, `--replay
+  [--apply]`, the replay listing the ids it would erase, dry run by
+  default) `[ERLT1]`..`[ERLT3]`.
+
+| Scope | Ref | What changed | Tests added | Config keys added |
+|---|---|---|---|---|
+| gdpr | Art.5 | detail: §2 accountability, proof of erasure paragraph (shortest retention applies, key kept across rotations); §1(e) "resumable through the record of the erasure in progress" (was "recorded in the erasure ledger") | `ERLG3`, `ERLG4`, `ERLG6`, `ERLA2`, `ERLA4`, `ERLA6`, `ERLT4` | `accountErasure.ledger.enabled`, `.retentionDays` |
+| gdpr | Art.17 | detail: new paragraph "Proof of erasure and restores" | `ERLG3`..`ERLG9`, `ERLA1`..`ERLA6`, `ERLR1`..`ERLR9`, `ERLT1`..`ERLT4` (`2CEL1` in prose, see below) | `accountErasure.ledger.enabled`, `.retentionDays`, `.hmacKey` |
+| gdpr | Art.30 | detail: one register line for the ledger (purpose, data, retention, recipients) | `ERLG4`, `ERLT4` | |
+| ccpa | 1798.105 | overview: a deletion can be confirmed later | `ERLG4`, `ERLA4` | |
+| iso-27001 | A.8.10 | detail: new paragraph "Record of each deletion"; `docs:` + `customer-resources/backup.md` | `ERLG3`, `ERLG4`, `ERLG6`, `ERLA2`, `ERLA4`, `ERLA6`, `ERLT1`, `ERLT3`, `ERLT4`, `ERLR1`, `ERLR8` | `accountErasure.ledger.retentionDays` |
+| iso-27001 | A.8.13 | detail: new paragraph "Erased accounts stay erased" | `ERLR1`..`ERLR9`, `ERLT3` | |
+| hipaa-security | 164.316(b)(2)(i) | detail: ledger retention (1825) under the six-year floor, set 2190 or `0` on every core; key kept across rotations; `docs:` + `customer-resources/backup.md` | `ERLG3`, `ERLG4`, `ERLT4`, `ERLA6` | `accountErasure.ledger.retentionDays`, `.hmacKey` |
+
+Not in `tests:`: `[ERLG1]` / `[ERLG2]` are titles built from a table in
+`erasure-ledger.test.js`, so the bracketed code never appears literally
+(as `[CMCER3]` above); `[ERLG3]` covers the trigger family in `tests:`.
+`[2CEL1]` (the two-core test: an erasure on one core found by the other's
+lookup and refused by its restore check) is cited in prose on
+`gdpr.Art.17` only: the requirement schema allows test codes starting
+with a letter (`^[A-Z][A-Z0-9]+$`) and the validator's code scan reads the
+same shape, so a code starting with a digit cannot go in `tests:`.
+
+Also updated: `proposals/erasure-ledger.md` (new),
+`proposals/account-auto-deletion.md` (pointer: the ledger shipped later),
+`context/data-retention-operator-owned.md` ("What remains after a
+deletion": the ledger, its own retention),
+`context/operator-backup-coverage.md` ("Erased accounts and restores": the
+restore refusal, the platform backup rows, the replay).
+Walked without change:
+- **Erasure, derived and sibling rows** (`pipeda.Principle.4.5`,
+  `swiss-nlpd.Art.32`, `soc2.CC6.5`, `soc2.P4.3`, `soc2.C1.2`,
+  `iso-27701.A.7.4.5`, `hipaa-security.164.310(d)(1)`): they state the
+  deletion and its backup reach and defer to `gdpr.Art.17`, where the
+  record is described; none claims proof of deletion is missing.
+- **Retention** (`soc2.P4.2`): its subject is the retention of personal
+  information inside accounts; the ledger's own retention is recorded in
+  `context/data-retention-operator-owned.md`.
+- **Records of processing, other scopes** (`swiss-nlpd.Art.12`,
+  `iso-27701.A.7.4.7`, `iso-27701.B.8.5.4`): register derivation unchanged;
+  the one line for the ledger is on `gdpr.Art.30`.
+- **Backup rows, other scopes** (`hipaa-security.164.308(a)(7)(ii)(A)`,
+  `soc2.A1.2`, `hds.Activity.5`, the `backup-restore` primitive): coverage
+  unchanged; the restore refusal is recorded on `iso-27001.A.8.13` and in
+  the context note.
+- **Audit rows** (`iso-27001.A.8.15`, `hipaa-security.164.312(b)`): the
+  two methods are audited like the other `/system` admin methods (syslog);
+  `audit.onUserDelete` is unchanged and is only copied into the record.
+- **Platform DB at rest and residency** (`context/cross-border-platformdb-implications.md`,
+  `context/core-affinity-architecture.md`): the rows are pseudonymous
+  hashes replicated like other platform rows, no new cross-core flow of
+  account data.
+- `gdpr.Art.17` line "open-pryv.io#154" in the `keep` paragraph: kept, it
+  cites the issue for the rc.46 keep-mode fix and stays true.
+Transport and response-header rows: not affected. B.2, B.3, B.4 (no new
+primitive: `backup-restore` and `account-auto-deletion` extended), B.5 to
 B.10: none.
 
 ## Section C: Maintenance reminders
