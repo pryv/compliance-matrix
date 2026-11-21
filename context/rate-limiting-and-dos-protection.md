@@ -362,8 +362,14 @@ Rows whose `detail` should call out the operator-side responsibility
   (registration, renames) never use the cache; an account moved to
   another core can be routed to its former core for up to 30 s, a name
   just registered can be unknown for up to 5 s. The cached read is
-  rqlite `linearizable` (no Raft log entry per read) `[RQRC5]`. The
-  embedded DNS answers at most `dns.responseRateLimit.perSecond` UDP
+  rqlite `linearizable` (no Raft log entry per read) `[RQRC5]`. A name
+  not in the cache still costs one read: a client (IPv4 address or
+  IPv6 /64, through `http.trustedProxies`) whose `/{username}/*`
+  lookups found no account more than
+  `limits.routing.unknownNamesPerClientPerMinute` times in a minute
+  (default 60, per API worker) gets `429 too-many-requests` for names
+  not already cached until the minute ends; cached names and other
+  clients go on `[CUCB1]`..`[CUCB4]`. The embedded DNS answers at most `dns.responseRateLimit.perSecond` UDP
   queries that need a platform lookup (`<core>.<domain>`,
   `<username>.<domain>`, found or not) a second per client network
   (default 20, per /24 IPv4 or /56 IPv6, all names counted together,
