@@ -277,6 +277,18 @@ construction:
 | Token leakage in body | impossible, tokens stay with receiver, not in wire payload |
 | Body-content tampering | no sensitive content to tamper with |
 
+**Update (2026-11-21): signed calls from the release after
+open-pryv.io 2.0.0-rc.87.** Not needed to protect data, signing is
+now available so a receiver can check that a call comes from the
+platform without a secret in the webhook URL: `webhooks.create`
+returns a per-webhook secret once, each call carries a
+`Pryv-Signature` header (HMAC-SHA256 of a timestamp and the exact
+body), `webhooks.rotateSecret` replaces the secret, and webhooks
+created earlier stay unsigned (`signed: false`) until rotated. No
+nonce: the timestamp bounds replays to the window the receiver
+accepts. Detail and test codes: `context/webhooks-signal-only.md`,
+"Signed calls".
+
 **What still matters operationally:**
 - TLS on delivery (don't leak the *existence* of a change).
 - Delivery retries + back-off; receiver awareness of failure

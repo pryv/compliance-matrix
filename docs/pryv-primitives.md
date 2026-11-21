@@ -470,6 +470,14 @@ flow.
   signing, per-delivery nonces, replay windows) for the data-
   integrity dimension. TLS-on-delivery + delivery retry semantics
   still matter operationally.
+- **Signed calls** (the release after open-pryv.io 2.0.0-rc.87): so
+  that a receiver can tell a call comes from the platform,
+  `webhooks.create` returns a per-webhook `secret` once, every call
+  carries `Pryv-Signature: t=<unix seconds>,v1=<HMAC-SHA256 of t and
+  the body>`, and `webhooks.rotateSecret` replaces the secret. The
+  read-only `signed` property shows webhooks created before the
+  release, unsigned until rotated `[WHSG2]`, `[WHSG5]`, `[WHSR1]`,
+  `[WHSG6]`.
 - **Compliance role**: notification primitive for any row about
   "real-time change detection" / event-driven integrations
   (GDPR Art.32, HIPAA-Security 164.312(e)(1) transmission security,

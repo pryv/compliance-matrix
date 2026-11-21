@@ -37,8 +37,8 @@ push-with-content webhooks:
 
 | Concern with push-with-content | Pryv signal-only consequence |
 |---|---|
-| HMAC signing of body so receiver can authenticate the sender | Not required: no sensitive content in the body to authenticate. Forged signal → at worst an extra authenticated GET that returns the same data. |
-| Per-delivery nonce + replay window | Not required for data integrity: replayed signal → idempotent GET. Receiver de-dupes by event state. |
+| HMAC signing of body so receiver can authenticate the sender | Not required for data protection: no sensitive content in the body to authenticate. Forged signal → at worst an extra authenticated GET that returns the same data. Available all the same from the release after open-pryv.io 2.0.0-rc.87: a per-webhook secret and a `Pryv-Signature` header (see "Signed calls" below). |
+| Per-delivery nonce + replay window | Not required for data integrity: replayed signal → idempotent GET. Receiver de-dupes by event state. The signature carries a timestamp, so a receiver can refuse a call outside a 300 s window; no nonce. |
 | Token leakage in webhook body | Impossible by construction: tokens stay with the receiver, not in the wire payload. |
 | Body-content tampering by attacker proxy | No sensitive content to tamper with. |
 | Receiver-side body validation logic complexity | Eliminated: receiver code path is the same authenticated GET it uses for everything else. |
@@ -99,17 +99,55 @@ This is a **data-minimisation** improvement (the receiver is woken only for the
 slices it declared, bounded by its grant) on top of the existing transmission-
 surface narrowing.
 
+## Signed calls (the release after open-pryv.io 2.0.0-rc.87)
+
+Signal-only keeps data off the push path; it does not tell your receiver that
+a call really comes from your platform. Before this release the only way was a
+secret placed in the webhook URL. From the release after open-pryv.io
+2.0.0-rc.87 each webhook can carry its own signing secret:
+
+- **The secret.** `webhooks.create` returns `secret` (`whsec_` followed by 32
+  random bytes in base64url) in its result, once; no other method returns it
+  `[WHSG5]`, `[WHSG8]`. It is stored with the webhook in the account's
+  database, like the access token, and travels with a server backup, so a
+  restore keeps signing with the same value `[WHSR5]`; a deleted webhook keeps
+  no secret `[WHSR4]`. It never enters the messages the API processes exchange
+  to start or reload a webhook `[WHSG7]`, `[WHSM1]`.
+- **The header.** Every call of a webhook with a secret carries
+  `Pryv-Signature: t=<unix seconds>,v1=<hex>`, the HMAC-SHA256 under the secret
+  of `t`, a `.` and the exact bytes of the body `[WHSG1]`, `[WHSG2]`, `[WHSG9]`.
+  Retries and `webhooks.test` are signed afresh with a new time `[WHSG3]`,
+  `[WHSG4]`. Your receiver verifies on the raw body with a constant-time
+  comparison and refuses a `t` more than 300 s from its clock. There is no
+  delivery id or nonce: a replay inside the window costs one extra
+  authenticated GET, as above.
+- **Rotation.** `webhooks.rotateSecret` (`POST /{username}/webhooks/{id}/rotate-secret`)
+  replaces the secret at once and returns the new one; the running webhook
+  reloads and signs with the new secret only `[WHSR1]`, `[WHSR7]`, `[WHSP1]`,
+  `[WHST1]`. It follows the access rules of `webhooks.update`: another app's
+  access is refused, and so is an account delegate for a webhook whose URL it
+  may not read in full; the account owner may rotate an app's secret, which
+  the app then no longer knows `[WHSR2]`, `[WHSR3]`. A call already under way
+  may still carry the previous signature.
+- **Existing webhooks.** Webhooks created before this release have no secret
+  and send unsigned calls (`signed: false` on the webhook) until
+  `webhooks.rotateSecret` gives them one `[WHSG6]`, `[WHSR6]`. If your
+  receivers rely on the signature, rotate each legacy webhook once and refuse
+  unsigned calls on your side.
+
 ## Matrix rows that benefit from this framing
 
 | Scope | Row | Why this matters |
 |---|---|---|
 | gdpr | Art.5(1)(c) data minimisation | scoped delivery wakes the receiver only for the slices it declared interest in, bounded by its token's read scope; payload is subscriber-chosen key names only |
-| gdpr | Art.32 security of processing | webhooks are part of the transmission surface; signal-only design narrows the attack surface |
-| hipaa-security | 164.312(e)(1) transmission security | TLS-only delivery + no PHI in webhook body |
+| gdpr | Art.32 security of processing | webhooks are part of the transmission surface; signal-only design narrows the attack surface; signed calls let the receiver authenticate the sender |
+| hipaa-security | 164.312(e)(1) transmission security | TLS-only delivery + no PHI in webhook body + signed calls |
 | hipaa-security | 164.312(e)(2)(i) integrity controls | webhook bodies carry no PHI to require integrity |
 | hipaa-security | 164.312(e)(2)(ii) encryption | webhook bodies carry no ePHI; encryption requirement narrowed |
 | iso-27001 | A.8.20 networks security | signal-only narrows the cross-network data surface |
 | iso-27001 | A.8.21 network services security | same |
+| iso-27001 | A.8.24 use of cryptography | the per-webhook signing secret belongs in the key inventory |
+| soc2 | CC6.6 boundary protection | a signed call lets the receiver refuse calls from outside the platform |
 | pipeda | Principle.4.7 safeguards | transmission-surface narrowing for the multi-aspect safeguards row |
 
 These rows should reference this note when an implementer is

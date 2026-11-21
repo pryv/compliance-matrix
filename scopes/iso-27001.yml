@@ -782,7 +782,7 @@ requirements:
     draft: true
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS]
     config_keys: [http.ssl.keyFile, http.ssl.certFile, letsEncrypt.enabled, storages.engines.rqlite.tls, hostedSites.<name>.hsts, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl]
-    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC, HSHT, PFR1, PFR2, PFR3, PFR4, CO22, CLCX1, CLCX2, CLCX3, CLCX4]
+    tests: [ACMEINT, ACMEORCH, CERTUTILS, FORCERENEWIPC, BUNDLEENC, HSHT, PFR1, PFR2, PFR3, PFR4, CO22, CLCX1, CLCX2, CLCX3, CLCX4, WHSG2, WHSG6, WHSR1]
     overview: |
       TLS in transit once configured: either the core terminates it
       (`http.ssl.*`, with the built-in ACME integration issuing,
@@ -818,7 +818,13 @@ requirements:
       IP, in `cmc.allowedPrivateHosts` (host names, IPs or CIDR ranges,
       the grammar of `webhooks.allowedPrivateHosts`; checked at boot)
       `[PFR3]`. Webhook deliveries apply the same address rules. Egress
-      filtering on your network stays yours.
+      filtering on your network stays yours. From the release after
+      open-pryv.io 2.0.0-rc.87 webhook calls are signed with a
+      per-webhook secret (`Pryv-Signature`, HMAC-SHA256 of a timestamp
+      and the body), so the receivers on your side can refuse calls
+      that do not come from the platform `[WHSG2]`, `[WHSR1]`; webhooks
+      created earlier stay unsigned until `webhooks.rotateSecret`
+      `[WHSG6]` (see `context/webhooks-signal-only.md`).
 
       **Inter-core certificates (the release after open-pryv.io
       2.0.0-rc.87).** A newly created cluster CA is a CA that may sign
@@ -843,7 +849,7 @@ requirements:
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, backup-payload-encryption]
     config_keys: [letsEncrypt.atRestKey]
-    tests: [ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, AREV3, BNEV1, BKSM4, SCTK1, SCTK2, CLCX1, CLCX2, CLCX3]
+    tests: [ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, AREV3, BNEV1, BKSM4, SCTK1, SCTK2, CLCX1, CLCX2, CLCX3, WHSG1, WHSG8, WHSR5]
     planned:
       - kind: feature
         summary: "End-to-end encryption adds a customer-key flow (CMEK / BYOK) to the cryptography catalogue"
@@ -898,7 +904,15 @@ requirements:
       authentication) instead of leaving it to each verifier's defaults
       `[CLCX2]`, `[CLCX3]`, see A.8.20. Existing CAs and certificates are
       not reissued: record in your key inventory which clusters still
-      run a CA created before this release.
+      run a CA created before this release. Webhook signing: each
+      webhook created from this release has its own secret (`whsec_`
+      and 32 bytes from `node:crypto`) `[WHSG8]`, used as an
+      HMAC-SHA256 key over a timestamp and the body of each call
+      `[WHSG1]`. It is stored in clear with the webhook, like the
+      access token, travels with server backups `[WHSR5]`, is shown to
+      the client once, and is replaced with `webhooks.rotateSecret`
+      (no overlap window); its custody on the receiving side is your
+      integrators'.
 
   - ref: A.8.25
     title: A.8.25 Secure development lifecycle
@@ -2012,8 +2026,8 @@ requirements:
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, observability-provider]
     derives_from: [iso-27001.A.8.20]
     docs: [customer-resources/rate-limiting.md]
-    config_keys: [auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, http.responseIdleTimeoutMs, account.emailVerification.registrationCodesPerIpPerHour, account.emailVerification.addressesPerAccountPerDay, services.email.maxPerHour, dns.responseRateLimit.perSecond, dns.responseRateLimit.slip]
-    tests: [CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5, RIDL1, MLBG1, MLBG2, MLBG3, DRRL1, DRRL2, DRRL5, DRRL6]
+    config_keys: [auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, access.openedOnlyByAuthPage, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, http.responseIdleTimeoutMs, account.emailVerification.registrationCodesPerIpPerHour, account.emailVerification.addressesPerAccountPerDay, services.email.maxPerHour, dns.responseRateLimit.perSecond, dns.responseRateLimit.slip]
+    tests: [CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, RAU1, RAU3, RAU4, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5, RIDL1, MLBG1, MLBG2, MLBG3, DRRL1, DRRL2, DRRL5, DRRL6]
     overview: |
       Pryv's external
       network surface is the TLS-terminating HTTPS API + the embedded
@@ -2034,7 +2048,14 @@ requirements:
       (`auth.passwordAttempts`) `[CEPB1]`, `[CEPI1]`; credential
       methods refused inside batches and over socket.io `[CEDB1]`;
       live `/reg/access` requests per address
-      (`access.maxLiveRequestsPerIp`) `[RAI1]`; batch, paging, upload
+      (`access.maxLiveRequestsPerIp`) `[RAI1]`, a request nobody opens
+      living `access.unopenedRequestTtl` (600 s) `[RAU1]`; from the
+      release after 2.0.0-rc.87, with `access.openedOnlyByAuthPage`
+      (default `false`) only the auth page's read (`?authPage=1`) opens
+      a request, so an app polling at once no longer keeps every
+      request alive for the hour `[RAU3]`, `[RAU4]`; turn it on once
+      your auth page sends the flag (a courtesy flag anyone can add,
+      the per-address budget unchanged); batch, paging, upload
       and socket.io message bounds `[CEDB5]`, `[EGLV1]`, `[MPLM3]`,
       `[SION4]`; and in 2.0.0-rc.50 an invitation-check budget
       `[IVCK1]`, a `webhooks.test` interval `[WHTT1]` and preview

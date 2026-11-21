@@ -3998,6 +3998,101 @@ Walked without change:
 Response-header, platform DB and backup rows: not affected. B.1 (no new
 method), B.2 to B.10: none.
 
+**Walked 2026-11-21 for signed webhook calls and
+`access.openedOnlyByAuthPage` (unreleased at the walk; the release after
+open-pryv.io 2.0.0-rc.87)**: open-pryv.io `e938a570`, `5dd2734a`, review
+fixes `3631a7a8`, merged to master at `dee5720c`. The rows say "the
+release after open-pryv.io 2.0.0-rc.87": name the tag once it is cut.
+The validator passes against `dee5720c` (the `WHSG*` / `WHSR*` /
+`WHST1` / `WHSP1` / `WHSM1` / `RAU3` / `RAU4` codes resolve). No Section A
+slug and no `planned:` chip involved (no proposal mirrors this work); no
+tier shift; `reviewed_at` left unchanged. B.1 fires (new API method
+`webhooks.rotateSecret`) and B.11 fires (new config key
+`access.openedOnlyByAuthPage`). What changed:
+- **Signed webhook calls**: `webhooks.create` returns a per-webhook
+  `secret` (`whsec_` and 32 random bytes from `node:crypto`, base64url)
+  once; no other method returns it, and the read model gains `signed`
+  `[WHSG5]`, `[WHSG8]`. Every call of a webhook with a secret carries
+  `Pryv-Signature: t=<unix seconds>,v1=<hex>`, the HMAC-SHA256 under the
+  secret of `t`, `.` and the exact body bytes `[WHSG1]`, `[WHSG2]`,
+  `[WHSG9]`; retries and `webhooks.test` are signed afresh `[WHSG3]`,
+  `[WHSG4]`. The secret is stored in clear with the webhook (like the
+  access token), kept by a server backup and restore `[WHSR5]`, removed
+  from a deleted webhook's row `[WHSR4]`, and never carried by the
+  messages that start or reload a webhook across processes `[WHSG7]`,
+  `[WHSM1]`. Webhooks created before the release stay unsigned
+  (`signed: false`) until rotated `[WHSG6]`, `[WHSR6]`. Not a breaking
+  change.
+- **New API method** `webhooks.rotateSecret` (`POST
+  /{username}/webhooks/{id}/rotate-secret`): replaces the secret at once
+  and returns the new one; the running webhook reloads and signs with
+  the new secret only `[WHSR1]`, `[WHSR7]`, with one running copy per
+  webhook and a stopped copy that neither retries nor writes its run
+  `[WHSP1]`, `[WHST1]`. Access rules of `webhooks.update`; refused to
+  another app's access `[WHSR2]` and to an account delegate for a
+  webhook whose URL it may not read in full, the owner allowed
+  `[WHSR3]`. Listed among the audited methods and classed `write` in
+  the breach-scope report.
+- **New config key** `access.openedOnlyByAuthPage` (default `false`,
+  unchanged behaviour): when `true`, only a read of a pending
+  `/reg/access` request carrying `?authPage=1` opens it; the app's polls
+  no longer stretch its unopened life (`access.unopenedRequestTtl`)
+  `[RAU3]`, `[RAU4]`. A courtesy flag, not a control: anyone can add it,
+  and the per-address budget is unchanged.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| hipaa-security | 164.312(e)(1) | detail: signal-only webhook paragraph extended with signed calls, rotation and legacy webhooks | `WHSG2`, `WHSG3`, `WHSG5`, `WHSG6`, `WHSR1` |
+| iso-27001 | A.8.20 | detail: outbound paragraph, webhook calls signed so receivers can refuse others | `WHSG2`, `WHSG6`, `WHSR1` |
+| iso-27001 | A.8.24 | detail: "Changes in the release after open-pryv.io 2.0.0-rc.87" extended with the webhook signing secret (generation, storage in clear, backups, rotation, key inventory) | `WHSG1`, `WHSG8`, `WHSR5` |
+| iso-27001 | A.8.21 | `config_keys:` + `access.openedOnlyByAuthPage`; detail: unopened request life and the new key in the in-code budgets list | `RAU1`, `RAU3`, `RAU4` |
+| soc2 | CC6.6 | detail: new paragraph, signed webhook calls and rotation rules | `WHSG2`, `WHSG6`, `WHSR1`, `WHSR2`, `WHSR3` |
+| soc2 | PI1.4 | overview: webhook calls signed | none (prose only) |
+| gdpr | Art.32 | detail: new bullet "Webhook calls" (signal-only and signed); `pryv_primitives:` + `webhooks` | `WHSG2`, `WHSG5`, `WHSG6`, `WHSR1` |
+
+Also updated: `context/webhooks-signal-only.md` (comparison table rows
+on HMAC signing and replay windows, new section "Signed calls", rows
+table); `context/rate-limiting-and-dos-protection.md` (unauthenticated
+entry points: `access.openedOnlyByAuthPage`);
+`context/operator-backup-coverage.md` (webhook rows carry the signing
+secret; the API export never sees it); `docs/pryv-primitives.md`
+(`webhooks`: signed calls); `docs/implementer-faq.md` (Q7 update).
+Walked without change:
+- **Transmission integrity and encryption** (`hipaa-security.164.312(e)(2)(i)`,
+  `164.312(e)(2)(ii)`, `soc2.CC6.7`, `pipeda.Principle.4.7`): webhook
+  bodies carry no ePHI or personal data, so these rows' TLS claims hold;
+  the signature is recorded on `164.312(e)(1)` and the context note.
+- **Network services** (`iso-27001.A.8.21`, webhook side): the webhook
+  address rules and the `webhooks.test` interval are unchanged; signed
+  calls are recorded on `A.8.20`, from which it derives.
+- **Data minimisation** (`gdpr.Art.5` §1(c)): the body is unchanged
+  (scope key names only); the signature adds a header, no data.
+- **Access control and delegation** (`hipaa-security.164.312(a)(1)`,
+  `soc2.CC6.1`, `soc2.CC6.3`, `context/delegation-model.md`): the new
+  method takes the rules of `webhooks.update`, no new grant path; the
+  delegate refusal follows the existing credential-view rule.
+- **Audit rows** (`iso-27001.A.8.15`, `hipaa-security.164.312(b)`):
+  the new method is audited like every other; the audit records the
+  call, not the returned secret.
+- **Backup rows** (`iso-27001.A.8.13`,
+  `hipaa-security.164.308(a)(7)(ii)(A)`, `hds.Activity.5`, the
+  `backup-restore` primitive): coverage unchanged; the secret in the
+  webhook row is recorded in `context/operator-backup-coverage.md` and
+  on `iso-27001.A.8.24`.
+- **DSAR and portability** (`gdpr.Art.15`, `gdpr.Art.20`,
+  `context/account-backup-coverage.md`): the subject export reads
+  `webhooks.get`, which never returns the secret; `signed` is server
+  metadata, nothing new to port.
+- **Sign-in request state** (`gdpr.Art.32` pseudonymisation bullet,
+  `iso-27001.A.8.11`, `context/cross-border-platformdb-implications.md`,
+  `context/core-affinity-architecture.md`): `/reg/access` state stays in
+  each core's cluster store and the creation budget keys are unchanged;
+  the new key only shortens the life of requests nobody opens.
+- **Edge recipes** (Section A `RATE-LIMITING-RECIPES`): the new key is
+  an in-code lifetime choice, not an edge budget; no recipe text to
+  change.
+Response-header and platform DB rows: not affected. B.2 to B.10: none.
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check

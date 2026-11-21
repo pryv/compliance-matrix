@@ -172,7 +172,13 @@ Rows whose `detail` should call out the operator-side responsibility
 - **Unauthenticated entry points** (2.0.0-rc.47, rc.50): one address
   holds at most `access.maxLiveRequestsPerIp` live `/reg/access`
   requests (default 50), and an unread request lives
-  `access.unopenedRequestTtl` (600 s) `[RAI1]`, `[RAU1]`;
+  `access.unopenedRequestTtl` (600 s) `[RAI1]`, `[RAU1]`. Any read
+  opens a request by default, the app's own polls included; from the
+  release after 2.0.0-rc.87, `access.openedOnlyByAuthPage: true`
+  (default `false`) lets only the auth page's read (`?authPage=1`)
+  open it, so polling no longer keeps unseen requests alive for the
+  hour `[RAU3]`, `[RAU4]` (a courtesy flag anyone can add; the
+  per-address budget is unchanged);
   `POST /access/invitationtoken/check` allows 10 checks a minute per
   address `[IVCK1]`; password reset requests were already budgeted
   per account and per address (2.0.0-rc.43). Since 2.0.0-rc.58 the

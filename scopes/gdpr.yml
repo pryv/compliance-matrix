@@ -2393,10 +2393,10 @@ requirements:
     pryv_effort_saved: high
     facilitation_mode: infrastructure
     draft: true
-    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion]
+    pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion, webhooks]
     docs: [customer-resources/auth-oauth2.md, customer-resources/adapter-routes.md]
     config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount, oauth.audienceBoundSessions, oauth.stateKey, oauth.perUserIssuer, oauth.clientMetadataDocuments.mode, adapterRoutes]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3, WHSG2, WHSG5, WHSG6, WHSR1]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -2778,6 +2778,16 @@ requirements:
           `[OCMD03G]`; a host listed in `cmc.allowedPrivateHosts` is
           allowed for them too. Keeping your own network's egress
           filtering stays yours.
+        - Webhook calls: IMPLEMENTED, signal-only (no personal data in
+          the body, see `context/webhooks-signal-only.md`) and, from the
+          release after open-pryv.io 2.0.0-rc.87, signed: a per-webhook
+          secret returned once by `webhooks.create` keys a
+          `Pryv-Signature` HMAC-SHA256 of a timestamp and the exact
+          body, so a receiver can refuse calls that do not come from
+          your platform without a secret in the webhook URL `[WHSG2]`,
+          `[WHSG5]`; `webhooks.rotateSecret` replaces the secret
+          `[WHSR1]`; webhooks created earlier stay unsigned
+          (`signed: false`) until rotated `[WHSG6]`.
         - Adapter routes: CONFIGURABLE, off by default. With
           `adapterRoutes` set (open-pryv.io 2.0.0-rc.73) the core
           forwards `/adapter/<name>/…` to a sidecar you run without
