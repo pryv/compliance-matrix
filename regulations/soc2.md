@@ -640,7 +640,9 @@ delegated app (`bin/oauth-client.js revoke <clientId>`) no longer
 merely blocks new grants while issued tokens live out their TTL:
 it writes a platform-wide tombstone and every core rejects that
 client's existing access tokens at validation time within
-`oauth.clientRevokeCheckSeconds` (default 30 s), open socket.io
+`oauth.clientRevokeCheckSeconds` (default 30 s; from the release
+after open-pryv.io 2.0.0-rc.87 a value above 300 s is used as
+300 s, like `caching.accessMaxAgeSeconds`), open socket.io
 connections are swept and dropped too. So "remove access for app
 X, everywhere, now" is one operator command with a bounded
 propagation window (open-pryv.io `7b6321aa`). For DPoP-bound apps

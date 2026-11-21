@@ -933,10 +933,17 @@ Pryv-mediated workflow, the analogous control is the validity
 window of the access token. Combining `auth.sessionMaxAge` (for
 interactive workforce sessions) with per-grant `access.expires`
 (for app-driven background processes) covers both shapes.
+`auth.sessionMaxAge` counts from the last activity: from the
+release after open-pryv.io 2.0.0-rc.87, an open socket.io
+connection no longer extends the session by itself (its periodic
+re-validation re-checks it without extending it), only calls
+made on it do, and a session that has expired is never extended
+again; the idle socket is disconnected at the next re-validation
+`[SIST1]`, `[SIST2]`, `[SIST3]`.
 
 **Evidence**
 
-- tests: AA02, ACCP
+- tests: AA02, ACCP, SIST1, SIST2, SIST3
 - config keys: auth.sessionMaxAge, access.expires
 - primitives: access, permissions
 

@@ -7517,10 +7517,17 @@ Pryv-mediated workflow, the analogous control is the validity
 window of the access token. Combining `auth.sessionMaxAge` (for
 interactive workforce sessions) with per-grant `access.expires`
 (for app-driven background processes) covers both shapes.
+`auth.sessionMaxAge` counts from the last activity: from the
+release after open-pryv.io 2.0.0-rc.87, an open socket.io
+connection no longer extends the session by itself (its periodic
+re-validation re-checks it without extending it), only calls
+made on it do, and a session that has expired is never extended
+again; the idle socket is disconnected at the next re-validation
+`[SIST1]`, `[SIST2]`, `[SIST3]`.
 
 **Evidence**
 
-- tests: AA02, ACCP
+- tests: AA02, ACCP, SIST1, SIST2, SIST3
 - config keys: auth.sessionMaxAge, access.expires
 - primitives: access, permissions
 
@@ -11385,7 +11392,16 @@ sites) and TCP are not limited by it `[DRRL6]`. A public resolver
 sending many clients' queries from one network meets the limit
 first: past it, it retries, over TCP for the truncated answers, so
 size this limit and `dns.tcpMaxConnections` for your traffic.
-Routing lookups are cached per process (see A.8.6).
+Forged queries for random names spread over many networks pass
+that per-network limit: the same release also bounds, for the
+whole DNS server, the UDP lookups of names it does not already
+know that found nothing (`dns.responseRateLimit.missesPerSecond`,
+default 100, lookups still running included, for at most 5 s);
+past it such queries are refused the same way without a lookup,
+while known names and TCP are still answered `[DRRL7]`, `[DRRL8]`,
+`[DRRL9]`. During such a flood an existing account not resolved
+in the last 30 s counts as unknown too and its resolver retries
+over TCP. Routing lookups are cached per process (see A.8.6).
 Since open-pryv.io 2.0.0-rc.87, password checks run a bounded
 number at a time per API worker
 (`auth.passwordCheckConcurrency`, `auth.passwordCheckQueue`):
@@ -11425,9 +11441,9 @@ per workload profile, a load test proving the limits fire):
 
 **Evidence**
 
-- tests: CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, RAU1, RAU3, RAU4, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5, RIDL1, MLBG1, MLBG2, MLBG3, DRRL1, DRRL2, DRRL5, DRRL6
+- tests: CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, RAU1, RAU3, RAU4, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5, RIDL1, MLBG1, MLBG2, MLBG3, DRRL1, DRRL2, DRRL5, DRRL6, DRRL7, DRRL8, DRRL9
 - docs: customer-resources/rate-limiting.md
-- config keys: auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, access.openedOnlyByAuthPage, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, http.responseIdleTimeoutMs, account.emailVerification.registrationCodesPerIpPerHour, account.emailVerification.addressesPerAccountPerDay, services.email.maxPerHour, dns.responseRateLimit.perSecond, dns.responseRateLimit.slip
+- config keys: auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, access.openedOnlyByAuthPage, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, http.responseIdleTimeoutMs, account.emailVerification.registrationCodesPerIpPerHour, account.emailVerification.addressesPerAccountPerDay, services.email.maxPerHour, dns.responseRateLimit.perSecond, dns.responseRateLimit.slip, dns.responseRateLimit.missesPerSecond
 - derives from: iso-27001.A.8.20
 - primitives: letsEncrypt-integration, multi-core-mTLS, observability-provider
 - context notes: rate-limiting-and-dos-protection
@@ -14134,7 +14150,9 @@ delegated app (`bin/oauth-client.js revoke <clientId>`) no longer
 merely blocks new grants while issued tokens live out their TTL:
 it writes a platform-wide tombstone and every core rejects that
 client's existing access tokens at validation time within
-`oauth.clientRevokeCheckSeconds` (default 30 s), open socket.io
+`oauth.clientRevokeCheckSeconds` (default 30 s; from the release
+after open-pryv.io 2.0.0-rc.87 a value above 300 s is used as
+300 s, like `caching.accessMaxAgeSeconds`), open socket.io
 connections are swept and dropped too. So "remove access for app
 X, everywhere, now" is one operator command with a bounded
 propagation window (open-pryv.io `7b6321aa`). For DPoP-bound apps
