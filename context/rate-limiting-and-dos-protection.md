@@ -195,7 +195,13 @@ Rows whose `detail` should call out the operator-side responsibility
   per user, per destination (platform-wide since 2.0.0-rc.50) and per
   core (`services.mfa.methods.sms.sendLimits.perCorePerHour`, default
   100, the toll-fraud cost cap) `[MSSL1]`, `[MSSL11]`;
-  `webhooks.test` once per webhook interval `[WHTT1]`.
+  `webhooks.test` once per webhook interval `[WHTT1]`. From the release
+  after 2.0.0-rc.87, at most `webhooks.maxPerAccess` webhooks per access
+  (default 10) and `webhooks.maxPerUser` per account (default 100), past
+  either `webhooks.create` answers `400 invalid-operation`, and at most
+  `webhooks.maxScopes` scopes per webhook (default 20, `400
+  invalid-parameters-format` on create and update); webhooks already
+  stored keep working, `0` turns each off `[WHLM1]`..`[WHLM3]`.
 - **Per-membership budgets, CMC group accounts** (2.0.0-rc.79): the
   member accesses a group's core mints on patient accounts
   (`consent/member-access-cmc`) are paced per membership, counted for

@@ -401,6 +401,14 @@ worker, then `429` for uncached names): the HTTP budgets table needs a row
 for it, with the same shared-address note as the other per-address budgets
 (B.11 walk of 2026-11-21, routing miss budget). No chip involved.
 
+**Trigger fired (2026-11-21, webhook caps):** the same release caps webhooks
+per access (`webhooks.maxPerAccess`, 10) and per account (`webhooks.maxPerUser`,
+100), `400 invalid-operation` past either on `webhooks.create`, and scopes per
+webhook (`webhooks.maxScopes`, 20, `400 invalid-parameters-format` on create
+and update). The in-code budgets table needs rows for them, and the webhooks
+reference should name the new refusals (developer-site work, outside this
+repo; B.11 walk of 2026-11-21, webhook caps). No chip involved.
+
 **Where the work lives**: the developer site (`dev-site2`, customer resources).
 Q6 outcome, voluntarily missing at Pryv layer; ship reference configs.
 
