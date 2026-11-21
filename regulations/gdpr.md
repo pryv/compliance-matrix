@@ -1734,7 +1734,38 @@ given in the rc.72 notes: run it once on each PostgreSQL core that
 erased accounts before rc.72, never as part of an upgrade. On
 SQLite such a row stays in the erased account's directory, kept
 only with `audit.onUserDelete: keep`: the files there other than
-the `audit-*` ones are leftovers you may remove.
+the `audit-*` ones are leftovers you may remove (an erasure on the
+release after open-pryv.io 2.0.0-rc.87 also leaves an
+`erased.json` marker there: keep it, see the next paragraph).
+
+Work still running when the account is erased (the release after
+open-pryv.io 2.0.0-rc.87). A long request, an upload or a CMC
+dispatch reading a peer that is still running for an account
+while it is erased can no longer store data for it. On
+PostgreSQL the database refuses a new row for an id the users
+index does not hold, in the events, streams, accesses, profile,
+webhooks, account-field, password and store-key tables `[PGUG1]`;
+the erasure removes the index entry first and an insert in flight
+holds that entry until it commits, so the data removal after it
+sees the row `[PGUG3]`. An erased account stays refused until it
+is restored `[PGUG6]`, a write that bypasses the CMC guard is
+refused as for a gone account `[CMCER6]`, and an event's stream
+links are written only while the event exists `[PGUG9]`. Not
+checked: the audit table (kept under `keep`), series points
+(dropped again as the erasure's last step) and attachment content
+stored in PostgreSQL. On SQLite with `audit.onUserDelete: keep`,
+the kept directory holds the `audit-*` files and an `erased.json`
+marker (no username), nothing else `[CMCER4]`; while the marker
+is there no new file is created in the directory, in every process
+of the core and across restarts `[ERMK1]`, `[ERMK3]`, and a
+restore of the account removes it `[ERMK5]`. Earlier releases
+could re-open empty databases in that directory (no row in them;
+you may remove them). Residual: an open that passed the check just
+before the marker was written can still create one empty file (a
+millisecond window, no row). Operator notes (keep the marker, a
+data-only `pg_restore`, rolling back): developer site
+`customer-resources/backup`, "Erased accounts on disk and in the
+database".
 
 **Technical**
 
@@ -1747,8 +1778,8 @@ auth/delete.ts` (middleware registration).
 
 **Evidence**
 
-- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3
-- docs: customer-resources/account-auto-deletion.md
+- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, ERMK5, PGUG1, PGUG3, PGUG6, PGUG9, CMCER6
+- docs: customer-resources/account-auto-deletion.md, customer-resources/backup.md
 - config keys: storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass
 - primitives: event, stream, backup-restore, external-id-index, account-auto-deletion
 - samples: scheduled-retention-job

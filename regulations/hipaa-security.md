@@ -1938,7 +1938,15 @@ directory, readable by user id, while everything else there is
 removed `[DKP1]`. Before 2.0.0-rc.46 the SQLite directory wipe
 erased it, so `keep` behaved like `erase` on SQLite: if you
 relied on `keep` there, audit of accounts deleted earlier is
-gone.
+gone. From the release after open-pryv.io 2.0.0-rc.87 the kept
+directory also holds an `erased.json` marker (no username) and
+nothing else besides the audit files `[CMCER4]`: while it is
+there no new file is created in the directory, in any process of
+the core and across restarts `[ERMK1]`, `[ERMK3]`, so work still
+running for the account when it was erased no longer re-opens
+empty databases next to the retained audit. The audit itself is
+read and written as before. Keep the marker when you archive or
+tidy such directories; a restore of the account removes it.
 
 **Access deletion records** (open-pryv.io 2.0.0-rc.56). The
 record of a deleted access is what lets an audit row name the
@@ -1965,7 +1973,7 @@ part of its documentation.
 
 **Evidence**
 
-- tests: DKP1, ADP1, ADSW17
+- tests: DKP1, ADP1, ADSW17, ERMK1, ERMK3
 - docs: customer-resources/account-auto-deletion.md
 - config keys: audit.onUserDelete, accesses.deletionRecords.retentionDays
 - primitives: backup-restore, audit, account-auto-deletion
