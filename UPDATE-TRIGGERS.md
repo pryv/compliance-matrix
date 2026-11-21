@@ -394,7 +394,12 @@ and caches routing lookups per process. If the page covers the embedded DNS,
 its in-code budgets table needs a row for this limit, with the note that a
 public resolver sending many clients' queries from one network meets it first
 (developer-site work, outside this repo; B.11 walk of 2026-11-20, routing
-lookups). No chip involved.
+lookups). The same release also limits, per client (IPv4 address or IPv6
+/64), the `/{username}/*` lookups that find no account
+(`limits.routing.unknownNamesPerClientPerMinute`, 60 a minute per API
+worker, then `429` for uncached names): the HTTP budgets table needs a row
+for it, with the same shared-address note as the other per-address budgets
+(B.11 walk of 2026-11-21, routing miss budget). No chip involved.
 
 **Where the work lives**: the developer site (`dev-site2`, customer resources).
 Q6 outcome, voluntarily missing at Pryv layer; ship reference configs.
@@ -3847,6 +3852,43 @@ Walked without change:
   operator signal but no row lists DNS log lines.
 Transport and backup rows: not affected. B.1 (no new method or error
 answer), B.2 to B.10: none.
+
+**Walked 2026-11-21 (routing miss budget) (unreleased at the walk; the
+release after open-pryv.io 2.0.0-rc.87)**: open-pryv.io feature commit
+`30a9cccb`, merged to master as `c68dabf0`. Same release as the
+routing-lookups walk above: name the tag once it is cut. The validator
+passes against `c68dabf0`. No Section A slug, no `planned:` chip, no
+tier shift; `reviewed_at` left unchanged. No new API method or response
+header. It closes most of the residual the routing-lookups walk left:
+distinct random names over HTTP each cost one platform read. What
+changed:
+- **Unknown names per client**: new key
+  `limits.routing.unknownNamesPerClientPerMinute` (default 60, per API
+  worker, `0` turns it off). A client (IPv4 address or IPv6 /64, through
+  `http.trustedProxies`) whose `/{username}/*` lookups found no account
+  more than that many times in a minute gets `429 too-many-requests` (an
+  existing error id, new on this path) for names not already in the
+  routing cache until the minute ends; cached names and other clients
+  go on `[CUCB1]`..`[CUCB4]`.
+
+| Scope | Ref | What changed | Tests added | Config keys added |
+|---|---|---|---|---|
+| iso-27001 | A.8.6 | routing paragraph: one sentence on the per-client budget of unknown names | `CUCB2` | `limits.routing.unknownNamesPerClientPerMinute` |
+
+Also updated: `context/rate-limiting-and-dos-protection.md` (the
+"Routing lookups and DNS answers, multi-core" bullet: key, default,
+429, test codes); Section A `RATE-LIMITING-RECIPES` (the HTTP budget
+added to the routing-lookups trigger note).
+Walked without change:
+- **Per-address budgets** (`iso-27001.A.8.21`): it lists the
+  unauthenticated lookup budgets of the embedded DNS and the API; this
+  one guards a platform read, recorded with the routing cache on A.8.6,
+  to which A.8.21 points.
+- **Derived and sibling capacity rows** (`soc2.A1.1`, `diga.A1.4.3`):
+  `soc2.A1.1` derives from A.8.6; the `diga.A1.4.3` detail already says
+  random names no longer each cost a cluster-wide read.
+Transport, platform DB and backup rows: not affected. B.1 (no new
+method; the 429 on this path recorded here), B.2 to B.10: none.
 
 **Walked 2026-11-20 for keyed address and email hashes, the chosen-token
 floor and the CMC retry-row sweep (unreleased at the walk; the release
