@@ -409,6 +409,17 @@ and update). The in-code budgets table needs rows for them, and the webhooks
 reference should name the new refusals (developer-site work, outside this
 repo; B.11 walk of 2026-11-21, webhook caps). No chip involved.
 
+**Trigger fired (2026-11-21, DNS miss budget and session touch):** the same release
+bounds, for the whole embedded DNS, the UDP lookups of unknown names that found
+nothing (`dns.responseRateLimit.missesPerSecond`, 100 a second, then dropped or
+truncated like the per-network limit; existing accounts not resolved in the last
+30 s fall back to TCP during such a flood). If the page covers the embedded DNS,
+its in-code budgets table needs a row for it. The same release stops open
+socket.io connections from extending a personal session by themselves (only
+calls do) and uses `oauth.clientRevokeCheckSeconds` / `caching.accessMaxAgeSeconds`
+above 300 s as 300 s (developer-site work, outside this repo; B.11 walk of
+2026-11-21, DNS miss budget). No chip involved.
+
 **Where the work lives**: the developer site (`dev-site2`, customer resources).
 Q6 outcome, voluntarily missing at Pryv layer; ship reference configs.
 

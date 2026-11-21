@@ -386,7 +386,18 @@ Rows whose `detail` should call out the operator-side responsibility
   logged ("UDP lookup answer(s) refused by dns.responseRateLimit")
   `[DRRL1]`..`[DRRL5]`. Other names (apex, static, service, hosted
   sites) and TCP are not limited by it `[DRRL6]`; TCP stays bounded by
-  `dns.tcpMaxConnections`.
+  `dns.tcpMaxConnections`. A forged flood of distinct names spread
+  over many networks passes the per-network limit, so the server as a
+  whole also allows at most `dns.responseRateLimit.missesPerSecond`
+  (default 100) UDP lookups a second of names it does not already know
+  (not a core, not an account in its routing cache) that found
+  nothing, lookups still running counted for at most 5 s; past it such
+  queries are refused the same way without a lookup and logged ("UDP
+  lookup(s) of unknown names refused by
+  dns.responseRateLimit.missesPerSecond"), known names and TCP still
+  answered `[DRRL7]`..`[DRRL9]`. An existing account not resolved by
+  the DNS in the last 30 s counts as unknown during such a flood, and
+  its resolver retries over TCP.
 - **Recovery**: a worker that keeps crashing is replaced after a
   delay doubling up to 30 s (2.0.0-rc.50) `[WRBO1]`.
 

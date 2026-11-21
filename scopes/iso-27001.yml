@@ -2049,8 +2049,8 @@ requirements:
     pryv_primitives: [letsEncrypt-integration, multi-core-mTLS, observability-provider]
     derives_from: [iso-27001.A.8.20]
     docs: [customer-resources/rate-limiting.md]
-    config_keys: [auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, access.openedOnlyByAuthPage, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, http.responseIdleTimeoutMs, account.emailVerification.registrationCodesPerIpPerHour, account.emailVerification.addressesPerAccountPerDay, services.email.maxPerHour, dns.responseRateLimit.perSecond, dns.responseRateLimit.slip]
-    tests: [CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, RAU1, RAU3, RAU4, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5, RIDL1, MLBG1, MLBG2, MLBG3, DRRL1, DRRL2, DRRL5, DRRL6]
+    config_keys: [auth.passwordAttempts, http.trustedProxies, access.maxLiveRequestsPerIp, access.openedOnlyByAuthPage, socketIO.maxMessageBytes, limits.batch.maxTotalItems, uploads.maxFiles, dns.tcpMaxConnections, auth.passwordCheckConcurrency, auth.passwordCheckQueue, limits.requests.maxInflightPerUser, limits.requests.maxInflightPerAccess, limits.json.maxDepth, limits.json.maxObjectKeys, socketIO.maxConnectionsPerAccess, socketIO.maxConnectionsPerUser, socketIO.maxInflightCallsPerConnection, socketIO.maxScopesPerConnection, http.responseIdleTimeoutMs, account.emailVerification.registrationCodesPerIpPerHour, account.emailVerification.addressesPerAccountPerDay, services.email.maxPerHour, dns.responseRateLimit.perSecond, dns.responseRateLimit.slip, dns.responseRateLimit.missesPerSecond]
+    tests: [CEPB1, CEPI1, CEPI2, CEDB1, CEDB5, RAI1, RAU1, RAU3, RAU4, EGLV1, MPLM3, SION4, IVCK1, WHTT1, PVPX1, DNR01, CLIM2, PCLM1, PCLM2, APLM1, APLM3, APLM9, SIOL1, SIOL3, SIOL5, RIDL1, MLBG1, MLBG2, MLBG3, DRRL1, DRRL2, DRRL5, DRRL6, DRRL7, DRRL8, DRRL9]
     overview: |
       Pryv's external
       network surface is the TLS-terminating HTTPS API + the embedded
@@ -2103,7 +2103,16 @@ requirements:
       sending many clients' queries from one network meets the limit
       first: past it, it retries, over TCP for the truncated answers, so
       size this limit and `dns.tcpMaxConnections` for your traffic.
-      Routing lookups are cached per process (see A.8.6).
+      Forged queries for random names spread over many networks pass
+      that per-network limit: the same release also bounds, for the
+      whole DNS server, the UDP lookups of names it does not already
+      know that found nothing (`dns.responseRateLimit.missesPerSecond`,
+      default 100, lookups still running included, for at most 5 s);
+      past it such queries are refused the same way without a lookup,
+      while known names and TCP are still answered `[DRRL7]`, `[DRRL8]`,
+      `[DRRL9]`. During such a flood an existing account not resolved
+      in the last 30 s counts as unknown too and its resolver retries
+      over TCP. Routing lookups are cached per process (see A.8.6).
       Since open-pryv.io 2.0.0-rc.87, password checks run a bounded
       number at a time per API worker
       (`auth.passwordCheckConcurrency`, `auth.passwordCheckQueue`):
