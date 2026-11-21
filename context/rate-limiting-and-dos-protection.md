@@ -397,7 +397,11 @@ Rows whose `detail` should call out the operator-side responsibility
   dns.responseRateLimit.missesPerSecond"), known names and TCP still
   answered `[DRRL7]`..`[DRRL9]`. An existing account not resolved by
   the DNS in the last 30 s counts as unknown during such a flood, and
-  its resolver retries over TCP.
+  its resolver retries over TCP. Core names, the core of an account,
+  `lsc`, the service names and hosted sites are answered from the core
+  list the DNS re-reads every 30 s, so these answers cost no platform
+  read (a core change is seen within 30 s; a list older than 90 s is not
+  used) `[DCIC1]`..`[DCIC4]`.
 - **Recovery**: a worker that keeps crashing is replaced after a
   delay doubling up to 30 s (2.0.0-rc.50) `[WRBO1]`.
 
