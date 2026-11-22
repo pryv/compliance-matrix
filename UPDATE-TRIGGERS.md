@@ -420,6 +420,13 @@ calls do) and uses `oauth.clientRevokeCheckSeconds` / `caching.accessMaxAgeSecon
 above 300 s as 300 s (developer-site work, outside this repo; B.11 walk of
 2026-11-21, DNS miss budget). No chip involved.
 
+**Written up (2026-11-22):** the six trigger notes above (2026-11-19 to 2026-11-21:
+ceilings per account / access / connection, idle timeout, stream tree, audit
+reads, mail budgets, DNS response rate limit, routing miss budget, webhook caps,
+DNS miss budget, socket session touch, revocation lag at 300 s, DNS core-info
+list) are on the developer site's rate-limiting page, webhooks guide and API
+reference (dev-site2 `bb9db18`, published with the release after 2.0.0-rc.87).
+
 **Where the work lives**: the developer site (`dev-site2`, customer resources).
 Q6 outcome, voluntarily missing at Pryv layer; ship reference configs.
 
