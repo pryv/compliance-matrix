@@ -285,8 +285,10 @@ metrics plus sanitized error stack traces.
 
 ## How to assemble the subprocessor inventory for your DPA
 
-Today (pre-admin-panel): read `override-config.yml` + per-host
-overlays + identify which optional integrations are non-default:
+Identify which optional integrations are non-default, from
+`override-config.yml` + per-host overlays or, from the release after
+open-pryv.io 2.0.0-rc.87, from the effective-configuration document
+of each core (below):
 - `letsEncrypt.enabled: true` → LE (or whichever
   `letsEncrypt.directoryUrl` you pointed at).
 - `services.email.smtp.host: ...` → your SMTP relay.
@@ -298,11 +300,21 @@ overlays + identify which optional integrations are non-default:
 - `service.eventTypes: https://...` → upstream catalogue host (if
   not self-hosted).
 
-Once the planned `GET /system/admin/config/effective` admin
-endpoint ships (effective-config exposure), it surfaces all of
-this in one machine-readable JSON blob per core. The operator's
-DPIA / DPA register / Art.30 records-of-processing pipeline can
-consume it directly.
+From the release after open-pryv.io 2.0.0-rc.87 (`21fd8085`)
+the admin route `GET /system/admin/config/effective` answers the
+configuration each core runs with as one machine-readable JSON
+document, each key with the layer that set it, secrets redacted,
+plus digests to compare cores and snapshots (developer site, system
+reference, "Get the effective configuration"). The operator's DPIA /
+DPA register / Art.30 records-of-processing pipeline can read it
+per core instead of the files. Two limits for this inventory: the
+subtrees that can carry credentials (SMS provider endpoints,
+telemetry headers, data-store settings, OAuth extension options) are
+shown only as set, with a keyed fingerprint, never their content, and
+some service URLs show their origin only, so the provider behind them
+is named from your own records; and the document covers Pryv's
+configuration, not the hosting, proxy or log routing listed below.
+The admin-panel view over the same data is a later item.
 
 ## Where Pryv-the-software is NOT the right Art.28 answer-source
 
@@ -332,7 +344,8 @@ consume it directly.
 - `gdpr.Art.28` detail extended with the zero-mandatory-
   subprocessor framing + per-integration enumeration + the
   LE-as-dev-facilitator distinction + the three data-flow
-  guarantees + the future inventory pipeline.
+  guarantees + the inventory pipeline (the effective-configuration
+  route, shipped in the release after open-pryv.io 2.0.0-rc.87).
 - `gdpr.Art.30` row stays as-is, the existing register-field
   mapping table is already strong; the subprocessor question
   is sub-Art.30(1)(f) "categories of recipients" and the
@@ -340,12 +353,12 @@ consume it directly.
 - `pryv-primitives.md` `observability-provider` entry covers
   the PII filter detail; this note cross-references rather
   than duplicates.
-- No backlog filed (the future improvement, machine-readable
-  subprocessor inventory, is absorbed by the planned
-  bootstrap-admin-panel work).
-- No `planned:` chips, Q20's chips against
-  `CONFIG-EFFECTIVE-EXPOSURE` already capture the future
-  matrix updates.
+- No backlog filed (the machine-readable configuration inventory
+  was absorbed by the bootstrap-admin-panel work and shipped as the
+  effective-configuration route; the panel view is still later).
+- No `planned:` chips here; Q20's chips against
+  `CONFIG-EFFECTIVE-EXPOSURE` carried the matrix updates and were
+  discharged when the route shipped (2026-11-23 walk).
 
 ## See also
 
@@ -356,5 +369,5 @@ consume it directly.
   audit-by-construction (Q9 finding cross-referenced from
   layer 1 above).
 - `compliance-matrix/UPDATE-TRIGGERS.md`: `CONFIG-EFFECTIVE-
-  EXPOSURE` Section A entry (future subprocessor inventory
-  pipeline).
+  EXPOSURE` Section A entry (the shipped effective-configuration
+  route and the rows walked).

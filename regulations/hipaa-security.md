@@ -2220,7 +2220,7 @@ the testing programme itself is the operator's.
 
 ## HIPAA-Security 164.308(a)(8): Evaluation, standard
 
-Coverage: facilitated · effort saved: low · mode: evidence · draft
+Coverage: facilitated · effort saved: medium · mode: evidence · draft
 
 Requirement: Perform a periodic technical and nontechnical evaluation in
 response to environmental or operational changes affecting the
@@ -2245,7 +2245,10 @@ vulnerability reporting enabled on the published
 repositories), and the code-level security review of
 open-pryv.io (2026-06 to 2026-10, fixes in 2.0.0-rc.40 to
 2.0.0-rc.51, public report `SECURITY-AUDIT.md` published
-2026-10-14). The assessment write-up is operator-side.
+2026-10-14), and, from the release after open-pryv.io
+2.0.0-rc.87, a technical baseline per core: the effective
+configuration with its digests (see detail). The assessment
+write-up is operator-side.
 
 **Detail**
 
@@ -2275,15 +2278,32 @@ added applications and procedures, and the "in response to
 environmental or operational changes" trigger, are evaluated by you.
 It was performed by the maintainers, not an independent assessor.
 
+**A technical baseline to evaluate against** (the release after
+open-pryv.io 2.0.0-rc.87, `21fd8085`): the admin route
+`GET /system/admin/config/effective` answers the configuration
+each core runs with, secrets redacted (presence, type and a
+keyed fingerprint only) `[CFE5]`, and two SHA-256 digests. The
+periodic evaluation can diff the `full` digest against the
+previous baseline: an unchanged digest says the reported
+configuration did not change since (hidden values included only
+while secret fingerprints are on, `configMeta.secretFingerprints`;
+values the master process alone sets are not reported), a
+changed one sends you to
+compare the two documents key by key (each entry names the
+layer that set it) `[CFE6]`, `[CFC8]`; `?digest=true` answers
+the digests alone `[CFE3]`, and the `platform` digest compares
+cores. This gives the "environmental or operational changes"
+trigger a technical signal for Pryv's own configuration. It
+shows configuration, not that a safeguard is effective; the
+baseline you keep, the host and network configuration and the
+evaluation stay yours.
+
 **Evidence**
 
+- tests: CFE3, CFE5, CFE6, CFC8
 - derives from: hipaa-security.164.316(b)(2)(iii)
 - primitives: audit, observability-provider
 - context notes: code-security-review-2026
-
-**Planned changes**
-
-- feature: Read-only effective-configuration endpoint supplies the technical baseline snapshot the periodic evaluation is measured against
 
 ## HIPAA-Security 164.310(a)(1): Facility access controls, standard
 

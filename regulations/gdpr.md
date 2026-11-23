@@ -2514,14 +2514,21 @@ both directions.
 partly via Pryv's audit log + this compliance matrix
 (evidence-backed assertion structure).
 
-**Future: machine-readable subprocessor inventory**: the
-planned `GET /system/admin/config/effective` admin route
-(`CONFIG-EFFECTIVE-EXPOSURE` per `UPDATE-TRIGGERS.md`) will
-expose the merged effective config per core as a single JSON
-artefact the operator's DPA register + Art.30
-records-of-processing pipeline can consume directly. Until
-then, the operator reads `override-config.yml` + per-host
-overlays + identifies non-default integrations by hand.
+**Machine-readable configuration per core** (the release after
+open-pryv.io 2.0.0-rc.87, `21fd8085`): the admin route
+`GET /system/admin/config/effective` answers the configuration
+the answering core runs with as one JSON document, one entry
+per key with the layer that set it, secrets redacted
+(`CONFIG-EFFECTIVE-EXPOSURE` in `UPDATE-TRIGGERS.md`)
+`[CFE1]`, `[CFE5]`. Your DPA register and Art.30 pipeline can
+read from it which optional integrations a core has configured
+instead of reading `override-config.yml` and per-host overlays
+by hand. It is not a subprocessor list: the subtrees that can
+carry credentials (SMS provider endpoints, telemetry headers,
+data-store settings) show only that they are set, with a
+keyed fingerprint, never their content, so you name those
+providers from your own records; and it shows Pryv's
+configuration only, not your hosting, proxy or log routing.
 
 **Evidence**
 
@@ -2556,10 +2563,29 @@ Register field → Pryv data source:
 | Categories of recipients | counterparty `access` (CMC pair) |
 | Transfers to third countries | CMC counterparty `apiEndpoint` host + chosen hosting |
 | Retention | `access.clientData.retention` + `access.expires` |
-| Security measures | covered in Art.32 |
+| Security measures | covered in Art.32; per core, the effective-configuration document below |
 
 Audit row → access ref (with serial) → consent state at that moment.
 Recoverable per data-subject + per-time-window + per-purpose.
+
+**§1(g) general description of technical security measures**
+(the release after open-pryv.io 2.0.0-rc.87, `21fd8085`):
+the description of technical security measures can be emitted
+per core as a redacted machine-readable document.
+`GET /system/admin/config/effective` (admin key; developer site,
+system reference, "Get the effective configuration") answers
+the configuration the answering core runs with, one entry per
+key with the layer that set it (`default-file`,
+`override-file`, `env`, `platform-db`, ...) and its scope
+(`platform`, expected identical on every core, or `core`), and
+dates it (`snapshotAt`, `coreId`) with two SHA-256 digests
+`[CFE1]`, `[CFE6]`. Secrets are never shown, only that they are
+set, their type and a keyed fingerprint `[CFE5]`, `[CFC3]`.
+Attach a snapshot per core to the register entry instead of a
+hand-written list. It shows configured values, not that a
+measure is effective, and it covers Pryv's own configuration
+only: the organisational measures and your hosting, network and
+key custody stay in your description. See Art.32.
 
 One processing of your own to list (the release after
 open-pryv.io 2.0.0-rc.87, `83e14c94`): the erasure ledger, one
@@ -2598,7 +2624,7 @@ not the subject's data. See
 
 **Evidence**
 
-- tests: UZEV, TJ8S, AA01, ERLG4, ERLT4
+- tests: UZEV, TJ8S, AA01, ERLG4, ERLT4, CFE1, CFE5, CFE6, CFC3
 - docs: customer-resources/audit-setup.md, guides/audit-logs.md
 - primitives: access, clientData, audit, CMC, data-residency
 - context notes: content-query-audit-semantics
@@ -2606,7 +2632,6 @@ not the subject's data. See
 **Planned changes**
 
 - feature: Chained / signed audit log makes the Article 30 register tamper-evident
-- feature: Read-only effective-configuration endpoint turns the §1(g) description of technical security measures into emitable evidence
 
 ## GDPR Art.32: Security of processing
 
@@ -3003,6 +3028,27 @@ Per-aspect:
     names the addressed account in headers it sets itself (client
     copies removed) `[ADRI09]`, `[ADRU3]`. See
     `iso-27001.A.8.26`.
+  - Configured safeguards, readable per core: IMPLEMENTED, from
+    the release after open-pryv.io 2.0.0-rc.87 (`21fd8085`).
+    Operator-readable evidence of the configured safeguards: the
+    admin route `GET /system/admin/config/effective` (admin key,
+    `404` without it `[CFE2]`) answers the configuration the
+    answering core runs with, each key with the layer that set
+    it and its scope, so the settings this row cites (TLS, MFA
+    mode, OAuth options, adapter routes, ...) can be shown as
+    they are on each core without host access. Secrets are never
+    shown: every key is classified (shown, URL origin only,
+    secret or opaque), a key no rule names is redacted, shown
+    strings are scanned for secret-looking values and URLs lose
+    their credentials or are redacted when they do not parse
+    cleanly; a redacted entry carries its presence, type and a
+    path-bound HMAC fingerprint keyed by
+    `auth.filesReadTokenSecret`, never a fragment of the value
+    `[CFE5]`, `[CFC3]`, `[CFC7]`. Each call is audited without a
+    user and logged, and never cached `[CFE8]`. It shows
+    configuration, not effectiveness: it is not evidence that a
+    control works, and it does not replace the §1(d) testing
+    below. Values the master process alone sets are not in it.
   - Regular testing (§1(d)): FILLED BY EXISTING PRIMITIVES.
     **Existing evidence (citable today)**:
       - **Multi-engine CI test matrix**: ~2351 tests on
@@ -3064,7 +3110,7 @@ Per-aspect:
 
 **Evidence**
 
-- tests: HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3, WHSG2, WHSG5, WHSG6, WHSR1
+- tests: HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3, WHSG2, WHSG5, WHSG6, WHSR1, CFE2, CFE5, CFE8, CFC3, CFC7
 - docs: customer-resources/auth-oauth2.md, customer-resources/adapter-routes.md
 - config keys: hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount, oauth.audienceBoundSessions, oauth.stateKey, oauth.perUserIssuer, oauth.clientMetadataDocuments.mode, adapterRoutes
 - primitives: permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion, webhooks
@@ -3073,7 +3119,6 @@ Per-aspect:
 **Planned changes**
 
 - feature: End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive
-- feature: Read-only effective-configuration endpoint strengthens the evidence narrative around operator-visible safeguards
 - feature: Account transfer to a beneficiary (implemented, not released): a beneficiary's name and date of birth encrypted at rest, unreadable before the transfer starts
 
 ## GDPR Art.33: Notification of personal data breach to the supervisory authority
@@ -3226,7 +3271,7 @@ Operator's runbook derives per-subject timing from
 
 ## GDPR Art.35: Data protection impact assessment
 
-Coverage: facilitated · effort saved: low · mode: evidence · draft
+Coverage: facilitated · effort saved: medium · mode: evidence · draft
 
 Requirement: Where processing is likely to result in a high risk to the rights
 and freedoms of natural persons, the controller shall, prior to
@@ -3256,15 +3301,25 @@ deployment.
     contributes the technical-control inventory.
   - (d) measures envisaged to address the risks → see the
     Art.32 row of this matrix + cross-scope ISO 27001 A.8
-    control rows.
+    control rows. For the technical safeguards in force on
+    each core, the DPIA safeguards inventory can cite a dated,
+    digest-stamped per-core snapshot (the release after
+    open-pryv.io 2.0.0-rc.87, `21fd8085`):
+    `GET /system/admin/config/effective` (admin key) answers the
+    configuration a core runs with, secrets redacted, stamped
+    with `coreId`, `snapshotAt` and two SHA-256 digests (`full`
+    for that core, `platform` for the keys every core should
+    share) that anyone holding the document can recompute
+    `[CFE1]`, `[CFE6]`; `?digest=true` answers the digests alone,
+    to check later that the snapshot cited is still the one in
+    force `[CFE3]`. It proves which values are configured, not
+    that the measure is effective or sufficient for the risk:
+    the assessment of (c) and (d) stays yours.
 
 **Evidence**
 
+- tests: CFE1, CFE3, CFE6
 - primitives: audit, data-residency, access, system-streams
-
-**Planned changes**
-
-- feature: Read-only effective-configuration endpoint feeds the DPIA safeguards inventory from live per-core data instead of a hand-written list
 
 ## GDPR Art.36: Prior consultation
 
@@ -3370,9 +3425,11 @@ Practical DPO-monitoring patterns:
   / context notes interlink for the auditable claim graph.
 - **DPIA / breach-scope tooling** the DPO consumes when
   active: `bin/breach-scope.js` for the breach scoping
-  artefact (shipped), and the future
-  `CONFIG-EFFECTIVE-EXPOSURE` effective-config endpoint
-  for DPIA Section (d).
+  artefact (shipped), and the effective-configuration
+  endpoint `GET /system/admin/config/effective` (the release
+  after open-pryv.io 2.0.0-rc.87) for DPIA Section (d): the
+  configuration each core runs with, secrets redacted, with
+  digests to compare cores and snapshots (see Art.35).
 
 **Evidence**
 

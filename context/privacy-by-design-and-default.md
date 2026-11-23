@@ -295,9 +295,16 @@ narrative recipe:
 > process registry is self-documented via `GET /accesses` +
 > audit log. The 12 platform defaults [list per the catalogue
 > above] satisfy Art.25(2) by-default settings; our deployment's
-> specific configuration [pointing at the planned effective-config
-> endpoint per Q20] proves which defaults are
+> specific configuration [a dated snapshot of each core's
+> effective-configuration document, per Q20] shows which defaults are
 > in force."*
+
+The snapshot is `GET /system/admin/config/effective` (admin key; the
+release after open-pryv.io 2.0.0-rc.87): each key with the layer that
+set it, so a value no other layer overrides reads
+`source: default-file`, secrets redacted, stamped with `coreId`,
+`snapshotAt` and SHA-256 digests. It shows configured values, not that
+a default achieves its purpose.
 
 ## Matrix encoding
 
