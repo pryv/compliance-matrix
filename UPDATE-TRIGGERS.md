@@ -4403,6 +4403,43 @@ Transport and response-header rows: not affected. B.2, B.3, B.4 (no new
 primitive: `backup-restore` and `account-auto-deletion` extended), B.5 to
 B.10: none.
 
+**Walked 2026-11-23 for the access-request `returnURL` check and
+`access.returnOrigins` (unreleased at the walk; the release after
+open-pryv.io 2.0.0-rc.87)**: open-pryv.io `380eb78d` + review follow-ups
+`9228b6fb`, master `9228b6fb`. The row says "the release after
+open-pryv.io 2.0.0-rc.87": name the tag once it is cut. No Section A slug,
+no `planned:` chip, no tier shift; `reviewed_at` left unchanged. No new
+API method (B.1: `POST /reg/access` gains a refusal, an existing error id).
+What changed:
+- **Shape check, always** (BREAKING for a client sending such a value):
+  `returnURL` is absent (`undefined`, `null`, `false`, `""`, `"false"`) or
+  an absolute URL without control characters or `user:password@`, an
+  http(s) one with its `//`, whose scheme is not `javascript:`, `data:`,
+  `vbscript:` or `blob:`; otherwise `400 invalid-parameters`,
+  `data.param: "returnURL"`, before the request exists `[RAO8]`,
+  `[RAO9]`, `[RTO5]`, `[RTO10]`, `[RTO11]`, `[RTO13]`. `file:` stays
+  accepted (hybrid apps; an http(s) page cannot navigate there).
+- **New config key `access.returnOrigins`** (optional, `auth.trustedApps`
+  grammar): a bound app id may only return to its registered origins
+  `[RAO2]`, `[RAO3]`, `[RTO2]`, `[RTO3]`, `[RTO8]`; unbound ids and an unset
+  key unchanged `[RAO1]`, `[RAO5]`; an invalid entry refuses the boot and
+  `bin/check-config.js` `[CVRO1]`, and fails closed at runtime `[RTO12]`.
+  Redirect hygiene only: the request creator still reads the outcome by
+  polling; client binding is the OAuth2 flow's.
+
+| Scope | Ref | What changed | Tests added | Config keys added |
+|---|---|---|---|---|
+| iso-27001 | A.8.26 | detail: new paragraph on the `returnURL` check and the origin binding, after the `REDIRECTED` example | `RAO3`, `RAO8`, `RTO10`, `RTO12` | `access.returnOrigins` |
+
+Walked without change:
+- **Secure authentication** (`iso-27001.A.8.5`, `soc2.CC6.1`): the change
+  authenticates no client and changes no sign-in step; recorded on A.8.26
+  as an application-security requirement, with its limit stated.
+- **Per-address budgets** (`iso-27001.A.8.21`): the refusal happens before
+  the request takes a place in the `/reg/access` budget; no new limit.
+Transport, availability, platform DB and backup rows: not affected. B.2 to
+B.10: none.
+
 ## Section C: Maintenance reminders
 
 - **Quarterly review**: run a full pass of authored rows and check
