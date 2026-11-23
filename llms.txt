@@ -87,4 +87,4 @@ Facilitation mode (the kind of help, mostly on `facilitated` rows):
 
 Evidence: test codes resolve at https://pryv.github.io/tests/#<code>, functional specs at https://pryv.github.io/functional-specifications/ and docs paths at https://pryv.github.io/<path>/.
 
-Generated 2026-11-23T12:34:46.667Z.
+Generated 2026-11-23T18:20:43.639Z.
