@@ -2247,8 +2247,8 @@ requirements:
     pryv_primitives: [audit]
     docs: [customer-resources/adapter-routes.md]
     derives_from: [iso-27001.A.8.25]
-    config_keys: [cmc.allowedPrivateHosts, oauth.clientMetadataDocuments.maxDocumentBytes, adapterRoutes, access.returnOrigins]
-    tests: [ACTY, MC04D, RAO3, RAO8, RTO10, RTO12, HTC1, HSPE1, QPR2, PFR1, PFR2, PFR4, PFR5, PFR6, PFR10, CO21, CO22, RQ33, OCMD01, OCMD03B, OCMD03D, OCMD03G, OCMD03H, OCMDE17, ADRI03, ADRI06, ADRI09, ADRI13, ADRC03, ADRC08, ADRU3, ADRU4]
+    config_keys: [cmc.allowedPrivateHosts, oauth.clientMetadataDocuments.maxDocumentBytes, adapterRoutes, access.returnOrigins, services.email.mergeLanguage]
+    tests: [ACTY, MC04D, RAO3, RAO8, RTO10, RTO12, RSLK7, CKML1, HTC1, HSPE1, QPR2, PFR1, PFR2, PFR4, PFR5, PFR6, PFR10, CO21, CO22, RQ33, OCMD01, OCMD03B, OCMD03D, OCMD03G, OCMD03H, OCMDE17, ADRI03, ADRI06, ADRI09, ADRI13, ADRC03, ADRC08, ADRU3, ADRU4]
     overview: |
       For the operator running
       Pryv as one of its applications, this compliance matrix IS the
@@ -2293,6 +2293,15 @@ requirements:
       authentication: whoever creates a request can still read its
       outcome by polling; apps that need their redirect bound to the
       client use the OAuth2 flow.
+
+      Mail sent through Mandrill: since the release after open-pryv.io
+      2.0.0-rc.87, `services.email.mergeLanguage: handlebars` makes
+      Mandrill HTML-escape the variables of `{{VAR}}` templates (names,
+      links, an administrator's reason) `[RSLK7]`. Unset, Mandrill uses
+      its account default, whose escaping it does not document, and the
+      core warns at boot `[CKML1]`. Converting the Mandrill templates and
+      setting the key are yours; the bundled in-process templates escape
+      by themselves.
 
       Further examples from the 2026 security review (open-pryv.io
       2.0.0-rc.49 and 2.0.0-rc.50; `context/code-security-review-2026.md`):

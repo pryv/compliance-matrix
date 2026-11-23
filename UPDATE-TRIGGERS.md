@@ -357,9 +357,13 @@ site page [Rate limiting and DoS protection](https://pryv.github.io/customer-res
 (source `dev-site2/src/content/docs/customer-resources/rate-limiting.md`, verified end
 to end against a running core) is now cited as `docs:` on iso-27001 A.8.6 and A.8.21,
 hipaa-security 164.308(a)(5)(ii)(C) and 164.308(a)(6)(i), and diga A1.4.3. Coverage
-tiers are unchanged (the contribution stays facilitated). Dedicated HAProxy /
-Cloudflare / Traefik / Caddy snippets remain a backlog item with no chips: they
-would add no row shift. When the client-IP attribution changes (trusted-proxy list),
+tiers are unchanged (the contribution stays facilitated). **HAProxy added
+2026-11-23** (dev-site2 `34f0074`, unpublished at the time): a reference
+`haproxy.cfg` with the same routes, keys and limits, and fail2ban filters for
+its log, verified end to end against an open-pryv.io 2.0.0-rc.87 core; the
+rows already cite the page, nothing to change on them. Cloudflare / Traefik /
+Caddy snippets remain a backlog item with no chips: they would add no row
+shift. When the client-IP attribution changes (trusted-proxy list),
 refresh the page's "How Pryv reads the client IP" paragraph.
 
 **Trigger fired (2026-10-13):** open-pryv.io 2.0.0-rc.47 introduced in-code
@@ -4596,6 +4600,25 @@ Walked without change:
   the request takes a place in the `/reg/access` budget; no new limit.
 Transport, availability, platform DB and backup rows: not affected. B.2 to
 B.10: none.
+
+**Walked 2026-11-23 for the Mandrill merge-tag language (unreleased at the
+walk; the release after open-pryv.io 2.0.0-rc.87)**: open-pryv.io
+`29977794`, master `0b33af16`. The row says "the release after
+open-pryv.io 2.0.0-rc.87": name the tag once it is cut. No Section A slug,
+no `planned:` chip, no tier shift; `reviewed_at` left unchanged. No new API
+method. What changed: **new optional config key
+`services.email.mergeLanguage`** (`handlebars` or `mailchimp`), sent to
+Mandrill as `merge_language` `[RSLK7]`; `handlebars` escapes `{{VAR}}`;
+unset keeps the account default (escaping undocumented by Mandrill) with a
+boot warning, any other value refuses the boot `[CV-GA9]`, `[CKML1]`.
+
+| Scope | Ref | What changed | Tests added | Config keys added |
+|---|---|---|---|---|
+| iso-27001 | A.8.26 | detail: paragraph on Mandrill variable escaping, after the `returnURL` paragraph | `RSLK7`, `CKML1` | `services.email.mergeLanguage` |
+
+Walked without change: `soc2.CC6.8` (cites no mail path), `gdpr.Art.34`
+(names Mandrill as a delivery service only). Transport, availability,
+platform DB and backup rows: not affected. B.2 to B.10: none.
 
 ## Section C: Maintenance reminders
 
