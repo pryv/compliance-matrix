@@ -1198,6 +1198,19 @@ exposing the effective configuration, so the "which defaults are in
 force" claim can be proved rather than asserted, is planned (the
 `CONFIG-EFFECTIVE-EXPOSURE` backlog item).
 
+**Update (2026-11-23): shipped in the release after open-pryv.io
+2.0.0-rc.87.** `GET /system/admin/config/effective` (admin key)
+answers the configuration each core runs with, one entry per key with
+the layer that set it and its scope (`platform` or `core`), secrets
+redacted (presence, type and a keyed fingerprint, never a fragment),
+stamped with `coreId`, `snapshotAt` and two SHA-256 digests (`platform`
+to compare cores, `full` for a per-core baseline); `?digest=true`
+answers the digests alone. Section (d) can cite a dated,
+digest-stamped snapshot per core. It shows which values are
+configured, not that a measure is effective; the admin-panel view of
+it is a later item. Rows: `gdpr.Art.30`, `gdpr.Art.32`,
+`gdpr.Art.35`, `iso-27001.A.8.9`, `hipaa-security.164.308(a)(8)`.
+
 **Matrix encoding:** the composition recipes in
 `context/privacy-by-design-and-default.md` (Art.25 evidence pack)
 and `context/special-categories-operator-facilitated.md` (Art.9
@@ -1451,6 +1464,13 @@ exclude list.
    config/effective` exposes the merged effective config per core
    as a single JSON artefact ready to feed the operator's DPA
    register + Art.30 pipeline.
+   **Update (2026-11-23):** the route shipped in the release after
+   open-pryv.io 2.0.0-rc.87. It lists what each core has
+   configured, but it is not a subprocessor list: the subtrees that
+   can carry credentials (SMS provider endpoints, telemetry headers,
+   data-store settings) show only that they are set, and some
+   service URLs show their origin only, so name those providers from
+   your own records. See `context/subprocessor-posture-and-data-flow.md`.
 
 2. **Does Pryv differentiate PII-handling subprocessors vs.
    non-PII?**, Not as a structured flag, but the integration
@@ -1633,6 +1653,7 @@ for the integrations themselves + **"voluntarily missing
 structured-inventory artefact. The future inventory pipeline
 already has its slot in `UPDATE-TRIGGERS.md`
 (`CONFIG-EFFECTIVE-EXPOSURE`); no separate Art.28 backlog needed.
+(Shipped since: see the update under sub-question 1.)
 
 **Commit:** *(this commit)*.
 

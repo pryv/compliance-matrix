@@ -594,41 +594,82 @@ directing reporters at the public issue tracker).
 
 Proposal: `proposals/vulnerability-disclosure-program.md`.
 
-### `CONFIG-EFFECTIVE-EXPOSURE`
+### `CONFIG-EFFECTIVE-EXPOSURE` (SHIPPED in open-pryv.io `21fd8085`, the release after 2.0.0-rc.87; all 5 chips discharged, rows walked 2026-11-23)
 
-**Where the work lives**: `open-pryv.io`, new
-`GET /system/admin/config/effective` admin route + SPA
-"Configuration" tab. Absorbed by the bootstrap-admin-panel
-work (planned MVP1 slice). Read-only, per-core, merged effective
-config including the YAML-only key families (no SSH-the-box
-requirement to read deployment safeguards). Secrets redacted
-per a `SECRET_KEYS` constant + JSON-schema `secret: true`
-annotations. `?digest=true` short-circuit for cross-core drift
-pings.
+**Where the work lived**: `open-pryv.io`
+(https://github.com/pryv/open-pryv.io/issues/118). New admin route
+`GET /system/admin/config/effective` (method `system.getEffectiveConfig`;
+developer site, system reference, "Get the effective configuration",
+`config.effective.get`), code in `components/business/src/effectiveConfig/`.
+Admin key, `404` without it: the configuration the answering core runs
+with, `{ configMeta, keys }`, one entry per dotted key with its `source`
+layer (`default-file`, `base-file`, `override-file`, `bootstrap-file`,
+`env`, `argv`, `derived`, `service-info`, `shipped-plugin`, `built-in`,
+`platform-db`) and `scope` (`platform`, expected identical on every core;
+`core`, differs by design). Secrets redacted by an allow-list
+classification of every key with default-deny (a key no rule names, or a
+shown key whose name looks like a secret, is `unclassified`), a scan of
+shown strings, and URL sanitising that fails closed; a redacted entry
+shows presence, type and a path-bound HMAC fingerprint keyed by
+`auth.filesReadTokenSecret`, never a fragment (no fingerprints when that
+secret is a placeholder, published or short:
+`configMeta.secretFingerprints: false`). Two SHA-256 digests,
+`platform` (cross-core drift) and `full` (per-core baseline);
+`?digest=true` answers `configMeta` only; any other parameter `400`.
+Audited without a user, logged (`[config-effective-read]`),
+`Cache-Control: no-store`; `503` when platform storage is unreachable.
+It is the view of the API worker that answers (values the master process
+alone sets are not in it), and it shows configured values, not that a
+control is effective. Test codes `[CFE1]`..`[CFE8]`
+(`components/api-server/test/system-config-effective.test.js`) and
+`[CFC0]`..`[CFC9]` (`components/business/test/unit/effectiveConfig.test.js`).
+
+**What stays later**: the admin-panel "Configuration" view over the same
+data is not shipped; it remains a later, non-gating item of the
+admin-panel effort and moves no row. Deltas from the filed proposal: the
+redaction contract is the default-deny classification above (not a
+`SECRET_KEYS` list plus `secret: true` schema annotations), and hidden
+values carry keyed fingerprints so a change in them still changes the
+digests.
 
 Surfaced 2026-05-21 by DPIA Section (d) safeguards inventory
-feed gap-probing. Also unlocks cross-core drift
-detection + operator runbook + post-hoc debugging use-cases.
+feed gap-probing.
 
 **Tracking card**: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705795&issue=pryv%7Copen-pryv.io%7C118
 
-Affected rows when the endpoint ships:
+| Scope | Ref | Kind | Impact | Discharged row change |
+|---|---|---|---|---|
+| gdpr | Art.30 | feature | medium | chip removed; `tests:` + `CFE1`, `CFE5`, `CFE6`, `CFC3`; detail: the §1(g) description of technical security measures can be emitted per core as a redacted machine-readable document; table row "Security measures" points at it |
+| gdpr | Art.32 | feature | low | chip removed; `tests:` + `CFE2`, `CFE5`, `CFE8`, `CFC3`, `CFC7`; new per-aspect bullet "Configured safeguards, readable per core": operator-readable evidence of the configured safeguards, configuration not effectiveness, not §1(d) testing |
+| gdpr | Art.35 | feature | medium | chip removed; `tests: [CFE1, CFE3, CFE6]`; §7(d): the DPIA safeguards inventory can cite a dated, digest-stamped per-core snapshot |
+| iso-27001 | A.8.9 | feature | medium | chip removed; `tests: [CFE1, CFE3, CFE5, CFE6, CFE8, CFC1, CFC8]`; overview + new detail: configuration readable and comparable (per-core and platform digests) without host access; what stays yours |
+| hipaa-security | 164.308(a)(8) | feature | medium | chip removed; `tests: [CFE3, CFE5, CFE6, CFC8]`; overview + detail paragraph "A technical baseline to evaluate against": diff the `full` digest against the previous baseline |
 
-| Scope | Ref | Kind | Impact | Chip | After shipping |
-|---|---|---|---|---|---|
-| gdpr | Art.30 | feature | medium | ✅ | cite endpoint as evidence-emitter for the §1(g) "description of technical security measures" |
-| gdpr | Art.32 | feature | low | ✅ | strengthen evidence narrative around operator-visible safeguards |
-| gdpr | Art.35 | feature | medium | ✅ | DPIA safeguards inventory cites the endpoint output; coverage tier could shift F:Awareness Low → F:Evidence Med |
-| iso-27001 | A.8.9 | feature | medium | ✅ | direct match, configuration management evidence; row could move F:Storage / F:Primitive → Configurable |
-| hipaa-security | 164.308(a)(8) | feature | medium | ✅ | evaluation gains a technical baseline snapshot instead of a per-cycle reconstruction |
+Operator ruling 2026-11-23: `pryv_effort_saved` low to medium on gdpr
+Art.35, iso-27001 A.8.9 and hipaa-security 164.308(a)(8); coverage and
+facilitation mode unchanged (A.8.9 stays `evidence`, the route is evidence,
+not a setting); `reviewed_at` left unchanged.
+Also updated: `gdpr.Art.28` (the "future" machine-readable inventory
+paragraph now describes the shipped route and its limits: credential
+subtrees show only that they are set, so it is not a subprocessor list),
+`gdpr.Art.39` (DPIA tooling line),
+`context/subprocessor-posture-and-data-flow.md`,
+`context/privacy-by-design-and-default.md`,
+`context/special-categories-operator-facilitated.md` (correction: the
+endpoint reports configuration, not the annotations of event types),
+`docs/implementer-faq.md` (Q20, Q23 updates). Walked without change:
+`iso-27001.A.8.15` and `hipaa-security.164.312(b)` (the method is
+audited like the other `/system` admin methods); `hds.Activity.3`
+(cites release tags and image SHAs as configuration-management
+evidence; it makes no claim the route changes, a pointer can be added
+at its next review). Triggers: B.1 (new admin method, recorded there); B.11
+not fired (no new config key: the fingerprint key is the existing
+`auth.filesReadTokenSecret`); B.4 (no new primitive).
 
-Proposal: `proposals/config-effective-exposure.md` (filed 2026-07-28).
-The chips carry no `backlog:` key: the work has no standalone backlog
-file and is delivered by the bootstrap + admin-panel effort, and
-`planned.backlog` is optional in the schema. The earlier note here
-claimed a backlog stub was required to satisfy the validator; that is
-not the case (`scripts/validate.js` only resolves `backlog` when it is
-set).
+Proposal: `proposals/config-effective-exposure.md` (Status: shipped in
+`21fd8085`). **When the tag is cut**: replace "the release after
+open-pryv.io 2.0.0-rc.87" with the tag in the rows above and in the
+proposal.
 
 ⚑ **Lookup note.** The `164.308(a)(8)` ref is **quoted** in
 `scopes/hipaa-security.yml` (`- ref: "164.308(a)(8)"`), unlike most refs in
@@ -2110,6 +2151,19 @@ methods `system.erasures.list` (`GET /system/admin/erasures`) and
 without a user `[ERLA1]`..`[ERLA6]`. The erasure family fired;
 the walk and the rows are recorded under B.11 ("Walked 2026-11-21 for the
 erasure ledger") and Section A `ERASURE-LEDGER`.
+
+**2026-11-23, effective configuration (open-pryv.io `21fd8085`, the
+release after 2.0.0-rc.87)**: new admin method `system.getEffectiveConfig`
+(`GET /system/admin/config/effective`, `?digest=true`; reference entry
+`config.effective.get`), admin key, `404` without it, audited without a
+user, never cached `[CFE1]`..`[CFE8]`. Read-only, no subject data: the
+DSAR, rectification, erasure and access-control families are not
+touched. The walk and the rows are recorded under Section A
+`CONFIG-EFFECTIVE-EXPOSURE` (all five chips discharged). B.11 not fired
+(no new config key). The same merge makes a production core refuse the
+admin key and files-read secret values published in the open-pryv.io
+repository (as it already refused the published PII pepper): no row
+claims otherwise, none changed.
 
 ### B.2: New event-type formats (`data-types` repo)
 

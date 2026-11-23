@@ -128,9 +128,14 @@ operator can author:
 Pryv doesn't *enforce* these annotations server-side, but the
 operator's client code reads them and gates writes accordingly;
 their export tooling uses them to drive a "you're exporting Art.9
-data, confirm exception applies" warning; their DPIA tooling
-(the planned `GET /system/admin/config/effective` admin endpoint,
-when shipped) surfaces them in the deployment summary.
+data, confirm exception applies" warning; their DPIA tooling reads
+them from the catalogue for the deployment summary. The
+effective-configuration admin route
+(`GET /system/admin/config/effective`, the release after
+open-pryv.io 2.0.0-rc.87) does not carry these annotations: it
+reports each core's configuration (for example which event-type
+catalogue URL the core is set to), so the DPIA tooling combines the
+two.
 
 The HDS data-model exemplar already does similar annotations for
 HDS-specific FHIR-R4 bindings; the same authoring pattern carries

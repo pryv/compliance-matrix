@@ -1216,25 +1216,58 @@ requirements:
       software, services and networks shall be established, documented,
       implemented, monitored and reviewed.
     coverage: facilitated
-    pryv_effort_saved: low
+    pryv_effort_saved: medium
     facilitation_mode: evidence
     draft: true
     pryv_primitives: [audit]
-    planned:
-      - kind: feature
-        summary: "Read-only effective-configuration endpoint supplies per-core configuration-management evidence without host access"
-        proposal: proposals/config-effective-exposure.md
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=219705795&issue=pryv%7Copen-pryv.io%7C118
-        impact: medium
+    tests: [CFE1, CFE3, CFE5, CFE6, CFE8, CFC1, CFC8]
     overview: |
       Pryv configuration lives in
       `default-config.yml` + `override-config.yml` + `host-config.yml`
       (operator-side); a `config-validation` step on master start
       fails fast on unresolved variables or missing required service
       fields, giving a baseline "configuration is well-formed" check.
-      The operator's config-change procedure (versioning, approval,
-      deployment) sits on top. Audit log shows when config-driven
+      From the release after open-pryv.io 2.0.0-rc.87 (`21fd8085`)
+      the configuration is readable and comparable (per-core and
+      platform digests) without host access:
+      `GET /system/admin/config/effective` (admin key) answers what
+      each core runs with, secrets redacted. The operator's
+      config-change procedure (versioning, approval, deployment) and
+      the review sit on top. Audit log shows when config-driven
       behaviour changed observably.
+    detail: |
+      **Reading and comparing the configuration** (the release after
+      open-pryv.io 2.0.0-rc.87, `21fd8085`; developer site, system
+      reference, "Get the effective configuration"):
+        - One entry per key, sorted, with the layer that set it
+          (`default-file`, `base-file`, `override-file`,
+          `bootstrap-file`, `env`, `argv`, `derived`,
+          `platform-db`, ...) and its scope: `platform` (expected
+          identical on every core) or `core` (differs by design:
+          host, ports, paths, local credentials, local tuning)
+          `[CFE1]`, `[CFC1]`. Every key of the shipped defaults has
+          an explicit rule `[CFC1]`; a key no rule names is redacted
+          as `unclassified`.
+        - Two SHA-256 digests: `platform`, over the `platform` keys,
+          to detect drift between cores; `full`, over every key, to
+          compare a core with its previous baseline. They ignore
+          order and sources and recompute from the returned keys
+          `[CFE6]`, `[CFC8]`; `?digest=true` answers the digests
+          only, for a cheap periodic check `[CFE3]`. A changed secret
+          changes the digests through its keyed fingerprint, without
+          revealing it; with no usable `auth.filesReadTokenSecret`
+          there are no fingerprints (`configMeta.secretFingerprints:
+          false`) and a changed hidden value does not change them.
+        - Secrets never shown (presence, type and fingerprint only)
+          `[CFE5]`; each read is audited without a user, logged and
+          never cached `[CFE8]`.
+      What stays yours: the approved baseline itself, storing the
+      snapshots, the review cadence and the change procedure; the
+      host, OS, network, proxy and database-server configuration,
+      which this document does not cover; and the values the master
+      process alone sets, which are not in it (it is the view of the
+      API worker that answers). It shows configuration, not that a
+      control is effective.
 
   - ref: A.8.11
     title: A.8.11 Data masking
