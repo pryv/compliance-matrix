@@ -299,6 +299,13 @@ Per-principle breakdown, what Pryv does for you, what you do:
   boot (`[CVAD3]`), and a holder's inactivity schedule is
   suspended, never erased, while tracking is off (`[ACXP19]`).
   The erasure is `auth.delete`'s, guards included (`[ADSW8]`).
+  An exception for one account is yours to grant: since the
+  release after open-pryv.io 2.0.0-rc.87 your support can
+  restart a pending preset schedule from now, with its full
+  period and reminders (a holder who cannot sign in in time),
+  reasoned, mailed to the holder and recorded in the account's
+  trail (`POST /system/admin/auto-deletion/clear`, see Art.17)
+  `[ADCL3]`.
   Event-level and stream-level retention stays your retention
   job. See `context/data-retention-operator-owned.md`,
   "Account-level auto-deletion", and the operator page
@@ -381,7 +388,7 @@ Per-principle breakdown, what Pryv does for you, what you do:
 
 **Evidence**
 
-- tests: GLHP, UZEV, ACXP2, ACXP3, ACXP8, ACXP10, ACXP19, ACAC1, ACAC2, ACAC7, ADSW8, ADSW9, ADSW13, ACST14, LGLU3, CVAD3, URB2, RCRG1, RCRG2, RCRG3, RCRG5, RCRG6, RCRG7, MCUR1, MCUR2, ERLG3, ERLG4, ERLG6, ERLA2, ERLA4, ERLA6, ERLT4
+- tests: GLHP, UZEV, ACXP2, ACXP3, ACXP8, ACXP10, ACXP19, ACAC1, ACAC2, ACAC7, ADSW8, ADSW9, ADSW13, ACST14, LGLU3, CVAD3, URB2, RCRG1, RCRG2, RCRG3, RCRG5, RCRG6, RCRG7, MCUR1, MCUR2, ERLG3, ERLG4, ERLG6, ERLA2, ERLA4, ERLA6, ERLT4, ADCL3
 - specs: EVENT.BASE, STREAM.BASE
 - docs: customer-resources/account-auto-deletion.md
 - config keys: account.autoDeletion.inactivity.defaultDays, account.autoDeletion.inactivity.countAppUse, account.autoDeletion.userOverride, account.autoDeletion.allowUserOptOut, account.autoDeletion.reminders.leadDays, account.autoDeletion.reminders.minNoticeDays, account.autoDeletion.dryRun, accessTracking.isActive, accountErasure.ledger.enabled, accountErasure.ledger.retentionDays
@@ -1620,6 +1627,41 @@ the same path. See `context/data-retention-operator-owned.md`,
 "Account-level auto-deletion", and the operator page
 `customer-resources/account-auto-deletion`.
 
+Changes during a sweep pass, since the release after
+open-pryv.io 2.0.0-rc.87: the sweep reads the holder's setting,
+the schedule and the transfer record again right before it
+erases, and once more after the erasure is recorded as in
+progress; a change made meanwhile (the holder moving their date
+later, your support's reset below) stops that account's pass,
+and the next pass judges it on what is there then `[ADCLR]`,
+`[ADCLQ]`. The sweep never writes its schedule over one changed
+since it read it `[ADCLS]`. Earlier releases could ignore such a
+change, or write over it, and erase the account.
+
+Stopping a pending deletion for a holder (support), since the
+release after open-pryv.io 2.0.0-rc.87: your administrator calls
+`POST /system/admin/auto-deletion/clear` (method
+`system.autoDeletion.reset`, admin key, `username` and a
+`reason` of 1 to 500 characters). By default the schedule restarts from now with its
+full period, reminders and minimum notice, as a sign-in would;
+the policy that applies (your preset or the holder's own period)
+is not changed `[ADCL3]`, `[ADCL4]`. A holder's own **date** is
+their unconditional erasure request: it is refused without
+`removeSetting: true` `[ADCL5]`, which removes the holder's own
+schedule (your preset then applies from now, if any)
+`[ADCL6]`, `[ADCLT]`; use it only on the holder's verified
+request, the identity check being yours. A holder's `never` is
+never removed `[ADCL7]`. An erasure already started is refused
+`[ADCLH]`, `[ADCLX]`. Every change is mailed to the holder with
+your reason as written (`account-deletion-scheduled`, variables
+`BY_OPERATOR`, `OPERATOR_REASON`) and recorded in the account's
+own audit trail (`account.autoDeletion.resetByAdmin`: what was
+pending, what is now, the reason, no address) `[ADCLI]`; without
+an address the change stands and is recorded `[ADCLJ]`. A
+repeated call changes nothing more `[ADCL9]`. Residual risk to
+cover in your support procedure: someone other than the holder
+asking you to stop a deletion the holder wanted.
+
 `bin/backup.js` supports per-user backup files alongside DB-engine
 backups; using per-user backups improves erasure semantics
 regardless of engine.
@@ -1856,7 +1898,7 @@ auth/delete.ts` (middleware registration).
 
 **Evidence**
 
-- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, ERMK5, PGUG1, PGUG3, PGUG6, PGUG9, CMCER6, ERLG3, ERLG4, ERLG5, ERLG6, ERLG7, ERLG8, ERLG9, ERLA1, ERLA2, ERLA3, ERLA4, ERLA5, ERLA6, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT1, ERLT2, ERLT3, ERLT4
+- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, ERMK5, PGUG1, PGUG3, PGUG6, PGUG9, CMCER6, ERLG3, ERLG4, ERLG5, ERLG6, ERLG7, ERLG8, ERLG9, ERLA1, ERLA2, ERLA3, ERLA4, ERLA5, ERLA6, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT1, ERLT2, ERLT3, ERLT4, ADCL3, ADCL5, ADCL6, ADCLH, ADCLI, ADCLR, ADCLS, ADCLQ
 - docs: customer-resources/account-auto-deletion.md, customer-resources/backup.md
 - config keys: storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass, accountErasure.ledger.enabled, accountErasure.ledger.retentionDays, accountErasure.ledger.hmacKey
 - primitives: event, stream, backup-restore, external-id-index, account-auto-deletion
@@ -2915,7 +2957,16 @@ Per-aspect:
     database dump holds no usable link. A claim binds the transfer
     to the first account that claims it; failed links count on the
     caller's per-address budget of failed secrets. The operator's audited read of those fields
-    is deferred.
+    is deferred. Merged on open-pryv.io master `98b286d5`, part
+    of the still unreleased transfer: the owner's core accepts the claimant's
+    delegation invite only while the transfer is still claimed by
+    that account, checked before the control access is created and
+    again once the relationship is active; otherwise the accept is
+    refused (`410`) and the invite withdrawn on both cores, so a
+    transfer that was cancelled or lapsed while its invite could
+    not be withdrawn can no longer be completed `[ADCLP]`,
+    `[ADTI1]`, `[ADTI3]`, `[DACK1]`, `[DACK3]`, `[DACK5]`.
+    Ordinary delegation invites are not affected `[ADTI2]`.
   - Credential hand-off: IMPLEMENTED, the shared-secrets
     endpoints (`open-pryv.io/components/shared-secrets/`) hand a
     credential to a third party by a one-time random key instead
