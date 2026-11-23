@@ -1504,6 +1504,15 @@ transfer release**: discharge the "transfer" chips (gdpr Art.5 second chip,
 Art.6, Art.13 second chip, Art.14, the transfer half of Art.32) and walk the
 delegation rows listed in the proposal (a controller can be set by a claim).
 
+**2026-11-23 (open-pryv.io master `98b286d5`, the release after
+2.0.0-rc.87)**: support reset `system.autoDeletion.reset` (`POST
+/system/admin/auto-deletion/clear`), the sweep's re-read before acting, and
+the transfer claim-invite check. No chip discharged or added (the 5 transfer
+chips stay); rows walked under B.1 ("Walked 2026-11-23 for the auto-deletion
+support reset"). At the transfer release, also move the claim-invite codes
+(`ADCLP`, `ADTI1`..`ADTI4`, `DACK1`..`DACK5`) from the `gdpr.Art.32` prose
+into the rows' `tests:` (proposal step 6).
+
 ### `ERASURE-LEDGER` (SHIPPED in open-pryv.io `83e14c94`, the release after 2.0.0-rc.87; no chip was queued; rows walked 2026-11-21)
 
 **Where the work lived**: `open-pryv.io` (https://github.com/pryv/open-pryv.io/issues/154).
@@ -2164,6 +2173,100 @@ touched. The walk and the rows are recorded under Section A
 admin key and files-read secret values published in the open-pryv.io
 repository (as it already refused the published PII pepper): no row
 claims otherwise, none changed.
+
+**Walked 2026-11-23 for the auto-deletion support reset (unreleased at the
+walk; the release after open-pryv.io 2.0.0-rc.87)**: open-pryv.io
+`52a79dee`, review follow-ups `84a5ce67`, `9c023cf0`, `c57e403c`, `447c063c`,
+`7469d95f`, merged on master `98b286d5`. The rows say "the release after open-pryv.io
+2.0.0-rc.87": name the tag once it is cut. Section A `ACCOUNT-AUTO-DELETION`
+gains a dated note; no `planned:` chip discharged or added (the 5 transfer
+chips stay, the transfer being unreleased); no tier shift; `reviewed_at`
+left unchanged. Triggers: B.1 (one new admin method, one new audit action,
+no new error id); no new config key (B.11: none; the mail template
+`account-deletion-scheduled` gains two variables, `BY_OPERATOR` and
+`OPERATOR_REASON`, with an upgrade note to set the stored template again).
+What changed:
+- **New API method** `system.autoDeletion.reset` (`POST
+  /system/admin/auto-deletion/clear`, admin key, `404` without it, body
+  `{ username, reason, removeSetting? }`, the reason 1 to 500 characters)
+  `[ADCL1]`, `[ADCL2]`: by default the pending schedule restarts from now
+  with its full period, reminders and minimum notice, as a sign-in would,
+  the policy (operator preset or the holder's own period) unchanged
+  `[ADCL3]`, `[ADCL4]`, `[ADCLA]`, `[ADCLK]`; a holder's own date is
+  refused (`400 invalid-operation`, `data.reason: "date-schedule"`)
+  `[ADCL5]`; `removeSetting: true` removes the holder's own schedule
+  (their erasure request: on their verified request only) `[ADCL6]`,
+  `[ADCLT]`; `never` is never removed `[ADCL7]`; nothing pending, or a
+  repeated call: no change, no mail, no trail entry `[ADCL8]`,
+  `[ADCL9]`; an erasure already started, or starting while the call runs:
+  refused `erasure-in-progress` `[ADCLH]`, `[ADCLX]`, `[ADCLX2]`. A claim
+  window not claimed yet is cancelled as a use of the account would, the
+  beneficiary told, a pending claim invite withdrawn `[ADCLB]`, `[ADCLC]`,
+  `[ADCLD]`, `[ADCLF]`, `[ADCLU]`, `[ADCLV]`, `[ADCLG]`; once the
+  claimant controls the account the transfer completes, `409
+  auto-deletion-transfer-claimed` `[ADCLE]`, `[ADCLW]`. The account on
+  another core: `307` to that core `[ADCLM]`. Audited without a user (the
+  call) and in the account's own trail (`account.autoDeletion.resetByAdmin`:
+  what was pending, what is now, the reason, no address) `[ADCLI]`; the
+  holder is mailed with the reason as written, `notified: "audit-only"`
+  when they cannot be `[ADCL4]`, `[ADCLJ]`, `[ADCLN]`.
+- **Sweep fix**: the sweep reads the holder's setting, the schedule row
+  and the transfer record again right before an erasure, a claim window
+  opening, its end or its cancellation, and a last time once the erasure
+  is recorded as in progress; a change made meanwhile stops that
+  account's pass `[ADCLR]`, `[ADCLY]`, `[ADCLZ]`, `[ADCLQ]`, `[ADCLO]`,
+  `[ADCLL]`. It never writes its schedule row over one changed since it
+  read it `[ADCLS]`. Before, such a change could be ignored or written
+  over, and the account erased.
+- **Account transfer, an ended transfer's invite** (part of the merged,
+  unreleased transfer): the owner's core accepts a delegation invite sent for a transfer only while
+  that transfer is claimed by the invited account, checked before the
+  control access is created and again once the relationship is active;
+  otherwise `410`, the invite withdrawn on both cores `[ADCLP]`,
+  `[ADTI1]`, `[ADTI3]`, `[ADTI4]`, `[DACK1]`..`[DACK5]`. Ordinary
+  delegation invites unaffected `[ADTI2]`.
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.17 | detail: two new paragraphs, "Changes during a sweep pass" and "Stopping a pending deletion for a holder (support)" (restart by default, a holder's date refused without `removeSetting`, mailed, trail entry, residual risk of a request not from the holder) | `ADCL3`, `ADCL5`, `ADCL6`, `ADCLH`, `ADCLI`, `ADCLR`, `ADCLS`, `ADCLQ` |
+| gdpr | Art.5 | detail, §1(e) auto-deletion paragraph: a per-account exception to your preset is yours to grant, by the support reset | `ADCL3` |
+| gdpr | Art.32 | detail, transfer bullet (planned, chip kept): the claim-invite check, codes in prose only | none (`ADCLP`, `ADTI1`..`ADTI3`, `DACK1`, `DACK3`, `DACK5` in prose) |
+| hipaa-security | 164.312(b) | detail: new paragraph, the administrator's reset recorded without a user and in the account's trail | `ADCLI`, `ADCLW` |
+
+No config keys added. Codes of the unreleased transfer stay in prose
+(as its other codes), to be moved into `tests:` at the transfer release
+(proposal "At release (transfer)", step 6).
+Also updated: `context/data-retention-operator-owned.md` (sweep re-read;
+"Legal hold": the support reset, which postpones and does not hold; the
+"admin method to clear a schedule is later work" sentence removed),
+`docs/pryv-primitives.md` `account-auto-deletion` (sweep re-read, new
+"Support reset" bullet; the transfer said "designed, not implemented",
+now "implemented, not released"), `proposals/account-auto-deletion.md`
+(history line, transfer release step 6).
+Walked without change:
+- **Erasure, derived and sibling rows** (`ccpa.1798.105`,
+  `pipeda.Principle.4.5`, `swiss-nlpd.Art.32`, `soc2.CC6.5`, `soc2.P4.3`,
+  `soc2.C1.2`, `iso-27701.A.7.4.5`, `iso-27001.A.8.10`): they state the
+  scheduled deletion and defer to `gdpr.Art.17` / `gdpr.Art.5`, where the
+  reset and the re-read are described; none claims an operator cannot
+  stop one account's schedule.
+- **Retention** (`soc2.P4.2`): retention of personal information inside
+  accounts stays the operator's job; the per-account exception is a
+  support act, recorded on `gdpr.Art.5`. Tier kept.
+- **Transparency** (`gdpr.Art.12`, `gdpr.Art.13`): the holder is told by
+  the existing confirmation mail, now naming the support and its reason
+  `[ADCLN]`; the Art.13 §2(a) preset notice is unchanged.
+- **Audit, other rows** (`iso-27001.A.8.15`, `soc2.CC7.2`,
+  `iso-27701.A.7.4.7`): the admin call is audited like the other `/system`
+  admin methods; the per-account trail entry is recorded on
+  `hipaa-security.164.312(b)`, where the external-id release precedent is.
+- **Access control and delegation** (`hipaa-security.164.312(a)(1)`,
+  `164.312(d)`, `soc2.CC6.1`, `CC6.2`, `iso-27001.A.5.15`, `A.5.16`,
+  `gdpr.Art.8`): their delegation text does not yet describe a
+  controller set by a transfer claim (walked at the transfer release, per
+  the proposal); ordinary delegation invites are unchanged `[ADTI2]`.
+Transport, response-header, platform DB and backup rows: not affected.
+B.2 to B.11: none (no new primitive: `account-auto-deletion` extended).
 
 ### B.2: New event-type formats (`data-types` repo)
 

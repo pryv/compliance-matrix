@@ -241,6 +241,11 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
 5. Note on `gdpr.Art.32`: the operator read path for the name and date of birth is NOT shipped;
    the row must say they are unreadable (encrypted, no method) until it is, and that rotating
    the admin key without `identitySecretsKey` makes them unreadable.
+6. The claim-invite check (open-pryv.io master `98b286d5`: an invite sent for a transfer is
+   accepted only while the transfer is claimed by that account, else `410` and withdrawn) is
+   already in the `gdpr.Art.32` planned bullet with `[ADCLP]`, `[ADTI1]`..`[ADTI4]`,
+   `[DACK1]`..`[DACK5]`; carry it into the delegation rows walked in step 2 (how a controller
+   is set by a claim, and when that claim can no longer be completed).
 
 ## History
 
@@ -262,3 +267,9 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
   the 5 transfer chips stay `planned`.
 - 2026-11-01: transfer merged to open-pryv.io master (`2bd4778b`); still not released (the release
   waits for the Art.14(5)(b) reading); the 5 transfer chips stay `planned`.
+- 2026-11-23: open-pryv.io master `98b286d5` (the release after 2.0.0-rc.87): the support reset
+  `system.autoDeletion.reset` (`POST /system/admin/auto-deletion/clear`; the "admin method to
+  clear a schedule" the context note listed as later work; not a hold), the sweep's re-read before acting,
+  and the transfer claim-invite check (a cancelled or lapsed transfer can no longer be completed
+  through its old invite). No chip involved; rows walked, see `UPDATE-TRIGGERS.md` B.1 ("Walked
+  2026-11-23 for the auto-deletion support reset").

@@ -1031,10 +1031,17 @@ mails (open-pryv.io 2.0.0-rc.66, `8521c8d5`; per-core block
   WARN log line before and after, an `account.autoDeletion.erase` audit row with
   `audit.onUserDelete: keep` `[ADSW17]`; `dryRun` `[ADSW13]`,
   `maxDeletionsPerPass` `[ADSW12]`; an interrupted erasure completes later
-  `[ADSW19]`.
+  `[ADSW19]`. Since the release after open-pryv.io 2.0.0-rc.87 it reads the
+  setting, the schedule and the transfer record again before acting and never
+  writes over a change made meanwhile `[ADCLR]`, `[ADCLS]`.
+- **Support reset** (the release after open-pryv.io 2.0.0-rc.87):
+  `system.autoDeletion.reset` (`POST /system/admin/auto-deletion/clear`, admin
+  key) restarts a pending schedule from now, or with `removeSetting: true`
+  removes the holder's own one; reasoned, mailed to the holder, recorded in the
+  account's trail `[ADCL3]`, `[ADCL5]`, `[ADCL6]`, `[ADCLI]`.
 - **Not covered**: retention of events and streams inside an account (the
   operator's job, `context/data-retention-operator-owned.md`); transfer to a
-  beneficiary (designed, not implemented, `proposals/account-auto-deletion.md`).
+  beneficiary (implemented, not released, `proposals/account-auto-deletion.md`).
 - **Compliance role**: account-level storage limitation (GDPR Art.5 §1(e), PIPEDA
   Principle 4.5, ISO 27701 A.7.4.5, SOC 2 P4.2) and erasure scheduled by the
   data subject (GDPR Art.17, CCPA 1798.105, Swiss nLPD Art.32). Operator page:

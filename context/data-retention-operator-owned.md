@@ -300,8 +300,11 @@ one on gives dormant accounts the full schedule, and lowering it
 restarts the clock; at the deadline the core's sweep re-reads the
 account's use, runs the deletion guards of `auth.delete` (a refusal
 is held and mailed once), then erases exactly as `auth.delete`
-does, relationships torn down included. One sweep per core, no
-cluster coordination (an account lives on one core).
+does, relationships torn down included. Since the release after
+open-pryv.io 2.0.0-rc.87 it also reads the holder's setting, the
+schedule and the transfer record again right before acting, and a
+change made meanwhile stops that account's pass. One sweep per
+core, no cluster coordination (an account lives on one core).
 
 ### Your role as operator
 
@@ -348,13 +351,27 @@ cluster coordination (an account lives on one core).
    accounts, accounts under a delegation) stay under your own
    retention procedure if your rule must reach them; their holders
    can still schedule their own deletion.
-5. **Legal hold.** There is no per-account operator hold (an
-   admin method to clear a schedule is later work). To
+5. **Legal hold.** There is no per-account operator hold. To
    stop deletions on a core, set `inactivity.defaultDays: null`
    (stops the preset) or `enabled: false` (hides the feature and
    stops the sweep entirely, holders' own schedules included).
    Build your litigation-hold procedure on those switches, or keep
-   the preset off where holds are frequent.
+   the preset off where holds are frequent. For one account (a
+   holder who cannot sign in in time), the release after
+   open-pryv.io 2.0.0-rc.87 adds a support reset, `POST
+   /system/admin/auto-deletion/clear` (admin key, `username`,
+   `reason`): by default the pending schedule restarts from now
+   with its full period and reminders, the policy unchanged; a
+   holder's own date is refused unless `removeSetting: true`
+   removes the holder's own schedule, which you do only on their
+   verified request (it is their erasure request, GDPR Art.17). It
+   postpones, it does not hold: the restarted schedule runs again
+   unless the holder signs in or changes it. Every change is mailed
+   to the holder with your reason and recorded in the account's
+   trail (`account.autoDeletion.resetByAdmin`). A platform whose
+   mail templates were seeded earlier sets
+   `account-deletion-scheduled` again first, or the mail still
+   ends with the advice to change the password.
 6. **What remains after a deletion.** Each erasure is logged at
    WARN before it starts and after it completes (username, user id,
    trigger, whether the holder or your preset set the schedule,
