@@ -11651,6 +11651,19 @@ authentication page sent it; if your own page did, it must stop
 another core is served through the shared-secret hand-off
 between cores).
 
+The address an authorisation request returns to (`returnURL`,
+followed by the authentication page once the user answers) is
+checked when the request is created, since the release after
+open-pryv.io 2.0.0-rc.87: a value that is not absent or an absolute
+URL, carries `user:password@`, or uses a `javascript:`, `data:`,
+`vbscript:` or `blob:` scheme is refused (`400 invalid-parameters`)
+`[RAO8]`, `[RTO10]`. With `access.returnOrigins` set, an app id
+you list may only return to the origins you register for it
+`[RAO3]`, `[RTO12]`. This is redirect hygiene, not client
+authentication: whoever creates a request can still read its
+outcome by polling; apps that need their redirect bound to the
+client use the OAuth2 flow.
+
 Further examples from the 2026 security review (open-pryv.io
 2.0.0-rc.49 and 2.0.0-rc.50; `context/code-security-review-2026.md`):
 every JSON answer of the API carries `Cache-Control: no-store` and
@@ -11710,9 +11723,9 @@ an ingress route adapter paths around the core.
 
 **Evidence**
 
-- tests: ACTY, MC04D, HTC1, HSPE1, QPR2, PFR1, PFR2, PFR4, PFR5, PFR6, PFR10, CO21, CO22, RQ33, OCMD01, OCMD03B, OCMD03D, OCMD03G, OCMD03H, OCMDE17, ADRI03, ADRI06, ADRI09, ADRI13, ADRC03, ADRC08, ADRU3, ADRU4
+- tests: ACTY, MC04D, RAO3, RAO8, RTO10, RTO12, HTC1, HSPE1, QPR2, PFR1, PFR2, PFR4, PFR5, PFR6, PFR10, CO21, CO22, RQ33, OCMD01, OCMD03B, OCMD03D, OCMD03G, OCMD03H, OCMDE17, ADRI03, ADRI06, ADRI09, ADRI13, ADRC03, ADRC08, ADRU3, ADRU4
 - docs: customer-resources/adapter-routes.md
-- config keys: cmc.allowedPrivateHosts, oauth.clientMetadataDocuments.maxDocumentBytes, adapterRoutes
+- config keys: cmc.allowedPrivateHosts, oauth.clientMetadataDocuments.maxDocumentBytes, adapterRoutes, access.returnOrigins
 - derives from: iso-27001.A.8.25
 - primitives: audit
 - context notes: code-security-review-2026
