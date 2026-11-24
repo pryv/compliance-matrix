@@ -1094,9 +1094,12 @@ and the resulting revocation (open-pryv.io `829f7238`), so the
 §164.312(b) trail covers delegated-app authorization activity,
 not just data access. Federated sign-in (SSO, beta) emits into the
 same pipeline: `sso.login` (user-resolved, in the account's trail)
-and `sso.refused` (pre-identification: no-account / unproved email /
-mint failure, syslog), so an attempted account takeover through an
-external identity is itself auditable.
+and `sso.refused` (pre-identification: no-account / unproved email,
+syslog), so an attempted account takeover through an external
+identity is itself auditable. From the release after 2.0.0-rc.87 a
+sign-in that fails after its account was found (session or hand-off
+not made) is `sso.failed` in that account's trail `[SSOE10]`; before,
+it was `sso.refused` in syslog only.
 
 **OAuth2 audit additions (open-pryv.io 2.0.0-rc.66 to
 2.0.0-rc.77).** In the subject's trail: `oauth.nonce.reused` (an
