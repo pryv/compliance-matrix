@@ -1034,9 +1034,18 @@ authorise) can examine the history.
 
 **Detail**
 
-Audit storage uses SQLite directly (not the engine-agnostic mall
-layer), to keep the audit path independent of the data path. This
-decouples integrity of the log from issues in the primary engine.
+Audit storage has its own storage interface (not the
+engine-agnostic mall layer), to keep the audit path independent of
+the data path: per-user SQLite files on the SQLite engine, its own
+connection pool on the PostgreSQL engine. This decouples the log
+from issues in the data path.
+
+The audit record is written after the call has taken effect, on
+every transport (HTTP, batch, socket.io). If that write fails, the
+call's answer is unchanged and the failure is logged at error level
+with the method, account and stack, which the operator should
+alert on `[BAUF1]`, `[BAUF2]`. A failed write is never replaced by
+a false error record.
 
 Audit row content is data-minimal **by construction**: action +
 source (transport + ip) + URL query + access ref + optional
@@ -1212,7 +1221,7 @@ stalled reader could hold.
 
 **Evidence**
 
-- tests: AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC, RIDL3, RIDL4, RIDL5, ADCLI, ADCLW
+- tests: AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC, RIDL3, RIDL4, RIDL5, ADCLI, ADCLW, BAUF1, BAUF2
 - config keys: accesses.deletionRecords.retentionDays, limits.audit.maxConcurrentReadsPerAccess, limits.audit.maxReadWaitMs
 - primitives: audit, audit-event-stream, external-id-index
 - context notes: content-query-audit-semantics, delegation-model, workforce-access-patterns
