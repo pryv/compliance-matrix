@@ -361,9 +361,17 @@ tiers are unchanged (the contribution stays facilitated). **HAProxy added
 2026-11-23** (dev-site2 `34f0074`, unpublished at the time): a reference
 `haproxy.cfg` with the same routes, keys and limits, and fail2ban filters for
 its log, verified end to end against an open-pryv.io 2.0.0-rc.87 core; the
-rows already cite the page, nothing to change on them. Cloudflare / Traefik /
-Caddy snippets remain a backlog item with no chips: they would add no row
-shift. When the client-IP attribution changes (trusted-proxy list),
+rows already cite the page, nothing to change on them. **Traefik and Caddy
+added 2026-11-24** (dev-site2 `318b986`, unpublished at the time): a Traefik
+static + dynamic configuration and a Caddyfile (with the caddy-ratelimit
+module) for the same routes, keys and limits, with fail2ban filters for their
+JSON access logs, verified end to end against an open-pryv.io 2.0.0-rc.87 core
+(Traefik 3.8, Caddy 2.11.9); rows unchanged for the same reason. A Cloudflare
+snippet remains a backlog item with no chips: it would add no row shift. When
+the page is next published, refresh the sentence "HAProxy, Cloudflare, Traefik
+and Caddy apply the same route table; dedicated snippets ... not shipped yet"
+in `context/rate-limiting-and-dos-protection.md` and `docs/implementer-faq.md`
+(only Cloudflare is then missing). When the client-IP attribution changes (trusted-proxy list),
 refresh the page's "How Pryv reads the client IP" paragraph.
 
 **Trigger fired (2026-10-13):** open-pryv.io 2.0.0-rc.47 introduced in-code

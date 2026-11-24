@@ -8,6 +8,11 @@ iso-27001 A.8.21 and hipaa-security 164.308(a)(5)(ii)(C); the page is also cited
 A.8.6, hipaa-security 164.308(a)(6)(i) and diga A1.4.3. HAProxy, Cloudflare, Traefik and Caddy
 snippets are not shipped (no chips; the nginx page states the same route table applies).
 
+**Update 2026-11-24:** HAProxy (dev-site2 `34f0074`, 2026-11-23), Traefik and Caddy (dev-site2
+`318b986`, 2026-11-24) configurations added to the same page with their fail2ban filters, each
+verified end to end against an open-pryv.io 2.0.0-rc.87 core; not yet published on
+pryv.github.io. Cloudflare remains (no chips).
+
 **Update 2026-10-13:** open-pryv.io 2.0.0-rc.47 and 2.0.0-rc.50 added targeted in-code budgets
 (failed passwords per account and per client address across cores, live access requests per
 address, pending MFA sessions per account, batch / paging / upload / socket.io bounds, an
