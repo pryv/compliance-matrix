@@ -115,7 +115,7 @@ This is the foundation for several matrix coverage upgrades:
 - **GDPR Art.5(1)(b) (Purpose limitation)**: `implemented`: permissions per
   stream enforce the purpose granted at consent; can't read outside the
   granted stream scope.
-- **GDPR Art.5(2) (Accountability)**: `implemented`: every API call audited
+- **GDPR Art.5(2) (Accountability)**: `implemented`: API calls audited
   with the access ref (incl. serial) → access row carries the consent
   state at that serial.
 - **GDPR Art.30 (Records of processing)**: `implemented`: accesses (with

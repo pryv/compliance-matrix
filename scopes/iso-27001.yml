@@ -695,8 +695,9 @@ requirements:
         tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467766&issue=pryv%7Copen-pryv.io%7C74
         impact: low
     overview: |
-      Per-user audit log captures every API method invocation; access
-      reference (accessId + accessSerial) ties each row to the
+      Per-user audit log captures the API calls on an account (scope in
+      the `audit` primitive; calls without a user go to the syslog
+      mirror, off by default); access reference (accessId + accessSerial) ties each row to the
       authenticated identity. Since open-pryv.io `07b6d3b6` this
       includes the OAuth2 authorization server's own activity
       (`oauth.*` events: consent lifecycle, code exchange incl. replay
@@ -706,7 +707,9 @@ requirements:
       SQLite files, or its own PostgreSQL connection pool) to decouple
       the log from data-path engine issues. A failed audit write never
       changes the call's answer and is logged at error level for the
-      operator's alerting `[BAUF1]`. The
+      operator's alerting `[BAUF1]`; from the release after open-pryv.io
+      2.0.0-rc.87 it is also counted, for the same alerting (see
+      hipaa-security 164.312(b)); it is not recovered. The
       "analysed" element (review cadence, alerting thresholds) is the
       operator's procedure.
     detail: |

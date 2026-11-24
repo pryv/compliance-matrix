@@ -189,8 +189,10 @@ custom-auth-step extension point; `default-config.yml`
 
 ### 7. Audit log automatic capture
 
-The audit primitive is invariant, every API call against every
-stream is audited, regardless of sensitivity. The operator gets
+The audit is on by default and does not depend on the stream: API
+calls on a sensitive stream are recorded like any other (exceptions:
+high-frequency series and previews, see the `audit` entry of
+`docs/pryv-primitives.md`). The operator gets
 the audit trail "for free" for sensitive streams; nothing extra to
 configure. The audit-minimality posture (Q9: no request body
 captured) is a feature here, not a limitation, audit captures

@@ -268,6 +268,22 @@ The atomic data record.
 
 Records API method invocations per user.
 
+- **Scope, and what is outside it**: on by default, not invariant: the
+  operator can switch it off (`audit.active`) or filter it by method
+  (`audit.storage.filter`, unset by default). An account's trail holds the
+  API calls made on that account over HTTP, in a batch or over socket.io,
+  except a short list of unaudited reads (`NOT_AUDITED_METHODS` in
+  `components/audit/src/ApiMethods.ts`). Calls with no resolved user
+  (registration, administration calls, OAuth and SSO steps before a user is
+  known) are not in any trail: they are recorded only in the syslog mirror,
+  off by default (`audit.syslog.active`); four administration acts also
+  leave a record in the trail of the account they concern. High-frequency
+  series calls and image preview calls are not audited, nor are the lookups
+  the server makes for itself inside a flow (OAuth consent, sign-in,
+  delivery), whose writes are. Corrected
+  2026-11-24: several places of this matrix said "every API call" and
+  "invariant, no opt-out".
+
 - **Stored**: per-user SQLite by default, or shared PostgreSQL tables when the
   operator selects the PostgreSQL audit engine, which the installation wizard
   does for PostgreSQL platforms (see `components/audit/` and the engines under
@@ -859,7 +875,10 @@ happens before egress.
   only, the error class, a hard-coded message chosen by error
   code, and a stack rebuilt from repository-relative frames. Plus
   `telemetry.dropped`, which counts datapoints the emitter
-  refused, by reason.
+  refused, by reason, and (from the release after open-pryv.io
+  2.0.0-rc.87) `audit.records.lost`, which counts audit records
+  that could not be written, labelled only with
+  `audit.record.kind` and `audit.loss.reason`.
 - **Anonymity controls**: error reports are aggregated by fault
   and stamped at the reporting interval, not the instant of
   failure; the instance id is the machine hostname and is never

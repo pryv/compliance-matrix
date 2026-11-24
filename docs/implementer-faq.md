@@ -229,7 +229,7 @@ through `http.trustedProxies` only. Detail and test codes:
 
 **What Pryv contributes:** detection layer, plus the targeted
 budgets above.
-- Audit log captures every API call (fail2ban watches it for
+- Audit log captures the API calls on accounts (fail2ban watches it for
   auth-failure patterns; SIEM consumes for anomaly detection).
 - Observability adapter surfaces per-core request-rate + latency +
   error-rate metrics.
@@ -1373,7 +1373,7 @@ deployment-specific facilitation strength is in the detail prose.
 4. Custom `@pryv/datastore` for per-subtree storage tiering.
 5. Per-engine isolation at storage layer (storage-engine plugins).
 6. `customExtensions.customAuthStepFn` access-grant gate.
-7. Audit log automatic capture (Pryv-invariant).
+7. Audit log automatic capture (on by default).
 8. Backup encryption tiering (built-in encryption, operator-held keys, Q15).
 
 CMC consent flows (Q18) are a ninth lever for cross-account
@@ -1553,8 +1553,9 @@ exclude list.
              api.method.duration   {method.id, status.class}
              api.method.errors     {method.id, error.code}
              telemetry.dropped     {reason}
+             audit.records.lost    {audit.record.kind, audit.loss.reason}
    resource  service.name, service.version,
-             service.instance.id (core FQDN), service.worker
+             service.instance.id (machine hostname), service.worker
    errors    error.code, error.class, method.id,
              error.stack (frames only, repository-relative)
    ```
@@ -1570,7 +1571,11 @@ exclude list.
    route parameters, bodies, headers, usernames and record
    identifiers have no key in the schema, so no code path can
    emit them; a datapoint outside the vocabulary is dropped and
-   counted under `telemetry.dropped` rather than sent.
+   counted under `telemetry.dropped` rather than sent. From the
+   release after open-pryv.io 2.0.0-rc.87 the counter
+   `audit.records.lost` (labels `audit.record.kind` and
+   `audit.loss.reason`, fixed values) reports audit records that
+   could not be written.
 
    The outbound host names that the agent era could not
    suppress (`peer.hostname`, `server.address`, for webhooks,
@@ -2068,7 +2073,7 @@ with the standard PbD anti-pattern:
 | Standard (PbD anti-pattern) | Pryv (privacy-by-design) |
 |---|---|
 | Processes have direct access to personal data | Access Control is a separate layer every process traverses |
-| Cannot track per-resource access | Audit captures every API call per-subject (invariant, no opt-out) |
+| Cannot track per-resource access | Audit captures API calls per-subject (on by default; bounds in the `audit` entry of `docs/pryv-primitives.md`) |
 | Process registry maintained manually (drifts) | Process registry self-documented (`GET /accesses` + audit) |
 
 **Data-model commitment**: streams + events segregated by
@@ -2086,7 +2091,7 @@ operators can't accidentally ship it.
 **12 platform defaults** (the catalogue answer):
 
 1. Default-deny on permissions (empty `permissions: []`).
-2. Audit-on by default (invariant, no opt-out, Q9).
+2. Audit-on by default (Q9).
 3. TLS enforced (the optional Let's Encrypt integration).
 4. Hosting region pinned per user (Q12 architectural residency).
 5. Stream-permission granularity (Q22, no "public" tier exists).

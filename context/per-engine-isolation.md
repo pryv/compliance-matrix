@@ -28,8 +28,9 @@ opening a different file.
 - Erasure (GDPR Art. 17 / HIPAA §164.310(d)(1)) is `rm` of the
   per-user folder, removes the user from filesystem-level backups
   as well, depending on the operator's backup tool semantics.
-- Audit log per-user SQLite under `components/audit/` follows the
-  same model regardless of base-storage engine choice.
+- Audit log: per-user SQLite files by default, whatever the
+  base-storage engine, so it follows the same model unless
+  `storages.audit.engine` is set to `postgresql`.
 
 This is **physical filesystem-level isolation.** Cross-user reads
 require either an OS-level read of another user's file (root
@@ -191,6 +192,7 @@ inherit the framing without needing the cross-link in every cell.
   this note characterises.
 - `access`, `permissions`, the API-surface enforcement layer (which
   on PG is the only enforcement layer).
-- `audit`: per-user SQLite regardless of base-storage engine.
+- `audit`: its own engine setting (`storages.audit.engine`), per-user
+  SQLite by default whatever the base-storage engine.
 - `backup-restore`: engine-specific erasure semantics tie back to
   the isolation model.

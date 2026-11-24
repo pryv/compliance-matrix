@@ -126,12 +126,17 @@ discloses them per Art.13(1)(f) where recipients exist.
   method registry, re-checked against that registry at emit time),
   `status.class` (`2xx`/`3xx`/`4xx`/`5xx`) and `error.code` (a value
   from the API's published error id list, or `unknown`). Resource
-  identity: service name, service version, the core's own FQDN and a
+  identity: service name, service version, the machine hostname and a
   worker index. Error reports, for server-side faults only: the
   error code, the error class name, and a stack trace whose frames
   are rewritten repository-relative, with frames from outside the
   repository discarded. One operational counter, `telemetry.dropped`,
-  reports how many datapoints the emitter refused, by reason.
+  reports how many datapoints the emitter refused, by reason. From
+  the release after open-pryv.io 2.0.0-rc.87 one more,
+  `audit.records.lost`, counts the audit records that could not be
+  written, labelled only with `audit.record.kind` (`valid`, `error`,
+  `event`) and `audit.loss.reason` (four fixed causes) `[ALRS1]` to
+  `[ALRS3]`.
 - **What cannot flow out, by construction**: request URLs, query
   and route parameters, request and response bodies, HTTP headers of
   any kind, usernames, stream/event/attachment identifiers, log
@@ -281,7 +286,7 @@ agent observes the process, credentials, request bodies, URLs,
 headers and SQL have no code path to the backend at all: they are
 absent from the schema rather than removed from a payload. What
 crosses to the observability backend is aggregated per-method
-metrics plus sanitized error stack traces.
+metrics, operational counters and sanitized error stack traces.
 
 ## How to assemble the subprocessor inventory for your DPA
 

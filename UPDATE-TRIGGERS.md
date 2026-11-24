@@ -2186,6 +2186,33 @@ admin key and files-read secret values published in the open-pryv.io
 repository (as it already refused the published PII pepper): no row
 claims otherwise, none changed.
 
+**2026-11-24, lost audit records (open-pryv.io `12b43736`, the release
+after 2.0.0-rc.87)**: new admin method `system.getAuditStatus` (`GET
+/system/audit-status`, admin key, `404` without it, not audited, never
+cached): counts by kind and cause of the audit records the core could
+not write since it started, no method, account or message
+`[ALRW1]`..`[ALRW8]`. Read-only, no subject data: the DSAR,
+rectification, erasure and access-control families are not touched. The
+audit family fired: `hipaa-security.164.312(b)` (detail, tests),
+`hipaa-security.164.308(a)(1)(ii)(D)`, `hipaa-privacy.164.528`,
+`iso-27001.A.8.15` and `gdpr.Art.5` say that a record that cannot be
+written is logged and counted, and not recovered. No row claims that no
+record is lost. No tier shift, no chip, no new config key. Emitted
+surface: B.10 of the same date. Corrected in the same walk: `diga` audit
+row, `hds.Activity.3` audit sub-control, `gdpr.Art.30` technical,
+`context/per-engine-isolation.md` named SQLite as the only audit storage.
+Same date, the release after 2.0.0-rc.87 too: in-process API calls (a
+delivery to an account of the same core, the one-time secrets, the writes of
+an OAuth consent) are recorded `[IPAU1]`..`[IPAUA]`, and no audit row stays
+under an erased id on the PostgreSQL audit engine `[AGPE1]`..`[AGPE6]`,
+`[AGPG1]`..`[AGPG4]` (`hipaa-security.164.312(b)` with a correction of
+record, `gdpr.Art.17`). Telemetry is sent at a worker's normal stop
+`[OBSF1]`, `[WSTP1]`: same emitted surface, B.10 not fired.
+Also corrected, with no code change behind it: "every API call is audited"
+and "invariant, no opt-out" (the rows above, `gdpr.Art.25`, the
+`audit` primitive which now states the scope, `docs/implementer-faq.md`
+and five context notes).
+
 **Walked 2026-11-23 for the auto-deletion support reset (unreleased at the
 walk; the release after open-pryv.io 2.0.0-rc.87)**: open-pryv.io
 `52a79dee`, review follow-ups `84a5ce67`, `9c023cf0`, `c57e403c`, `447c063c`,
@@ -3113,6 +3140,20 @@ note, `swiss-nlpd.Art.9`) remain accurate unchanged.
 keys (`observability.newrelic.*`, `newrelic-license-key`,
 `newrelic-high-security`, and the `NEW_RELIC_*` environment opt-ins)
 are removed.
+
+**Trigger pass outcome (2026-11-24, lost audit records)**: open-pryv.io
+`12b43736` (the release after 2.0.0-rc.87) adds one metric name,
+`audit.records.lost`, and two attribute keys with closed values,
+`audit.record.kind` (3) and `audit.loss.reason` (4): at most twelve
+series, no method, account or message. Proof: constants pinned
+`[ALRS1]`, validation decisions for accepted and refused inputs
+`[ALRS2]`, wire enumeration of the sent payload `[ALRS3]`. The
+enumeration from a running deployment is owed at the release. Refreshed:
+`context/subprocessor-posture-and-data-flow.md`, `docs/pryv-primitives.md`
+(`observability-provider`), `docs/implementer-faq.md` (Layer 3),
+`gdpr.Art.28` Layer 3. The claim is unchanged. Also corrected: three of
+them still named the core FQDN as instance identity (the machine hostname
+since 2026-07-28).
 
 **Superseded pass (2026-07-27), kept for the audit trail**: the shipped
 New Relic adapter had been inert since observability first shipped, so

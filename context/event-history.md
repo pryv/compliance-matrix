@@ -59,8 +59,8 @@ complete record and has to be justified against your erasure obligations.
 
 ## What the audit log records about event changes
 
-The audit log is on by default (`audit.active: true`, every API method
-audited) and does not depend on `versioning`. For each call it records the
+The audit log is on by default (`audit.active: true`; scope in the
+`audit` entry of `docs/pryv-primitives.md`) and does not depend on `versioning`. For each call it records the
 access that made it (id and version), the time, the method, the source IP and
 the URL query parameters; never the request body. In addition:
 
