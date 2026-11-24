@@ -2207,7 +2207,8 @@ an OAuth consent) are recorded `[IPAU1]`..`[IPAUA]`, and no audit row stays
 under an erased id on the PostgreSQL audit engine `[AGPE1]`..`[AGPE6]`,
 `[AGPG1]`..`[AGPG4]` (`hipaa-security.164.312(b)` with a correction of
 record, `gdpr.Art.17`). Telemetry is sent at a worker's normal stop
-`[OBSF1]`, `[WSTP1]`: same emitted surface, B.10 not fired.
+`[OBSF1]`, `[WSTP1]`: same emitted surface, B.10 not fired. New audit action
+`sso.failed` `[SSOE10]` (`hipaa-security.164.312(b)`, `soc2` federated sign-in).
 Also corrected, with no code change behind it: "every API call is audited"
 and "invariant, no opt-out" (the rows above, `gdpr.Art.25`, the
 `audit` primitive which now states the scope, `docs/implementer-faq.md`

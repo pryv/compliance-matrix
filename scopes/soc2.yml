@@ -413,7 +413,8 @@ requirements:
       identity cannot claim an account whose email was never inbox-proved,
       MFA (when active) is still enforced, and the session token reaches
       the auth app via a one-time shared secret, never a URL. Sign-ins and
-      refusals are recorded in the audit trail (`sso.login`, `sso.refused`).
+      refusals are recorded in the audit trail (`sso.login`, `sso.refused`,
+      and from the release after open-pryv.io 2.0.0-rc.87 `sso.failed`).
 
       **Credential transmission to third parties.** When a credential
       must be handed to a counterparty, the shared-secrets endpoints
