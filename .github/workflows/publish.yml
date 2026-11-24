@@ -17,24 +17,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout compliance-matrix
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: compliance-matrix
 
       - name: Checkout dev-site (for reqid resolution)
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pryv/dev-site
           path: dev-site
 
       - name: Checkout dev-site2 (for docs path resolution)
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pryv/dev-site2
           path: dev-site2
 
       - name: Checkout open-pryv.io (for test-code resolution)
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: pryv/open-pryv.io
           path: open-pryv.io
@@ -49,7 +49,7 @@ jobs:
           mv open-pryv.io workspace/
 
       - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           # Pinned: newer Node 24 releases abort in better-sqlite3's statement finalizer
           node-version: '24.18.1'
