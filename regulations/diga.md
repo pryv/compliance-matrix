@@ -381,9 +381,10 @@ protected against tampering.
 
 **What Pryv does for you**
 
-Per-user audit log records every API method invocation; storage
-is SQLite directly (decoupled from data-path engine) so log
-integrity is independent of primary engine state. The
+Per-user audit log records the API calls on an account; storage
+has its own engine setting (per-user SQLite files by default, or a
+PostgreSQL connection pool of its own), so the log is decoupled
+from the data path. The
 audit-event-stream optional channel additionally emits audit
 records into the subject's own streams when surface-side
 visibility is required.

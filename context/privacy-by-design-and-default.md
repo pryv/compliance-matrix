@@ -50,7 +50,7 @@ Processes ──direct access──► Personal Data
 Processes ─►Access Control ─►Personal Data
               │
               ▼
-   Audit / Logs per-Data-Subject (invariant, automatic)
+   Audit / Logs per-Data-Subject (automatic, on by default)
 ```
 
 - Access control is a **separate layer** that every process
@@ -153,11 +153,14 @@ at `components/business/src/accesses/AccessLogic.ts:280-292`
 (`canDeleteAccess`) + access creation pipeline. No "default
 read all" anti-pattern available.
 
-### 2. Audit-on by default (no opt-out)
+### 2. Audit-on by default
 
-The audit primitive is **invariant**, no config flag turns it
-off; every API call (`AUDITED_METHODS` set at
-`components/audit/src/ApiMethods.ts`) is captured at write-time.
+The audit is on with the default configuration, for every account
+and nothing to set up: API calls on an account (`WITH_USER_METHODS`
+at `components/audit/src/ApiMethods.ts`) are recorded in its trail.
+It is the operator's setting (`audit.active`), and it has bounds:
+calls without a user, high-frequency series and previews (see the
+`audit` entry of `docs/pryv-primitives.md`).
 Audit-by-construction (Q9) means the audit captures method +
 access ref + URL query + integrity hash; **never the request
 body**; `auth=` query params stripped. Both privacy-protective
@@ -291,7 +294,7 @@ narrative recipe:
 > reference + the open-source codebase audit-trail), data is
 > segregated by data-subject and by context (streams + events);
 > access control is independent of processes (separate enforcement
-> layer); audit logs are per-subject and invariant; the
+> layer); audit logs are per-subject and on by default; the
 > process registry is self-documented via `GET /accesses` +
 > audit log. The 12 platform defaults [list per the catalogue
 > above] satisfy Art.25(2) by-default settings; our deployment's

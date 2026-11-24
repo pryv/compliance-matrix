@@ -353,8 +353,10 @@ request, with specified exceptions.
 
 **What Pryv does for you**
 
-Pryv's audit log is the §164.528 substrate: every API method call
-attributed to an access (with version) is recorded. Filtering by
+Pryv's audit log is the §164.528 substrate: API calls on an
+account, attributed to an access (with version), are recorded
+(high-frequency series and preview reads are not: account for
+those disclosures by other means if you use them). Filtering by
 access category, TPO accesses, §164.512 disclosures, etc., lets
 you derive the §164.528-eligible subset (which excludes TPO).
 Six-year retention of the audit log is your operator-side
@@ -377,6 +379,10 @@ of PHI disclosed, purpose. Each field has a Pryv source:
     See `docs/pryv-primitives.md` audit entry for the full
     capture catalogue.
   - purpose → `access.clientData.purpose` recorded at grant time
+A record that cannot be written is a disclosure the trail cannot
+account for: it is logged and, from the release after open-pryv.io
+2.0.0-rc.87, counted (see hipaa-security 164.312(b)); it is not
+recovered.
 Pre-computing per-subject accounting reports periodically (and
 storing them on a dedicated stream) is a useful operational
 pattern for fast response to requests.

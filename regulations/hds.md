@@ -339,8 +339,8 @@ applicable retention policy.
 **What Pryv does for you**
 
 HDS Activity 3 audit sub-control inherits the Pryv audit
-primitive (per-user SQLite, every API method captured with
-access reference + timestamp). The retention period + log-
+primitive (per-user SQLite files by default, or PostgreSQL; API
+calls on an account captured with access reference + timestamp). The retention period + log-
 review cadence are operator policy per the HDS audit pack.
 
 **Evidence**

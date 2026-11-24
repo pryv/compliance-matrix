@@ -352,10 +352,14 @@ Per-principle breakdown, what Pryv does for you, what you do:
   encrypted, unreadable before the transfer starts, and erased
   with the transfer (§1(c)).
 - Integrity & confidentiality (§1(f)), covered separately at Art.32.
-- Accountability (§2), IMPLEMENTED. Every API call audited with
+- Accountability (§2), IMPLEMENTED. API calls on an account are
+  audited (scope in the `audit` primitive: calls without a
+  user, high-frequency series and previews are outside it) with
   the access reference + version; access carries the consent state
   at that version → end-to-end accountability chain you can point
-  auditors at.
+  auditors at. A record that cannot be written is logged and, from
+  the release after open-pryv.io 2.0.0-rc.87, counted (see
+  hipaa-security 164.312(b)); it is not recovered.
 
   Proof of erasure (the release after open-pryv.io 2.0.0-rc.87,
   `83e14c94`). Every account erasure, whoever decided it, leaves
@@ -1687,7 +1691,16 @@ calls `auditStorage.deleteUser(userId)` regardless of the
 configured audit engine. SQLite + PostgreSQL audit deployments
 converge on the same end-state: zero audit rows for the deleted
 subject. The `[USAD]` test suite asserts engine-agnostically via
-`auditStorage.forUser(userId).countEvents() === 0`.
+`auditStorage.forUser(userId).countEvents() === 0`. **Known gap
+of the PostgreSQL audit engine, closed in the release after
+open-pryv.io 2.0.0-rc.87:** a call still running during the
+erasure could leave one audit row under the erased id. The row is
+now refused, and the erasure removes audit rows a second time once
+the account is gone `[AGPE1]`, `[AGPE2]`, `[AGPG3]`. Rows left
+earlier are removed with the statement of the upgrade note (only on
+a core that never ran with `keep`). With the audit storage on
+PostgreSQL and the base storage on SQLite the second removal
+applies, not the refusal.
 
 Operator setting `audit.onUserDelete` (shipped in `405b3a1`)
 gates the behaviour:
@@ -2330,7 +2343,8 @@ satisfy "by default, only data necessary for each
 specific purpose are processed":
 
 1. **Default-deny on permissions** (empty `permissions: []`).
-2. **Audit-on by default** (invariant, no opt-out).
+2. **Audit-on by default** (the operator can switch it off
+   with `audit.active`).
 3. **TLS enforced** (optional Let's Encrypt integration).
 4. **Hosting region pinned per user** (Q12 architectural
    residency).
@@ -2515,8 +2529,11 @@ three real layers, each tested:
    per-API-method call counts, duration histograms and error
    counts, labelled only with a method id from the platform's
    own API registry, a status class and an error code from
-   the published error id list; service name and version,
-   core FQDN and worker index; and, for server-side faults,
+   the published error id list; the number of audit
+   records that could not be written, by kind and cause (from
+   the release after open-pryv.io 2.0.0-rc.87); service name
+   and version, machine hostname and worker index; and, for
+   server-side faults,
    the error class plus a stack trace with frames rewritten
    repository-relative. Request URLs, query and route
    parameters, bodies, headers, usernames, record identifiers,
@@ -2643,8 +2660,8 @@ so set the same everywhere); recipients: holders of the admin key
 
 **Technical**
 
-Audit data lives in per-user SQLite
-(`open-pryv.io/components/audit/`); `audit.get` API method exposes
+Audit data lives in the configured audit engine (per-user SQLite
+files by default, or PostgreSQL; `open-pryv.io/components/audit/`); `audit.get` API method exposes
 it with access-time + method + access reference. Since
 open-pryv.io `07b6d3b6`, OAuth2 authorization-server activity
 (`oauth.*`: consent granted, code exchanged, token issued /

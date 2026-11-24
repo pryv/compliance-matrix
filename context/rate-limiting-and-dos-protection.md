@@ -94,8 +94,8 @@ problem cleanly, the edge sees all traffic.
 Pryv-side contribution to the operator's DoS / rate-limiting
 posture is in the **detection layer**, not the enforcement layer:
 
-- **Audit log of every API call.** Per-user SQLite audit row per
-  API method invocation includes timestamp, access reference,
+- **Audit log of API calls.** The audit row of each call on an
+  account (not high-frequency series or previews) includes timestamp, access reference,
   method, key request fields. SIEM tools consume this to drive
   policy (fail2ban, in the published recipe, reads the proxy log
   instead).

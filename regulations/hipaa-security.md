@@ -47,11 +47,12 @@ incident tracking reports.
 
 **What Pryv does for you**
 
-Every API call is captured by Pryv's per-user audit log; the
-`audit.get` method exposes it for periodic review. Observability
+API calls on an account are captured by Pryv's per-user audit log;
+the `audit.get` method exposes it for periodic review. Observability
 (opt-in telemetry emitter) gives system-level activity reports for
-the infrastructure side. The "regular review" cadence is your written
-procedure.
+the infrastructure side; from the release after open-pryv.io
+2.0.0-rc.87 it also reports how many audit records could not be
+written. The "regular review" cadence is your written procedure.
 
 **Detail**
 
@@ -64,8 +65,8 @@ streams, useful when the subject participates in review.
 
 **Technical**
 
-Audit storage: per-user SQLite in
-`open-pryv.io/components/audit/`. Access method: `audit.get`. Tests
+Audit storage: the configured audit engine (per-user SQLite files
+by default, or PostgreSQL), written by `open-pryv.io/components/audit/`. Access method: `audit.get`. Tests
 live under `open-pryv.io/components/audit/test/`.
 
 **Evidence**
@@ -1025,7 +1026,9 @@ or use ePHI.
 
 **What Pryv does for you**
 
-Pryv's per-user audit log records every API method invocation,
+Pryv's per-user audit log records the API calls made on an account
+(over HTTP, batch and socket.io; not high-frequency series or
+previews, see the `audit` primitive for the exact scope):
 timestamp, user, access reference, method, success / error. The
 `audit.get` API method surfaces it for examination. The optional
 audit-event-stream channel additionally emits audit records into
@@ -1043,9 +1046,23 @@ from issues in the data path.
 The audit record is written after the call has taken effect, on
 every transport (HTTP, batch, socket.io). If that write fails, the
 call's answer is unchanged and the failure is logged at error level
-with the method, account and stack, which the operator should
-alert on `[BAUF1]`, `[BAUF2]`. A failed write is never replaced by
-a false error record.
+with its stack (a batch or socket.io line also names the method or
+the account), which the operator should alert on `[BAUF1]`,
+`[BAUF2]`. A failed write is never replaced by a false error
+record.
+
+From the release after 2.0.0-rc.87 (open-pryv.io `12b43736`) each
+record that could not be written is also counted, by kind and
+cause, with no method, account or message `[ALRC1]`, `[ALRC2]`:
+`GET /system/audit-status` (admin key) answers the totals of the
+core since it started `[ALRW2]`, and the opt-in telemetry sends
+`audit.records.lost` `[ALRS3]`. Counting never changes the call's
+answer `[ALRC7]`. Alert on any value above zero, on every core. A
+counted record is lost, not written later. Not counted: a process
+stopped between the answer and the write, a storage write that
+never ends, a syslog delivery error reported after the call. Under
+`audit.onUserDelete: erase`, a record refused because its account
+was erased meanwhile is not a lost record (warning log) `[AGPE1]`.
 
 Audit row content is data-minimal **by construction**: action +
 source (transport + ip) + URL query + access ref + optional
@@ -1102,8 +1119,18 @@ documents, sampled per host and reason, never the document body
 `[OCMDE13]`. Refresh tokens are named by a hash since rc.69
 `[ORL12]`. Since rc.68 the session minted at consent is written by
 the system, so the consent shows as `oauth.consent.granted` plus
-the grant's own create or update row, no longer as an
-`accesses.create` row. Not audited: requests on adapter routes
+the consent's own write: the grant's `accesses.create` or
+`accesses.update` row, or the `events.create` row of the consent
+event that creates it (an app-account client), source `oauth2`,
+no address `[IPAU6]`, `[IPAUA]`. **Correction (2026-11-24):** an
+earlier version of this entry stated that row for every release
+since rc.68; it is written from the release after
+2.0.0-rc.87 only (before, the write left no row of its own). The
+same release records a delivery to an account of the same core
+`[IPAU1]`, `[IPAU2]` and the one-time secret of a credential
+hand-off `[IPAU4]` or of a third-party sign-in `[IPAU5]`. The
+lookups the server makes for itself inside these flows are not
+separate records. Not audited: requests on adapter routes
 (the sidecar audits them) and the `421` answers for an account
 served by another core (warning log only). The three address-alias
 methods (rc.76) are audited like any API call `[OPAL2]`.
@@ -1221,7 +1248,7 @@ stalled reader could hold.
 
 **Evidence**
 
-- tests: AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC, RIDL3, RIDL4, RIDL5, ADCLI, ADCLW, BAUF1, BAUF2
+- tests: AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC, RIDL3, RIDL4, RIDL5, ADCLI, ADCLW, BAUF1, BAUF2, ALRC1, ALRC2, ALRC7, ALRS3, ALRW2, IPAU1, IPAU2, IPAU4, IPAU5, IPAU6, IPAUA, AGPE1
 - config keys: accesses.deletionRecords.retentionDays, limits.audit.maxConcurrentReadsPerAccess, limits.audit.maxReadWaitMs
 - primitives: audit, audit-event-stream, external-id-index
 - context notes: content-query-audit-semantics, delegation-model, workforce-access-patterns
