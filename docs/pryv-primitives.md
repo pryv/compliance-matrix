@@ -662,10 +662,15 @@ modules.
     + incremental via `events.get?modifiedSince=T`), audit log, HF
     series data points, webhooks, attachments, plus a per-file sha256
     integrity manifest.
-  - **Webapp (read-side text only)**: omits attachments / HF series /
-    webhooks / sha256 manifest (those fetchers stay CLI-only). Route
-    non-technical subjects here; route subjects needing the omitted
-    resources to the CLI.
+  - **Webapp** (v0.2.0, on the library from v0.7.0): the same
+    read-side resources (attachments and access history are opt-in, HF
+    series and webhooks opt-out), except the sha256 manifest, which
+    stays CLI-only. Route non-technical subjects here; route one who
+    needs the manifest to the CLI.
+  - **Neither completes a second factor** (checked in library v0.9.0 and
+    webapp v0.2.0: both sign in with username and password, and the
+    sign-in stops when the account has MFA active). Plan how you answer
+    such a subject's request.
 - **Audit-as-events (v0.6.0+)**: audit is fetched via the standard
   events API on the `:_audit:*` store streams
   (`events.get?streams=[':_audit:accesses',':_audit:actions']`), not
@@ -923,10 +928,14 @@ Includes `consent/*`, `notification/*-cmc`, `message/chat-cmc`.
   conformance; structural-accuracy enforcement at ingest
   (Art.5(1)(d) layer 1).
 - **Server-side validation**: `events.create` AND `events.update`
-  run every payload through `typeRepo.lookup(type).validate(
-  content)`; unknown types + content schema violations are
-  rejected with HTTP `400`. No silent downgrade, no truncation.
-  Backed by **`ajv-draft-04`** + `ajv-formats` under the
+  validate the content of every event whose type is in the
+  catalogue against that type's schema; a violation is rejected with
+  HTTP `400`. No truncation. **A type that is not in the catalogue is
+  accepted with any content** `[ETD1]` (a free type: the catalogue
+  validates, it does not restrict, and no setting refuses unknown
+  types), except on a core that has not been able to load its
+  catalogue since it started, which refuses it with `400` until it
+  does `[ETD2]`, `[ETD3]`, and for a `series:` type. Backed by **`ajv-draft-04`** + `ajv-formats` under the
   `components/utils/src/jsonValidator.ts` façade (validation
   errors are reshaped to the legacy `z-schema` wire-shape for
   back-compat; consumers don't need to care).
@@ -934,16 +943,14 @@ Includes `consent/*`, `notification/*-cmc`, `message/chat-cmc`.
   Schema draft-04, `type`, `required`, `enum`, `pattern`,
   `properties`, `additionalProperties`, `minimum` / `maximum` /
   `exclusiveMinimum` / `exclusiveMaximum`, `minLength` /
-  `maxLength`, format strings. Primitive-type coercion (e.g.,
-  string `"42"` → number `42`) runs *before* schema validation
-  via `valueTypes` (`components/business/src/types/basic_type.ts:
-  60-65`); coercion is a convenience for form-post clients and
-  does not relax range constraints.
+  `maxLength`, format strings. Event content is validated as given:
+  the string `"42"` fails a `number` type. Only the values of a
+  series are converted to their type before they are stored
+  (`components/business/src/types/basic_type.ts`).
 - **Built-in default**: `components/business/src/types/event-
-  types.default.json` (~4750 lines mirroring upstream
-  `pryv/data-types`) is the baked-in fallback; the server starts
-  with this catalogue even if no `service.eventTypes` config is
-  set. **Bounds usage is sparse in defaults**, only `mood/rating`
+  types.default.json` (mirroring upstream `pryv/data-types`) is
+  bundled; a core validates against it until its catalogue is loaded
+  (`service.eventTypes` is required at boot). **Bounds usage is sparse in defaults**, only `mood/rating`
   (0..1) and `note/*` (4 MB `maxLength`) declare numerical or
   length limits. Physical-measurement types (`mass/kg`,
   `temperature/c`, `pressure/mmhg`, `frequency/bpm`, …) ship as
@@ -954,11 +961,12 @@ Includes `consent/*`, `notification/*-cmc`, `message/chat-cmc`.
   upstream catalogue, FHIR-R4 bindings, regulated-deployment-
   specific schemas) maintain a **sibling data-model repo**,
   publish a merged catalogue to a URL, and point
-  `service.eventTypes` at that URL. The server fetches at
-  startup, validates against the JSON Schema meta-schema, and
-  `deepMerge`s on top of the baked-in defaults
-  (`components/business/src/types.ts:143-186`
-  `TypeRepository.tryUpdate`). **Custom types are first-class**,
+  `service.eventTypes` at that URL. The server fetches it at
+  startup and applies it on top of the bundled defaults, entry by
+  entry (a type it carries replaces the bundled one whole, the
+  others stay;
+  `components/business/src/types.ts` `TypeRepository.tryUpdate`).
+  **Custom types are first-class**,
   same ajv-draft-04 validation pipeline, same canonical
   serialisation in `events.get`, same portability in
   `events.json` exports. The **HDS data-model exemplar** declares

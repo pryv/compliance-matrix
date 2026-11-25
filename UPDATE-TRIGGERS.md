@@ -1602,6 +1602,39 @@ Proposal: `proposals/erasure-ledger.md` (Status: shipped in `83e14c94`).
 **When the tag is cut**: replace "the release after open-pryv.io
 .0.0-rc.88" with the tag in the rows above and in the proposal.
 
+### `ENCRYPTED-OFFHOST-BACKUPS-AS-TRANSFER-SURFACE` (documentation only: no code, no chip, no tier shift; rows walked 2026-11-25)
+
+**Where the work lived**: this repository. The question "my encrypted
+backups go to a bucket in another country: transfer? processor?" now has
+its own note, `context/encrypted-offhost-backups.md`, and FAQ Q35. No
+`planned:` chip was queued and no `proposals/` mirror exists, since no row
+shifts. The FAQ round produced no new slug.
+
+| Scope | Ref | What changed |
+|---|---|---|
+| gdpr | Art.44 | overview: an EU/EEA hosting raises no transfer by itself, copies and remote access are analysed on their own (was "no Chapter-V analysis is needed"); detail: off-host backups paragraph |
+| gdpr | Art.28 | detail: the backup destination is a processor outside the opt-in integration table; §3(g) copies in backups end with the backup retention |
+| iso-27001 | A.8.13 | overview pointer; detail: "Offsite copies" paragraph |
+| gdpr | Art.44, Art.46 | detail, corrected in the same walk: PlatformDB at-rest encryption is no longer called backlog (companion container or host disk encryption), PII hashing is the default since open-pryv.io 2.0.0-rc.3, not opt-in |
+
+Corrected in the same walk, no row: FAQ Q25 (MFA sessions are core-local;
+options A and B settled), FAQ Q23 and
+`context/subprocessor-posture-and-data-flow.md` (`service.eventTypes` is
+required, no built-in default), `context/cmc-consent-primitives.md`
+(built files of data-types), the `account-backup-tool` primitive (webapp
+coverage), the keyspace table and option statuses of
+`context/cross-border-platformdb-implications.md`.
+
+**Walk the note again when:**
+- an open-pryv.io release changes what an encrypted `bin/backup.js` run
+  leaves in clear (`storages/interfaces/backup/`: directory names,
+  `chain.json`, file headers, `encryption.json`, `manifest.sig`), its
+  algorithms or key models, what the platform data of a whole-core backup
+  holds, or adds an upload or an expiry of its own;
+- the EDPB replaces Recommendations 01/2020, Guidelines 05/2021 or
+  Guidelines 07/2020, or guidance on encrypted data follows the Court's
+  judgment in C-413/23 P.
+
 ## Section B: Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued
@@ -2341,7 +2374,33 @@ Walked without change:
 Transport, response-header, platform DB and backup rows: not affected.
 B.2 to B.11: none (no new primitive: `account-auto-deletion` extended).
 
+**Walked 2026-11-25 for open-pryv.io branches merged that day** (audit of
+the server's own access writes, SQLite base with PostgreSQL audit, rqlite
+10.7.5; named "the release after open-pryv.io 2.0.0-rc.88" until the tag).
+Three audit actions without an API method: `accesses.created`,
+`accesses.changed`, `accesses.deleted` (type `audit-log/access`). Rows:
+`hipaa-security.164.312(b)` (the rule and its exceptions),
+`hipaa-privacy.164.528` (the rows do not record path parameters: the
+earlier "query/path params" was wrong), `gdpr.Art.17` (the erased-account
+residual of that pairing), `iso-27001.A.8.14` (rqlite version,
+platform writes answered without a result). `breach-scope` reports list the
+new records and do not count them as calls. No tier change. Prose only: the
+test codes join `tests:` at the tag.
+
 ### B.2: New event-type formats (`data-types` repo)
+
+**Correction of record 2026-11-25 (no code change).** The matrix said
+that an event of an unknown type is rejected with 400, that a custom
+catalogue is deep-merged, that an invalid one stops the server, and that
+an unset `service.eventTypes` falls back to the bundled types. In
+open-pryv.io an unknown type is accepted with any content once the
+catalogue is loaded `[ETD1]`, a catalogue is applied entry by entry, an
+invalid one leaves the core on the bundled types, refusing unknown types
+until it loads `[ETD2]`, `[ETD3]`, and the key is required at boot.
+Corrected: `gdpr.Art.5`, `Art.20`, `Art.25`, `soc2.PI1.2`, the `data-types`
+primitive, FAQ Q14, Q21, Q27, and the notes `custom-event-type-catalogues`,
+`data-accuracy-structural-vs-semantic`, `special-categories-operator-facilitated`,
+`privacy-by-design-and-default`. No tier changed in this pass.
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
 affect:
@@ -3212,7 +3271,8 @@ transport rows (`hipaa-security.164.312(e)(*)`, `iso-27001.A.8.20` /
 `hipaa-security.164.308(a)(7)(ii)(B)`), and the backup rows
 (`hipaa-security.164.308(a)(7)(ii)(A)`, `iso-27001.A.8.13`,
 `hds.Activity.5`, `soc2.PI1.5`, the `backup-restore` primitive,
-`context/operator-backup-coverage.md`). Add any new key to the rows'
+`context/operator-backup-coverage.md`,
+`context/encrypted-offhost-backups.md`). Add any new key to the rows'
 `config_keys:` and its `[CODE]` tests to `tests:`.
 
 **Walked 2026-10-03 for open-pryv.io 2.0.0-rc.34** (tag `2.0.0-rc.34`,

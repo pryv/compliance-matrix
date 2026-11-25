@@ -514,7 +514,9 @@ requirements:
       makes; a multi-core cluster replicates the platform DB only
       (rqlite Raft + mTLS), not user data, which stays on each user's
       home core. The operator's
-      backup policy (cadence, retention, offsite) is layered on top.
+      backup policy (cadence, retention, offsite) is layered on top;
+      for an offsite copy in another country or with a provider, see
+      "Offsite copies" in the detail.
       "Regularly tested" is the operator's drill. On the Pryv side,
       backup and restore round trips are tested: `[BKSR]` (series
       data), `[BKEV]` (events store), `[BKVR]` (manifest version), and
@@ -561,6 +563,18 @@ requirements:
       (LUKS / S3 SSE-KMS / ...) on a plaintext backup; record the
       choice and the key custody (a lost key or passphrase makes the
       backup unrecoverable) in your backup-policy SOP.
+
+      **Offsite copies.** Pryv writes backups to a directory and never
+      uploads or expires them: destination, transport, access control
+      and retention of the offsite copy are in your policy. Encryption
+      with a key the provider never holds protects the content there;
+      it does not settle the legal side (a provider that only stores
+      encrypted data is a processor, storage in a third country is a
+      transfer to assess), and an encrypted backup still shows user
+      ids, run dates, file counts and sizes. Put the destination in
+      your supplier and data-protection registers, keep the decryption
+      key out of the provider's reach, and test restores from the
+      offsite copy itself: `context/encrypted-offhost-backups.md`.
 
       **Since open-pryv.io 2.0.0-rc.47 to 2.0.0-rc.50**: a plaintext
       backup is announced on stderr `[BKPW1]`; `--passphrase-file` keeps
@@ -2038,7 +2052,11 @@ requirements:
       election a taken name no longer reads as free, nor a known one as
       unknown `[RQRC6]`, and a failed read is not cached `[PUCC6]`. With
       `storages.engines.rqlite.external`, the rqlited you run must support
-      the `linearizable` read level (the bundled one is 10.6.0).
+      the `linearizable` read level (the bundled one is 10.6.0, and
+      10.7.5 from the release after open-pryv.io 2.0.0-rc.88). From that
+      release a platform write that rqlite answers without a result
+      (leader unreachable) is an error, where it was silently lost
+      `[RQNA1]`.
 
   - ref: A.8.17
     title: A.8.17 Clock synchronization
