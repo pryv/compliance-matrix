@@ -1569,6 +1569,39 @@ Proposal: `proposals/erasure-ledger.md` (Status: shipped in `83e14c94`).
 **When the tag is cut**: replace "the release after open-pryv.io
 2.0.0-rc.87" with the tag in the rows above and in the proposal.
 
+### `ENCRYPTED-OFFHOST-BACKUPS-AS-TRANSFER-SURFACE` (documentation only: no code, no chip, no tier shift; rows walked 2026-11-25)
+
+**Where the work lived**: this repository. The question "my encrypted
+backups go to a bucket in another country: transfer? processor?" now has
+its own note, `context/encrypted-offhost-backups.md`, and FAQ Q35. No
+`planned:` chip was queued and no `proposals/` mirror exists, since no row
+shifts. The FAQ round produced no new slug.
+
+| Scope | Ref | What changed |
+|---|---|---|
+| gdpr | Art.44 | overview: an EU/EEA hosting raises no transfer by itself, copies and remote access are analysed on their own (was "no Chapter-V analysis is needed"); detail: off-host backups paragraph |
+| gdpr | Art.28 | detail: the backup destination is a processor outside the opt-in integration table; §3(g) copies in backups end with the backup retention |
+| iso-27001 | A.8.13 | overview pointer; detail: "Offsite copies" paragraph |
+| gdpr | Art.44, Art.46 | detail, corrected in the same walk: PlatformDB at-rest encryption is no longer called backlog (companion container or host disk encryption), PII hashing is the default since open-pryv.io 2.0.0-rc.3, not opt-in |
+
+Corrected in the same walk, no row: FAQ Q25 (MFA sessions are core-local;
+options A and B settled), FAQ Q23 and
+`context/subprocessor-posture-and-data-flow.md` (`service.eventTypes` is
+required, no built-in default), `context/cmc-consent-primitives.md`
+(built files of data-types), the `account-backup-tool` primitive (webapp
+coverage), the keyspace table and option statuses of
+`context/cross-border-platformdb-implications.md`.
+
+**Walk the note again when:**
+- an open-pryv.io release changes what an encrypted `bin/backup.js` run
+  leaves in clear (`storages/interfaces/backup/`: directory names,
+  `chain.json`, file headers, `encryption.json`, `manifest.sig`), its
+  algorithms or key models, what the platform data of a whole-core backup
+  holds, or adds an upload or an expiry of its own;
+- the EDPB replaces Recommendations 01/2020, Guidelines 05/2021 or
+  Guidelines 07/2020, or guidance on encrypted data follows the Court's
+  judgment in C-413/23 P.
+
 ## Section B: Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued
@@ -3179,7 +3212,8 @@ transport rows (`hipaa-security.164.312(e)(*)`, `iso-27001.A.8.20` /
 `hipaa-security.164.308(a)(7)(ii)(B)`), and the backup rows
 (`hipaa-security.164.308(a)(7)(ii)(A)`, `iso-27001.A.8.13`,
 `hds.Activity.5`, `soc2.PI1.5`, the `backup-restore` primitive,
-`context/operator-backup-coverage.md`). Add any new key to the rows'
+`context/operator-backup-coverage.md`,
+`context/encrypted-offhost-backups.md`). Add any new key to the rows'
 `config_keys:` and its `[CODE]` tests to `tests:`.
 
 **Walked 2026-10-03 for open-pryv.io 2.0.0-rc.34** (tag `2.0.0-rc.34`,

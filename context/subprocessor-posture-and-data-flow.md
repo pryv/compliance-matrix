@@ -200,9 +200,9 @@ discloses them per Art.13(1)(f) where recipients exist.
 
 ### Upstream catalogue fetch (`service.eventTypes`)
 
-- **Config gate**: `service.eventTypes` URL (default points at
-  `https://raw.github.com/pryv/data-types/master/dist/event-
-  types.json`).
+- **Config gate**: `service.eventTypes` URL. There is no built-in
+  default: the key is required at boot, and the install wizard
+  proposes `https://pryv.github.io/event-types/flat.json`.
 - **What flows OUT**: nothing; this is a **read-only fetch of
   schemas INTO the core**. The catalogue payload is JSON Schema
   fragments, not personal data.
@@ -216,9 +216,9 @@ discloses them per Art.13(1)(f) where recipients exist.
   personal data crosses the boundary. Still worth disclosing in
   the operator's DPIA / Art.30 if upstream-pinning matters to
   the audit narrative.
-- **Code anchor**: `components/business/src/types.ts:143-186`
-  `TypeRepository.tryUpdate`; `default-config.yml` `service:`
-  block.
+- **Code anchor**: `components/business/src/types.ts`
+  `TypeRepository.tryUpdate`; the required `service` fields in
+  `config/plugins/config-validation.js`.
 
 ## Data-flow guarantees that limit subprocessor exposure
 
@@ -332,7 +332,7 @@ The admin-panel view over the same data is a later item.
   agreement, even when the backups are encrypted with a key the
   provider never holds. Pryv ships the encryption
   (`backup-payload-encryption`); you name the destination in your
-  register.
+  register. See `context/encrypted-offhost-backups.md`.
 - **CDN / reverse-proxy** sitting in front of the core
   (nginx / HAProxy / Cloudflare). Pryv doesn't ship one; the
   operator's deployment topology choice (see the

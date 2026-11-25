@@ -662,10 +662,12 @@ modules.
     + incremental via `events.get?modifiedSince=T`), audit log, HF
     series data points, webhooks, attachments, plus a per-file sha256
     integrity manifest.
-  - **Webapp (read-side text only)**: omits attachments / HF series /
-    webhooks / sha256 manifest (those fetchers stay CLI-only). Route
-    non-technical subjects here; route subjects needing the omitted
-    resources to the CLI.
+  - **Webapp** (v0.2.0, on the library from v0.7.0): the same
+    read-side resources (attachments and access history are opt-in, HF
+    series and webhooks opt-out), except the sha256 manifest, which
+    stays CLI-only. It does not handle a second factor. Route
+    non-technical subjects here; route a subject with MFA active, or one
+    who needs the manifest, to the CLI.
 - **Audit-as-events (v0.6.0+)**: audit is fetched via the standard
   events API on the `:_audit:*` store streams
   (`events.get?streams=[':_audit:accesses',':_audit:actions']`), not
