@@ -41,12 +41,11 @@ app. Implementation:
   field path. There is no silent coercion or downgrade, `value:
   9999` for a `temperature/c` event-type with `maximum: 50` does
   not get truncated, it fails.
-- **Type-aware coercion** (small caveat): the coercion step at
-  `business/src/types/basic_type.ts:60-65` (`valueTypes`) runs
-  *before* schema validation, normalising primitive types
-  (e.g., string `"42"` → number `42` for a `number`-typed
-  field). This is a convenience for clients that submit JSON
-  strings from form posts; it does not relax range constraints.
+- **No coercion of event content**: the string `"42"` fails a
+  `number` type. Only the values of a series are converted to their
+  type before they are stored (`business/src/types/basic_type.ts`).
+  (Correction 2026-11-25: an earlier version said event content is
+  converted too.)
 
 ## Layer 2: Range/sanity bounds (Pryv-scope: primitive supplied; defaults sparse)
 

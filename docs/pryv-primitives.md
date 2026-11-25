@@ -943,11 +943,10 @@ Includes `consent/*`, `notification/*-cmc`, `message/chat-cmc`.
   Schema draft-04, `type`, `required`, `enum`, `pattern`,
   `properties`, `additionalProperties`, `minimum` / `maximum` /
   `exclusiveMinimum` / `exclusiveMaximum`, `minLength` /
-  `maxLength`, format strings. Primitive-type coercion (e.g.,
-  string `"42"` → number `42`) runs *before* schema validation
-  via `valueTypes` (`components/business/src/types/basic_type.ts:
-  60-65`); coercion is a convenience for form-post clients and
-  does not relax range constraints.
+  `maxLength`, format strings. Event content is validated as given:
+  the string `"42"` fails a `number` type. Only the values of a
+  series are converted to their type before they are stored
+  (`components/business/src/types/basic_type.ts`).
 - **Built-in default**: `components/business/src/types/event-
   types.default.json` (mirroring upstream `pryv/data-types`) is
   bundled; a core validates against it until its catalogue is loaded

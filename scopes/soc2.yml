@@ -1299,7 +1299,7 @@ requirements:
       including controls over completeness and accuracy, to result in
       products and services that meet the entity's objectives.
     coverage: facilitated
-    pryv_effort_saved: medium
+    pryv_effort_saved: low
     facilitation_mode: primitive
     draft: true
     pryv_primitives: [data-types, event, permissions]
@@ -1315,6 +1315,8 @@ requirements:
       *right* blood-pressure reading) stays in your application. Tighten
       structural strictness by declaring min/max/pattern in a custom
       catalogue, see context/data-accuracy-structural-vs-semantic.md.
+      **Correction (2026-11-25):** an earlier version said unknown types
+      are rejected; effort saved lowered from medium to low.
 
   - ref: PI1.3
     title: PI1.3 Completeness and accuracy of processing
