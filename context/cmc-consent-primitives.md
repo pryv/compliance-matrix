@@ -381,8 +381,8 @@ distinct gate shapes, chosen per trigger by what's at stake:
   publishes offers, widens grants and gives OAuth2 consent; revoke is not
   affected.
 
-- **An offer may require a verified email address** (the release after
-  open-pryv.io 2.0.0-rc.87, `e9d6aca8`): with
+- **An offer may require a verified email address** (open-pryv.io
+  2.0.0-rc.88, `e9d6aca8`): with
   `request.requireVerifiedEmail: true` the accepting account's core refuses
   `consent/accept-cmc` while that account's primary address is not proved
   (trigger `failed`, reason `cmc-verified-email-required`, no detail, not

@@ -386,7 +386,7 @@ identity cannot claim an account whose email was never inbox-proved,
 MFA (when active) is still enforced, and the session token reaches
 the auth app via a one-time shared secret, never a URL. Sign-ins and
 refusals are recorded in the audit trail (`sso.login`, `sso.refused`,
-and from the release after open-pryv.io 2.0.0-rc.87 `sso.failed`).
+and from the release after open-pryv.io 2.0.0-rc.88 `sso.failed`).
 
 **Credential transmission to third parties.** When a credential
 must be handed to a counterparty, the shared-secrets endpoints
@@ -642,7 +642,7 @@ merely blocks new grants while issued tokens live out their TTL:
 it writes a platform-wide tombstone and every core rejects that
 client's existing access tokens at validation time within
 `oauth.clientRevokeCheckSeconds` (default 30 s; from the release
-after open-pryv.io 2.0.0-rc.87 a value above 300 s is used as
+after open-pryv.io 2.0.0-rc.88 a value above 300 s is used as
 300 s, like `caching.accessMaxAgeSeconds`), open socket.io
 connections are swept and dropped too. So "remove access for app
 X, everywhere, now" is one operator command with a bounded
@@ -811,7 +811,7 @@ per-host bounded `[OCMD03B]`, `[OCMD03G]`, `[OCMD03H]`; a host you
 list in `cmc.allowedPrivateHosts` is allowed for them too.
 
 Webhook calls leaving the boundary are signed from the release
-after open-pryv.io 2.0.0-rc.87: a per-webhook secret, returned
+after open-pryv.io 2.0.0-rc.88: a per-webhook secret, returned
 once by `webhooks.create` and replaced by `webhooks.rotateSecret`,
 keys a `Pryv-Signature` HMAC-SHA256 of a timestamp and the body,
 so the receiving systems can refuse calls from anyone else
@@ -1391,7 +1391,7 @@ output can be tied back to a verified state. Webhooks notify
 subscribers of change (signal-only, the receiver fetches the
 authoritative state via authenticated GET, so the delivered output
 is always the current canonical value); from the release after
-open-pryv.io 2.0.0-rc.87 each call is signed with a per-webhook
+open-pryv.io .0.0-rc.88 each call is signed with a per-webhook
 secret, so the receiver can check where it comes from (see
 context/webhooks-signal-only.md). Delivery SLAs to your end
 recipients are your specification.

@@ -81,7 +81,7 @@ PG row deletion), same notes as gdpr.Art.17 apply. Since
 open-pryv.io 2.0.0-rc.58 the deletion also releases the
 consumer's external ids (links to third-party record ids) at
 once, on the home core and in the platform index `[XIDD2]`. From
-the release after open-pryv.io 2.0.0-rc.87 each deletion leaves a
+the release after open-pryv.io 2.0.0-rc.88 each deletion leaves a
 durable record without the consumer's data (the erasure ledger,
 see gdpr.Art.17), so you can confirm later that a consumer's
 account was deleted, and when `[ERLG4]`, `[ERLA4]`. The
@@ -1143,7 +1143,7 @@ of password checks no longer stalls a worker's other requests
 `Retry-After`), and on PostgreSQL a runaway database statement of an
 API request is stopped after a time limit instead of holding its
 connection for as long as it takes. From the release after
-2.0.0-rc.87, one account, one access or one socket.io connection
+2.0.0-rc.88, one account, one access or one socket.io connection
 can hold only a bounded number of calls and connections at once on
 a worker (the extra ones answer `429 too-many-requests`), and
 overly nested or oversized call parameters are refused up front.
@@ -1604,7 +1604,7 @@ Per-principle breakdown, what Pryv does for you, what you do:
   suspended, never erased, while tracking is off (`[ACXP19]`).
   The erasure is `auth.delete`'s, guards included (`[ADSW8]`).
   An exception for one account is yours to grant: since the
-  release after open-pryv.io 2.0.0-rc.87 your support can
+  release after open-pryv.io 2.0.0-rc.88 your support can
   restart a pending preset schedule from now, with its full
   period and reminders (a holder who cannot sign in in time),
   reasoned, mailed to the holder and recorded in the account's
@@ -1616,7 +1616,7 @@ Per-principle breakdown, what Pryv does for you, what you do:
   `customer-resources/account-auto-deletion`.
 
   Leftovers of unfinished registrations (the release after
-  open-pryv.io 2.0.0-rc.87; merged, unreleased at this walk). A
+  open-pryv.io .0.0-rc.88; merged, unreleased at this walk). A
   registration that fails, or whose process dies midway, can
   leave personal data that no finished account owns: account
   fields (the email included) under an id the users index lacks,
@@ -1662,10 +1662,10 @@ Per-principle breakdown, what Pryv does for you, what you do:
   the access reference + version; access carries the consent state
   at that version → end-to-end accountability chain you can point
   auditors at. A record that cannot be written is logged and, from
-  the release after open-pryv.io 2.0.0-rc.87, counted (see
+  the release after open-pryv.io 2.0.0-rc.88, counted (see
   hipaa-security 164.312(b)); it is not recovered.
 
-  Proof of erasure (the release after open-pryv.io 2.0.0-rc.87,
+  Proof of erasure (the release after open-pryv.io 2.0.0-rc.88,
   `83e14c94`). Every account erasure, whoever decided it, leaves
   one durable record in the platform database, the erasure
   ledger: keyed hashes of the user id and username, when the
@@ -2936,7 +2936,7 @@ the same path. See `context/data-retention-operator-owned.md`,
 `customer-resources/account-auto-deletion`.
 
 Changes during a sweep pass, since the release after
-open-pryv.io 2.0.0-rc.87: the sweep reads the holder's setting,
+open-pryv.io .0.0-rc.88: the sweep reads the holder's setting,
 the schedule and the transfer record again right before it
 erases, and once more after the erasure is recorded as in
 progress; a change made meanwhile (the holder moving their date
@@ -2947,7 +2947,7 @@ since it read it `[ADCLS]`. Earlier releases could ignore such a
 change, or write over it, and erase the account.
 
 Stopping a pending deletion for a holder (support), since the
-release after open-pryv.io 2.0.0-rc.87: your administrator calls
+release after open-pryv.io 2.0.0-rc.88: your administrator calls
 `POST /system/admin/auto-deletion/clear` (method
 `system.autoDeletion.reset`, admin key, `username` and a
 `reason` of 1 to 500 characters). By default the schedule restarts from now with its
@@ -2997,7 +2997,7 @@ converge on the same end-state: zero audit rows for the deleted
 subject. The `[USAD]` test suite asserts engine-agnostically via
 `auditStorage.forUser(userId).countEvents() === 0`. **Known gap
 of the PostgreSQL audit engine, closed in the release after
-open-pryv.io 2.0.0-rc.87:** a call still running during the
+open-pryv.io .0.0-rc.88:** a call still running during the
 erasure could leave one audit row under the erased id. The row is
 now refused, and the erasure removes audit rows a second time once
 the account is gone `[AGPE1]`, `[AGPE2]`, `[AGPG3]`. Rows left
@@ -3088,7 +3088,7 @@ leftovers under the former names.
 Personal data left by a failed or interrupted registration can
 sit under no finished account, out of reach of
 `system.users.delete`. From the release after open-pryv.io
-2.0.0-rc.87, `bin/reconcile-user-cores.js --registrations`
+.0.0-rc.88, `bin/reconcile-user-cores.js --registrations`
 clears such account fields and, when you name it, erases an
 indexed account left without a password through the account
 deletion's erasure `[RCRG1]`, `[RCRG3]`; use it when such a
@@ -3102,7 +3102,7 @@ retry row (`cmc-internal/retry-cmc`), invisible through the API
 and never processed, holding a counterparty's invite URL with its
 token. Since rc.72 nothing is written for an account that is
 erased or whose erasure has started, but rows written before stay.
-From the release after open-pryv.io 2.0.0-rc.87,
+From the release after open-pryv.io 2.0.0-rc.88,
 `bin/reconcile-user-cores.js --cmc-retries` lists them on
 PostgreSQL (rows under an id the users index does not hold) and,
 with `--apply`, deletes the rows of an id that holds nothing else
@@ -3115,11 +3115,11 @@ erased accounts before rc.72, never as part of an upgrade. On
 SQLite such a row stays in the erased account's directory, kept
 only with `audit.onUserDelete: keep`: the files there other than
 the `audit-*` ones are leftovers you may remove (an erasure on the
-release after open-pryv.io 2.0.0-rc.87 also leaves an
+release after open-pryv.io 2.0.0-rc.88 also leaves an
 `erased.json` marker there: keep it, see the next paragraph).
 
 Work still running when the account is erased (the release after
-open-pryv.io 2.0.0-rc.87). A long request, an upload or a CMC
+open-pryv.io .0.0-rc.88). A long request, an upload or a CMC
 dispatch reading a peer that is still running for an account
 while it is erased can no longer store data for it. On
 PostgreSQL the database refuses a new row for an id the users
@@ -3148,7 +3148,7 @@ data-only `pg_restore`, rolling back): developer site
 database".
 
 Proof of erasure and restores (the release after open-pryv.io
-2.0.0-rc.87, `83e14c94`, https://github.com/pryv/open-pryv.io/issues/154).
+.0.0-rc.88, `83e14c94`, https://github.com/pryv/open-pryv.io/issues/154).
 Each account erasure ends by writing one record in the
 platform database, the erasure ledger, kept after the account
 is gone: keyed hashes (HMAC-SHA256) of the user id and of the
@@ -3835,7 +3835,7 @@ three real layers, each tested:
    own API registry, a status class and an error code from
    the published error id list; the number of audit
    records that could not be written, by kind and cause (from
-   the release after open-pryv.io 2.0.0-rc.87); service name
+   the release after open-pryv.io 2.0.0-rc.88); service name
    and version, machine hostname and worker index; and, for
    server-side faults,
    the error class plus a stack trace with frames rewritten
@@ -3878,7 +3878,7 @@ partly via Pryv's audit log + this compliance matrix
 (evidence-backed assertion structure).
 
 **Machine-readable configuration per core** (the release after
-open-pryv.io 2.0.0-rc.87, `21fd8085`): the admin route
+open-pryv.io .0.0-rc.88, `21fd8085`): the admin route
 `GET /system/admin/config/effective` answers the configuration
 the answering core runs with as one JSON document, one entry
 per key with the layer that set it, secrets redacted
@@ -3932,7 +3932,7 @@ Audit row → access ref (with serial) → consent state at that moment.
 Recoverable per data-subject + per-time-window + per-purpose.
 
 **§1(g) general description of technical security measures**
-(the release after open-pryv.io 2.0.0-rc.87, `21fd8085`):
+(the release after open-pryv.io 2.0.0-rc.88, `21fd8085`):
 the description of technical security measures can be emitted
 per core as a redacted machine-readable document.
 `GET /system/admin/config/effective` (admin key; developer site,
@@ -3951,7 +3951,7 @@ only: the organisational measures and your hosting, network and
 key custody stay in your description. See Art.32.
 
 One processing of your own to list (the release after
-open-pryv.io 2.0.0-rc.87, `83e14c94`): the erasure ledger, one
+open-pryv.io .0.0-rc.88, `83e14c94`): the erasure ledger, one
 record per erased account kept after the account is gone, as
 proof of erasure (Art.5 §2, Art.17). It holds keyed hashes of
 the user id and username (pseudonymous personal data while the
@@ -4093,7 +4093,7 @@ Per-aspect:
     the unauthenticated lookup routes and the mail budgets) are
     keyed by an HMAC-SHA256 under a key derived from
     `auth.adminAccessKey` from the release after open-pryv.io
-    2.0.0-rc.87 `[SKHA1]`..`[SKHA4]`; earlier releases used a
+    .0.0-rc.88 `[SKHA1]`..`[SKHA4]`; earlier releases used a
     plain SHA-256, which a listing of the platform database
     reverses by running candidate addresses or a mailing list
     through it. The keyed hash holds against whoever reads the
@@ -4383,7 +4383,7 @@ Per-aspect:
     filtering stays yours.
   - Webhook calls: IMPLEMENTED, signal-only (no personal data in
     the body, see `context/webhooks-signal-only.md`) and, from the
-    release after open-pryv.io 2.0.0-rc.87, signed: a per-webhook
+    release after open-pryv.io 2.0.0-rc.88, signed: a per-webhook
     secret returned once by `webhooks.create` keys a
     `Pryv-Signature` HMAC-SHA256 of a timestamp and the exact
     body, so a receiver can refuse calls that do not come from
@@ -4401,7 +4401,7 @@ Per-aspect:
     copies removed) `[ADRI09]`, `[ADRU3]`. See
     `iso-27001.A.8.26`.
   - Configured safeguards, readable per core: IMPLEMENTED, from
-    the release after open-pryv.io 2.0.0-rc.87 (`21fd8085`).
+    the release after open-pryv.io 2.0.0-rc.88 (`21fd8085`).
     Operator-readable evidence of the configured safeguards: the
     admin route `GET /system/admin/config/effective` (admin key,
     `404` without it `[CFE2]`) answers the configuration the
@@ -4676,7 +4676,7 @@ deployment.
     control rows. For the technical safeguards in force on
     each core, the DPIA safeguards inventory can cite a dated,
     digest-stamped per-core snapshot (the release after
-    open-pryv.io 2.0.0-rc.87, `21fd8085`):
+    open-pryv.io .0.0-rc.88, `21fd8085`):
     `GET /system/admin/config/effective` (admin key) answers the
     configuration a core runs with, secrets redacted, stamped
     with `coreId`, `snapshotAt` and two SHA-256 digests (`full`
@@ -4799,7 +4799,7 @@ Practical DPO-monitoring patterns:
   active: `bin/breach-scope.js` for the breach scoping
   artefact (shipped), and the effective-configuration
   endpoint `GET /system/admin/config/effective` (the release
-  after open-pryv.io 2.0.0-rc.87) for DPIA Section (d): the
+  after open-pryv.io 2.0.0-rc.88) for DPIA Section (d): the
   configuration each core runs with, secrets redacted, with
   digests to compare cores and snapshots (see Art.35).
 
@@ -6256,7 +6256,7 @@ of PHI disclosed, purpose. Each field has a Pryv source:
   - purpose → `access.clientData.purpose` recorded at grant time
 A record that cannot be written is a disclosure the trail cannot
 account for: it is logged and, from the release after open-pryv.io
-2.0.0-rc.87, counted (see hipaa-security 164.312(b)); it is not
+.0.0-rc.88, counted (see hipaa-security 164.312(b)); it is not
 recovered.
 Pre-computing per-subject accounting reports periodically (and
 storing them on a dedicated stream) is a useful operational
@@ -6861,7 +6861,7 @@ API calls on an account are captured by Pryv's per-user audit log;
 the `audit.get` method exposes it for periodic review. Observability
 (opt-in telemetry emitter) gives system-level activity reports for
 the infrastructure side; from the release after open-pryv.io
-2.0.0-rc.87 it also reports how many audit records could not be
+.0.0-rc.88 it also reports how many audit records could not be
 written. The "regular review" cadence is your written procedure.
 
 **Detail**
@@ -7745,7 +7745,7 @@ window of the access token. Combining `auth.sessionMaxAge` (for
 interactive workforce sessions) with per-grant `access.expires`
 (for app-driven background processes) covers both shapes.
 `auth.sessionMaxAge` counts from the last activity: from the
-release after open-pryv.io 2.0.0-rc.87, an open socket.io
+release after open-pryv.io 2.0.0-rc.88, an open socket.io
 connection no longer extends the session by itself (its periodic
 re-validation re-checks it without extending it), only calls
 made on it do, and a session that has expired is never extended
@@ -7812,7 +7812,7 @@ Since open-pryv.io 2.0.0-rc.86 both read a second envelope version
 that authenticates its context (the at-rest row it is stored in;
 the bundle's version, salt and nonce) with a pinned 16-byte tag
 `[AREV1]`, `[BNEV1]`. Bundles are written in it from that release;
-at-rest rows from the release after open-pryv.io 2.0.0-rc.87
+at-rest rows from the release after open-pryv.io 2.0.0-rc.88
 `[AREV3]` (2.0.0-rc.86 and rc.87 still write them in the first
 version, so a core of the previous release keeps reading them).
 
@@ -7861,7 +7861,7 @@ the account), which the operator should alert on `[BAUF1]`,
 `[BAUF2]`. A failed write is never replaced by a false error
 record.
 
-From the release after 2.0.0-rc.87 (open-pryv.io `12b43736`) each
+From the release after 2.0.0-rc.88 (open-pryv.io `12b43736`) each
 record that could not be written is also counted, by kind and
 cause, with no method, account or message `[ALRC1]`, `[ALRC2]`:
 `GET /system/audit-status` (admin key) answers the totals of the
@@ -7906,7 +7906,7 @@ not just data access. Federated sign-in (SSO, beta) emits into the
 same pipeline: `sso.login` (user-resolved, in the account's trail)
 and `sso.refused` (pre-identification: no-account / unproved email,
 syslog), so an attempted account takeover through an external
-identity is itself auditable. From the release after 2.0.0-rc.87 a
+identity is itself auditable. From the release after 2.0.0-rc.88 a
 sign-in that fails after its account was found (session or hand-off
 not made) is `sso.failed` in that account's trail `[SSOE10]`; before,
 it was `sso.refused` in syslog only.
@@ -7938,7 +7938,7 @@ event that creates it (an app-account client), source `oauth2`,
 no address `[IPAU6]`, `[IPAUA]`. **Correction (2026-11-24):** an
 earlier version of this entry stated that row for every release
 since rc.68; it is written from the release after
-2.0.0-rc.87 only (before, the write left no row of its own). The
+2.0.0-rc.88 only (before, the write left no row of its own). The
 same release records a delivery to an account of the same core
 `[IPAU1]`, `[IPAU2]` and the one-time secret of a credential
 hand-off `[IPAU4]` or of a third-party sign-in `[IPAU5]`. The
@@ -8002,7 +8002,7 @@ audited, like `auth.cores`: the unauthenticated lookup
 2.0.0-rc.59), both reads that name no account.
 
 **Account auto-deletion, administrator's reset** (the release
-after open-pryv.io 2.0.0-rc.87). An administrator stopping or
+after open-pryv.io 2.0.0-rc.88). An administrator stopping or
 restarting an account's pending deletion (`POST
 /system/admin/auto-deletion/clear`, admin key) is recorded twice,
 like the external-id release: the admin call itself without a user
@@ -8040,7 +8040,7 @@ audited `[ASM9]`. The account app's next release draws its Activity
 chart and an Audit trail chart over a chosen period from it.
 
 **socket.io calls running at the same time (fix, the release after
-open-pryv.io 2.0.0-rc.87).** Every call on one socket.io connection
+open-pryv.io .0.0-rc.88).** Every call on one socket.io connection
 used to share one context, so two calls running at once could swap
 their method id: the audit row (and the access usage count) of one
 call could name the other call's method. Each call now runs with
@@ -8302,7 +8302,7 @@ refused code exchange spends it and revokes its access, and the
 client starts a new authorization `[OPCL4]`.
 
 **A chosen access token cannot be short (the release after
-open-pryv.io 2.0.0-rc.87).** Since the bearer of a valid token is
+open-pryv.io .0.0-rc.88).** Since the bearer of a valid token is
 authenticated, a short token is a guessable one. `accesses.create`
 with an explicit `token` refuses one shorter than 16 characters,
 measured after slugification, with `400
@@ -8452,7 +8452,7 @@ LE certificate replication uses rqlite keyspace `tls-cert/<host>` +
 `tls-acme-account`; rotation triggers `https.Server.setSecureContext`
 via cluster IPC for live key swap without downtime. The cluster CA
 lives outside the LE chain, operator-rooted, used only between
-cores. From the release after open-pryv.io 2.0.0-rc.87, a newly
+cores. From the release after open-pryv.io 2.0.0-rc.88, a newly
 created cluster CA may sign end-entity certificates only
 (`pathlen:0`) `[CLCX1]`, and each node certificate is marked as an
 end entity for TLS server and client authentication, so a core's
@@ -8468,7 +8468,7 @@ webhook surface; the transmission-security attack surface
 narrows accordingly. See `context/webhooks-signal-only.md` for
 the full design rationale + operational caveats (TLS-on-
 delivery, retry semantics, poison-pill protection). From the
-release after open-pryv.io 2.0.0-rc.87 the calls are also
+release after open-pryv.io 2.0.0-rc.88 the calls are also
 signed, so your receiver can check that a call comes from your
 platform: `webhooks.create` returns a per-webhook secret once
 `[WHSG5]`, every call (retries included) carries a
@@ -8806,7 +8806,7 @@ directory, readable by user id, while everything else there is
 removed `[DKP1]`. Before 2.0.0-rc.46 the SQLite directory wipe
 erased it, so `keep` behaved like `erase` on SQLite: if you
 relied on `keep` there, audit of accounts deleted earlier is
-gone. From the release after open-pryv.io 2.0.0-rc.87 the kept
+gone. From the release after open-pryv.io 2.0.0-rc.88 the kept
 directory also holds an `erased.json` marker (no username) and
 nothing else besides the audit files `[CMCER4]`: while it is
 there no new file is created in the directory, in any process of
@@ -8839,7 +8839,7 @@ enables account auto-deletion keeps `audit.onUserDelete: keep`
 and keeps those log lines for the six-year period if they are
 part of its documentation.
 
-**Erasure ledger (the release after open-pryv.io 2.0.0-rc.87,
+**Erasure ledger (the release after open-pryv.io 2.0.0-rc.88,
 `83e14c94`).** Every account erasure leaves one durable record
 in the platform database (keyed hashes of the user id and
 username, dates, trigger, core, the `audit.onUserDelete` mode;
@@ -9107,7 +9107,7 @@ repositories), and the code-level security review of
 open-pryv.io (2026-06 to 2026-10, fixes in 2.0.0-rc.40 to
 2.0.0-rc.51, public report `SECURITY-AUDIT.md` published
 2026-10-14), and, from the release after open-pryv.io
-2.0.0-rc.87, a technical baseline per core: the effective
+.0.0-rc.88, a technical baseline per core: the effective
 configuration with its digests (see detail). The assessment
 write-up is operator-side.
 
@@ -9140,7 +9140,7 @@ environmental or operational changes" trigger, are evaluated by you.
 It was performed by the maintainers, not an independent assessor.
 
 **A technical baseline to evaluate against** (the release after
-open-pryv.io 2.0.0-rc.87, `21fd8085`): the admin route
+open-pryv.io .0.0-rc.88, `21fd8085`): the admin route
 `GET /system/admin/config/effective` answers the configuration
 each core runs with, secrets redacted (presence, type and a
 keyed fingerprint only) `[CFE5]`, and two SHA-256 digests. The
@@ -9872,7 +9872,7 @@ that both fail at the provider keep the enrolment that was pending
 before them `[MACC2]`.
 
 **Access tokens chosen by the caller (the release after
-open-pryv.io 2.0.0-rc.87).** A token is a bearer credential.
+open-pryv.io .0.0-rc.88).** A token is a bearer credential.
 `accesses.create` with an explicit `token` refuses one shorter
 than 16 characters, measured after slugification (what is
 stored), with `400 invalid-parameters-format` `[TKMN1]`; a token
@@ -9882,7 +9882,7 @@ accesses your integrations created with chosen tokens if you need
 to replace short ones.
 
 **Tokens Pryv generates come from the secure random source (the
-release after open-pryv.io 2.0.0-rc.87).** Access tokens (the
+release after open-pryv.io 2.0.0-rc.88).** Access tokens (the
 `token` omitted), personal (session) tokens, password-reset tokens
 and the default token of a cross-account (CMC) access are drawn
 from `node:crypto` directly, with no bias between symbols
@@ -9937,7 +9937,7 @@ notice (`[ACXP8]`) before, through the same erasure as
 interrupted halfway is completed at a later pass (`[ADSW19]`).
 
 Unfinished registrations (the release after open-pryv.io
-2.0.0-rc.87; merged, unreleased at this walk). Rows a failed or
+.0.0-rc.88; merged, unreleased at this walk). Rows a failed or
 interrupted registration left behind are no longer required by
 any account: a failed registration's compensation now removes
 its account fields on PostgreSQL too `[URB2]`, and
@@ -9951,7 +9951,7 @@ email a stale name held on the platform `[RCRG6]`. See
 gdpr.Art.5 §1(e) for the safeguards.
 
 CMC retry rows left by erasures before open-pryv.io 2.0.0-rc.72
-(the release after open-pryv.io 2.0.0-rc.87). Each holds a
+(the release after open-pryv.io 2.0.0-rc.88). Each holds a
 counterparty's invite URL with its token and is no longer required
 by any account. `bin/reconcile-user-cores.js --cmc-retries` lists
 them on PostgreSQL and deletes them only with `--apply`, for an id
@@ -9962,7 +9962,7 @@ SQLite such rows stay in the erased account's kept directory. See
 gdpr.Art.17.
 
 Nothing stored after the deletion (the release after open-pryv.io
-2.0.0-rc.87). Work still running for an account while it is
+.0.0-rc.88). Work still running for an account while it is
 erased can no longer store data for it: on PostgreSQL the database
 refuses a new row for an id the users index does not hold, and the
 deletion's removal of the data sees any insert that was in flight
@@ -9973,7 +9973,7 @@ present `[CMCER4]`, `[ERMK3]`. Residual: one empty SQLite file in a
 millisecond window, no row. See gdpr.Art.17.
 
 Record of each deletion (the release after open-pryv.io
-2.0.0-rc.87, `83e14c94`). Every account erasure leaves one
+.0.0-rc.88, `83e14c94`). Every account erasure leaves one
 record in the platform database, the erasure ledger: keyed
 hashes of the user id and username, when, what decided it, on
 which core, no account content `[ERLG3]`, `[ERLG4]`; the
@@ -10151,7 +10151,7 @@ former username are exported and restored under the username
 `[BKAL3]`. Take a new backup after upgrading.
 
 **Erased accounts stay erased (the release after open-pryv.io
-2.0.0-rc.87, `83e14c94`).** A restore checks the erasure ledger
+.0.0-rc.88, `83e14c94`).** A restore checks the erasure ledger
 (one durable record per erased account, see gdpr.Art.17): an
 account erased after its backup is not restored, whether the
 ledger records it (and no restore since) or an erasure of it
@@ -10208,7 +10208,7 @@ SQLite files, or its own PostgreSQL connection pool) to decouple
 the log from data-path engine issues. A failed audit write never
 changes the call's answer and is logged at error level for the
 operator's alerting `[BAUF1]`; from the release after open-pryv.io
-2.0.0-rc.87 it is also counted, for the same alerting (see
+.0.0-rc.88 it is also counted, for the same alerting (see
 hipaa-security 164.312(b)); it is not recovered. The
 "analysed" element (review cadence, alerting thresholds) is the
 operator's procedure.
@@ -10226,7 +10226,7 @@ user resolved; never a token or a document body) `[OXN02]`,
 requests are not audited by the core. Since rc.77 a streamed
 answer the client stopped reading is logged as an error
 (`client-closed-request`), not a success `[AUAB3]`. From the
-release after rc.87, calls running at the same time on one
+release after rc.88, calls running at the same time on one
 socket.io connection are each audited under their own method;
 before, two such calls could swap their method id in the audit
 row and the access usage counts `[SKMC]`. Full list on
@@ -10399,7 +10399,7 @@ IP, in `cmc.allowedPrivateHosts` (host names, IPs or CIDR ranges,
 the grammar of `webhooks.allowedPrivateHosts`; checked at boot)
 `[PFR3]`. Webhook deliveries apply the same address rules. Egress
 filtering on your network stays yours. From the release after
-open-pryv.io 2.0.0-rc.87 webhook calls are signed with a
+open-pryv.io .0.0-rc.88 webhook calls are signed with a
 per-webhook secret (`Pryv-Signature`, HMAC-SHA256 of a timestamp
 and the body), so the receivers on your side can refuse calls
 that do not come from the platform `[WHSG2]`, `[WHSR1]`; webhooks
@@ -10407,7 +10407,7 @@ created earlier stay unsigned until `webhooks.rotateSecret`
 `[WHSG6]` (see `context/webhooks-signal-only.md`).
 
 **Inter-core certificates (the release after open-pryv.io
-2.0.0-rc.87).** A newly created cluster CA is a CA that may sign
+.0.0-rc.88).** A newly created cluster CA is a CA that may sign
 end-entity certificates only (`basicConstraints CA:TRUE,
 pathlen:0`; key usage limited to signing certificates and CRLs)
 `[CLCX1]`. The node certificate a core receives when it joins is
@@ -10465,13 +10465,13 @@ envelope version, bound to the row that holds it and with a
 pinned tag, is read from this release `[AREV1]`, `[AREV2]`;
 2.0.0-rc.86 and rc.87 still write rows in the first version (no
 binding) so that a core of the previous release can read them. The
-release after open-pryv.io 2.0.0-rc.87 writes version 2 `[AREV3]`:
+release after open-pryv.io 2.0.0-rc.88 writes version 2 `[AREV3]`:
 every core must have run 2.0.0-rc.86 or later before it is
 deployed, and going back to a release before 2.0.0-rc.86 is not
 possible without restoring the rows. The configured
 `letsEncrypt.atRestKey` is unchanged.
 
-**Changes in the release after open-pryv.io 2.0.0-rc.87.** Random
+**Changes in the release after open-pryv.io 2.0.0-rc.88.** Random
 secrets: the bearer tokens Pryv generates (access, personal and
 password-reset tokens, the default token of a cross-account
 access) are drawn from `node:crypto` without bias, never from a
@@ -10772,7 +10772,7 @@ Pryv configuration lives in
 (operator-side); a `config-validation` step on master start
 fails fast on unresolved variables or missing required service
 fields, giving a baseline "configuration is well-formed" check.
-From the release after open-pryv.io 2.0.0-rc.87 (`21fd8085`)
+From the release after open-pryv.io 2.0.0-rc.88 (`21fd8085`)
 the configuration is readable and comparable (per-core and
 platform digests) without host access:
 `GET /system/admin/config/effective` (admin key) answers what
@@ -10784,7 +10784,7 @@ behaviour changed observably.
 **Detail**
 
 **Reading and comparing the configuration** (the release after
-open-pryv.io 2.0.0-rc.87, `21fd8085`; developer site, system
+open-pryv.io .0.0-rc.88, `21fd8085`; developer site, system
 reference, "Get the effective configuration"):
   - One entry per key, sorted, with the layer that set it
     (`default-file`, `base-file`, `override-file`,
@@ -10877,7 +10877,7 @@ The boundary is recorded in
     the mail budgets in each core's cluster store) are an
     HMAC-SHA256 under a key derived from
     `auth.adminAccessKey` from the release after open-pryv.io
-    2.0.0-rc.87 `[SKHA1]`..`[SKHA4]`. Earlier releases stored a
+    .0.0-rc.88 `[SKHA1]`..`[SKHA4]`. Earlier releases stored a
     plain SHA-256, which a listing of the platform database
     reverses by enumerating addresses or running a mailing list
     through it; the keyed hash leaves that to holders of the
@@ -11236,7 +11236,7 @@ gated so an external identity cannot claim an account whose email
 was never inbox-proved.
 
 **Strength of chosen access tokens.** From the release after
-open-pryv.io 2.0.0-rc.87, a token chosen by the caller of
+open-pryv.io .0.0-rc.88, a token chosen by the caller of
 `accesses.create` must have at least 16 characters after
 slugification, or the call is refused `[TKMN1]`; tokens already
 issued are unchanged. From the same release, the tokens Pryv
@@ -11496,7 +11496,7 @@ connection and how much CPU password checks take; many slow
 requests in a row are still for your edge layer to limit.
 
 **Per-account, per-access and per-connection ceilings (the release
-after open-pryv.io 2.0.0-rc.87; on by default, per API worker, `0`
+after open-pryv.io 2.0.0-rc.88; on by default, per API worker, `0`
 turns each off).** Authenticated calls running at once (HTTP, batch
 counted once, socket.io) are capped per account
 (`limits.requests.maxInflightPerUser`, default 64) and per access
@@ -11620,7 +11620,7 @@ nodes upgraded back to back (followers first, never adding a node
 while versions are mixed): `open-pryv.io/INSTALL.md`, "Upgrading
 the bundled rqlite (9.x to 10.x)".
 
-**Routing reads (the release after open-pryv.io 2.0.0-rc.87).** The
+**Routing reads (the release after open-pryv.io 2.0.0-rc.88).** The
 cached read of which core hosts a name (see A.8.6) asks rqlite for
 the `linearizable` level instead of `strong`: just as up to date,
 without a Raft log entry per read; the other reads of that mapping
@@ -11766,7 +11766,7 @@ methods refused inside batches and over socket.io `[CEDB1]`;
 live `/reg/access` requests per address
 (`access.maxLiveRequestsPerIp`) `[RAI1]`, a request nobody opens
 living `access.unopenedRequestTtl` (600 s) `[RAU1]`; from the
-release after 2.0.0-rc.87, with `access.openedOnlyByAuthPage`
+release after 2.0.0-rc.88, with `access.openedOnlyByAuthPage`
 (default `false`) only the auth page's read (`?authPage=1`) opens
 a request, so an app polling at once no longer keeps every
 request alive for the hour `[RAU3]`, `[RAU4]`; turn it on once
@@ -11782,7 +11782,7 @@ budgets read the client address through `http.trustedProxies`
 only: behind your reverse proxy, list it there `[CEPI2]`. The
 embedded DNS server validates requests and bounds its TCP
 connections (`dns.tcpMaxConnections`, 2.0.0-rc.46) `[DNR01]`.
-From the release after 2.0.0-rc.87 it also limits the UDP answers
+From the release after 2.0.0-rc.88 it also limits the UDP answers
 that need a platform lookup (`<core>.<domain>`,
 `<username>.<domain>`, found or not) to
 `dns.responseRateLimit.perSecond` a second per client network
@@ -11817,7 +11817,7 @@ endpoints `503 temporarily_unavailable`, both with
 `Retry-After`, and the refusal is never a failed attempt
 `[CLIM2]`, `[PCLM1]`, `[PCLM2]`; on PostgreSQL the database work
 of an API request is time-limited (see A.8.6). From the release
-after 2.0.0-rc.87, each API worker also caps the calls running at
+after 2.0.0-rc.88, each API worker also caps the calls running at
 once per account and per access (`limits.requests.*`, `429
 too-many-requests`), the nesting and size of call parameters
 (`limits.json.*`, `400`), and socket.io connections per access and
@@ -11900,7 +11900,7 @@ between cores).
 The address an authorisation request returns to (`returnURL`,
 followed by the authentication page once the user answers) is
 checked when the request is created, since the release after
-open-pryv.io 2.0.0-rc.87: a value that is not absent or an absolute
+open-pryv.io .0.0-rc.88: a value that is not absent or an absolute
 URL, carries `user:password@`, or uses a `javascript:`, `data:`,
 `vbscript:` or `blob:` scheme is refused (`400 invalid-parameters`)
 `[RAO8]`, `[RTO10]`. With `access.returnOrigins` set, an app id
@@ -11911,7 +11911,7 @@ outcome by polling; apps that need their redirect bound to the
 client use the OAuth2 flow.
 
 Mail sent through Mandrill: since the release after open-pryv.io
-2.0.0-rc.87, `services.email.mergeLanguage: handlebars` makes
+.0.0-rc.88, `services.email.mergeLanguage: handlebars` makes
 Mandrill HTML-escape the variables of `{{VAR}}` templates (names,
 links, an administrator's reason) `[RSLK7]`. Unset, Mandrill uses
 its account default, whose escaping it does not document, and the
@@ -14325,7 +14325,7 @@ identity cannot claim an account whose email was never inbox-proved,
 MFA (when active) is still enforced, and the session token reaches
 the auth app via a one-time shared secret, never a URL. Sign-ins and
 refusals are recorded in the audit trail (`sso.login`, `sso.refused`,
-and from the release after open-pryv.io 2.0.0-rc.87 `sso.failed`).
+and from the release after open-pryv.io 2.0.0-rc.88 `sso.failed`).
 
 **Credential transmission to third parties.** When a credential
 must be handed to a counterparty, the shared-secrets endpoints
@@ -14581,7 +14581,7 @@ merely blocks new grants while issued tokens live out their TTL:
 it writes a platform-wide tombstone and every core rejects that
 client's existing access tokens at validation time within
 `oauth.clientRevokeCheckSeconds` (default 30 s; from the release
-after open-pryv.io 2.0.0-rc.87 a value above 300 s is used as
+after open-pryv.io 2.0.0-rc.88 a value above 300 s is used as
 300 s, like `caching.accessMaxAgeSeconds`), open socket.io
 connections are swept and dropped too. So "remove access for app
 X, everywhere, now" is one operator command with a bounded
@@ -14750,7 +14750,7 @@ per-host bounded `[OCMD03B]`, `[OCMD03G]`, `[OCMD03H]`; a host you
 list in `cmc.allowedPrivateHosts` is allowed for them too.
 
 Webhook calls leaving the boundary are signed from the release
-after open-pryv.io 2.0.0-rc.87: a per-webhook secret, returned
+after open-pryv.io 2.0.0-rc.88: a per-webhook secret, returned
 once by `webhooks.create` and replaced by `webhooks.rotateSecret`,
 keys a `Pryv-Signature` HMAC-SHA256 of a timestamp and the body,
 so the receiving systems can refuse calls from anyone else
@@ -15330,7 +15330,7 @@ output can be tied back to a verified state. Webhooks notify
 subscribers of change (signal-only, the receiver fetches the
 authoritative state via authenticated GET, so the delivered output
 is always the current canonical value); from the release after
-open-pryv.io 2.0.0-rc.87 each call is signed with a per-webhook
+open-pryv.io .0.0-rc.88 each call is signed with a per-webhook
 secret, so the receiver can check where it comes from (see
 context/webhooks-signal-only.md). Delivery SLAs to your end
 recipients are your specification.

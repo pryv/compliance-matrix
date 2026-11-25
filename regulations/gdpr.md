@@ -300,7 +300,7 @@ Per-principle breakdown, what Pryv does for you, what you do:
   suspended, never erased, while tracking is off (`[ACXP19]`).
   The erasure is `auth.delete`'s, guards included (`[ADSW8]`).
   An exception for one account is yours to grant: since the
-  release after open-pryv.io 2.0.0-rc.87 your support can
+  release after open-pryv.io 2.0.0-rc.88 your support can
   restart a pending preset schedule from now, with its full
   period and reminders (a holder who cannot sign in in time),
   reasoned, mailed to the holder and recorded in the account's
@@ -312,7 +312,7 @@ Per-principle breakdown, what Pryv does for you, what you do:
   `customer-resources/account-auto-deletion`.
 
   Leftovers of unfinished registrations (the release after
-  open-pryv.io 2.0.0-rc.87; merged, unreleased at this walk). A
+  open-pryv.io .0.0-rc.88; merged, unreleased at this walk). A
   registration that fails, or whose process dies midway, can
   leave personal data that no finished account owns: account
   fields (the email included) under an id the users index lacks,
@@ -358,10 +358,10 @@ Per-principle breakdown, what Pryv does for you, what you do:
   the access reference + version; access carries the consent state
   at that version → end-to-end accountability chain you can point
   auditors at. A record that cannot be written is logged and, from
-  the release after open-pryv.io 2.0.0-rc.87, counted (see
+  the release after open-pryv.io 2.0.0-rc.88, counted (see
   hipaa-security 164.312(b)); it is not recovered.
 
-  Proof of erasure (the release after open-pryv.io 2.0.0-rc.87,
+  Proof of erasure (the release after open-pryv.io 2.0.0-rc.88,
   `83e14c94`). Every account erasure, whoever decided it, leaves
   one durable record in the platform database, the erasure
   ledger: keyed hashes of the user id and username, when the
@@ -1632,7 +1632,7 @@ the same path. See `context/data-retention-operator-owned.md`,
 `customer-resources/account-auto-deletion`.
 
 Changes during a sweep pass, since the release after
-open-pryv.io 2.0.0-rc.87: the sweep reads the holder's setting,
+open-pryv.io .0.0-rc.88: the sweep reads the holder's setting,
 the schedule and the transfer record again right before it
 erases, and once more after the erasure is recorded as in
 progress; a change made meanwhile (the holder moving their date
@@ -1643,7 +1643,7 @@ since it read it `[ADCLS]`. Earlier releases could ignore such a
 change, or write over it, and erase the account.
 
 Stopping a pending deletion for a holder (support), since the
-release after open-pryv.io 2.0.0-rc.87: your administrator calls
+release after open-pryv.io 2.0.0-rc.88: your administrator calls
 `POST /system/admin/auto-deletion/clear` (method
 `system.autoDeletion.reset`, admin key, `username` and a
 `reason` of 1 to 500 characters). By default the schedule restarts from now with its
@@ -1693,7 +1693,7 @@ converge on the same end-state: zero audit rows for the deleted
 subject. The `[USAD]` test suite asserts engine-agnostically via
 `auditStorage.forUser(userId).countEvents() === 0`. **Known gap
 of the PostgreSQL audit engine, closed in the release after
-open-pryv.io 2.0.0-rc.87:** a call still running during the
+open-pryv.io .0.0-rc.88:** a call still running during the
 erasure could leave one audit row under the erased id. The row is
 now refused, and the erasure removes audit rows a second time once
 the account is gone `[AGPE1]`, `[AGPE2]`, `[AGPG3]`. Rows left
@@ -1784,7 +1784,7 @@ leftovers under the former names.
 Personal data left by a failed or interrupted registration can
 sit under no finished account, out of reach of
 `system.users.delete`. From the release after open-pryv.io
-2.0.0-rc.87, `bin/reconcile-user-cores.js --registrations`
+.0.0-rc.88, `bin/reconcile-user-cores.js --registrations`
 clears such account fields and, when you name it, erases an
 indexed account left without a password through the account
 deletion's erasure `[RCRG1]`, `[RCRG3]`; use it when such a
@@ -1798,7 +1798,7 @@ retry row (`cmc-internal/retry-cmc`), invisible through the API
 and never processed, holding a counterparty's invite URL with its
 token. Since rc.72 nothing is written for an account that is
 erased or whose erasure has started, but rows written before stay.
-From the release after open-pryv.io 2.0.0-rc.87,
+From the release after open-pryv.io 2.0.0-rc.88,
 `bin/reconcile-user-cores.js --cmc-retries` lists them on
 PostgreSQL (rows under an id the users index does not hold) and,
 with `--apply`, deletes the rows of an id that holds nothing else
@@ -1811,11 +1811,11 @@ erased accounts before rc.72, never as part of an upgrade. On
 SQLite such a row stays in the erased account's directory, kept
 only with `audit.onUserDelete: keep`: the files there other than
 the `audit-*` ones are leftovers you may remove (an erasure on the
-release after open-pryv.io 2.0.0-rc.87 also leaves an
+release after open-pryv.io 2.0.0-rc.88 also leaves an
 `erased.json` marker there: keep it, see the next paragraph).
 
 Work still running when the account is erased (the release after
-open-pryv.io 2.0.0-rc.87). A long request, an upload or a CMC
+open-pryv.io .0.0-rc.88). A long request, an upload or a CMC
 dispatch reading a peer that is still running for an account
 while it is erased can no longer store data for it. On
 PostgreSQL the database refuses a new row for an id the users
@@ -1844,7 +1844,7 @@ data-only `pg_restore`, rolling back): developer site
 database".
 
 Proof of erasure and restores (the release after open-pryv.io
-2.0.0-rc.87, `83e14c94`, https://github.com/pryv/open-pryv.io/issues/154).
+.0.0-rc.88, `83e14c94`, https://github.com/pryv/open-pryv.io/issues/154).
 Each account erasure ends by writing one record in the
 platform database, the erasure ledger, kept after the account
 is gone: keyed hashes (HMAC-SHA256) of the user id and of the
@@ -2531,7 +2531,7 @@ three real layers, each tested:
    own API registry, a status class and an error code from
    the published error id list; the number of audit
    records that could not be written, by kind and cause (from
-   the release after open-pryv.io 2.0.0-rc.87); service name
+   the release after open-pryv.io 2.0.0-rc.88); service name
    and version, machine hostname and worker index; and, for
    server-side faults,
    the error class plus a stack trace with frames rewritten
@@ -2574,7 +2574,7 @@ partly via Pryv's audit log + this compliance matrix
 (evidence-backed assertion structure).
 
 **Machine-readable configuration per core** (the release after
-open-pryv.io 2.0.0-rc.87, `21fd8085`): the admin route
+open-pryv.io .0.0-rc.88, `21fd8085`): the admin route
 `GET /system/admin/config/effective` answers the configuration
 the answering core runs with as one JSON document, one entry
 per key with the layer that set it, secrets redacted
@@ -2628,7 +2628,7 @@ Audit row → access ref (with serial) → consent state at that moment.
 Recoverable per data-subject + per-time-window + per-purpose.
 
 **§1(g) general description of technical security measures**
-(the release after open-pryv.io 2.0.0-rc.87, `21fd8085`):
+(the release after open-pryv.io 2.0.0-rc.88, `21fd8085`):
 the description of technical security measures can be emitted
 per core as a redacted machine-readable document.
 `GET /system/admin/config/effective` (admin key; developer site,
@@ -2647,7 +2647,7 @@ only: the organisational measures and your hosting, network and
 key custody stay in your description. See Art.32.
 
 One processing of your own to list (the release after
-open-pryv.io 2.0.0-rc.87, `83e14c94`): the erasure ledger, one
+open-pryv.io .0.0-rc.88, `83e14c94`): the erasure ledger, one
 record per erased account kept after the account is gone, as
 proof of erasure (Art.5 §2, Art.17). It holds keyed hashes of
 the user id and username (pseudonymous personal data while the
@@ -2789,7 +2789,7 @@ Per-aspect:
     the unauthenticated lookup routes and the mail budgets) are
     keyed by an HMAC-SHA256 under a key derived from
     `auth.adminAccessKey` from the release after open-pryv.io
-    2.0.0-rc.87 `[SKHA1]`..`[SKHA4]`; earlier releases used a
+    .0.0-rc.88 `[SKHA1]`..`[SKHA4]`; earlier releases used a
     plain SHA-256, which a listing of the platform database
     reverses by running candidate addresses or a mailing list
     through it. The keyed hash holds against whoever reads the
@@ -3079,7 +3079,7 @@ Per-aspect:
     filtering stays yours.
   - Webhook calls: IMPLEMENTED, signal-only (no personal data in
     the body, see `context/webhooks-signal-only.md`) and, from the
-    release after open-pryv.io 2.0.0-rc.87, signed: a per-webhook
+    release after open-pryv.io 2.0.0-rc.88, signed: a per-webhook
     secret returned once by `webhooks.create` keys a
     `Pryv-Signature` HMAC-SHA256 of a timestamp and the exact
     body, so a receiver can refuse calls that do not come from
@@ -3097,7 +3097,7 @@ Per-aspect:
     copies removed) `[ADRI09]`, `[ADRU3]`. See
     `iso-27001.A.8.26`.
   - Configured safeguards, readable per core: IMPLEMENTED, from
-    the release after open-pryv.io 2.0.0-rc.87 (`21fd8085`).
+    the release after open-pryv.io 2.0.0-rc.88 (`21fd8085`).
     Operator-readable evidence of the configured safeguards: the
     admin route `GET /system/admin/config/effective` (admin key,
     `404` without it `[CFE2]`) answers the configuration the
@@ -3372,7 +3372,7 @@ deployment.
     control rows. For the technical safeguards in force on
     each core, the DPIA safeguards inventory can cite a dated,
     digest-stamped per-core snapshot (the release after
-    open-pryv.io 2.0.0-rc.87, `21fd8085`):
+    open-pryv.io .0.0-rc.88, `21fd8085`):
     `GET /system/admin/config/effective` (admin key) answers the
     configuration a core runs with, secrets redacted, stamped
     with `coreId`, `snapshotAt` and two SHA-256 digests (`full`
@@ -3495,7 +3495,7 @@ Practical DPO-monitoring patterns:
   active: `bin/breach-scope.js` for the breach scoping
   artefact (shipped), and the effective-configuration
   endpoint `GET /system/admin/config/effective` (the release
-  after open-pryv.io 2.0.0-rc.87) for DPIA Section (d): the
+  after open-pryv.io 2.0.0-rc.88) for DPIA Section (d): the
   configuration each core runs with, secrets redacted, with
   digests to compare cores and snapshots (see Art.35).
 

@@ -51,7 +51,7 @@ API calls on an account are captured by Pryv's per-user audit log;
 the `audit.get` method exposes it for periodic review. Observability
 (opt-in telemetry emitter) gives system-level activity reports for
 the infrastructure side; from the release after open-pryv.io
-2.0.0-rc.87 it also reports how many audit records could not be
+.0.0-rc.88 it also reports how many audit records could not be
 written. The "regular review" cadence is your written procedure.
 
 **Detail**
@@ -935,7 +935,7 @@ window of the access token. Combining `auth.sessionMaxAge` (for
 interactive workforce sessions) with per-grant `access.expires`
 (for app-driven background processes) covers both shapes.
 `auth.sessionMaxAge` counts from the last activity: from the
-release after open-pryv.io 2.0.0-rc.87, an open socket.io
+release after open-pryv.io 2.0.0-rc.88, an open socket.io
 connection no longer extends the session by itself (its periodic
 re-validation re-checks it without extending it), only calls
 made on it do, and a session that has expired is never extended
@@ -1002,7 +1002,7 @@ Since open-pryv.io 2.0.0-rc.86 both read a second envelope version
 that authenticates its context (the at-rest row it is stored in;
 the bundle's version, salt and nonce) with a pinned 16-byte tag
 `[AREV1]`, `[BNEV1]`. Bundles are written in it from that release;
-at-rest rows from the release after open-pryv.io 2.0.0-rc.87
+at-rest rows from the release after open-pryv.io 2.0.0-rc.88
 `[AREV3]` (2.0.0-rc.86 and rc.87 still write them in the first
 version, so a core of the previous release keeps reading them).
 
@@ -1051,7 +1051,7 @@ the account), which the operator should alert on `[BAUF1]`,
 `[BAUF2]`. A failed write is never replaced by a false error
 record.
 
-From the release after 2.0.0-rc.87 (open-pryv.io `12b43736`) each
+From the release after 2.0.0-rc.88 (open-pryv.io `12b43736`) each
 record that could not be written is also counted, by kind and
 cause, with no method, account or message `[ALRC1]`, `[ALRC2]`:
 `GET /system/audit-status` (admin key) answers the totals of the
@@ -1096,7 +1096,7 @@ not just data access. Federated sign-in (SSO, beta) emits into the
 same pipeline: `sso.login` (user-resolved, in the account's trail)
 and `sso.refused` (pre-identification: no-account / unproved email,
 syslog), so an attempted account takeover through an external
-identity is itself auditable. From the release after 2.0.0-rc.87 a
+identity is itself auditable. From the release after 2.0.0-rc.88 a
 sign-in that fails after its account was found (session or hand-off
 not made) is `sso.failed` in that account's trail `[SSOE10]`; before,
 it was `sso.refused` in syslog only.
@@ -1128,7 +1128,7 @@ event that creates it (an app-account client), source `oauth2`,
 no address `[IPAU6]`, `[IPAUA]`. **Correction (2026-11-24):** an
 earlier version of this entry stated that row for every release
 since rc.68; it is written from the release after
-2.0.0-rc.87 only (before, the write left no row of its own). The
+2.0.0-rc.88 only (before, the write left no row of its own). The
 same release records a delivery to an account of the same core
 `[IPAU1]`, `[IPAU2]` and the one-time secret of a credential
 hand-off `[IPAU4]` or of a third-party sign-in `[IPAU5]`. The
@@ -1192,7 +1192,7 @@ audited, like `auth.cores`: the unauthenticated lookup
 2.0.0-rc.59), both reads that name no account.
 
 **Account auto-deletion, administrator's reset** (the release
-after open-pryv.io 2.0.0-rc.87). An administrator stopping or
+after open-pryv.io 2.0.0-rc.88). An administrator stopping or
 restarting an account's pending deletion (`POST
 /system/admin/auto-deletion/clear`, admin key) is recorded twice,
 like the external-id release: the admin call itself without a user
@@ -1230,7 +1230,7 @@ audited `[ASM9]`. The account app's next release draws its Activity
 chart and an Audit trail chart over a chosen period from it.
 
 **socket.io calls running at the same time (fix, the release after
-open-pryv.io 2.0.0-rc.87).** Every call on one socket.io connection
+open-pryv.io .0.0-rc.88).** Every call on one socket.io connection
 used to share one context, so two calls running at once could swap
 their method id: the audit row (and the access usage count) of one
 call could name the other call's method. Each call now runs with
@@ -1492,7 +1492,7 @@ refused code exchange spends it and revokes its access, and the
 client starts a new authorization `[OPCL4]`.
 
 **A chosen access token cannot be short (the release after
-open-pryv.io 2.0.0-rc.87).** Since the bearer of a valid token is
+open-pryv.io .0.0-rc.88).** Since the bearer of a valid token is
 authenticated, a short token is a guessable one. `accesses.create`
 with an explicit `token` refuses one shorter than 16 characters,
 measured after slugification, with `400
@@ -1642,7 +1642,7 @@ LE certificate replication uses rqlite keyspace `tls-cert/<host>` +
 `tls-acme-account`; rotation triggers `https.Server.setSecureContext`
 via cluster IPC for live key swap without downtime. The cluster CA
 lives outside the LE chain, operator-rooted, used only between
-cores. From the release after open-pryv.io 2.0.0-rc.87, a newly
+cores. From the release after open-pryv.io 2.0.0-rc.88, a newly
 created cluster CA may sign end-entity certificates only
 (`pathlen:0`) `[CLCX1]`, and each node certificate is marked as an
 end entity for TLS server and client authentication, so a core's
@@ -1658,7 +1658,7 @@ webhook surface; the transmission-security attack surface
 narrows accordingly. See `context/webhooks-signal-only.md` for
 the full design rationale + operational caveats (TLS-on-
 delivery, retry semantics, poison-pill protection). From the
-release after open-pryv.io 2.0.0-rc.87 the calls are also
+release after open-pryv.io 2.0.0-rc.88 the calls are also
 signed, so your receiver can check that a call comes from your
 platform: `webhooks.create` returns a per-webhook secret once
 `[WHSG5]`, every call (retries included) carries a
@@ -1996,7 +1996,7 @@ directory, readable by user id, while everything else there is
 removed `[DKP1]`. Before 2.0.0-rc.46 the SQLite directory wipe
 erased it, so `keep` behaved like `erase` on SQLite: if you
 relied on `keep` there, audit of accounts deleted earlier is
-gone. From the release after open-pryv.io 2.0.0-rc.87 the kept
+gone. From the release after open-pryv.io 2.0.0-rc.88 the kept
 directory also holds an `erased.json` marker (no username) and
 nothing else besides the audit files `[CMCER4]`: while it is
 there no new file is created in the directory, in any process of
@@ -2029,7 +2029,7 @@ enables account auto-deletion keeps `audit.onUserDelete: keep`
 and keeps those log lines for the six-year period if they are
 part of its documentation.
 
-**Erasure ledger (the release after open-pryv.io 2.0.0-rc.87,
+**Erasure ledger (the release after open-pryv.io 2.0.0-rc.88,
 `83e14c94`).** Every account erasure leaves one durable record
 in the platform database (keyed hashes of the user id and
 username, dates, trigger, core, the `audit.onUserDelete` mode;
@@ -2297,7 +2297,7 @@ repositories), and the code-level security review of
 open-pryv.io (2026-06 to 2026-10, fixes in 2.0.0-rc.40 to
 2.0.0-rc.51, public report `SECURITY-AUDIT.md` published
 2026-10-14), and, from the release after open-pryv.io
-2.0.0-rc.87, a technical baseline per core: the effective
+.0.0-rc.88, a technical baseline per core: the effective
 configuration with its digests (see detail). The assessment
 write-up is operator-side.
 
@@ -2330,7 +2330,7 @@ environmental or operational changes" trigger, are evaluated by you.
 It was performed by the maintainers, not an independent assessor.
 
 **A technical baseline to evaluate against** (the release after
-open-pryv.io 2.0.0-rc.87, `21fd8085`): the admin route
+open-pryv.io .0.0-rc.88, `21fd8085`): the admin route
 `GET /system/admin/config/effective` answers the configuration
 each core runs with, secrets redacted (presence, type and a
 keyed fingerprint only) `[CFE5]`, and two SHA-256 digests. The
