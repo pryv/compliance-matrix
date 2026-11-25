@@ -486,7 +486,7 @@ flow.
   signing, per-delivery nonces, replay windows) for the data-
   integrity dimension. TLS-on-delivery + delivery retry semantics
   still matter operationally.
-- **Signed calls** (the release after open-pryv.io 2.0.0-rc.87): so
+- **Signed calls** (the release after open-pryv.io 2.0.0-rc.88): so
   that a receiver can tell a call comes from the platform,
   `webhooks.create` returns a per-webhook `secret` once, every call
   carries `Pryv-Signature: t=<unix seconds>,v1=<HMAC-SHA256 of t and
@@ -713,7 +713,7 @@ per-key purpose label (TLS certificate and ACME account keys: from
   tag; 2.0.0-rc.86 and rc.87 read both versions and still write the
   first, so a core of the previous release keeps reading every row during
   an upgrade and after a rollback. The release after open-pryv.io
-  2.0.0-rc.87 writes version 2 (the first only on explicit request):
+  .0.0-rc.88 writes version 2 (the first only on explicit request):
   every core of a platform must have run 2.0.0-rc.86 or later before it
   is deployed, and going back to a release before 2.0.0-rc.86 is not
   possible without restoring the rows. Rows already stored are rewritten
@@ -841,7 +841,7 @@ Since open-pryv.io 2.0.0-rc.86 a bundle's version, salt and nonce are
 authenticated with its content (pinned 16-byte tag); a joining core must
 run that release or later to read it, while bundles of earlier releases
 are still read `[BNEV1]`. From the release after open-pryv.io
-2.0.0-rc.87, a newly created cluster CA is limited to end-entity
+.0.0-rc.88, a newly created cluster CA is limited to end-entity
 certificates (`pathlen:0`, signs certificates and CRLs only) and node
 certificates state their purpose (end entity, digital signature, TLS
 server and client authentication) `[CLCX1]`..`[CLCX3]`; existing CAs and
@@ -876,7 +876,7 @@ happens before egress.
   code, and a stack rebuilt from repository-relative frames. Plus
   `telemetry.dropped`, which counts datapoints the emitter
   refused, by reason, and (from the release after open-pryv.io
-  2.0.0-rc.87) `audit.records.lost`, which counts audit records
+  .0.0-rc.88) `audit.records.lost`, which counts audit records
   that could not be written, labelled only with
   `audit.record.kind` and `audit.loss.reason`.
 - **Anonymity controls**: error reports are aggregated by fault
@@ -1050,10 +1050,10 @@ mails (open-pryv.io 2.0.0-rc.66, `8521c8d5`; per-core block
   WARN log line before and after, an `account.autoDeletion.erase` audit row with
   `audit.onUserDelete: keep` `[ADSW17]`; `dryRun` `[ADSW13]`,
   `maxDeletionsPerPass` `[ADSW12]`; an interrupted erasure completes later
-  `[ADSW19]`. Since the release after open-pryv.io 2.0.0-rc.87 it reads the
+  `[ADSW19]`. Since the release after open-pryv.io 2.0.0-rc.88 it reads the
   setting, the schedule and the transfer record again before acting and never
   writes over a change made meanwhile `[ADCLR]`, `[ADCLS]`.
-- **Support reset** (the release after open-pryv.io 2.0.0-rc.87):
+- **Support reset** (the release after open-pryv.io 2.0.0-rc.88):
   `system.autoDeletion.reset` (`POST /system/admin/auto-deletion/clear`, admin
   key) restarts a pending schedule from now, or with `removeSetting: true`
   removes the holder's own one; reasoned, mailed to the holder, recorded in the

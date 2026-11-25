@@ -127,7 +127,7 @@ Rows whose `detail` should call out the operator-side responsibility
 
 - HTTPS body size limits (Express body-parser defaults).
 - Connection timeouts at the Node.js HTTP server layer: Node's
-  defaults, plus, from the release after 2.0.0-rc.87, an idle timeout
+  defaults, plus, from the release after 2.0.0-rc.88, an idle timeout
   on HTTP connections (`http.responseIdleTimeoutMs`, see "Stalled
   readers" below). Slow-client timeouts on requests still belong at
   the proxy.
@@ -174,7 +174,7 @@ Rows whose `detail` should call out the operator-side responsibility
   requests (default 50), and an unread request lives
   `access.unopenedRequestTtl` (600 s) `[RAI1]`, `[RAU1]`. Any read
   opens a request by default, the app's own polls included; from the
-  release after 2.0.0-rc.87, `access.openedOnlyByAuthPage: true`
+  release after 2.0.0-rc.88, `access.openedOnlyByAuthPage: true`
   (default `false`) lets only the auth page's read (`?authPage=1`)
   open it, so polling no longer keeps unseen requests alive for the
   hour `[RAU3]`, `[RAU4]` (a courtesy flag anyone can add; the
@@ -196,7 +196,7 @@ Rows whose `detail` should call out the operator-side responsibility
   core (`services.mfa.methods.sms.sendLimits.perCorePerHour`, default
   100, the toll-fraud cost cap) `[MSSL1]`, `[MSSL11]`;
   `webhooks.test` once per webhook interval `[WHTT1]`. From the release
-  after 2.0.0-rc.87, at most `webhooks.maxPerAccess` webhooks per access
+  after 2.0.0-rc.88, at most `webhooks.maxPerAccess` webhooks per access
   (default 10) and `webhooks.maxPerUser` per account (default 100), past
   either `webhooks.create` answers `400 invalid-operation`, and at most
   `webhooks.maxScopes` scopes per webhook (default 20, `400
@@ -260,7 +260,7 @@ Rows whose `detail` should call out the operator-side responsibility
   `[PGSS1]`..`[PGSS4]`, `[PGSI1]`..`[PGSI4]`, `[PGSX1]`, `[PGSX2]`;
   `[UNXS1]`..`[UNXS4]`, `[MNSC1]`..`[MNSC3]`, `[STMC1]`, `[STMC2]`.
 - **Calls in progress per account and per access** (the release after
-  2.0.0-rc.87; on by default). Authenticated calls running at once on
+  2.0.0-rc.88; on by default). Authenticated calls running at once on
   an API worker (HTTP, socket.io, a batch counted once and its inner
   calls not again) are capped per account
   (`limits.requests.maxInflightPerUser`, default 64) and per access
@@ -297,7 +297,7 @@ Rows whose `detail` should call out the operator-side responsibility
   These caps bound concurrent work per worker, not request rates: per-token
   request rates on data routes stay at the edge.
 - **Stream tree and stream ids per event** (the release after
-  2.0.0-rc.87; on by default, `0` turns each off). A stream sits at
+  2.0.0-rc.88; on by default, `0` turns each off). A stream sits at
   most `limits.streams.maxDepth` levels deep (default 32, a root
   stream is level 1), on creation and on a move (the moved subtree
   counts); an account holds at most `limits.streams.maxPerAccount`

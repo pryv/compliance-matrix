@@ -380,7 +380,7 @@ so the page's client-IP paragraph needs that refresh (developer-site work,
 outside this repo). The matrix rows were updated under `SECURITY-REVIEW-2026`;
 no chip involved.
 
-**Trigger fired (2026-11-19):** the release after open-pryv.io 2.0.0-rc.87 adds
+**Trigger fired (2026-11-19):** the release after open-pryv.io 2.0.0-rc.88 adds
 in-code ceilings per account, per access and per socket.io connection (`429
 too-many-requests`, `Retry-After: 1`) and on call parameter shape (`400`); the
 page's in-code budgets table needs rows for them, and its per-token load test
@@ -437,7 +437,7 @@ ceilings per account / access / connection, idle timeout, stream tree, audit
 reads, mail budgets, DNS response rate limit, routing miss budget, webhook caps,
 DNS miss budget, socket session touch, revocation lag at 300 s, DNS core-info
 list) are on the developer site's rate-limiting page, webhooks guide and API
-reference (dev-site2 `bb9db18`, published with the release after 2.0.0-rc.87).
+reference (dev-site2 `bb9db18`, published with the release after 2.0.0-rc.88).
 
 **Where the work lives**: the developer site (`dev-site2`, customer resources).
 Q6 outcome, voluntarily missing at Pryv layer; ship reference configs.
@@ -517,7 +517,7 @@ Proposal: `proposals/platformdb-pii-hashing.md`.
 **Note (2026-11-20)**: keys outside `platform.piiMode` (per-address
 password and password-reset budgets, registration email challenge rows)
 moved from a plain SHA-256 to an HMAC-SHA256 under a key derived from
-`auth.adminAccessKey` in the release after open-pryv.io 2.0.0-rc.87;
+`auth.adminAccessKey` in the release after open-pryv.io 2.0.0-rc.88;
 recorded in the B.11 walk of that date, no chip involved.
 
 ### `SUPPLY-CHAIN-SCANNING-PIPELINE`: SHIPPED
@@ -606,7 +606,7 @@ directing reporters at the public issue tracker).
 
 Proposal: `proposals/vulnerability-disclosure-program.md`.
 
-### `CONFIG-EFFECTIVE-EXPOSURE` (SHIPPED in open-pryv.io `21fd8085`, the release after 2.0.0-rc.87; all 5 chips discharged, rows walked 2026-11-23)
+### `CONFIG-EFFECTIVE-EXPOSURE` (SHIPPED in open-pryv.io `21fd8085`, the release after 2.0.0-rc.88; all 5 chips discharged, rows walked 2026-11-23)
 
 **Where the work lived**: `open-pryv.io`
 (https://github.com/pryv/open-pryv.io/issues/118). New admin route
@@ -680,7 +680,7 @@ not fired (no new config key: the fingerprint key is the existing
 
 Proposal: `proposals/config-effective-exposure.md` (Status: shipped in
 `21fd8085`). **When the tag is cut**: replace "the release after
-open-pryv.io 2.0.0-rc.87" with the tag in the rows above and in the
+open-pryv.io .0.0-rc.88" with the tag in the rows above and in the
 proposal.
 
 ⚑ **Lookup note.** The `164.308(a)(8)` ref is **quoted** in
@@ -1016,10 +1016,10 @@ sign-in). Config keys: `account.emailVerification.*`,
 No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so it
 carries no `planned:` chips.
 
-### Consent offers requiring a verified email (merged, unreleased at the walk; rows walked 2026-11-25)
+### Consent offers requiring a verified email (SHIPPED in open-pryv.io 2.0.0-rc.88; rows walked 2026-11-25)
 
-**Where the work lives**: open-pryv.io `e9d6aca8` (the release after
-2.0.0-rc.87): `components/cmc/src/{validators,handleAccept,errorIds}.ts`
+**Where the work lives**: open-pryv.io `e9d6aca8` (released in 2.0.0-rc.88,
+tag on `d5a16158`, 2026-11-25): `components/cmc/src/{validators,handleAccept,errorIds}.ts`
 (`request.requireVerifiedEmail`, `cmc-verified-email-required`),
 `service/info` `features.cmcRequireVerifiedEmail`; `@pryv/cmc`
 (`createInvite`, `readOffer`); data-types 1.3.4 (`consent/request-cmc` gains
@@ -1046,8 +1046,8 @@ person prove the address). Public issue: pryv/open-pryv.io#173. No
   conditionality (Art.7(4)) stays the implementer's to justify.
 - B.1, B.3 to B.7, B.10, B.11: none (no method, config key, storage, telemetry
   or platform key).
-At the release: replace "the release after open-pryv.io 2.0.0-rc.87" by the tag
-in the gates section and here.
+Released 2026-11-25: the gates section and this entry name open-pryv.io
+2.0.0-rc.88; the event-type catalogue 1.3.4 is published (dev-site2).
 
 ### `SECURITY-REVIEW-2026` (code-level security review of open-pryv.io; fixes SHIPPED in 2.0.0-rc.40 to 2.0.0-rc.51; public report published 2026-10-14; rows walked 2026-10-13 and 2026-10-14): DISCHARGED
 
@@ -1550,7 +1550,7 @@ Art.6, Art.13 second chip, Art.14, the transfer half of Art.32) and walk the
 delegation rows listed in the proposal (a controller can be set by a claim).
 
 **2026-11-23 (open-pryv.io master `98b286d5`, the release after
-2.0.0-rc.87)**: support reset `system.autoDeletion.reset` (`POST
+2.0.0-rc.88)**: support reset `system.autoDeletion.reset` (`POST
 /system/admin/auto-deletion/clear`), the sweep's re-read before acting, and
 the transfer claim-invite check. No chip discharged or added (the 5 transfer
 chips stay); rows walked under B.1 ("Walked 2026-11-23 for the auto-deletion
@@ -1558,7 +1558,7 @@ support reset"). At the transfer release, also move the claim-invite codes
 (`ADCLP`, `ADTI1`..`ADTI4`, `DACK1`..`DACK5`) from the `gdpr.Art.32` prose
 into the rows' `tests:` (proposal step 6).
 
-### `ERASURE-LEDGER` (SHIPPED in open-pryv.io `83e14c94`, the release after 2.0.0-rc.87; no chip was queued; rows walked 2026-11-21)
+### `ERASURE-LEDGER` (SHIPPED in open-pryv.io `83e14c94`, the release after 2.0.0-rc.88; no chip was queued; rows walked 2026-11-21)
 
 **Where the work lived**: `open-pryv.io` (https://github.com/pryv/open-pryv.io/issues/154).
 A durable record per erased account in the platform database (keyed
@@ -1600,7 +1600,7 @@ B.11 unfinished-registrations record).
 
 Proposal: `proposals/erasure-ledger.md` (Status: shipped in `83e14c94`).
 **When the tag is cut**: replace "the release after open-pryv.io
-2.0.0-rc.87" with the tag in the rows above and in the proposal.
+.0.0-rc.88" with the tag in the rows above and in the proposal.
 
 ## Section B: Trigger categories (no specific backlog slug yet)
 
@@ -2207,7 +2207,7 @@ the walk and the rows are recorded under B.11 ("Walked 2026-11-21 for the
 erasure ledger") and Section A `ERASURE-LEDGER`.
 
 **2026-11-23, effective configuration (open-pryv.io `21fd8085`, the
-release after 2.0.0-rc.87)**: new admin method `system.getEffectiveConfig`
+release after 2.0.0-rc.88)**: new admin method `system.getEffectiveConfig`
 (`GET /system/admin/config/effective`, `?digest=true`; reference entry
 `config.effective.get`), admin key, `404` without it, audited without a
 user, never cached `[CFE1]`..`[CFE8]`. Read-only, no subject data: the
@@ -2220,7 +2220,7 @@ repository (as it already refused the published PII pepper): no row
 claims otherwise, none changed.
 
 **2026-11-24, lost audit records (open-pryv.io `12b43736`, the release
-after 2.0.0-rc.87)**: new admin method `system.getAuditStatus` (`GET
+after 2.0.0-rc.88)**: new admin method `system.getAuditStatus` (`GET
 /system/audit-status`, admin key, `404` without it, not audited, never
 cached): counts by kind and cause of the audit records the core could
 not write since it started, no method, account or message
@@ -2234,7 +2234,7 @@ record is lost. No tier shift, no chip, no new config key. Emitted
 surface: B.10 of the same date. Corrected in the same walk: `diga` audit
 row, `hds.Activity.3` audit sub-control, `gdpr.Art.30` technical,
 `context/per-engine-isolation.md` named SQLite as the only audit storage.
-Same date, the release after 2.0.0-rc.87 too: in-process API calls (a
+Same date, the release after 2.0.0-rc.88 too: in-process API calls (a
 delivery to an account of the same core, the one-time secrets, the writes of
 an OAuth consent) are recorded `[IPAU1]`..`[IPAUA]`, and no audit row stays
 under an erased id on the PostgreSQL audit engine `[AGPE1]`..`[AGPE6]`,
@@ -2248,10 +2248,10 @@ and "invariant, no opt-out" (the rows above, `gdpr.Art.25`, the
 and five context notes).
 
 **Walked 2026-11-23 for the auto-deletion support reset (unreleased at the
-walk; the release after open-pryv.io 2.0.0-rc.87)**: open-pryv.io
+walk; the release after open-pryv.io 2.0.0-rc.88)**: open-pryv.io
 `52a79dee`, review follow-ups `84a5ce67`, `9c023cf0`, `c57e403c`, `447c063c`,
 `7469d95f`, merged on master `98b286d5`. The rows say "the release after open-pryv.io
-2.0.0-rc.87": name the tag once it is cut. Section A `ACCOUNT-AUTO-DELETION`
+.0.0-rc.88": name the tag once it is cut. Section A `ACCOUNT-AUTO-DELETION`
 gains a dated note; no `planned:` chip discharged or added (the 5 transfer
 chips stay, the transfer being unreleased); no tier shift; `reviewed_at`
 left unchanged. Triggers: B.1 (one new admin method, one new audit action,
@@ -3176,7 +3176,7 @@ keys (`observability.newrelic.*`, `newrelic-license-key`,
 are removed.
 
 **Trigger pass outcome (2026-11-24, lost audit records)**: open-pryv.io
-`12b43736` (the release after 2.0.0-rc.87) adds one metric name,
+`12b43736` (the release after 2.0.0-rc.88) adds one metric name,
 `audit.records.lost`, and two attribute keys with closed values,
 `audit.record.kind` (3) and `audit.loss.reason` (4): at most twelve
 series, no method, account or message. Proof: constants pinned
@@ -3786,10 +3786,10 @@ by the earlier budgets), platform DB and backup rows: not affected
 method; new error answers recorded here), B.2 to B.10: none.
 
 **Walked 2026-11-18 for unfinished registrations (unreleased at the walk;
-the release after open-pryv.io 2.0.0-rc.87, which shipped without them)**:
+the release after open-pryv.io 2.0.0-rc.88, which shipped without them)**:
 operator pass on master `9024b4c6`; registration without a PostgreSQL
 transaction and the compensation fix on master `4ac4f637`, both merged
-2026-11-18. The rows say "the release after open-pryv.io 2.0.0-rc.87":
+2026-11-18. The rows say "the release after open-pryv.io 2.0.0-rc.88":
 name the tag once it is cut. No Section A slug, no `planned:` chip, no
 tier shift; `reviewed_at` left unchanged. No new config key, response
 header or API method. What changed:
@@ -3864,9 +3864,9 @@ Walked without change:
 B.1 (no new method), B.2 to B.10: none.
 
 **Walked 2026-11-19 for the at-rest envelope write switch (unreleased at
-the walk; the release after open-pryv.io 2.0.0-rc.87, which shipped
+the walk; the release after open-pryv.io 2.0.0-rc.88, which shipped
 without it)**: merged on master `e74e7721` 2026-11-19. The rows say "the
-release after open-pryv.io 2.0.0-rc.87": name the tag once it is cut,
+release after open-pryv.io 2.0.0-rc.88": name the tag once it is cut,
 then move the Section C clause on envelope versions to Discharged. No
 Section A slug, no `planned:` chip, no tier shift; `reviewed_at` left
 unchanged. No new config key, response header or API method (the
@@ -3909,10 +3909,10 @@ Walked without change:
 B.1 (no new method), B.2 to B.10: none.
 
 **Walked 2026-11-19 for per-account, per-access and per-connection limits
-(unreleased at the walk; the release after open-pryv.io 2.0.0-rc.87)**:
+(unreleased at the walk; the release after open-pryv.io 2.0.0-rc.88)**:
 open-pryv.io feature commit `e433ed3a`, merged to master `a29dbc93`
 (2026-11-19). The rows say "the
-release after open-pryv.io 2.0.0-rc.87": name the tag once it is cut. The
+release after open-pryv.io 2.0.0-rc.88": name the tag once it is cut. The
 validator passes against master `a29dbc93`. No Section A slug, no `planned:` chip, no tier
 shift; `reviewed_at` left unchanged. No new API method or response header
 (`Retry-After` is already sent by earlier budgets). Each ceiling is on by
@@ -3988,11 +3988,11 @@ Transport, platform DB and backup rows: not affected. B.1 (no new method;
 new error answers recorded here), B.2 to B.10: none.
 
 **Walked 2026-11-20 for stream tree, stalled readers and mail budgets
-(unreleased at the walk; the release after open-pryv.io 2.0.0-rc.87)**:
+(unreleased at the walk; the release after open-pryv.io 2.0.0-rc.88)**:
 open-pryv.io feature commit `c60bbce9`, review fixes `270425ed` and
 the audit-read wait `348c9292`, merged to master `348c9292`
 (2026-11-20). Same release as the walk of 2026-11-19 above: the rows
-say "the release after open-pryv.io 2.0.0-rc.87" or "same release";
+say "the release after open-pryv.io 2.0.0-rc.88" or "same release";
 name the tag once it is cut. The validator passes against `348c9292`. No Section A slug, no `planned:`
 chip, no tier shift; `reviewed_at` left unchanged. No new API method or
 response header. Each cap is on by default and `0` turns it off; a cap
@@ -4092,10 +4092,10 @@ Transport, platform DB and backup rows: not affected. B.1 (no new method;
 new error answers recorded here), B.2 to B.10: none.
 
 **Walked 2026-11-20 (routing lookups) (unreleased at the walk; the
-release after open-pryv.io 2.0.0-rc.87)**: open-pryv.io feature commits
+release after open-pryv.io 2.0.0-rc.88)**: open-pryv.io feature commits
 `c7bdd4c6` and `0b77aa01` (review fixes), merged to master as
 `6152036a` (2026-11-20). Same release as the two walks above: the rows say "the
-release after open-pryv.io 2.0.0-rc.87" or "same release"; name the tag
+release after open-pryv.io 2.0.0-rc.88" or "same release"; name the tag
 once it is cut. The validator passes against `6152036a`. No Section A
 slug, no `planned:` chip, no tier shift; `reviewed_at` left unchanged. No
 new API method, error answer or response header. It answers the audit
@@ -4177,7 +4177,7 @@ Transport and backup rows: not affected. B.1 (no new method or error
 answer), B.2 to B.10: none.
 
 **Walked 2026-11-21 (routing miss budget) (unreleased at the walk; the
-release after open-pryv.io 2.0.0-rc.87)**: open-pryv.io feature commit
+release after open-pryv.io 2.0.0-rc.88)**: open-pryv.io feature commit
 `30a9cccb`, merged to master as `c68dabf0`. Same release as the
 routing-lookups walk above: name the tag once it is cut. The validator
 passes against `c68dabf0`. No Section A slug, no `planned:` chip, no
@@ -4215,9 +4215,9 @@ method; the 429 on this path recorded here), B.2 to B.10: none.
 
 **Walked 2026-11-20 for keyed address and email hashes, the chosen-token
 floor and the CMC retry-row sweep (unreleased at the walk; the release
-after open-pryv.io 2.0.0-rc.87)**: open-pryv.io `8fc11a4f`, review fixes
+after open-pryv.io 2.0.0-rc.88)**: open-pryv.io `8fc11a4f`, review fixes
 `732bdd3b` and `22a992fd`, merged to master at `22a992fd`. The rows say "the release after open-pryv.io
-2.0.0-rc.87": name the tag once it is cut. The validator passes against
+.0.0-rc.88": name the tag once it is cut. The validator passes against
 that commit. No Section A slug and no `planned:` chip involved (no
 proposal mirrors this work); no tier shift; `reviewed_at` left
 unchanged. No new config key, response header or API method. What
@@ -4299,10 +4299,10 @@ to B.10: none.
 
 **Walked 2026-11-20 for generated tokens from the crypto RNG and
 inter-core certificate extensions (unreleased at the walk; the release
-after open-pryv.io 2.0.0-rc.87)**: open-pryv.io `559c0ee0`, review
+after open-pryv.io 2.0.0-rc.88)**: open-pryv.io `559c0ee0`, review
 fixes `f89460ed` and `e4eb4e36`, merged to master at `771503e3`. The
 rows say "the release after open-pryv.io
-2.0.0-rc.87": name the tag once it is cut. The validator passes
+.0.0-rc.88": name the tag once it is cut. The validator passes
 against `771503e3` (the `SCTK*` / `CLCX*` codes resolve). No Section A slug and no `planned:` chip
 involved (no proposal mirrors this work); no tier shift; `reviewed_at`
 left unchanged. No new config key, response header or API method. What
@@ -4329,7 +4329,7 @@ changed:
 |---|---|---|---|
 | iso-27001 | A.8.5 | detail: generated token length corrected to 24; new paragraph "Tokens Pryv generates come from the secure random source" | `SCTK1`, `SCTK2`, `SCTK3` |
 | iso-27001 | A.5.17 | detail: "Strength of chosen access tokens" paragraph, generated tokens from the secure random source, 25 corrected to 24 | `SCTK2`, `SCTK3` |
-| iso-27001 | A.8.24 | detail: new paragraph "Changes in the release after open-pryv.io 2.0.0-rc.87" (random secrets, inter-core PKI, key inventory note) | `SCTK1`, `SCTK2`, `CLCX1`, `CLCX2`, `CLCX3` |
+| iso-27001 | A.8.24 | detail: new paragraph "Changes in the release after open-pryv.io 2.0.0-rc.88" (random secrets, inter-core PKI, key inventory note) | `SCTK1`, `SCTK2`, `CLCX1`, `CLCX2`, `CLCX3` |
 | iso-27001 | A.8.20 | detail: new paragraph "Inter-core certificates" (CA path length, node certificate purpose, name and address checks) | `CLCX1`, `CLCX2`, `CLCX3`, `CLCX4` |
 | hipaa-security | 164.312(d) | detail: chosen-token paragraph, generated length corrected to 24, generated tokens from `node:crypto` | `SCTK2`, `SCTK3` |
 | hipaa-security | 164.312(e)(1) | detail: cluster CA sentence extended (end-entity only CA, node certificate purpose) | `CLCX1`, `CLCX2`, `CLCX3` |
@@ -4365,9 +4365,9 @@ method), B.2 to B.10: none.
 
 **Walked 2026-11-21 for signed webhook calls and
 `access.openedOnlyByAuthPage` (unreleased at the walk; the release after
-open-pryv.io 2.0.0-rc.87)**: open-pryv.io `e938a570`, `5dd2734a`, review
+open-pryv.io .0.0-rc.88)**: open-pryv.io `e938a570`, `5dd2734a`, review
 fixes `3631a7a8`, merged to master at `dee5720c`. The rows say "the
-release after open-pryv.io 2.0.0-rc.87": name the tag once it is cut.
+release after open-pryv.io 2.0.0-rc.88": name the tag once it is cut.
 The validator passes against `dee5720c` (the `WHSG*` / `WHSR*` /
 `WHST1` / `WHSP1` / `WHSM1` / `RAU3` / `RAU4` codes resolve). No Section A
 slug and no `planned:` chip involved (no proposal mirrors this work); no
@@ -4409,7 +4409,7 @@ tier shift; `reviewed_at` left unchanged. B.1 fires (new API method
 |---|---|---|---|
 | hipaa-security | 164.312(e)(1) | detail: signal-only webhook paragraph extended with signed calls, rotation and legacy webhooks | `WHSG2`, `WHSG3`, `WHSG5`, `WHSG6`, `WHSR1` |
 | iso-27001 | A.8.20 | detail: outbound paragraph, webhook calls signed so receivers can refuse others | `WHSG2`, `WHSG6`, `WHSR1` |
-| iso-27001 | A.8.24 | detail: "Changes in the release after open-pryv.io 2.0.0-rc.87" extended with the webhook signing secret (generation, storage in clear, backups, rotation, key inventory) | `WHSG1`, `WHSG8`, `WHSR5` |
+| iso-27001 | A.8.24 | detail: "Changes in the release after open-pryv.io 2.0.0-rc.88" extended with the webhook signing secret (generation, storage in clear, backups, rotation, key inventory) | `WHSG1`, `WHSG8`, `WHSR5` |
 | iso-27001 | A.8.21 | `config_keys:` + `access.openedOnlyByAuthPage`; detail: unopened request life and the new key in the in-code budgets list | `RAU1`, `RAU3`, `RAU4` |
 | soc2 | CC6.6 | detail: new paragraph, signed webhook calls and rotation rules | `WHSG2`, `WHSG6`, `WHSR1`, `WHSR2`, `WHSR3` |
 | soc2 | PI1.4 | overview: webhook calls signed | none (prose only) |
@@ -4460,9 +4460,9 @@ Response-header and platform DB rows: not affected. B.2 to B.10: none.
 
 **Walked 2026-11-21 for the 10-symbol email code and erasure
 completeness (unreleased at the walk; the release after open-pryv.io
-2.0.0-rc.87)**: open-pryv.io `b2a8e516`, `b690b744`, `30430fa5`, merged
+.0.0-rc.88)**: open-pryv.io `b2a8e516`, `b690b744`, `30430fa5`, merged
 to master at `64307310`. The rows say "the release after open-pryv.io
-2.0.0-rc.87": name the tag once it is cut. The validator passes against
+.0.0-rc.88": name the tag once it is cut. The validator passes against
 `64307310` (the `ERMK*` / `PGUG*` / `CMCER*` codes resolve). No Section A
 slug and no `planned:` chip involved (no proposal mirrors this work); no
 tier shift; `reviewed_at` left unchanged. No new API method or config
@@ -4536,9 +4536,9 @@ new method; the `404` for a refused late write recorded here), B.2 to
 B.10: none.
 
 **Walked 2026-11-21 for the erasure ledger (unreleased at the walk; the
-release after open-pryv.io 2.0.0-rc.87)**: open-pryv.io `83e14c94`,
+release after open-pryv.io 2.0.0-rc.88)**: open-pryv.io `83e14c94`,
 https://github.com/pryv/open-pryv.io/issues/154. The rows say "the release
-after open-pryv.io 2.0.0-rc.87": name the tag once it is cut. Section A
+after open-pryv.io 2.0.0-rc.88": name the tag once it is cut. Section A
 `ERASURE-LEDGER` created as shipped (no `planned:` chip existed); no tier
 shift; `reviewed_at` left unchanged. Triggers: B.1 (two new admin
 methods), B.11 (three new config keys, a new platform DB row family,
@@ -4649,9 +4649,9 @@ B.10: none.
 
 **Walked 2026-11-23 for the access-request `returnURL` check and
 `access.returnOrigins` (unreleased at the walk; the release after
-open-pryv.io 2.0.0-rc.87)**: open-pryv.io `380eb78d` + review follow-ups
+open-pryv.io .0.0-rc.88)**: open-pryv.io `380eb78d` + review follow-ups
 `9228b6fb`, master `9228b6fb`. The row says "the release after
-open-pryv.io 2.0.0-rc.87": name the tag once it is cut. No Section A slug,
+open-pryv.io .0.0-rc.88": name the tag once it is cut. No Section A slug,
 no `planned:` chip, no tier shift; `reviewed_at` left unchanged. No new
 API method (B.1: `POST /reg/access` gains a refusal, an existing error id).
 What changed:
@@ -4685,9 +4685,9 @@ Transport, availability, platform DB and backup rows: not affected. B.2 to
 B.10: none.
 
 **Walked 2026-11-23 for the Mandrill merge-tag language (unreleased at the
-walk; the release after open-pryv.io 2.0.0-rc.87)**: open-pryv.io
+walk; the release after open-pryv.io 2.0.0-rc.88)**: open-pryv.io
 `29977794`, master `0b33af16`. The row says "the release after
-open-pryv.io 2.0.0-rc.87": name the tag once it is cut. No Section A slug,
+open-pryv.io .0.0-rc.88": name the tag once it is cut. No Section A slug,
 no `planned:` chip, no tier shift; `reviewed_at` left unchanged. No new API
 method. What changed: **new optional config key
 `services.email.mergeLanguage`** (`handlebars` or `mailchimp`), sent to
@@ -4727,7 +4727,7 @@ ships the fix.
 
 | Added | Where | Gap | Remove when |
 |---|---|---|---|
-| 2026-11-17 | `encryption-at-rest-secrets` primitive ("Envelope versions"), `iso-27001.A.8.24` detail, `hipaa-security.164.312(a)(2)(iv)` technical | at-rest envelopes (TLS and ACME keys, authenticator secrets, observability credentials, transfer identities) are read in the authenticated version 2 since open-pryv.io 2.0.0-rc.86 but still written in version 1, so no stored row is bound to its row yet | the release that writes version 2: rewrite each place as the written behaviour, with that release's name and test codes. Rewritten 2026-11-19 as "the release after open-pryv.io 2.0.0-rc.87" (merged on master `e74e7721`, B.11 walk of that date): at its tag, name it in the three places and move this clause to Discharged |
+| 2026-11-17 | `encryption-at-rest-secrets` primitive ("Envelope versions"), `iso-27001.A.8.24` detail, `hipaa-security.164.312(a)(2)(iv)` technical | at-rest envelopes (TLS and ACME keys, authenticator secrets, observability credentials, transfer identities) are read in the authenticated version 2 since open-pryv.io 2.0.0-rc.86 but still written in version 1, so no stored row is bound to its row yet | the release that writes version 2: rewrite each place as the written behaviour, with that release's name and test codes. Rewritten 2026-11-19 as "the release after open-pryv.io 2.0.0-rc.88" (merged on master `e74e7721`, B.11 walk of that date): at its tag, name it in the three places and move this clause to Discharged |
 
 Discharged: the 2026-11-09 clause on `oauth.audienceBoundSessions`
 defaulting to `false` (open-pryv.io 2.0.0-rc.73 to rc.81; in

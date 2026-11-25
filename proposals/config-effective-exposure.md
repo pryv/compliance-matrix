@@ -1,7 +1,7 @@
 # Read-only effective-configuration endpoint
 
 **Status: shipped in open-pryv.io `21fd8085`** (the merge to master; it ships
-in the release after open-pryv.io 2.0.0-rc.87, not tagged at the walk: name the
+in the release after open-pryv.io 2.0.0-rc.88, not tagged at the walk: name the
 tag here once it is cut). The admin-panel "Configuration" view over the same data
 is not shipped: it stays a later, non-gating item of the admin-panel effort and
 moves no row. Rows walked 2026-11-23 (`UPDATE-TRIGGERS.md` Section A

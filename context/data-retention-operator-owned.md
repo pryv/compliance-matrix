@@ -301,7 +301,7 @@ restarts the clock; at the deadline the core's sweep re-reads the
 account's use, runs the deletion guards of `auth.delete` (a refusal
 is held and mailed once), then erases exactly as `auth.delete`
 does, relationships torn down included. Since the release after
-open-pryv.io 2.0.0-rc.87 it also reads the holder's setting, the
+open-pryv.io .0.0-rc.88 it also reads the holder's setting, the
 schedule and the transfer record again right before acting, and a
 change made meanwhile stops that account's pass. One sweep per
 core, no cluster coordination (an account lives on one core).
@@ -358,7 +358,7 @@ core, no cluster coordination (an account lives on one core).
    Build your litigation-hold procedure on those switches, or keep
    the preset off where holds are frequent. For one account (a
    holder who cannot sign in in time), the release after
-   open-pryv.io 2.0.0-rc.87 adds a support reset, `POST
+   open-pryv.io .0.0-rc.88 adds a support reset, `POST
    /system/admin/auto-deletion/clear` (admin key, `username`,
    `reason`): by default the pending schedule restarts from now
    with its full period and reminders, the policy unchanged; a
@@ -382,7 +382,7 @@ core, no cluster coordination (an account lives on one core).
    HIPAA §164.316(b)(2)(i) or any regime that keeps the audit under
    its own basis. With the default `erase`, your log retention is
    the record. An erasure interrupted half-way completes at the
-   next pass. From the release after open-pryv.io 2.0.0-rc.87
+   next pass. From the release after open-pryv.io 2.0.0-rc.88
    (`83e14c94`) every erasure, scheduled or not, also leaves one
    durable record in the platform database, the erasure ledger:
    keyed hashes of the user id and username, dates, trigger, core,

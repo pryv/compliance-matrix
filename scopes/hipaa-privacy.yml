@@ -387,7 +387,7 @@ requirements:
         - purpose → `access.clientData.purpose` recorded at grant time
       A record that cannot be written is a disclosure the trail cannot
       account for: it is logged and, from the release after open-pryv.io
-      2.0.0-rc.87, counted (see hipaa-security 164.312(b)); it is not
+      .0.0-rc.88, counted (see hipaa-security 164.312(b)); it is not
       recovered.
       Pre-computing per-subject accounting reports periodically (and
       storing them on a dedicated stream) is a useful operational
