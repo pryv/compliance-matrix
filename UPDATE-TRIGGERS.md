@@ -1016,6 +1016,39 @@ sign-in). Config keys: `account.emailVerification.*`,
 No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so it
 carries no `planned:` chips.
 
+### Consent offers requiring a verified email (merged, unreleased at the walk; rows walked 2026-11-25)
+
+**Where the work lives**: open-pryv.io `e9d6aca8` (the release after
+2.0.0-rc.87): `components/cmc/src/{validators,handleAccept,errorIds}.ts`
+(`request.requireVerifiedEmail`, `cmc-verified-email-required`),
+`service/info` `features.cmcRequireVerifiedEmail`; `@pryv/cmc`
+(`createInvite`, `readOffer`); data-types 1.3.4 (`consent/request-cmc` gains
+an optional boolean); app-web-user-account (both consent pages help the
+person prove the address). Public issue: pryv/open-pryv.io#173. No
+`planned:` chip was queued and no proposal mirror exists.
+
+**Walked 2026-11-25:**
+- **B.2** (an event-type format gains an optional field): `gdpr.Art.20`,
+  `soc2.PI1.1`, `PI1.2`, `P7.1`, `hipaa-privacy.164.514(a)`, `iso-13485`: no
+  change (no row cites the request's optional flags). The catalogue is
+  published, and bundled in the core, with the release: re-walk the version
+  cited in `gdpr.Art.7` and the context note then.
+- **B.8** (token classes): none; the accept still takes a personal token.
+- **B.9** (OAuth): the first authorization on such an offer is refused with
+  `400 invalid_grant` while the address is not proved `[RVEI]`; no row cites
+  that answer.
+- **`EMAIL-VERIFICATION` above**: the identity-assurance claim it left to the
+  matrix owner now also has a consent-level use. Surfaced again, not written:
+  the requester's evidence is its own read of `verification/email`, not this
+  condition.
+- `gdpr.Art.7`: no tier change. `context/cmc-consent-primitives.md` (gates
+  section) describes the condition, what it does not guarantee, and that
+  conditionality (Art.7(4)) stays the implementer's to justify.
+- B.1, B.3 to B.7, B.10, B.11: none (no method, config key, storage, telemetry
+  or platform key).
+At the release: replace "the release after open-pryv.io 2.0.0-rc.87" by the tag
+in the gates section and here.
+
 ### `SECURITY-REVIEW-2026` (code-level security review of open-pryv.io; fixes SHIPPED in 2.0.0-rc.40 to 2.0.0-rc.51; public report published 2026-10-14; rows walked 2026-10-13 and 2026-10-14): DISCHARGED
 
 **What it is**: a systematic code-level security review of the open-pryv.io
