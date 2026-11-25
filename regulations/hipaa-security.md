@@ -154,7 +154,22 @@ releases read at most 100,000 ledger records per group account
 (with a warning in the log), so on a larger group an access beyond
 them lasted until its own expiry. When the group account itself is
 deleted, its members' accesses are deleted on the patient cores
-before the erasure, and no record is kept `[GA40]`. Terminating
+before the erasure, and no record is kept `[GA40]`. Since the
+release after open-pryv.io 2.0.0-rc.88 (merged on master
+`42c6bd03`, not yet released), an access is recorded `absent` only
+when the patient's core confirmed it gone: a refused deletion
+stays `residual` (`peer-rejected`), and so does an access whose
+grant no longer authenticates (`grant-gone`), one made through an
+earlier grant the patient replaced by accepting the group's invite
+again (`grant-replaced`), and one recorded by an earlier release
+whose relationship the patient ended (`grant-unknown`), each
+bounded by its own expiry `[CSA20]`, `[CSA22]`, `[CSA23]`,
+`[CSA11]`. On earlier releases such accesses could be reported
+`absent`. A second accept by the same patient on the same scope
+replaces the first: the earlier grant is ended with the member
+accesses made through it, so removing a member afterwards ends
+every access that member held `[CSA01]`; a member who joined the
+same team twice is handled the same way `[CSA14]`. Terminating
 such a member is no longer your code's job; deciding who may join
 stays yours. Code: `open-pryv.io/components/cmc/src/memberSweep.ts`,
 `handleMemberRevoke.ts`,
@@ -164,7 +179,7 @@ Pattern 3.
 
 **Evidence**
 
-- tests: AA02, ACCP, LG20, CMCGA, CMCMR, GA20, GA21, GA22, GA23, GA40, GA41, MA32
+- tests: AA02, ACCP, LG20, CMCGA, CMCMR, GA20, GA21, GA22, GA23, GA40, GA41, MA32, CMCSA, CSA01, CSA11, CSA14, CSA20, CSA22, CSA23
 - config keys: cmc.retryLoop.enabled, cmc.memberAccess.maxTtl, cmc.memberAccess.sweepIntervalMs
 - primitives: access, permissions, audit, CMC
 - context notes: workforce-access-patterns

@@ -1940,7 +1940,19 @@ data grant deleted through the API) `[CN58]`, `[DH16]`,
 open-pryv.io 2.0.0-rc.36 (`1420fe72`,
 https://github.com/pryv/open-pryv.io/issues/146); a delegation
 detach has recorded `by: 'delegation-detach'` since 2.0.0-rc.31
-(see below). The marker is server-owned, written only once the
+(see below). Since the release after open-pryv.io 2.0.0-rc.88
+(merged on master `42c6bd03`, not yet released) a relationship is
+one counterparty and one scope stream: when the person accepts a
+second invite of the same requester on the same scope, the latest
+accept replaces the first, the earlier grant is deleted with the
+accesses made through it, and its accept records `by: 'replaced'`
+with `replacedBy` naming the newer accept; on the requester's
+side the earlier invite reads `revoked` with `replacedBy`
+`[CSA05]`, `[CSA06]`, `[CSA33]`. A retry never restores an
+older or ended consent (`cmc-incoming-accept-superseded`,
+`cmc-accept-withdrawn`) `[CSA30]`, `[CSA40]`, `[CSA41]`, and a
+retried accept the requester refuses for good no longer deletes a
+grant the requester already paired `[CSA47]`. The marker is server-owned, written only once the
 grant is gone and never overwritten once set `[DCH25]`. It is an ordinary
 event update: with `versioning.forceKeepHistory: true` the accept
 event's history keeps the version before it ended; otherwise the
@@ -2219,7 +2231,7 @@ text names the members' access is yours to write. See
 
 **Evidence**
 
-- tests: AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11, MAAC, GA10, GA24, GA30, MB10, HR25, DH25, RQ20, RQ21, RQ22, RQ23, CIR26, CIR27, HR41, RQ33, RQ32, OE31, OSUB1, OSUB3, OCMP7, OCMP11, RQAS1, OCMP22, OREG12, OCMDE15
+- tests: AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11, MAAC, GA10, GA24, GA30, MB10, HR25, DH25, RQ20, RQ21, RQ22, RQ23, CIR26, CIR27, HR41, RQ33, RQ32, OE31, OSUB1, OSUB3, OCMP7, OCMP11, RQAS1, OCMP22, OREG12, OCMDE15, CMCSA, CSA05, CSA06, CSA30, CSA33, CSA40, CSA41, CSA47
 - docs: guides/consent.md, customer-resources/auth-oauth2.md
 - config keys: cmc.retryLoop.enabled, cmc.allowedPrivateHosts
 - primitives: access, permissions, clientData, CMC, event, delegation
@@ -7007,7 +7019,22 @@ releases read at most 100,000 ledger records per group account
 (with a warning in the log), so on a larger group an access beyond
 them lasted until its own expiry. When the group account itself is
 deleted, its members' accesses are deleted on the patient cores
-before the erasure, and no record is kept `[GA40]`. Terminating
+before the erasure, and no record is kept `[GA40]`. Since the
+release after open-pryv.io 2.0.0-rc.88 (merged on master
+`42c6bd03`, not yet released), an access is recorded `absent` only
+when the patient's core confirmed it gone: a refused deletion
+stays `residual` (`peer-rejected`), and so does an access whose
+grant no longer authenticates (`grant-gone`), one made through an
+earlier grant the patient replaced by accepting the group's invite
+again (`grant-replaced`), and one recorded by an earlier release
+whose relationship the patient ended (`grant-unknown`), each
+bounded by its own expiry `[CSA20]`, `[CSA22]`, `[CSA23]`,
+`[CSA11]`. On earlier releases such accesses could be reported
+`absent`. A second accept by the same patient on the same scope
+replaces the first: the earlier grant is ended with the member
+accesses made through it, so removing a member afterwards ends
+every access that member held `[CSA01]`; a member who joined the
+same team twice is handled the same way `[CSA14]`. Terminating
 such a member is no longer your code's job; deciding who may join
 stays yours. Code: `open-pryv.io/components/cmc/src/memberSweep.ts`,
 `handleMemberRevoke.ts`,
@@ -7017,7 +7044,7 @@ Pattern 3.
 
 **Evidence**
 
-- tests: AA02, ACCP, LG20, CMCGA, CMCMR, GA20, GA21, GA22, GA23, GA40, GA41, MA32
+- tests: AA02, ACCP, LG20, CMCGA, CMCMR, GA20, GA21, GA22, GA23, GA40, GA41, MA32, CMCSA, CSA01, CSA11, CSA14, CSA20, CSA22, CSA23
 - config keys: cmc.retryLoop.enabled, cmc.memberAccess.maxTtl, cmc.memberAccess.sweepIntervalMs
 - primitives: access, permissions, audit, CMC
 - context notes: workforce-access-patterns
@@ -11360,12 +11387,19 @@ naming the member; a revoked membership stays readable as a
 deletion record) `[GA22]`, narrowed with it `[GA41]`, and removed
 on every patient account when it ends `[GA20]`, with residuals
 recorded, retried by the retry loop and the periodic pass
-`[MR25]`, and bounded by the access's own expiry. See
+`[MR25]`, and bounded by the access's own expiry. Since the
+release after open-pryv.io 2.0.0-rc.88 (merged on master
+`42c6bd03`, not yet released), a patient keeps one grant per group
+and scope: accepting the group's invite again replaces the earlier
+grant and ends the member accesses made through it, the earlier
+invite reads `revoked` with `replacedBy` on the group account, and
+a member asking again gets an access through the current grant
+`[CSA02]`, `[CSA05]`, `[CSA06]`. See
 `context/workforce-access-patterns.md`, Pattern 3.
 
 **Evidence**
 
-- tests: AA01, AA02, ACCP, CMCMR, GA01, GA10, GA20, GA22, GA41, MR25
+- tests: AA01, AA02, ACCP, CMCMR, GA01, GA10, GA20, GA22, GA41, MR25, CSA02, CSA05, CSA06
 - derives from: iso-27001.A.5.15, iso-27001.A.5.16, hipaa-security.164.308(a)(3)(ii)(C)
 - primitives: access, permissions, audit, CMC
 - context notes: workforce-access-patterns
@@ -11462,14 +11496,21 @@ patient account and records the outcome per patient
 `[GA20]`, `[GA21]`, `[GA22]`, `[GA23]`. A residual is retried
 while `cmc.retryLoop.enabled` is `true` (the default) and cannot
 outlive the access's own expiry (at most
-`cmc.memberAccess.maxTtl`, 7 d by default). What the departing
+`cmc.memberAccess.maxTtl`, 7 d by default). Since the release
+after open-pryv.io 2.0.0-rc.88 (merged on master `42c6bd03`, not
+yet released), an access is recorded `absent` only when the
+patient's core confirmed it gone (a refusal or an access out of
+the group's reach stays `residual`, with its reason) `[CSA20]`,
+and the departing member keeps no access through an earlier grant
+the patient replaced, nor through a second membership on the same
+team `[CSA01]`, `[CSA14]`. What the departing
 person may still owe (confidentiality of what they read) stays
 contractual. See `context/workforce-access-patterns.md`,
 Pattern 3.
 
 **Evidence**
 
-- tests: CMCMR, GA20, GA21, GA22, GA23
+- tests: CMCMR, GA20, GA21, GA22, GA23, CSA01, CSA14, CSA20
 - config keys: cmc.retryLoop.enabled, cmc.memberAccess.maxTtl
 - derives from: iso-27001.A.5.16, iso-27001.A.5.18, hipaa-security.164.308(a)(3)(ii)(C)
 - primitives: access, audit, CMC

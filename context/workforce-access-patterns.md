@@ -228,7 +228,14 @@ anything.
    logged, or retried `[GA10]`, `[MA50]`. Asking again for the same
    patient with the same permissions returns the same child while it
    has more than five minutes left; other permissions replace it
-   `[GA11]`. The group's core keeps a hidden ledger of the children
+   `[GA11]`. Since the release after open-pryv.io 2.0.0-rc.88 (merged
+   on master `42c6bd03`, not yet released), a member asking again after
+   the patient accepted the group's invite a second time on the same
+   scope gets a child through the current grant (named
+   `cmc-member--<member>--<hash>-<8 hex characters>` when a child of the
+   earlier grant still holds the first name), and an ask without
+   `scopeStreamId` takes the relationship on the trigger's own stream
+   first `[CSA02]`, `[CSA36]`. The group's core keeps a hidden ledger of the children
    it minted (`:_cmc:_internal:members`), so the sweep below never
    depends on names.
 4. **The member reads the patient's data directly** from the
@@ -259,7 +266,20 @@ anything.
    expiry bounds what a core that stays down keeps. Retries and the
    periodic pass need `cmc.retryLoop.enabled`, `true` by default since
    2.0.0-rc.53; with `false` a warning is logged at boot and a
-   residual stays until the child expires `[MR42]`. When the group
+   residual stays until the child expires `[MR42]`. Since the release
+   after open-pryv.io 2.0.0-rc.88, a child is recorded `absent` only
+   when the patient's core confirmed it gone; otherwise it stays
+   `residual` with a reason, among them `peer-rejected` (a refusal is no
+   longer overturned by the child missing from the grant's list),
+   `grant-gone` (the grant no longer authenticates), `grant-replaced`
+   (a child of an earlier grant the patient replaced) and
+   `grant-unknown` (a child recorded by an earlier release, whose
+   relationship the patient ended), each bounded by the child's expiry
+   `[CSA20]`, `[CSA22]`, `[CSA23]`, `[CSA35]`. On earlier releases such
+   children could be reported `absent`. A member who joined the same
+   team twice is handled like a second accept: the earlier membership
+   access is deleted and its children swept when the newer one is
+   completed `[CSA14]`. When the group
    account itself is deleted, its children are deleted through the
    grants before the erasure, and no record is kept (the account is
    erased) `[GA40]`, `[MR28]`. A patient relationship the group ends
@@ -271,7 +291,14 @@ anything.
    2.0.0-rc.52 or later `[GA24]`. Every such deletion is the
    `accesses.delete` deletion since 2.0.0-rc.53, so it leaves a
    deletion record readable with `includeDeletions` `[GA22]`,
-   `[GA30]`.
+   `[GA30]`. A patient who accepts the group's invite again on the same
+   scope replaces the earlier grant (since the release after
+   open-pryv.io 2.0.0-rc.88): the patient's core deletes it with its
+   member children once the group's core has taken the new one, the
+   group's core deletes through it the children it holds and marks the
+   earlier invite `revoked` with `replacedBy`, so no grant is left on
+   the patient's account that the group cannot name `[CSA03]`,
+   `[CSA05]`, `[CSA06]`.
 
 **Audit and attribution.** Patient side: every call by a member
 carries the child access id; the child's `createdBy` is the group's

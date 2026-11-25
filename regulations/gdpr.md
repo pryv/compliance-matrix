@@ -636,7 +636,19 @@ data grant deleted through the API) `[CN58]`, `[DH16]`,
 open-pryv.io 2.0.0-rc.36 (`1420fe72`,
 https://github.com/pryv/open-pryv.io/issues/146); a delegation
 detach has recorded `by: 'delegation-detach'` since 2.0.0-rc.31
-(see below). The marker is server-owned, written only once the
+(see below). Since the release after open-pryv.io 2.0.0-rc.88
+(merged on master `42c6bd03`, not yet released) a relationship is
+one counterparty and one scope stream: when the person accepts a
+second invite of the same requester on the same scope, the latest
+accept replaces the first, the earlier grant is deleted with the
+accesses made through it, and its accept records `by: 'replaced'`
+with `replacedBy` naming the newer accept; on the requester's
+side the earlier invite reads `revoked` with `replacedBy`
+`[CSA05]`, `[CSA06]`, `[CSA33]`. A retry never restores an
+older or ended consent (`cmc-incoming-accept-superseded`,
+`cmc-accept-withdrawn`) `[CSA30]`, `[CSA40]`, `[CSA41]`, and a
+retried accept the requester refuses for good no longer deletes a
+grant the requester already paired `[CSA47]`. The marker is server-owned, written only once the
 grant is gone and never overwritten once set `[DCH25]`. It is an ordinary
 event update: with `versioning.forceKeepHistory: true` the accept
 event's history keeps the version before it ended; otherwise the
@@ -915,7 +927,7 @@ text names the members' access is yours to write. See
 
 **Evidence**
 
-- tests: AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11, MAAC, GA10, GA24, GA30, MB10, HR25, DH25, RQ20, RQ21, RQ22, RQ23, CIR26, CIR27, HR41, RQ33, RQ32, OE31, OSUB1, OSUB3, OCMP7, OCMP11, RQAS1, OCMP22, OREG12, OCMDE15
+- tests: AA01, ACCP, USAD, RA71, RA72, PS11, PS13, DCH12, DCH13, DCH15, DCH16, DCH17, DCH18, DCH21, DCH22, DCH23, DCH24, DCH25, DDK07, APB08, APB09, APB10, APB11, APB12, RCI1, RCI2, RCI3, RCI4, RCI5, RCI6, RCI7, RCI8, RCI9, RCI10, RCI11, CN58, CN59, CN60, DH16, HR32, HR34, CD26, OE27, HA43, HA44, IA18, IA22, CD28, APB16, HA46, HA48, CN67, CN69, DH23, ESR1, ESR4, ESR5, APB13, SIB01, SIB11, MAAC, GA10, GA24, GA30, MB10, HR25, DH25, RQ20, RQ21, RQ22, RQ23, CIR26, CIR27, HR41, RQ33, RQ32, OE31, OSUB1, OSUB3, OCMP7, OCMP11, RQAS1, OCMP22, OREG12, OCMDE15, CMCSA, CSA05, CSA06, CSA30, CSA33, CSA40, CSA41, CSA47
 - docs: guides/consent.md, customer-resources/auth-oauth2.md
 - config keys: cmc.retryLoop.enabled, cmc.allowedPrivateHosts
 - primitives: access, permissions, clientData, CMC, event, delegation
