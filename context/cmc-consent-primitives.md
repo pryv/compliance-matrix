@@ -381,6 +381,25 @@ distinct gate shapes, chosen per trigger by what's at stake:
   publishes offers, widens grants and gives OAuth2 consent; revoke is not
   affected.
 
+- **An offer may require a verified email address** (the release after
+  open-pryv.io 2.0.0-rc.87, `e9d6aca8`): with
+  `request.requireVerifiedEmail: true` the accepting account's core refuses
+  `consent/accept-cmc` while that account's primary address is not proved
+  (trigger `failed`, reason `cmc-verified-email-required`, no detail, not
+  retried, nothing sent to the requester; the link stays usable) `[RVE7]`,
+  `[RVED]`. It is checked before anything is created and again once the
+  grant exists `[RVEA]`, and refuses when the check cannot run `[RVE8]`. The
+  address is that of the account the accept is written on, also when a
+  delegate accepts `[RVEF]`. The offer must ask to read the address
+  (`:system:email`), so your requester never learns that an account has a
+  proved address without being granted it `[RVE2]`. **What it is not:** a
+  guarantee to you as the requester. The condition is enforced on the
+  accepter's side, and a person determined to can answer a link with a grant
+  made by hand. Read the `verification/email` event through the grant each
+  time you rely on the address `[RVEJ]`; a later change of address does not
+  end the consent. Making a consent conditional on a verified address is
+  your decision to justify (GDPR Art.7(4)), as for `mandatory`.
+
 Apps that hold only an app- or shared-access token (e.g. a third-party
 patient app that received its access via `/auth/access`) delegate **accept**
 + **scope-update** to Pryv's authorization web pages via the `/cmc-accept`
