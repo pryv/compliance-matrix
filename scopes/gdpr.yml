@@ -234,10 +234,13 @@ requirements:
         invisible to them.
       - Accuracy (§1(d)), FACILITATED + IMPLEMENTER-OWNED.
         Pryv enforces **structural** accuracy at ingest: every
-        `events.create` and `events.update` validates against the
-        declared event-type's JSON Schema (ajv-draft-04 via
-        `components/utils/src/jsonValidator.ts`), rejecting
-        out-of-shape or out-of-range payloads with HTTP 400.
+        `events.create` and `events.update` of a type in the
+        catalogue validates against that type's JSON Schema
+        (ajv-draft-04 via `components/utils/src/jsonValidator.ts`),
+        rejecting out-of-shape or out-of-range payloads with HTTP
+        400. A type outside the catalogue is accepted with any
+        content `[ETD1]`: allowing declared types only is a check
+        for the app.
         Numerical bounds (`minimum`/`maximum`), string patterns,
         and length limits are expressible per type, the HDS
         data-model exemplar declares 28 `minimum`/23 `maximum`
@@ -1938,9 +1941,9 @@ requirements:
       validation + serialisation pipeline. Receiving Pryv.io
       deployments that ship the same catalogue (or a superset)
       can import the events without loss. A receiving deployment
-      without the custom catalogue would reject unknown types at
-      write-time validation, the implementer ensures schema
-      alignment between transmitting + receiving operators when
+      without the custom catalogue stores the events without
+      validating their content (unknown types are accepted
+      `[ETD1]`); the implementer aligns the catalogues when
       relying on §2 controller-to-controller transmission.
 
       **Calendar interoperability (adapter):** beyond raw JSON, Pryv
@@ -2265,7 +2268,8 @@ requirements:
       6. **Data-minimal audit** (Q9, never captures request
          body).
       7. **Schema validation at ingest** (Q21, ajv-draft-04
-         rejects out-of-shape payloads by default).
+         rejects out-of-shape payloads of catalogue types by
+         default; other types are accepted as they are).
       8. **Zero mandatory subprocessors** (Q23, every
          integration opt-in).
       9. **Audit-minimal logger** (Q23, `inspectAndHide`

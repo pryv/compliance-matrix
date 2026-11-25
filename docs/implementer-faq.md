@@ -755,14 +755,12 @@ token needs to still be valid when walking `webhooks.get`).
 implementer maintains a **sibling data-model repo** (small,
 schema-only, no Pryv runtime), publishes a merged catalogue to a
 URL, and points the Pryv.io deployment's `service.eventTypes`
-config at that URL. The server fetches at startup, validates
-against the JSON Schema meta-schema, and **deep-merges** the
-fetched catalogue on top of the baked-in defaults
-(`components/business/src/types.ts:143-186`
-`TypeRepository.tryUpdate` does
-`defaultTypes = deepMerge(defaultTypes, fetched)`).
+config at that URL. The server fetches it at startup and applies
+it on top of the bundled defaults **entry by entry**: a type the
+catalogue carries replaces the bundled one whole, the others stay
+(`components/business/src/types.ts`, `TypeRepository.tryUpdate`).
 
-**Custom types are first-class**: same z-schema validation
+**Custom types are first-class**: same ajv-draft-04 validation
 pipeline, same canonical JSON serialisation in `events.get`,
 same portability in `events.json` exports. They're indistinguishable
 from upstream `pryv/data-types` types at the API surface.
@@ -793,12 +791,18 @@ service:
 ```
 
 **Validation guarantees**:
-- Catalogue must validate against JSON Schema meta-schema at
-  fetch time, invalid catalogues are rejected; server refuses
-  to start.
-- Per-event validation at write time: `events.create` calls
-  `typeRepo.lookup(type).validate(content)`; unknown types or
-  invalid content → `400`. No silent fallback.
+- A catalogue that cannot be fetched, is not JSON, or does not
+  compile as a JSON Schema as a whole is not applied. The core
+  starts anyway, on the bundled types only: it logs an error,
+  retries in the background, and refuses events of unknown types
+  with `400` until the catalogue loads `[ETD2]`, `[ETD3]`. Alert on
+  `GET /system/event-types-status` (admin key) `[ETD4]`.
+- A single type whose own schema is malformed loads with a warning,
+  and every event of that type is then refused.
+- Per-event validation at write time, for types in the catalogue:
+  invalid content → `400`. **A type that is not in the catalogue is
+  accepted with any content** `[ETD1]`; no setting refuses it. If
+  only declared types may be stored, your app has to check it.
 
 **What the extension model does NOT cover**:
 - Server-side computed fields (BMI from height+weight etc.),
@@ -814,8 +818,8 @@ service:
 - GDPR Art.20, custom types serialise identically to legacy;
   portability holds between deployments that share the catalogue.
   A receiving Pryv.io deployment without the custom catalogue
-  rejects unknown types at write, implementer ensures schema
-  alignment between transmitting + receiving operators.
+  stores the events without validating their content (unknown
+  types); align the catalogues if validation must hold there too.
 - MDR Annex II §5, implementer custom schemas live alongside
   legacy `pryv/data-types`; MDR-specific device-record formats
   can be authored once + reused across deployments.
@@ -839,6 +843,10 @@ service:
 
 No backlog filed: this is "filled by existing primitive". The
 extension model works today.
+
+**Correction (2026-11-25):** an earlier version of this answer said
+that unknown types are rejected, that the catalogue is deep-merged
+and that the server refuses to start on an invalid one. None holds.
 
 **Commit:** *(this commit)*.
 
@@ -1237,10 +1245,10 @@ returned by `?includeHistory=true`, only once you set
 
 | Sub-question | Pryv's answer | Where it lives |
 |---|---|---|
-| Does Pryv reject payloads that don't match the event-type's JSON Schema? | Yes, ajv-draft-04 validation on every `events.create` AND `events.update`; HTTP 400 with structured field-path error | `components/api-server/src/methods/events.ts:273, 564, 755-774` (`validateEventContentAndCoerce` middleware); `components/utils/src/jsonValidator.ts` (façade); `components/business/src/types/basic_type.ts:60-65` (`callValidator`) |
+| Does Pryv reject payloads that don't match the event-type's JSON Schema? | Yes for types in the catalogue: ajv-draft-04 validation on every `events.create` AND `events.update`; HTTP 400 with structured field-path error. A type that is not in the catalogue is accepted with any content `[ETD1]` | `components/api-server/src/methods/events.ts:273, 564, 755-774` (`validateEventContentAndCoerce` middleware); `components/utils/src/jsonValidator.ts` (façade); `components/business/src/types/basic_type.ts:60-65` (`callValidator`) |
 | Are numerical bounds expressible in event-types? | Yes, `minimum` / `maximum` / `exclusiveMinimum` / `exclusiveMaximum` / `minLength` / `maxLength` all enforced | JSON Schema draft-04 spec |
 | Do the **built-in** event-types use bounds? | Sparingly: only `mood/rating` (0..1) and `note/*` (4 MB `maxLength`). Physical-measurement types (`temperature/c`, `mass/kg`, `frequency/bpm`, …) ship as `"type": "number"` with no bounds | `components/business/src/types/event-types.default.json` (5 bound directives total across ~4750 lines) |
-| Can implementers add bounds via custom catalogue? | Yes, the Q14 extension model (`service.eventTypes` URL → `deepMerge` over defaults) | `components/business/src/types.ts:143-186` (`TypeRepository.tryUpdate`); HDS exemplar at `hds.com/data-model` declares 28 `minimum` + 23 `maximum` + 7 `pattern` constraints |
+| Can implementers add bounds via custom catalogue? | Yes, the Q14 extension model (`service.eventTypes` URL, applied entry by entry over the defaults) | `components/business/src/types.ts` (`TypeRepository.tryUpdate`); HDS exemplar at `hds.com/data-model` declares 28 `minimum` + 23 `maximum` + 7 `pattern` constraints |
 | Does `events.update` preserve the prior (inaccurate) value? | Only if you turn it on: with `versioning.forceKeepHistory: true` (default `false`) both built-in stores keep each prior version and `GET /events/:id?includeHistory=true` returns the chain via `mall.events.getHistory()`; on the default the update overwrites the value and `history` is empty | `config/default-config.yml` (`versioning`); `storages/engines/postgresql/src/dataStore/localUserEventsPG.ts`, `storages/engines/sqlite/src/dataStore/localUserEventsSQLite.ts` (`_generateVersionIfNeeded`) |
 | Is the rectification itself audited? | Yes, on every deployment: `events.update` is in `AUDITED_METHODS`; the audit row captures method + access ref + timestamp + the event's key and integrity hash as written (not the request body or the prior value, per Q9 audit-minimality) | `components/audit/src/ApiMethods.ts`, `components/audit/src/Audit.ts` |
 | Does Pryv detect semantic inaccuracy? | **No, by design**: the platform lacks the patient's clinical record, drug-interaction context, device calibration state, treatment plan; implementer's app layer carries that context | — |
@@ -1249,8 +1257,8 @@ returned by `?includeHistory=true`, only once you set
 when an Art.5(1)(d) complaint lands ("my health data showed an
 impossible value"), the implementer can defensibly say:
 
-1. Pryv rejected anything that violated the declared schema
-   (cite the ajv pipeline + the failing-payload HTTP 400
+1. Pryv rejected anything that violated the schema of a type in
+   the catalogue (types outside it are not validated; cite the ajv pipeline + the failing-payload HTTP 400
    semantics).
 2. The deployment used a bounded catalogue (cite the custom
    `service.eventTypes` URL + the relevant per-type bounds, OR
@@ -2106,7 +2114,8 @@ operators can't accidentally ship it.
 4. Hosting region pinned per user (Q12 architectural residency).
 5. Stream-permission granularity (Q22, no "public" tier exists).
 6. Data-minimal audit (Q9, never captures request body).
-7. Schema validation at ingest (Q21, ajv rejects out-of-shape).
+7. Schema validation at ingest (Q21, ajv rejects out-of-shape
+   content of catalogue types).
 8. Zero mandatory subprocessors (Q23, every integration opt-in).
 9. Audit-minimal logger (Q23, `inspectAndHide` invariant,
    `[BIH1-6]` tests).

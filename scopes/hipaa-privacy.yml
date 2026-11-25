@@ -375,9 +375,12 @@ requirements:
         - date → audit row timestamp
         - recipient → access holder (`access.id`) or counterparty (for
           shared / CMC accesses)
-        - description → API method + URL query/path params recorded
-          in audit. **The audit log does NOT capture the request
-          body**, so the description is "what was disclosed" at the
+        - description → API method + URL query parameters recorded
+          in audit, not the path (for example the id in
+          `events.getOne`; the rows of `accesses.update` and
+          `accesses.delete` name the access from the release after
+          open-pryv.io 2.0.0-rc.87). **The audit log does NOT capture
+          the request body**, so the description is "what was disclosed" at the
           API-shape level (e.g., `events.get` on a given stream),
           not the per-event content, sufficient under §164.528 and
           favourable for data minimisation (the audit row carries
@@ -389,6 +392,10 @@ requirements:
       account for: it is logged and, from the release after open-pryv.io
       2.0.0-rc.87, counted (see hipaa-security 164.312(b)); it is not
       recovered.
+      To whom access was open, and until when, is on the trail too: from
+      the same release each app or shared access the server itself
+      creates, changes or deletes leaves a record naming it (see
+      hipaa-security 164.312(b)).
       Pre-computing per-subject accounting reports periodically (and
       storing them on a dedicated stream) is a useful operational
       pattern for fast response to requests.

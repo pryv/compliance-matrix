@@ -13,9 +13,12 @@ first is a platform contribution. The second is implementer-owned
 
 ## Layer 1: Structural validation (Pryv-scope, enforced)
 
-Every `events.create` and `events.update` runs the payload through
-JSON Schema validation against the declared event-type before the
-event is persisted. Implementation:
+Every `events.create` and `events.update` of an event **whose type is
+in the catalogue** runs the payload through JSON Schema validation
+against that type before the event is persisted. An event of a type
+that is not in the catalogue is accepted with any content `[ETD1]`;
+no setting refuses it, so "only declared types" is a check for your
+app. Implementation:
 
 - **Validator:** `ajv-draft-04` (with `ajv-formats`), wrapped by
   the façade at `open-pryv.io/components/utils/src/jsonValidator.ts`
@@ -33,7 +36,7 @@ event is persisted. Implementation:
   `properties`, `additionalProperties`, **`minimum` / `maximum` /
   `exclusiveMinimum` / `exclusiveMaximum`**, `minLength` /
   `maxLength`, format strings (`date-time`, `email`, `uri`, …).
-- **Rejection behaviour:** a payload that fails validation is
+- **Rejection behaviour:** a payload that fails its type's validation is
   rejected with HTTP 400 + a structured error citing the failing
   field path. There is no silent coercion or downgrade, `value:
   9999` for a `temperature/c` event-type with `maximum: 50` does
@@ -50,8 +53,8 @@ event is persisted. Implementation:
 Pryv ships a built-in event-type catalogue at
 `components/business/src/types/event-types.default.json` (~4750
 lines mirroring upstream `pryv/data-types`). It exists so the
-server has something to validate against even when the operator
-hasn't pointed `service.eventTypes` at a custom URL.
+server has something to validate against until the catalogue at
+`service.eventTypes` (required at boot) is loaded.
 
 **The built-in catalogue uses `minimum` / `maximum` sparingly:**
 
@@ -101,10 +104,9 @@ Examples from the HDS catalogue:
 - `pattern`s for URL fields (`^(https?)://.+$`).
 
 When the implementer publishes their catalogue at a URL and points
-`service.eventTypes` at it, the server fetches at startup,
-validates the catalogue against the JSON Schema meta-schema, and
-`deepMerge`s on top of the built-in defaults
-(`components/business/src/types.ts:143-186`
+`service.eventTypes` at it, the server fetches it at startup and
+applies it on top of the built-in defaults, each type it carries
+replacing the built-in one whole (`components/business/src/types.ts`,
 `TypeRepository.tryUpdate`). The bounded types become first-class:
 `events.create` rejects out-of-range payloads with HTTP 400 from
 that point forward.
@@ -169,7 +171,8 @@ accuracy?":
 
 1. **Schema validation is on**: point at the ajv-draft-04
    pipeline + cite `jsonValidator.ts` + the `events.create` /
-   `events.update` middleware position.
+   `events.update` middleware position, and say that it covers the
+   types of your catalogue (others are not validated).
 2. **Range bounds are on** to the extent your catalogue declares
    them, if you're using the built-in defaults only, that's
    **shape but not bounds**; if you're using a custom catalogue
@@ -188,6 +191,6 @@ accuracy?":
   primitive + custom extension model).
 - `context/custom-event-type-catalogues.md`: the Q14 extension
   pattern (sibling data-model repo, `service.eventTypes` URL,
-  `deepMerge` semantics).
+  applied entry by entry over the defaults).
 - `context/data-masking-projection-vs-transformation.md`,
   audit-minimality (audit captures action + source, not body).

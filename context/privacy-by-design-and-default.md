@@ -213,9 +213,10 @@ content-confidentiality risk.
 ### 7. Schema validation at ingest (Q21)
 
 ajv-draft-04 via `components/utils/src/jsonValidator.ts`
-rejects out-of-shape payloads by default (HTTP 400). Operators
-can't accidentally store unstructured data that bypasses the
-catalogue's accuracy enforcement.
+rejects out-of-shape payloads of the types in the catalogue by
+default (HTTP 400). A type outside the catalogue is accepted with
+any content `[ETD1]`: storing only declared types is a check for
+the app, not a platform default.
 
 ### 8. Zero mandatory subprocessors (Q23)
 

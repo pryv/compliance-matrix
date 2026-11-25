@@ -2341,7 +2341,33 @@ Walked without change:
 Transport, response-header, platform DB and backup rows: not affected.
 B.2 to B.11: none (no new primitive: `account-auto-deletion` extended).
 
+**Walked 2026-11-25 for open-pryv.io branches merged that day** (audit of
+the server's own access writes, SQLite base with PostgreSQL audit, rqlite
+10.7.5; named "the release after open-pryv.io 2.0.0-rc.87" until the tag).
+Three audit actions without an API method: `accesses.created`,
+`accesses.changed`, `accesses.deleted` (type `audit-log/access`). Rows:
+`hipaa-security.164.312(b)` (the rule and its exceptions),
+`hipaa-privacy.164.528` (the rows do not record path parameters: the
+earlier "query/path params" was wrong), `gdpr.Art.17` (the erased-account
+residual of that pairing), `iso-27001.A.8.14` (rqlite version,
+platform writes answered without a result). `breach-scope` reports list the
+new records and do not count them as calls. No tier change. Prose only: the
+test codes join `tests:` at the tag.
+
 ### B.2: New event-type formats (`data-types` repo)
+
+**Correction of record 2026-11-25 (no code change).** The matrix said
+that an event of an unknown type is rejected with 400, that a custom
+catalogue is deep-merged, that an invalid one stops the server, and that
+an unset `service.eventTypes` falls back to the bundled types. In
+open-pryv.io an unknown type is accepted with any content once the
+catalogue is loaded `[ETD1]`, a catalogue is applied entry by entry, an
+invalid one leaves the core on the bundled types, refusing unknown types
+until it loads `[ETD2]`, `[ETD3]`, and the key is required at boot.
+Corrected: `gdpr.Art.5`, `Art.20`, `Art.25`, `soc2.PI1.2`, the `data-types`
+primitive, FAQ Q14, Q21, Q27, and the notes `custom-event-type-catalogues`,
+`data-accuracy-structural-vs-semantic`, `special-categories-operator-facilitated`,
+`privacy-by-design-and-default`. No tier changed in this pass.
 
 Add to the per-row `pryv_primitives: [data-types]` citations. May
 affect:

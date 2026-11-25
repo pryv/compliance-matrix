@@ -13,34 +13,38 @@ Implementers add custom event types **without forking
 (small, schema-only, no Pryv runtime), publish a merged catalogue
 to a URL, and point each Pryv.io deployment's
 `service.eventTypes` config at that URL. The server fetches the
-catalogue at startup, validates it via JSON Schema meta-
-validation, and **deep-merges** it on top of the baked-in
-defaults, so custom types are **first-class**, validated by the
-same z-schema pipeline as the standard catalogue, returned in
+catalogue at startup and applies it **entry by entry** on top of
+the bundled defaults, so custom types are **first-class**,
+validated by the same pipeline as the standard catalogue, returned in
 `events.get` with the same canonical shape, and portable in
 `events.json` for GDPR Art.20.
 
 ## How it works in code
 
-`components/business/src/types.ts:143-186`: `TypeRepository.tryUpdate(sourceURL)`:
+`components/business/src/types.ts`, `TypeRepository.tryUpdate(sourceURL)`:
 
 1. Fetches `service.eventTypes` URL at startup (or `file://`
    for tests).
-2. Validates the response against the JSON Schema
-   meta-schema (`validator.validateSchema`).
-3. `defaultTypes = deepMerge(defaultTypes, eventTypesDefinition)`,
-   **additive merge** on top of `event-types.default.json` (the
-   built-in legacy catalogue, ~4750 lines covering measurements,
-   activities, body, medical, etc.).
+2. Checks that the response compiles as a schema as a whole
+   (`validator.validateSchema`), then warns about each type whose
+   own schema is malformed: every event of such a type is refused.
+3. Applies it onto `event-types.default.json` (the bundled
+   catalogue, mirroring `pryv/data-types`), entry by entry: each
+   type it carries replaces the bundled one **whole** (not a deep
+   merge), and bundled types it does not carry stay. A catalogue
+   can therefore add and override types, not remove one.
 
-`components/api-server/src/methods/events.ts:53` reads
-`config.get('service:eventTypes')`. `components/hfs-server/src/
-application.ts:63` does the same, both API + HFS use the same
-catalogue.
+`components/api-server/src/methods/events.ts` and
+`components/hfs-server/src/application.ts` both read
+`service:eventTypes`: API and HFS use the same catalogue.
 
-If `service.eventTypes` is unset, the server falls back to the
-baked-in default, the implementer gets legacy `pryv/data-types`
-behaviour with no customisation.
+`service.eventTypes` is required: a core without it does not start
+(`config/plugins/config-validation.js`). When the URL cannot be
+fetched, or its answer is not JSON or does not compile, the core
+starts on the bundled types only, logs an error, retries in the
+background, and refuses events of unknown types until it loads
+`[ETD2]`, `[ETD3]`; `GET /system/event-types-status` (admin key)
+tells `[ETD4]`.
 
 ## The HDS exemplar
 
@@ -103,7 +107,7 @@ which schema versions are in force at audit time.
 
 | Obligation | Implication |
 |---|---|
-| GDPR Art.20 (portability) | Custom types serialise identically to legacy types; export bundles travel between deployments with the same JSON shape. Receiving Pryv.io deployments either ship the same catalogue (interoperable) or treat unknown types as opaque (rejected at write-time validation). |
+| GDPR Art.20 (portability) | Custom types serialise identically to legacy types; export bundles travel between deployments with the same JSON shape. Receiving Pryv.io deployments either ship the same catalogue (interoperable) or store the events of types they do not know without validating their content. |
 | MDR Annex II §5 (device-record schemas) | Implementer custom schemas live alongside legacy `pryv/data-types`; MDR-specific device-record formats can be authored once + reused across deployments. |
 | DiGA Annex 1.3.1 (FHIR-R4 requirement) | A FHIR-flavoured custom catalogue (mapping each FHIR resource to a Pryv event type) plugs into the extension model. The implementer maintains the FHIR-Pryv binding repo. |
 | ISO 13485 7.3 (design-control documentation) | The data-model repo IS the design-control artefact for the data layer, versioned, reviewed, signed off per ISO 13485 §7.3.4. |
@@ -111,15 +115,19 @@ which schema versions are in force at audit time.
 
 ## Schema integrity guarantees
 
-- **Catalogue must validate against JSON Schema meta-schema** at
-  fetch time, invalid catalogues are rejected + the server
-  refuses to start (or keeps the prior catalogue on a re-fetch).
-- **Per-event validation at write time**: `events.create` calls
-  `typeRepo.lookup(type).validate(content)`; an event with an
-  unknown type or invalid content is rejected with `400`.
-- **No silent fallback**: when validation fails, the API
-  returns an error; the event is not silently downgraded to
-  "unknown type" or stored without validation.
+- **A catalogue that does not load is not applied**: the core starts on the
+  bundled types and keeps retrying (above). The catalogue is loaded
+  once, at startup; a change of yours takes effect at the next
+  start of each core.
+- **Per-event validation at write time**, for types in the
+  catalogue: `events.create` and `events.update` reject invalid
+  content with `400`; the event is not stored.
+- **Unknown types are not refused.** An event of a type that is not
+  in the catalogue is accepted with any content `[ETD1]` (except by
+  a core whose catalogue has not loaded yet, and for `series:`
+  types). No setting makes the catalogue an allow-list: if only
+  declared types may be stored, check it in your app or review the
+  types in use.
 
 ## What the extension model does NOT cover
 

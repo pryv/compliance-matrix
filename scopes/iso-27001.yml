@@ -2052,7 +2052,11 @@ requirements:
       election a taken name no longer reads as free, nor a known one as
       unknown `[RQRC6]`, and a failed read is not cached `[PUCC6]`. With
       `storages.engines.rqlite.external`, the rqlited you run must support
-      the `linearizable` read level (the bundled one is 10.6.0).
+      the `linearizable` read level (the bundled one is 10.6.0, and
+      10.7.5 from the release after open-pryv.io 2.0.0-rc.87). From that
+      release a platform write that rqlite answers without a result
+      (leader unreachable) is an error, where it was silently lost
+      `[RQNA1]`.
 
   - ref: A.8.17
     title: A.8.17 Clock synchronization
