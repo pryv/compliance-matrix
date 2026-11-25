@@ -10,7 +10,7 @@ accounts. Findings from reading `open-pryv.io/components/cmc/` and
   (`components/cmc/`). The plugin is the manifest-level on/off toggle (loaded
   or not).
 - `data-types`: `consent/*` formats merged to master (`c76fc07`). Built
-  artefacts at `https://raw.github.com/pryv/data-types/master/dist/{event-types,flat,extras}.json`.
+  artefacts at `https://raw.github.com/pryv/data-types/master/dist/{event-types,flat,flat.min}.json`.
 - Client SDK: `@pryv/cmc` npm package (sibling to `@pryv/monitor`,
   `@pryv/socket.io`).
 

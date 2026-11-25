@@ -990,7 +990,7 @@ to BfArM-approved FHIR resources, published via the standard
 `context/custom-event-type-catalogues.md`). The mapping
 transformation (Pryv event ↔ FHIR Bundle) still runs
 app-side, but the schemas being mapped are first-class
-Pryv types validated by the same z-schema pipeline as the
+Pryv types validated by the same JSON Schema pipeline as the
 legacy catalogue.
 
 **Evidence**
@@ -1534,10 +1534,13 @@ Per-principle breakdown, what Pryv does for you, what you do:
   invisible to them.
 - Accuracy (§1(d)), FACILITATED + IMPLEMENTER-OWNED.
   Pryv enforces **structural** accuracy at ingest: every
-  `events.create` and `events.update` validates against the
-  declared event-type's JSON Schema (ajv-draft-04 via
-  `components/utils/src/jsonValidator.ts`), rejecting
-  out-of-shape or out-of-range payloads with HTTP 400.
+  `events.create` and `events.update` of a type in the
+  catalogue validates against that type's JSON Schema
+  (ajv-draft-04 via `components/utils/src/jsonValidator.ts`),
+  rejecting out-of-shape or out-of-range payloads with HTTP
+  400. A type outside the catalogue is accepted with any
+  content `[ETD1]`: allowing declared types only is a check
+  for the app.
   Numerical bounds (`minimum`/`maximum`), string patterns,
   and length limits are expressible per type, the HDS
   data-model exemplar declares 28 `minimum`/23 `maximum`
@@ -3003,8 +3006,12 @@ now refused, and the erasure removes audit rows a second time once
 the account is gone `[AGPE1]`, `[AGPE2]`, `[AGPG3]`. Rows left
 earlier are removed with the statement of the upgrade note (only on
 a core that never ran with `keep`). With the audit storage on
-PostgreSQL and the base storage on SQLite the second removal
-applies, not the refusal.
+PostgreSQL and the base storage on SQLite, the second removal
+applies, and a record is refused from the moment the erasure has
+marked the account `[AGPE1]`, `[AGPE4]`, `[AGPE7]`; one written in
+the last moment before that can stay, and the server warns about
+this pairing at boot (not with `keep`) `[CVAE1]`. Put the audit
+storage on SQLite to have it refused too.
 
 Operator setting `audit.onUserDelete` (shipped in `405b3a1`)
 gates the behaviour:
@@ -3303,9 +3310,9 @@ canonical JSON shape for custom types as for upstream
 validation + serialisation pipeline. Receiving Pryv.io
 deployments that ship the same catalogue (or a superset)
 can import the events without loss. A receiving deployment
-without the custom catalogue would reject unknown types at
-write-time validation, the implementer ensures schema
-alignment between transmitting + receiving operators when
+without the custom catalogue stores the events without
+validating their content (unknown types are accepted
+`[ETD1]`); the implementer aligns the catalogues when
 relying on §2 controller-to-controller transmission.
 
 **Calendar interoperability (adapter):** beyond raw JSON, Pryv
@@ -3657,7 +3664,8 @@ specific purpose are processed":
 6. **Data-minimal audit** (Q9, never captures request
    body).
 7. **Schema validation at ingest** (Q21, ajv-draft-04
-   rejects out-of-shape payloads by default).
+   rejects out-of-shape payloads of catalogue types by
+   default; other types are accepted as they are).
 8. **Zero mandatory subprocessors** (Q23, every
    integration opt-in).
 9. **Audit-minimal logger** (Q23, `inspectAndHide`
@@ -3869,9 +3877,20 @@ three real layers, each tested:
    Full account:
    `context/subprocessor-posture-and-data-flow.md`.
 
+**Your backup destination is not in the table above.** Pryv
+writes backups to a directory; where you copy them is your
+choice, so the provider of an off-host destination (a bucket,
+a backup service) is yours to name and contract. Encrypting
+with a key it never holds does not take it out of Art.28: EDPB
+Guidelines 07/2020 (example "Hosting services") treat a host
+that only stores encrypted data as a processor. When you are
+yourself a processor, it is your sub-processor (§2 and §4).
+See `context/encrypted-offhost-backups.md`.
+
 **§3(g) deletion / return of personal data at the end of
 provision**, `bin/backup.js` + `system.users.delete` cover
-both directions.
+both directions on the core; copies in your backups end with
+your backup retention.
 
 **§3(h) auditability**: the operator demonstrates compliance
 partly via Pryv's audit log + this compliance matrix
@@ -3896,7 +3915,7 @@ configuration only, not your hosting, proxy or log routing.
 **Evidence**
 
 - primitives: audit, access, clientData, encryption-at-rest-secrets, letsEncrypt-integration, observability-provider
-- context notes: subprocessor-posture-and-data-flow, content-query-audit-semantics
+- context notes: subprocessor-posture-and-data-flow, content-query-audit-semantics, encrypted-offhost-backups
 
 ### GDPR Art.30: Records of processing activities
 
@@ -4907,8 +4926,10 @@ The Art.44 framework
 is operational, every Art.45-49 path is conditional. Pryv's
 data-residency primitive is the technical enforcement layer:
 when you bind a subject's data to a hosting inside the EU/EEA,
-no Chapter-V analysis is needed (no transfer happens). When
-transfer is intentional, the CMC capability flow records the
+the core's storage raises no transfer by itself; the copies you
+make elsewhere (off-host backups, multi-region replication) and
+remote access from a third country are analysed on their own.
+When transfer is intentional, the CMC capability flow records the
 recipient hosting + the legal basis on the originating access's
 clientData, making Chapter V compliance auditable per transfer
 rather than per system.
@@ -4934,11 +4955,12 @@ verified keyspace inventory) replicate cluster-wide via
 rqlite Raft. In a multi-region cluster, this **is** a
 continuous cross-border transfer of personal data, an
 Art.46 mechanism (SCCs / BCRs / etc.) is legally required
-even though Tier-2 stays put. Mitigation options (filed as
-backlog or shipped): at-rest encryption of PlatformDB
-(`PLATFORMDB-AT-REST-ENCRYPTION`), HMAC-pseudonymisation
-of PII at the PlatformDB layer (`PLATFORMDB-PII-HASHING`,
-shipped, opt-in via `platform.piiMode: hashed`),
+even though Tier-2 stays put. Mitigation options: at-rest
+encryption of PlatformDB (the `container-encrypted-volume`
+companion, opt-in, or host disk encryption),
+HMAC-pseudonymisation of usernames and unique values at the
+PlatformDB layer (`platform.piiMode: hashed`, the default
+since open-pryv.io 2.0.0-rc.3),
 tokenisation with per-region mapping table (option C,
 brainstorm-tier, not yet backlogged).
 
@@ -4954,10 +4976,24 @@ basis on the access's `clientData.transfer_basis` per
 residency is preserved (no Tier-2 copy in the US); only
 the access path + Tier-1 routing-state crosses.
 
+**Off-host backups.** A backup stored with a provider in a
+third country is a transfer to assess, encrypted or not: the
+criteria of EDPB Guidelines 05/2021 do not ask whether the
+importer can read the data. With a key the provider never
+holds (`bin/backup.js --recipient-pubkey`), the encryption is
+a supplementary measure on top of the Art.45 or Art.46 basis,
+effective under the six conditions of EDPB Recommendations
+01/2020, Use Case 1. A whole-core backup carries the Tier-1
+account-field rows of every core of the cluster, as stored
+(keyed hashes by default), not only of the core backed up.
+Conditions, what stays visible in an encrypted
+backup and what you still owe:
+`context/encrypted-offhost-backups.md`.
+
 **Evidence**
 
 - primitives: data-residency, CMC, access
-- context notes: core-affinity-architecture, cross-border-platformdb-implications, transfer-basis-convention
+- context notes: core-affinity-architecture, cross-border-platformdb-implications, transfer-basis-convention, encrypted-offhost-backups
 
 ### GDPR Art.45: Transfers on the basis of an adequacy decision
 
@@ -5023,10 +5059,10 @@ Three cross-border surfaces in a typical Pryv deployment:
    options (at-rest encryption / PII hashing / tokenisation).
    The strongest compliance posture combines an Art.46
    mechanism (SCCs, BCRs, etc.) WITH at-rest encryption
-   (`PLATFORMDB-AT-REST-ENCRYPTION` backlog) AND
-   PII pseudonymisation at the PlatformDB layer
-   (`PLATFORMDB-PII-HASHING`, shipped, opt-in via
-   `platform.piiMode: hashed`).
+   (the `container-encrypted-volume` companion, opt-in, or
+   host disk encryption) AND PII pseudonymisation at the
+   PlatformDB layer (`platform.piiMode: hashed`, the default
+   since open-pryv.io 2.0.0-rc.3).
 
 3. **Subprocessor outbound** (SMTP / SMS / observability
    vendors). See `context/subprocessor-posture-and-data-
@@ -6244,9 +6280,12 @@ of PHI disclosed, purpose. Each field has a Pryv source:
   - date → audit row timestamp
   - recipient → access holder (`access.id`) or counterparty (for
     shared / CMC accesses)
-  - description → API method + URL query/path params recorded
-    in audit. **The audit log does NOT capture the request
-    body**, so the description is "what was disclosed" at the
+  - description → API method + URL query parameters recorded
+    in audit, not the path (for example the id in
+    `events.getOne`; the rows of `accesses.update` and
+    `accesses.delete` name the access from the release after
+    open-pryv.io 2.0.0-rc.87). **The audit log does NOT capture
+    the request body**, so the description is "what was disclosed" at the
     API-shape level (e.g., `events.get` on a given stream),
     not the per-event content, sufficient under §164.528 and
     favourable for data minimisation (the audit row carries
@@ -6258,6 +6297,10 @@ A record that cannot be written is a disclosure the trail cannot
 account for: it is logged and, from the release after open-pryv.io
 .0.0-rc.88, counted (see hipaa-security 164.312(b)); it is not
 recovered.
+To whom access was open, and until when, is on the trail too: from
+the same release each app or shared access the server itself
+creates, changes or deletes leaves a record naming it (see
+hipaa-security 164.312(b)).
 Pre-computing per-subject accounting reports periodically (and
 storing them on a dedicated stream) is a useful operational
 pattern for fast response to requests.
@@ -7943,7 +7986,20 @@ same release records a delivery to an account of the same core
 `[IPAU1]`, `[IPAU2]` and the one-time secret of a credential
 hand-off `[IPAU4]` or of a third-party sign-in `[IPAU5]`. The
 lookups the server makes for itself inside these flows are not
-separate records. Not audited: requests on adapter routes
+separate records. **Access rights, from the same release:** every
+creation, change of permissions or expiry, and deletion of an app
+or shared access leaves a record that names the access in its
+account's trail: the `accesses.create` / `update` / `delete` row of
+an API client (the last two name it from this release), an
+`oauth.*` event for the issuance of an OAuth session, and otherwise
+`accesses.created` / `changed` / `deleted` written by the server
+with its cause (consent withdrawn, chain collapsed, grant narrowed,
+client purged) `[ASDW1]`..`[ASDWG]`. Not recorded: an access that
+ends by its expiry, a session whose authorization code was never
+exchanged, one-off upgrade tools; personal accesses are recorded by
+the sign-in. A refused `accesses.update` / `delete` does not name
+its target. Before this release the server's own writes left the
+triggering call's row, or none. Not audited: requests on adapter routes
 (the sidecar audits them) and the `421` answers for an account
 served by another core (warning log only). The three address-alias
 methods (rc.76) are audited like any API call `[OPAL2]`.
@@ -10015,7 +10071,9 @@ produces per-user backup files, the only copy of user data Pryv
 makes; a multi-core cluster replicates the platform DB only
 (rqlite Raft + mTLS), not user data, which stays on each user's
 home core. The operator's
-backup policy (cadence, retention, offsite) is layered on top.
+backup policy (cadence, retention, offsite) is layered on top;
+for an offsite copy in another country or with a provider, see
+"Offsite copies" in the detail.
 "Regularly tested" is the operator's drill. On the Pryv side,
 backup and restore round trips are tested: `[BKSR]` (series
 data), `[BKEV]` (events store), `[BKVR]` (manifest version), and
@@ -10064,6 +10122,18 @@ enabling one of the two key models, or by your own layer
 (LUKS / S3 SSE-KMS / ...) on a plaintext backup; record the
 choice and the key custody (a lost key or passphrase makes the
 backup unrecoverable) in your backup-policy SOP.
+
+**Offsite copies.** Pryv writes backups to a directory and never
+uploads or expires them: destination, transport, access control
+and retention of the offsite copy are in your policy. Encryption
+with a key the provider never holds protects the content there;
+it does not settle the legal side (a provider that only stores
+encrypted data is a processor, storage in a third country is a
+transfer to assess), and an encrypted backup still shows user
+ids, run dates, file counts and sizes. Put the destination in
+your supplier and data-protection registers, keep the decryption
+key out of the provider's reach, and test restores from the
+offsite copy itself: `context/encrypted-offhost-backups.md`.
 
 **Since open-pryv.io 2.0.0-rc.47 to 2.0.0-rc.50**: a plaintext
 backup is announced on stderr `[BKPW1]`; `--passphrase-file` keeps
@@ -10183,7 +10253,7 @@ no longer stops a restore.
 - tests: BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1, XIDB2, XIDB3, XIDB4, XIDBK1, XIDBK2, BKAL1, BKAL3, BKSM1, BKSM2, BKSM3, BKSM4, BKSM5, BKSM6, BKSM7, BKSM8, BKIS1, BKIS2, BKIS3, BKDU1, RSFC1, RSFC3, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT3
 - docs: customer-resources/backup.md
 - primitives: backup-restore, backup-payload-encryption, multi-core-mTLS, external-id-index
-- context notes: operator-backup-coverage
+- context notes: encrypted-offhost-backups, operator-backup-coverage
 
 ### ISO 27001 A.8.15: A.8.15 Logging
 
@@ -11631,7 +11701,11 @@ yet) is now an error instead of "no such row", so during an
 election a taken name no longer reads as free, nor a known one as
 unknown `[RQRC6]`, and a failed read is not cached `[PUCC6]`. With
 `storages.engines.rqlite.external`, the rqlited you run must support
-the `linearizable` read level (the bundled one is 10.6.0).
+the `linearizable` read level (the bundled one is 10.6.0, and
+10.7.5 from the release after open-pryv.io 2.0.0-rc.88). From that
+release a platform write that rqlite answers without a result
+(leader unreachable) is an error, where it was silently lost
+`[RQNA1]`.
 
 **Evidence**
 
@@ -15256,7 +15330,7 @@ themselves are your product definitions.
 
 ### SOC 2 PI1.2: PI1.2 Completeness and accuracy of inputs
 
-Coverage: facilitated · effort saved: medium · mode: primitive · draft
+Coverage: facilitated · effort saved: low · mode: primitive · draft
 
 Requirement: The entity implements policies and procedures over system inputs,
 including controls over completeness and accuracy, to result in
@@ -15265,13 +15339,17 @@ products and services that meet the entity's objectives.
 **What Pryv does for you**
 
 Input accuracy is enforced structurally at ingest: events.create
-and events.update run every payload through the event type's JSON
-Schema (ajv-draft-04), unknown types and schema violations are
-rejected with HTTP 400, no silent truncation or downgrade. This is
+and events.update run the payload of every catalogue type through
+its JSON Schema (ajv-draft-04); schema violations are rejected with
+HTTP 400, no truncation. A type outside the catalogue is accepted
+with any content [ETD1]: restricting inputs to declared types is
+a control of yours, in the app. This is
 the structural-accuracy layer; semantic accuracy (is this the
 *right* blood-pressure reading) stays in your application. Tighten
 structural strictness by declaring min/max/pattern in a custom
 catalogue, see context/data-accuracy-structural-vs-semantic.md.
+**Correction (2026-11-25):** an earlier version said unknown types
+are rejected; effort saved lowered from medium to low.
 
 **Evidence**
 

@@ -295,7 +295,7 @@ to BfArM-approved FHIR resources, published via the standard
 `context/custom-event-type-catalogues.md`). The mapping
 transformation (Pryv event ↔ FHIR Bundle) still runs
 app-side, but the schemas being mapped are first-class
-Pryv types validated by the same z-schema pipeline as the
+Pryv types validated by the same JSON Schema pipeline as the
 legacy catalogue.
 
 **Evidence**

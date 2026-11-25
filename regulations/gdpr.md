@@ -230,10 +230,13 @@ Per-principle breakdown, what Pryv does for you, what you do:
   invisible to them.
 - Accuracy (§1(d)), FACILITATED + IMPLEMENTER-OWNED.
   Pryv enforces **structural** accuracy at ingest: every
-  `events.create` and `events.update` validates against the
-  declared event-type's JSON Schema (ajv-draft-04 via
-  `components/utils/src/jsonValidator.ts`), rejecting
-  out-of-shape or out-of-range payloads with HTTP 400.
+  `events.create` and `events.update` of a type in the
+  catalogue validates against that type's JSON Schema
+  (ajv-draft-04 via `components/utils/src/jsonValidator.ts`),
+  rejecting out-of-shape or out-of-range payloads with HTTP
+  400. A type outside the catalogue is accepted with any
+  content `[ETD1]`: allowing declared types only is a check
+  for the app.
   Numerical bounds (`minimum`/`maximum`), string patterns,
   and length limits are expressible per type, the HDS
   data-model exemplar declares 28 `minimum`/23 `maximum`
@@ -1699,8 +1702,12 @@ now refused, and the erasure removes audit rows a second time once
 the account is gone `[AGPE1]`, `[AGPE2]`, `[AGPG3]`. Rows left
 earlier are removed with the statement of the upgrade note (only on
 a core that never ran with `keep`). With the audit storage on
-PostgreSQL and the base storage on SQLite the second removal
-applies, not the refusal.
+PostgreSQL and the base storage on SQLite, the second removal
+applies, and a record is refused from the moment the erasure has
+marked the account `[AGPE1]`, `[AGPE4]`, `[AGPE7]`; one written in
+the last moment before that can stay, and the server warns about
+this pairing at boot (not with `keep`) `[CVAE1]`. Put the audit
+storage on SQLite to have it refused too.
 
 Operator setting `audit.onUserDelete` (shipped in `405b3a1`)
 gates the behaviour:
@@ -1999,9 +2006,9 @@ canonical JSON shape for custom types as for upstream
 validation + serialisation pipeline. Receiving Pryv.io
 deployments that ship the same catalogue (or a superset)
 can import the events without loss. A receiving deployment
-without the custom catalogue would reject unknown types at
-write-time validation, the implementer ensures schema
-alignment between transmitting + receiving operators when
+without the custom catalogue stores the events without
+validating their content (unknown types are accepted
+`[ETD1]`); the implementer aligns the catalogues when
 relying on §2 controller-to-controller transmission.
 
 **Calendar interoperability (adapter):** beyond raw JSON, Pryv
@@ -2353,7 +2360,8 @@ specific purpose are processed":
 6. **Data-minimal audit** (Q9, never captures request
    body).
 7. **Schema validation at ingest** (Q21, ajv-draft-04
-   rejects out-of-shape payloads by default).
+   rejects out-of-shape payloads of catalogue types by
+   default; other types are accepted as they are).
 8. **Zero mandatory subprocessors** (Q23, every
    integration opt-in).
 9. **Audit-minimal logger** (Q23, `inspectAndHide`
@@ -2565,9 +2573,20 @@ three real layers, each tested:
    Full account:
    `context/subprocessor-posture-and-data-flow.md`.
 
+**Your backup destination is not in the table above.** Pryv
+writes backups to a directory; where you copy them is your
+choice, so the provider of an off-host destination (a bucket,
+a backup service) is yours to name and contract. Encrypting
+with a key it never holds does not take it out of Art.28: EDPB
+Guidelines 07/2020 (example "Hosting services") treat a host
+that only stores encrypted data as a processor. When you are
+yourself a processor, it is your sub-processor (§2 and §4).
+See `context/encrypted-offhost-backups.md`.
+
 **§3(g) deletion / return of personal data at the end of
 provision**, `bin/backup.js` + `system.users.delete` cover
-both directions.
+both directions on the core; copies in your backups end with
+your backup retention.
 
 **§3(h) auditability**: the operator demonstrates compliance
 partly via Pryv's audit log + this compliance matrix
@@ -2592,7 +2611,7 @@ configuration only, not your hosting, proxy or log routing.
 **Evidence**
 
 - primitives: audit, access, clientData, encryption-at-rest-secrets, letsEncrypt-integration, observability-provider
-- context notes: subprocessor-posture-and-data-flow, content-query-audit-semantics
+- context notes: subprocessor-posture-and-data-flow, content-query-audit-semantics, encrypted-offhost-backups
 
 ## GDPR Art.30: Records of processing activities
 
@@ -3603,8 +3622,10 @@ The Art.44 framework
 is operational, every Art.45-49 path is conditional. Pryv's
 data-residency primitive is the technical enforcement layer:
 when you bind a subject's data to a hosting inside the EU/EEA,
-no Chapter-V analysis is needed (no transfer happens). When
-transfer is intentional, the CMC capability flow records the
+the core's storage raises no transfer by itself; the copies you
+make elsewhere (off-host backups, multi-region replication) and
+remote access from a third country are analysed on their own.
+When transfer is intentional, the CMC capability flow records the
 recipient hosting + the legal basis on the originating access's
 clientData, making Chapter V compliance auditable per transfer
 rather than per system.
@@ -3630,11 +3651,12 @@ verified keyspace inventory) replicate cluster-wide via
 rqlite Raft. In a multi-region cluster, this **is** a
 continuous cross-border transfer of personal data, an
 Art.46 mechanism (SCCs / BCRs / etc.) is legally required
-even though Tier-2 stays put. Mitigation options (filed as
-backlog or shipped): at-rest encryption of PlatformDB
-(`PLATFORMDB-AT-REST-ENCRYPTION`), HMAC-pseudonymisation
-of PII at the PlatformDB layer (`PLATFORMDB-PII-HASHING`,
-shipped, opt-in via `platform.piiMode: hashed`),
+even though Tier-2 stays put. Mitigation options: at-rest
+encryption of PlatformDB (the `container-encrypted-volume`
+companion, opt-in, or host disk encryption),
+HMAC-pseudonymisation of usernames and unique values at the
+PlatformDB layer (`platform.piiMode: hashed`, the default
+since open-pryv.io 2.0.0-rc.3),
 tokenisation with per-region mapping table (option C,
 brainstorm-tier, not yet backlogged).
 
@@ -3650,10 +3672,24 @@ basis on the access's `clientData.transfer_basis` per
 residency is preserved (no Tier-2 copy in the US); only
 the access path + Tier-1 routing-state crosses.
 
+**Off-host backups.** A backup stored with a provider in a
+third country is a transfer to assess, encrypted or not: the
+criteria of EDPB Guidelines 05/2021 do not ask whether the
+importer can read the data. With a key the provider never
+holds (`bin/backup.js --recipient-pubkey`), the encryption is
+a supplementary measure on top of the Art.45 or Art.46 basis,
+effective under the six conditions of EDPB Recommendations
+01/2020, Use Case 1. A whole-core backup carries the Tier-1
+account-field rows of every core of the cluster, as stored
+(keyed hashes by default), not only of the core backed up.
+Conditions, what stays visible in an encrypted
+backup and what you still owe:
+`context/encrypted-offhost-backups.md`.
+
 **Evidence**
 
 - primitives: data-residency, CMC, access
-- context notes: core-affinity-architecture, cross-border-platformdb-implications, transfer-basis-convention
+- context notes: core-affinity-architecture, cross-border-platformdb-implications, transfer-basis-convention, encrypted-offhost-backups
 
 ## GDPR Art.45: Transfers on the basis of an adequacy decision
 
@@ -3719,10 +3755,10 @@ Three cross-border surfaces in a typical Pryv deployment:
    options (at-rest encryption / PII hashing / tokenisation).
    The strongest compliance posture combines an Art.46
    mechanism (SCCs, BCRs, etc.) WITH at-rest encryption
-   (`PLATFORMDB-AT-REST-ENCRYPTION` backlog) AND
-   PII pseudonymisation at the PlatformDB layer
-   (`PLATFORMDB-PII-HASHING`, shipped, opt-in via
-   `platform.piiMode: hashed`).
+   (the `container-encrypted-volume` companion, opt-in, or
+   host disk encryption) AND PII pseudonymisation at the
+   PlatformDB layer (`platform.piiMode: hashed`, the default
+   since open-pryv.io 2.0.0-rc.3).
 
 3. **Subprocessor outbound** (SMTP / SMS / observability
    vendors). See `context/subprocessor-posture-and-data-

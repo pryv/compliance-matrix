@@ -1133,7 +1133,20 @@ same release records a delivery to an account of the same core
 `[IPAU1]`, `[IPAU2]` and the one-time secret of a credential
 hand-off `[IPAU4]` or of a third-party sign-in `[IPAU5]`. The
 lookups the server makes for itself inside these flows are not
-separate records. Not audited: requests on adapter routes
+separate records. **Access rights, from the same release:** every
+creation, change of permissions or expiry, and deletion of an app
+or shared access leaves a record that names the access in its
+account's trail: the `accesses.create` / `update` / `delete` row of
+an API client (the last two name it from this release), an
+`oauth.*` event for the issuance of an OAuth session, and otherwise
+`accesses.created` / `changed` / `deleted` written by the server
+with its cause (consent withdrawn, chain collapsed, grant narrowed,
+client purged) `[ASDW1]`..`[ASDWG]`. Not recorded: an access that
+ends by its expiry, a session whose authorization code was never
+exchanged, one-off upgrade tools; personal accesses are recorded by
+the sign-in. A refused `accesses.update` / `delete` does not name
+its target. Before this release the server's own writes left the
+triggering call's row, or none. Not audited: requests on adapter routes
 (the sidecar audits them) and the `421` answers for an account
 served by another core (warning log only). The three address-alias
 methods (rc.76) are audited like any API call `[OPAL2]`.

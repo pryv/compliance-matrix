@@ -26,12 +26,14 @@ PlatformDB.ts:120-244`):
 | User indexed fields (`setUserIndexedField`) | deployment-configured non-unique fields (country code, language, etc.) | typically PII |
 | `dns/<subdomain>` | per-user subdomain → core address mapping (subdomain == username in standard deployments) | **PII** |
 | `access-state/<key>` | short-lived OAuth2 rows: authorization codes (10 min) and refresh-token chains (up to 90 days), keyed by the SHA-256 of the code or token, never the credential itself, and carrying no access token; also registration email challenge rows and the failed-password and password-reset budgets per client address, keyed by an HMAC-SHA256 of the email or address under a key derived from `auth.adminAccessKey` from the release after open-pryv.io 2.0.0-rc.88 (a plain SHA-256 before, which a listing reverses by running candidate addresses or a mailing list through it) `[SKHA1]`..`[SKHA3]` | PII (the OAuth rows carry the username and user id; the keyed rows are pseudonymised, readable back only by a holder of the admin key testing candidates) |
-
-Not in PlatformDB (core-local, never replicated): `/reg/access` sign-in request state (including the app token once the user accepts and, since open-pryv.io 2.0.0-rc.32, the capability URLs of any cross-account consent invites the app sent with `cmcInvites`) and MFA sessions live in `cluster_kv`, an in-memory store held by each core's master process and shared only by that core's workers. Until open-pryv.io `3e72be4f`, `/reg/access` request state was stored in PlatformDB, so accepted app tokens and usernames were replicated to every core for up to an hour.
 | `tls-cert/<hostname>`, `tls-acme-account` | LE certs + account (optional ACME integration) | operator metadata only |
 | `observability/*` | encrypted observability secrets | operator secrets |
 | `mail-template/<type>/<lang>/<part>` | (planned mail-template admin work) | operator-controlled (could leak example PII in templates) |
 | `core-<id>`, bootstrap tokens | cluster topology + join state | operator metadata |
+
+With `platform.piiMode: hashed` (the default since open-pryv.io 2.0.0-rc.3), usernames and unique values are stored as keyed hashes (option B below), not in clear; `cleartext` is a legacy opt-out.
+
+Not in PlatformDB (core-local, never replicated): `/reg/access` sign-in request state (including the app token once the user accepts and, since open-pryv.io 2.0.0-rc.32, the capability URLs of any cross-account consent invites the app sent with `cmcInvites`) and MFA sessions live in `cluster_kv`, an in-memory store held by each core's master process and shared only by that core's workers. Until open-pryv.io `3e72be4f`, `/reg/access` request state was stored in PlatformDB, so accepted app tokens and usernames were replicated to every core for up to an hour.
 
 Per-user steady state: ~50-200 bytes (username + email + 1
 user-core mapping + 1 DNS record). For 100k users, ~5-20 MB
@@ -82,18 +84,27 @@ classification. The same holds for an off-host backup: an
 encrypted copy stored in another jurisdiction is still personal
 data under the controller's control; encryption changes the
 security posture (breach notification, what the storage provider
-can read), not the classification.
+can read), not the classification. A whole-core backup carries the
+unique and indexed account-field rows of every core of the cluster,
+as stored. See `context/encrypted-offhost-backups.md`.
 
 **Value**: real defence-in-depth against passive forfeiture
 scenarios. Cheap (~1 day).
 
-**Backlog**: internal slug `PLATFORMDB-AT-REST-ENCRYPTION`.
+**Status**: no code of its own. On a containerised deployment the
+`container-encrypted-volume` companion (opt-in) encrypts the PlatformDB
+files with the rest of the data; elsewhere, disk encryption of the host
+does (`PLATFORMDB-AT-REST-ENCRYPTION`, superseded).
 
 ### B. HMAC-pseudonymisation of PII at PlatformDB layer
 
 **What it changes**: persisted rows are HMAC-derived hashes; live
-request paths unchanged; pepper shared cluster-wide. Operator
-opts into `platform.piiMode: hashed` (or `minimised`, see below).
+request paths unchanged; pepper shared cluster-wide.
+**Shipped, and the default since open-pryv.io 2.0.0-rc.3**:
+`platform.piiMode: hashed` (`cleartext` is the legacy opt-out; the
+`minimised` posture below is not implemented). It covers usernames and
+unique values; indexed values are stored as given, under a hashed
+username.
 
 **Legal status under EDPB / WP29 Opinion 05/2014**: classified as
 **pseudonymisation**, NOT anonymisation. Re-identification by
@@ -129,8 +140,7 @@ local (no cluster-global guarantee). Lost feature: "find username
 by email" recovery. Acceptable tradeoff for many deployments
 where username-based recovery suffices.
 
-Effort: ~3-5 days. **Backlog**: internal slug
-`PLATFORMDB-PII-HASHING`.
+Internal slug `PLATFORMDB-PII-HASHING` (shipped; `minimised` deferred).
 
 ### C. Tokenisation with per-region mapping table (the structural answer)
 
@@ -212,6 +222,8 @@ justifies the investment).
   parallel to this PlatformDB-level note.
 - `context/subprocessor-posture-and-data-flow.md`: the third
   cross-border surface (vendor integrations).
+- `context/encrypted-offhost-backups.md`: the backup surface
+  (transfer and processor questions for encrypted copies abroad).
 - `context/core-affinity-architecture.md`: the Tier 2 residency
   guarantee.
 - Internal backlog slug `PLATFORMDB-AT-REST-ENCRYPTION`,

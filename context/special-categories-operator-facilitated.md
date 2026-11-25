@@ -106,7 +106,7 @@ history is the durable, queryable record.
 ### 3. Custom event-type catalogue with sensitivity annotations
 
 The Q14 / Q21 custom-catalogue extension (`service.eventTypes` URL
-→ `deepMerge` over baked-in defaults) is the operator's lever for
+, applied entry by entry over the bundled defaults) is the operator's lever for
 **encoding** the Art.9 classification in the event-type schemas
 themselves. Pryv's catalogue meta-schema accepts JSON Schema
 extension fields (`x-*` properties are passed through), so the

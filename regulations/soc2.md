@@ -1317,7 +1317,7 @@ themselves are your product definitions.
 
 ## SOC 2 PI1.2: PI1.2 Completeness and accuracy of inputs
 
-Coverage: facilitated · effort saved: medium · mode: primitive · draft
+Coverage: facilitated · effort saved: low · mode: primitive · draft
 
 Requirement: The entity implements policies and procedures over system inputs,
 including controls over completeness and accuracy, to result in
@@ -1326,13 +1326,17 @@ products and services that meet the entity's objectives.
 **What Pryv does for you**
 
 Input accuracy is enforced structurally at ingest: events.create
-and events.update run every payload through the event type's JSON
-Schema (ajv-draft-04), unknown types and schema violations are
-rejected with HTTP 400, no silent truncation or downgrade. This is
+and events.update run the payload of every catalogue type through
+its JSON Schema (ajv-draft-04); schema violations are rejected with
+HTTP 400, no truncation. A type outside the catalogue is accepted
+with any content [ETD1]: restricting inputs to declared types is
+a control of yours, in the app. This is
 the structural-accuracy layer; semantic accuracy (is this the
 *right* blood-pressure reading) stays in your application. Tighten
 structural strictness by declaring min/max/pattern in a custom
 catalogue, see context/data-accuracy-structural-vs-semantic.md.
+**Correction (2026-11-25):** an earlier version said unknown types
+are rejected; effort saved lowered from medium to low.
 
 **Evidence**
 
