@@ -1431,6 +1431,71 @@ rules hold; the one addition is the delegation grant guard's exemption for
 `[DDG04]`, which does not let a delegate publish an offer; their entries'
 dated "hard delete" wording is history and stays.
 
+### Cross-account consent: a second accept on the same scope replaces the first (MERGED on open-pryv.io master `42c6bd03`, the release after 2.0.0-rc.88, not yet released; rows walked 2026-11-25)
+
+**Where the work lives**: open-pryv.io master `42c6bd03` (feature commits
+`b8d76459` and `8b3acea2`, merged by `13bda354`; to ship in the release
+after 2.0.0-rc.88): `components/cmc/src/{replacedGrants,handleAccept,
+handleIncomingAccept,handleIncomingBackChannel,handleMemberAccess,
+handleMemberRevoke,memberLedger,memberSweep,acceptWithdrawal,retryQueue,
+errorIds}.ts`. Tests: integration `[CMCSA]`
+(`components/api-server/test/cmc-second-accept.test.js`, `[CSA01]`..`[CSA16]`),
+unit `[CSA20]`..`[CSA47]`. No `planned:` chip was queued and no proposal
+mirror exists; it follows up `GROUP-ACCOUNTS-CMC` above.
+
+One relationship per counterparty and scope stream: a person accepting a
+second invite of the same requester on the same scope replaces the first
+consent (earlier grant and its accesses deleted, accept marked
+`withdrawal.by: 'replaced'` with `replacedBy`; earlier invite `revoked` with
+`replacedBy`). A retry never restores an older or ended consent
+(`cmc-incoming-accept-superseded`, `cmc-accept-withdrawn`); a retried accept
+refused for good no longer deletes a paired grant; the back-channel delivery
+is retried. Group accounts: the offboarding record reports `residual`
+(reasons `peer-rejected`, `grant-gone`, `grant-replaced`, `grant-unknown`)
+rather than `absent` unless the patient's core confirmed the access gone; a
+member access never outlives the membership, a membership joined twice
+included; a member-access ask without `scopeStreamId` takes the trigger
+stream's own relationship first.
+
+**Walked 2026-11-25** (no tier change; `reviewed_at` unchanged; prose names
+the release after open-pryv.io 2.0.0-rc.88 and `42c6bd03`):
+
+| Scope | Ref | What changed | Tests added |
+|---|---|---|---|
+| gdpr | Art.7 | withdrawal record gains `by: 'replaced'` + `replacedBy`; one relationship per counterparty and scope; retries never restore an older or ended consent; a paired grant kept on a refused retry | `CMCSA`, `CSA05`, `CSA06`, `CSA30`, `CSA33`, `CSA40`, `CSA41`, `CSA47` |
+| hipaa-security | 164.308(a)(3)(ii)(C) | `absent` only when confirmed, residual reasons; second accept and second membership leave no member access after removal | `CMCSA`, `CSA01`, `CSA11`, `CSA14`, `CSA20`, `CSA22`, `CSA23` |
+| iso-27001 | A.5.18 | one grant per group and scope; earlier invite `revoked` with `replacedBy`; asks go through the current grant | `CSA02`, `CSA05`, `CSA06` |
+| iso-27001 | A.6.5 | `absent` only when confirmed; no access survives through a replaced grant or a second membership | `CSA01`, `CSA14`, `CSA20` |
+
+Rows walked without a change:
+- `hipaa-security.164.308(a)(4)(ii)(C)`, `164.312(a)(1)`, `164.312(b)`,
+  `soc2.CC6.2`, `CC6.3`, `iso-27001.A.5.15`, `A.5.16`: unchanged (their
+  prose states the bounds and attribution, which hold; the sweep detail
+  lives in the rows above).
+- `iso-27701.A.7.3.4` (consent withdrawal): unchanged (no claim about how
+  many grants a relationship holds).
+- Erasure and DSAR families: unchanged (account deletion and export are not
+  touched).
+
+Context notes: `context/cmc-consent-primitives.md` (withdrawal marker:
+`replaced`, the replace rule, the retry refusals),
+`context/workforce-access-patterns.md` Pattern 3 (asking again after a
+second accept, `scopeStreamId` default, residual reasons, a membership
+joined twice, the patient's second accept).
+
+Section B:
+- **B.1** (new error ids `cmc-incoming-accept-superseded`,
+  `cmc-accept-withdrawn`; no new method or config key): cited in `gdpr.Art.7`
+  and the context note.
+- **B.2** (server-written fields: `withdrawal.by: 'replaced'` +
+  `withdrawal.replacedBy` on `consent/accept-cmc`, `replacedBy` on
+  `consent/request-cmc`, new residual reasons on `consent/member-revoke-cmc`):
+  the event-type catalogue does not enumerate these values; re-walk
+  `gdpr.Art.7` if a later catalogue version does.
+- B.3 to B.11: none.
+At release: replace "merged on master `42c6bd03`, not yet released" in the
+four rows and two context notes with the release name.
+
 ### `ACCOUNT-AUTO-DELETION` (DELETION SHIPPED in open-pryv.io 2.0.0-rc.66 `8521c8d5`, 2026-10-30; 14 deletion chips discharged and the Art.32 chip narrowed to its transfer half, rows walked 2026-10-30; TRANSFER MERGED to open-pryv.io master `2bd4778b` (2026-11-01), not released: 5 chips kept)
 
 **Where the work lives**: open-pryv.io master since `8521c8d5` (2026-10-29),

@@ -621,7 +621,23 @@ the grant.
     `consent/revoke-cmc` (`revokeEventId` is that trigger) `[CN59]`,
     `[HR32]`, and `'peer-revoke'` when the requester withdraws
     (`revokeEventId` is the revocation's arrival in the person's inbox)
-    `[CN60]`. The marker sits on the person's side (the one who accepted);
+    `[CN60]`. Since the release after open-pryv.io 2.0.0-rc.88 (merged
+    on master `42c6bd03`, not yet released) a relationship is one
+    counterparty and one scope stream, and `by: 'replaced'` records a
+    consent the person replaced by accepting a second invite of the same
+    requester on the same scope: `withdrawal.replacedBy = {
+    acceptEventId, accessId }` names the newer accept and its grant; the
+    earlier grant and the accesses made through it are deleted once the
+    requester's core has taken the new one, and on the requester's
+    account the earlier invite reads `revoked` with `replacedBy = {
+    inviteEventId }`; no revoke notice is exchanged for it `[CSA05]`,
+    `[CSA06]`, `[CSA33]`. A retry never restores an older or ended
+    consent: the requester's core refuses an accept older than the one
+    it holds (`cmc-incoming-accept-superseded`) `[CSA30]`, the person's
+    core refuses a queued retry of an accept replaced or ended since
+    (`cmc-accept-withdrawn`) `[CSA40]`, `[CSA41]`, `[CSA46]`, and a
+    retried accept the requester refuses for good no longer deletes a
+    grant it already paired `[CSA47]`. The marker sits on the person's side (the one who accepted);
     the requester's record stays its request event and the revocation it
     wrote or received. It is written only once the grant is actually gone,
     never overwritten once set (the first teardown to record it wins), and
