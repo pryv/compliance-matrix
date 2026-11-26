@@ -1031,7 +1031,9 @@ taken. Test codes available to cite if it is taken up: `[EMCR1-12]`
 throttles), `[EMLK1-2]` (link format), `[CV-GA1-4]` / `[CKCF1-3]` (the
 default-on validator), `[SSOLI7]` (a code-proved address links on first
 sign-in). Config keys: `account.emailVerification.*`,
-`services.email.enabled.verifyEmail`, `services.email.emailChallengeTemplate`.
+`services.email.enabled.verifyEmail` (`services.email.sendVerifyEmail` from
+the release after open-pryv.io 2.0.0-rc.90, see "Mail switches are flat
+booleans" below), `services.email.emailChallengeTemplate`.
 
 No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so it
 carries no `planned:` chips.
@@ -1800,6 +1802,54 @@ primitive name open-pryv.io 2.0.0-rc.90. Test codes added to `tests:`:
 | gdpr | Art.3 | `MCHR1`, `MC05E`, `MC05F`, `MC05G` |
 | gdpr | Art.45 | `MCHR1`, `MC05E` |
 | swiss-nlpd | Art.34 | `MCHR1`, `MC05E`, `MC05F` |
+
+### Mail switches are flat booleans (the release after open-pryv.io 2.0.0-rc.90, not yet merged to master; rows walked 2026-11-26)
+
+**Where the work lives**: open-pryv.io branch `feat/email-switches-flat`
+(to ship in the release after 2.0.0-rc.90; rc.90 does not carry it). No
+`planned:` chip was queued and no proposal mirror exists. Configuration
+change, BREAKING for operators:
+- `services.email.enabled` is always a boolean, the whole-mail switch
+  (`false` turns every mail off; `true`, the default, leaves each mail to
+  its own switch).
+- The 14 per-mail switches that were its sub-keys are flat booleans of
+  `services.email`, named `send` + the former name: `sendWelcome`,
+  `sendResetPassword`, `sendVerifyEmail`, `sendMfaChange`,
+  `sendExternalIdReleased`, `sendAccountDeletionScheduled`,
+  `sendAccountDeletionReminder`, `sendAccountDeletionBlocked` and the six
+  `sendAccountTransfer...` (`Named`, `Claim`, `Started`, `Cancelled`,
+  `Lapsed`, `Completed`). All default to `true`, as before.
+- A core whose configuration still holds `services.email.enabled` as an
+  object, in any configuration source, refuses to boot and names every key
+  with its replacement (so a mail switched off is never sent again because
+  of the upgrade); a switch that is not `true` or `false` is refused too.
+  `bin/check-config.js` reports the same. Migration guide:
+  `MIGRATION-services-email-enabled.md` in open-pryv.io.
+
+**Walked 2026-11-26** (no tier change; `reviewed_at` unchanged; no claim
+changes, only the names of the switches):
+
+| Scope | Ref | What changed |
+|---|---|---|
+| gdpr | Art.12 | `config_keys` `services.email.sendExternalIdReleased` (was `services.email.enabled.externalIdReleased`); the detail paragraph names both, the former up to rc.90 |
+| gdpr | Art.13 | `config_keys` `services.email.sendAccountDeletionScheduled`, `services.email.sendAccountDeletionReminder` (were `services.email.enabled.accountDeletionScheduled` / `accountDeletionReminder`) |
+
+Also updated: `docs/pryv-primitives.md` (`external-id-index`: the switch),
+`proposals/account-auto-deletion.md` (the transfer release's `config_keys`
+step names `services.email.sendAccountTransfer*`), and the
+`EMAIL-VERIFICATION` entry above (the key to cite if an identity-assurance
+claim is taken up). The earlier walk records in this file
+(`EMAIL-VERIFICATION`, `ACCOUNT-AUTO-DELETION`, the external-id entries of
+B.1 and B.11) keep the former names: they record what was cited at the time.
+
+Section B:
+- **B.11** (renamed config keys; a former shape that refuses the boot):
+  the two rows above; no other row cites a mail switch.
+- B.1 to B.10: none.
+At release: replace "the release after open-pryv.io 2.0.0-rc.90" in the
+`gdpr.Art.12` detail and the primitive with the tag. If the release is
+rolled back to a version before it, put the former key names back in the
+two rows' `config_keys`.
 
 ## Section B: Trigger categories (no specific backlog slug yet)
 
