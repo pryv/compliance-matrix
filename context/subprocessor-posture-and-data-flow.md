@@ -132,7 +132,7 @@ discloses them per Art.13(1)(f) where recipients exist.
   are rewritten repository-relative, with frames from outside the
   repository discarded. One operational counter, `telemetry.dropped`,
   reports how many datapoints the emitter refused, by reason. From
-  the release after open-pryv.io 2.0.0-rc.89 one more,
+  open-pryv.io 2.0.0-rc.90 one more,
   `audit.records.lost`, counts the audit records that could not be
   written, labelled only with `audit.record.kind` (`valid`, `error`,
   `event`) and `audit.loss.reason` (four fixed causes) `[ALRS1]` to
@@ -305,7 +305,7 @@ of each core (below):
 - `service.eventTypes: https://...` → upstream catalogue host (if
   not self-hosted).
 
-From the release after open-pryv.io 2.0.0-rc.89 (`21fd8085`)
+From open-pryv.io 2.0.0-rc.90 (`21fd8085`)
 the admin route `GET /system/admin/config/effective` answers the
 configuration each core runs with as one machine-readable JSON
 document, each key with the layer that set it, secrets redacted,
@@ -350,7 +350,7 @@ The admin-panel view over the same data is a later item.
   subprocessor framing + per-integration enumeration + the
   LE-as-dev-facilitator distinction + the three data-flow
   guarantees + the inventory pipeline (the effective-configuration
-  route, shipped in the release after open-pryv.io 2.0.0-rc.89).
+  route, shipped in open-pryv.io 2.0.0-rc.90).
 - `gdpr.Art.30` row stays as-is, the existing register-field
   mapping table is already strong; the subprocessor question
   is sub-Art.30(1)(f) "categories of recipients" and the
