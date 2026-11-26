@@ -256,7 +256,7 @@ requirements:
     derives_from: [gdpr.Art.17, gdpr.Art.4, hipaa-security.164.310, hipaa-privacy.164.514, ccpa.1798.105]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.inactivity.defaultDays, account.autoDeletion.reminders.minNoticeDays]
     docs: [customer-resources/account-auto-deletion.md]
-    tests: [USAD, ACXP2, ACXP3, ACXP8, ACST10, ACST14, ADSW8]
+    tests: [USAD, ACXP2, ACXP3, ACXP8, ACST10, ACST14, ADSW8, AADL1, AADL2, AADL3, ADSW17, AARS5, AARSC]
     overview: |
       Per-user deletion via `system.users.delete` (engine-dependent
       backup behaviour, same notes as GDPR Art. 17). Per-event /
@@ -297,6 +297,20 @@ requirements:
       period, where self-deletion is allowed (`[ACST10]`). The deletion
       is `system.users.delete`'s, guards included (`[ADSW8]`).
       Per-record retention and de-identification stay as above.
+
+      What the audit trail keeps after the deletion, from the release
+      after open-pryv.io 2.0.0-rc.90. With `audit.onUserDelete: erase`
+      (the default) the trail goes with the account and nothing is
+      written about the deletion in it `[AADL3]`. With `keep`, the kept
+      trail ends with `account.deleted` (who, the erasure ledger's
+      trigger; for a deletion by the principal, their client address and
+      the asking personal access; ids and fixed words only) `[AADL1]`,
+      `[AADL2]`, and the auto-deletion sweep's own record of the erasure
+      no longer holds the username `[ADSW17]`, so the records the server
+      itself writes in a kept trail name no account by its username (the
+      call rows keep what they always held). A restore of the account from a backup
+      under `keep` keeps that trail rather than replacing it, and adds
+      `account.restored` `[AARSC]`, `[AARS5]`.
 
   - ref: A.7.4.6
     title: A.7.4.6 Temporary files
