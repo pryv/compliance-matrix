@@ -448,7 +448,7 @@ of password checks no longer stalls a worker's other requests
 `Retry-After`), and on PostgreSQL a runaway database statement of an
 API request is stopped after a time limit instead of holding its
 connection for as long as it takes. From the release after
-2.0.0-rc.88, one account, one access or one socket.io connection
+2.0.0-rc.89, one account, one access or one socket.io connection
 can hold only a bounded number of calls and connections at once on
 a worker (the extra ones answer `429 too-many-requests`), and
 overly nested or oversized call parameters are refused up front.

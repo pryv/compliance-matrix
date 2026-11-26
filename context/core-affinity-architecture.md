@@ -28,7 +28,7 @@ keyed across the cluster:
   "user X lives on core Y, send your subsequent calls there". The
   wrong-core check of every `/{username}/*` request (`421
   wrong-core`) and the embedded DNS read it too; from the release
-  after open-pryv.io 2.0.0-rc.88 each process caches that answer (30 s
+  after open-pryv.io 2.0.0-rc.89 each process caches that answer (30 s
   for a found mapping, 5 s for an unknown name,
   `cluster.userCoreCache.*`), so an account moved to another core can
   be routed to its former core for up to 30 s. Uniqueness checks never
