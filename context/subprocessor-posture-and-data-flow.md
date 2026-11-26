@@ -291,8 +291,8 @@ metrics, operational counters and sanitized error stack traces.
 ## How to assemble the subprocessor inventory for your DPA
 
 Identify which optional integrations are non-default, from
-`override-config.yml` + per-host overlays or, from the release after
-open-pryv.io 2.0.0-rc.89, from the effective-configuration document
+`override-config.yml` + per-host overlays or, from open-pryv.io
+2.0.0-rc.90, from the effective-configuration document
 of each core (below):
 - `letsEncrypt.enabled: true` → LE (or whichever
   `letsEncrypt.directoryUrl` you pointed at).

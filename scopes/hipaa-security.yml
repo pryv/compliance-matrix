@@ -60,8 +60,7 @@ requirements:
       API calls on an account are captured by Pryv's per-user audit log;
       the `audit.get` method exposes it for periodic review. Observability
       (opt-in telemetry emitter) gives system-level activity reports for
-      the infrastructure side; from the release after open-pryv.io
-      2.0.0-rc.89 it also reports how many audit records could not be
+      the infrastructure side; from open-pryv.io 2.0.0-rc.90 it also reports how many audit records could not be
       written. The "regular review" cadence is your written procedure.
     detail: |
       Audit records carry timestamp, user, access reference (accessId +
@@ -1102,8 +1101,7 @@ requirements:
       event that creates it (an app-account client), source `oauth2`,
       no address `[IPAU6]`, `[IPAUA]`. **Correction (2026-11-24):** an
       earlier version of this entry stated that row for every release
-      since rc.68; it is written from the release after
-      2.0.0-rc.89 only (before, the write left no row of its own). The
+      since rc.68; it is written from 2.0.0-rc.90 only (before, the write left no row of its own). The
       same release records a delivery to an account of the same core
       `[IPAU1]`, `[IPAU2]` and the one-time secret of a credential
       hand-off `[IPAU4]` or of a third-party sign-in `[IPAU5]`. The
@@ -1235,8 +1233,8 @@ requirements:
       audited `[ASM9]`. The account app's next release draws its Activity
       chart and an Audit trail chart over a chosen period from it.
 
-      **socket.io calls running at the same time (fix, the release after
-      open-pryv.io 2.0.0-rc.89).** Every call on one socket.io connection
+      **socket.io calls running at the same time (fix, open-pryv.io
+      2.0.0-rc.90).** Every call on one socket.io connection
       used to share one context, so two calls running at once could swap
       their method id: the audit row (and the access usage count) of one
       call could name the other call's method. Each call now runs with
@@ -1494,8 +1492,8 @@ requirements:
       refused code exchange spends it and revokes its access, and the
       client starts a new authorization `[OPCL4]`.
 
-      **A chosen access token cannot be short (the release after
-      open-pryv.io 2.0.0-rc.89).** Since the bearer of a valid token is
+      **A chosen access token cannot be short (open-pryv.io
+      2.0.0-rc.90).** Since the bearer of a valid token is
       authenticated, a short token is a guessable one. `accesses.create`
       with an explicit `token` refuses one shorter than 16 characters,
       measured after slugification, with `400
@@ -2252,8 +2250,7 @@ requirements:
       repositories), and the code-level security review of
       open-pryv.io (2026-06 to 2026-10, fixes in 2.0.0-rc.40 to
       2.0.0-rc.51, public report `SECURITY-AUDIT.md` published
-      2026-10-14), and, from the release after open-pryv.io
-      2.0.0-rc.89, a technical baseline per core: the effective
+      2026-10-14), and, from open-pryv.io 2.0.0-rc.90, a technical baseline per core: the effective
       configuration with its digests (see detail). The assessment
       write-up is operator-side.
     detail: |
@@ -2283,8 +2280,8 @@ requirements:
       environmental or operational changes" trigger, are evaluated by you.
       It was performed by the maintainers, not an independent assessor.
 
-      **A technical baseline to evaluate against** (the release after
-      open-pryv.io 2.0.0-rc.89, `21fd8085`): the admin route
+      **A technical baseline to evaluate against** (open-pryv.io
+      2.0.0-rc.90, `21fd8085`): the admin route
       `GET /system/admin/config/effective` answers the configuration
       each core runs with, secrets redacted (presence, type and a
       keyed fingerprint only) `[CFE5]`, and two SHA-256 digests. The

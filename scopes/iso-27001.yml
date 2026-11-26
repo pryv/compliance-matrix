@@ -381,8 +381,8 @@ requirements:
       that both fail at the provider keep the enrolment that was pending
       before them `[MACC2]`.
 
-      **Access tokens chosen by the caller (the release after
-      open-pryv.io 2.0.0-rc.89).** A token is a bearer credential.
+      **Access tokens chosen by the caller (open-pryv.io
+      2.0.0-rc.90).** A token is a bearer credential.
       `accesses.create` with an explicit `token` refuses one shorter
       than 16 characters, measured after slugification (what is
       stored), with `400 invalid-parameters-format` `[TKMN1]`; a token
@@ -438,8 +438,7 @@ requirements:
       `system.users.delete`, guards included (`[ADSW8]`); an erasure
       interrupted halfway is completed at a later pass (`[ADSW19]`).
 
-      Unfinished registrations (the release after open-pryv.io
-      2.0.0-rc.89; merged, unreleased at this walk). Rows a failed or
+      Unfinished registrations (open-pryv.io 2.0.0-rc.90; merged, unreleased at this walk). Rows a failed or
       interrupted registration left behind are no longer required by
       any account: a failed registration's compensation now removes
       its account fields on PostgreSQL too `[URB2]`, and
@@ -463,8 +462,7 @@ requirements:
       SQLite such rows stay in the erased account's kept directory. See
       gdpr.Art.17.
 
-      Nothing stored after the deletion (the release after open-pryv.io
-      2.0.0-rc.89). Work still running for an account while it is
+      Nothing stored after the deletion (open-pryv.io 2.0.0-rc.90). Work still running for an account while it is
       erased can no longer store data for it: on PostgreSQL the database
       refuses a new row for an id the users index does not hold, and the
       deletion's removal of the data sees any insert that was in flight
@@ -721,8 +719,7 @@ requirements:
       SQLite files, or its own PostgreSQL connection pool) to decouple
       the log from data-path engine issues. A failed audit write never
       changes the call's answer and is logged at error level for the
-      operator's alerting `[BAUF1]`; from the release after open-pryv.io
-      2.0.0-rc.89 it is also counted, for the same alerting (see
+      operator's alerting `[BAUF1]`; from open-pryv.io 2.0.0-rc.90 it is also counted, for the same alerting (see
       hipaa-security 164.312(b)); it is not recovered. The
       "analysed" element (review cadence, alerting thresholds) is the
       operator's procedure.
@@ -908,16 +905,15 @@ requirements:
       IP, in `cmc.allowedPrivateHosts` (host names, IPs or CIDR ranges,
       the grammar of `webhooks.allowedPrivateHosts`; checked at boot)
       `[PFR3]`. Webhook deliveries apply the same address rules. Egress
-      filtering on your network stays yours. From the release after
-      open-pryv.io 2.0.0-rc.89 webhook calls are signed with a
+      filtering on your network stays yours. From open-pryv.io
+      2.0.0-rc.90 webhook calls are signed with a
       per-webhook secret (`Pryv-Signature`, HMAC-SHA256 of a timestamp
       and the body), so the receivers on your side can refuse calls
       that do not come from the platform `[WHSG2]`, `[WHSR1]`; webhooks
       created earlier stay unsigned until `webhooks.rotateSecret`
       `[WHSG6]` (see `context/webhooks-signal-only.md`).
 
-      **Inter-core certificates (the release after open-pryv.io
-      2.0.0-rc.89).** A newly created cluster CA is a CA that may sign
+      **Inter-core certificates (open-pryv.io 2.0.0-rc.90).** A newly created cluster CA is a CA that may sign
       end-entity certificates only (`basicConstraints CA:TRUE,
       pathlen:0`; key usage limited to signing certificates and CRLs)
       `[CLCX1]`. The node certificate a core receives when it joins is
@@ -1269,8 +1265,8 @@ requirements:
       the review sit on top. Audit log shows when config-driven
       behaviour changed observably.
     detail: |
-      **Reading and comparing the configuration** (the release after
-      open-pryv.io 2.0.0-rc.89, `21fd8085`; developer site, system
+      **Reading and comparing the configuration** (open-pryv.io
+      2.0.0-rc.90, `21fd8085`; developer site, system
       reference, "Get the effective configuration"):
         - One entry per key, sorted, with the layer that set it
           (`default-file`, `base-file`, `override-file`,
@@ -1358,8 +1354,7 @@ requirements:
           per-address budgets of the unauthenticated lookup routes and
           the mail budgets in each core's cluster store) are an
           HMAC-SHA256 under a key derived from
-          `auth.adminAccessKey` from the release after open-pryv.io
-          2.0.0-rc.89 `[SKHA1]`..`[SKHA4]`. Earlier releases stored a
+          `auth.adminAccessKey` from open-pryv.io 2.0.0-rc.90 `[SKHA1]`..`[SKHA4]`. Earlier releases stored a
           plain SHA-256, which a listing of the platform database
           reverses by enumerating addresses or running a mailing list
           through it; the keyed hash leaves that to holders of the
@@ -1699,8 +1694,8 @@ requirements:
       gated so an external identity cannot claim an account whose email
       was never inbox-proved.
 
-      **Strength of chosen access tokens.** From the release after
-      open-pryv.io 2.0.0-rc.89, a token chosen by the caller of
+      **Strength of chosen access tokens.** From open-pryv.io
+      2.0.0-rc.90, a token chosen by the caller of
       `accesses.create` must have at least 16 characters after
       slugification, or the call is refused `[TKMN1]`; tokens already
       issued are unchanged. From the same release, the tokens Pryv
@@ -2085,8 +2080,7 @@ requirements:
       (leader unreachable) is an error, where it was silently lost
       `[RQNA1]`.
 
-      **Reads without an answer (the release after open-pryv.io
-      2.0.0-rc.89).** During a leader change, or when a core cannot
+      **Reads without an answer (open-pryv.io 2.0.0-rc.90).** During a leader change, or when a core cannot
       reach its local rqlited, a platform read that gets no answer is
       sent again every 100 ms for up to
       `storages.engines.rqlite.readWaitMs` (default 3000 ms, `0` = one
@@ -2356,8 +2350,8 @@ requirements:
 
       The address an authorisation request returns to (`returnURL`,
       followed by the authentication page once the user answers) is
-      checked when the request is created, since the release after
-      open-pryv.io 2.0.0-rc.89: a value that is not absent or an absolute
+      checked when the request is created, since open-pryv.io
+      2.0.0-rc.90: a value that is not absent or an absolute
       URL, carries `user:password@`, or uses a `javascript:`, `data:`,
       `vbscript:` or `blob:` scheme is refused (`400 invalid-parameters`)
       `[RAO8]`, `[RTO10]`. With `access.returnOrigins` set, an app id
@@ -2367,8 +2361,7 @@ requirements:
       outcome by polling; apps that need their redirect bound to the
       client use the OAuth2 flow.
 
-      Mail sent through Mandrill: since the release after open-pryv.io
-      2.0.0-rc.89, `services.email.mergeLanguage: handlebars` makes
+      Mail sent through Mandrill: since open-pryv.io 2.0.0-rc.90, `services.email.mergeLanguage: handlebars` makes
       Mandrill HTML-escape the variables of `{{VAR}}` templates (names,
       links, an administrator's reason) `[RSLK7]`. Unset, Mandrill uses
       its account default, whose escaping it does not document, and the

@@ -259,8 +259,7 @@ Rows whose `detail` should call out the operator-side responsibility
   in a row. Tests: storage engine `[PGLM1]`..`[PGLM5]`,
   `[PGSS1]`..`[PGSS4]`, `[PGSI1]`..`[PGSI4]`, `[PGSX1]`, `[PGSX2]`;
   `[UNXS1]`..`[UNXS4]`, `[MNSC1]`..`[MNSC3]`, `[STMC1]`, `[STMC2]`.
-- **Calls in progress per account and per access** (the release after
-  2.0.0-rc.89; on by default). Authenticated calls running at once on
+- **Calls in progress per account and per access** (2.0.0-rc.90; on by default). Authenticated calls running at once on
   an API worker (HTTP, socket.io, a batch counted once and its inner
   calls not again) are capped per account
   (`limits.requests.maxInflightPerUser`, default 64) and per access
@@ -296,8 +295,7 @@ Rows whose `detail` should call out the operator-side responsibility
   most once per second `[SIOL8]`.
   These caps bound concurrent work per worker, not request rates: per-token
   request rates on data routes stay at the edge.
-- **Stream tree and stream ids per event** (the release after
-  2.0.0-rc.89; on by default, `0` turns each off). A stream sits at
+- **Stream tree and stream ids per event** (2.0.0-rc.90; on by default, `0` turns each off). A stream sits at
   most `limits.streams.maxDepth` levels deep (default 32, a root
   stream is level 1), on creation and on a move (the moved subtree
   counts); an account holds at most `limits.streams.maxPerAccount`

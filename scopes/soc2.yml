@@ -1367,8 +1367,8 @@ requirements:
       output can be tied back to a verified state. Webhooks notify
       subscribers of change (signal-only, the receiver fetches the
       authoritative state via authenticated GET, so the delivered output
-      is always the current canonical value); from the release after
-      open-pryv.io 2.0.0-rc.89 each call is signed with a per-webhook
+      is always the current canonical value); from open-pryv.io
+      2.0.0-rc.90 each call is signed with a per-webhook
       secret, so the receiver can check where it comes from (see
       context/webhooks-signal-only.md). Delivery SLAs to your end
       recipients are your specification.

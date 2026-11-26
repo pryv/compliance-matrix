@@ -103,8 +103,7 @@ surface narrowing.
 
 Signal-only keeps data off the push path; it does not tell your receiver that
 a call really comes from your platform. Before this release the only way was a
-secret placed in the webhook URL. From the release after open-pryv.io
-2.0.0-rc.89 each webhook can carry its own signing secret:
+secret placed in the webhook URL. From open-pryv.io 2.0.0-rc.90 each webhook can carry its own signing secret:
 
 - **The secret.** `webhooks.create` returns `secret` (`whsec_` followed by 32
   random bytes in base64url) in its result, once; no other method returns it

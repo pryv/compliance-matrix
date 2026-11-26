@@ -277,8 +277,8 @@ construction:
 | Token leakage in body | impossible, tokens stay with receiver, not in wire payload |
 | Body-content tampering | no sensitive content to tamper with |
 
-**Update (2026-11-21): signed calls from the release after
-open-pryv.io 2.0.0-rc.89.** Not needed to protect data, signing is
+**Update (2026-11-21): signed calls from open-pryv.io
+2.0.0-rc.90.** Not needed to protect data, signing is
 now available so a receiver can check that a call comes from the
 platform without a secret in the webhook URL: `webhooks.create`
 returns a per-webhook secret once, each call carries a
@@ -1206,8 +1206,7 @@ exposing the effective configuration, so the "which defaults are in
 force" claim can be proved rather than asserted, is planned (the
 `CONFIG-EFFECTIVE-EXPOSURE` backlog item).
 
-**Update (2026-11-23): shipped in the release after open-pryv.io
-2.0.0-rc.89.** `GET /system/admin/config/effective` (admin key)
+**Update (2026-11-23): shipped in open-pryv.io 2.0.0-rc.90.** `GET /system/admin/config/effective` (admin key)
 answers the configuration each core runs with, one entry per key with
 the layer that set it and its scope (`platform` or `core`), secrets
 redacted (presence, type and a keyed fingerprint, never a fragment),
@@ -1472,8 +1471,8 @@ exclude list.
    config/effective` exposes the merged effective config per core
    as a single JSON artefact ready to feed the operator's DPA
    register + Art.30 pipeline.
-   **Update (2026-11-23):** the route shipped in the release after
-   open-pryv.io 2.0.0-rc.89. It lists what each core has
+   **Update (2026-11-23):** the route shipped in open-pryv.io
+   2.0.0-rc.90. It lists what each core has
    configured, but it is not a subprocessor list: the subtrees that
    can carry credentials (SMS provider endpoints, telemetry headers,
    data-store settings) show only that they are set, and some

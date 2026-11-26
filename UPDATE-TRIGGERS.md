@@ -700,7 +700,7 @@ not fired (no new config key: the fingerprint key is the existing
 Proposal: `proposals/config-effective-exposure.md` (Status: shipped in
 `21fd8085`). **When the tag is cut**: replace "the release after
 open-pryv.io 2.0.0-rc.89" with the tag in the rows above and in the
-proposal.
+proposal (done 2026-11-26: 2.0.0-rc.90).
 
 ⚑ **Lookup note.** The `164.308(a)(8)` ref is **quoted** in
 `scopes/hipaa-security.yml` (`- ref: "164.308(a)(8)"`), unlike most refs in
@@ -1633,8 +1633,7 @@ transfer release**: discharge the "transfer" chips (gdpr Art.5 second chip,
 Art.6, Art.13 second chip, Art.14, the transfer half of Art.32) and walk the
 delegation rows listed in the proposal (a controller can be set by a claim).
 
-**2026-11-23 (open-pryv.io master `98b286d5`, the release after
-2.0.0-rc.89)**: support reset `system.autoDeletion.reset` (`POST
+**2026-11-23 (open-pryv.io master `98b286d5`, 2.0.0-rc.90)**: support reset `system.autoDeletion.reset` (`POST
 /system/admin/auto-deletion/clear`), the sweep's re-read before acting, and
 the transfer claim-invite check. No chip discharged or added (the 5 transfer
 chips stay); rows walked under B.1 ("Walked 2026-11-23 for the auto-deletion
@@ -1687,8 +1686,9 @@ B.11 unfinished-registrations record).
 Proposal: `proposals/erasure-ledger.md` (Status: shipped in `83e14c94`).
 Released 2026-11-26: the rows above and the proposal name open-pryv.io
 2.0.0-rc.89. The `transfer-fallback` and `unfinished-registration`
-trigger values came after it: they ship in the release after
-2.0.0-rc.89.
+trigger values came after it: `unfinished-registration` ships in
+2.0.0-rc.90, `transfer-fallback` with the account transfer, which
+2.0.0-rc.90 does not carry.
 
 ### `ENCRYPTED-OFFHOST-BACKUPS-AS-TRANSFER-SURFACE` (documentation only: no code, no chip, no tier shift; rows walked 2026-11-25)
 
@@ -4592,8 +4592,8 @@ Response-header, platform DB and backup rows: not affected. B.1 (no new
 method), B.2 to B.10: none.
 
 **Walked 2026-11-21 for signed webhook calls and
-`access.openedOnlyByAuthPage` (unreleased at the walk; the release after
-open-pryv.io 2.0.0-rc.89)**: open-pryv.io `e938a570`, `5dd2734a`, review
+`access.openedOnlyByAuthPage` (unreleased at the walk; open-pryv.io
+2.0.0-rc.90)**: open-pryv.io `e938a570`, `5dd2734a`, review
 fixes `3631a7a8`, merged to master at `dee5720c`. The rows say "the
 release open-pryv.io 2.0.0-rc.90": name the tag once it is cut.
 The validator passes against `dee5720c` (the `WHSG*` / `WHSR*` /
@@ -4687,8 +4687,7 @@ Walked without change:
 Response-header and platform DB rows: not affected. B.2 to B.10: none.
 
 **Walked 2026-11-21 for the 10-symbol email code and erasure
-completeness (unreleased at the walk; the release after open-pryv.io
-2.0.0-rc.89)**: open-pryv.io `b2a8e516`, `b690b744`, `30430fa5`, merged
+completeness (unreleased at the walk; open-pryv.io 2.0.0-rc.90)**: open-pryv.io `b2a8e516`, `b690b744`, `30430fa5`, merged
 to master at `64307310`. The rows say "the release after open-pryv.io
 2.0.0-rc.89": name the tag once it is cut. The validator passes against
 `64307310` (the `ERMK*` / `PGUG*` / `CMCER*` codes resolve). No Section A
@@ -4876,8 +4875,8 @@ primitive: `backup-restore` and `account-auto-deletion` extended), B.5 to
 B.10: none.
 
 **Walked 2026-11-23 for the access-request `returnURL` check and
-`access.returnOrigins` (unreleased at the walk; the release after
-open-pryv.io 2.0.0-rc.89)**: open-pryv.io `380eb78d` + review follow-ups
+`access.returnOrigins` (unreleased at the walk; open-pryv.io
+2.0.0-rc.90)**: open-pryv.io `380eb78d` + review follow-ups
 `9228b6fb`, master `9228b6fb`. The row says "the release after
 open-pryv.io 2.0.0-rc.89": name the tag once it is cut. No Section A slug,
 no `planned:` chip, no tier shift; `reviewed_at` left unchanged. No new
