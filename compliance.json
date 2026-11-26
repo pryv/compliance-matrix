@@ -2,7 +2,7 @@
  "name": "Pryv compliance matrix",
  "description": "Maps 15 regulations and standards (GDPR, HIPAA, Swiss nLPD, CCPA, PIPEDA, DiGA, MDR, HDS, ISO 27001, ISO 27701, ISO 13485, SOC 2 and more) requirement by requirement onto what Pryv, the platform built from open-pryv.io, implements, makes configurable, facilitates or documents, and what stays with the implementer. 439 requirements, each backed by evidence (tests, docs, configuration keys).",
  "disclaimer": "This matrix describes the software's contribution to compliance. It is not legal advice and not a certification: implementer organisations remain responsible for their own GDPR, HIPAA, ISO, MDR or HDS posture. Rows marked draft are authored but not yet reviewed.",
- "generated_at": "2026-11-26T17:37:15.512Z",
+ "generated_at": "2026-11-26T21:13:01.037Z",
  "site": "https://pryv.github.io/compliance-matrix/",
  "source": "https://github.com/pryv/compliance-matrix",
  "license": "BSD-3-Clause",
