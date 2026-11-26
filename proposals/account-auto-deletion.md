@@ -213,7 +213,8 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
    `[ACRM1-5]` (mails), `[ACST1-16]`, `[ACST15A-C]` (API), `[ACAC1-10]` (activity), `[LGLU1-4]`
    (login), `[ACCF1-8]`, `[CVAD1-4]`, `[CKCF7]` (config), `[ADKS1-6]`, `[ADKR1-4]` (state).
 2. Add `config_keys:` `account.autoDeletion.*` (and `accessTracking.isActive` where inactivity
-   is cited), `services.email.enabled.accountDeletion*`.
+   is cited), `services.email.enabled.accountDeletion*` (flat `services.email.sendAccountDeletion*`
+   from the release after open-pryv.io 2.0.0-rc.90; the rows cite the new names).
 3. Cite the operator page `customer-resources/account-auto-deletion.md` in `docs:` once
    dev-site2 publishes it.
 4. Decide whether a new primitive (`account-auto-deletion`) enters `docs/pryv-primitives.md`.
@@ -235,7 +236,8 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
 2. Walk the access-control and delegation rows listed above (a controller set by a claim): cite
    the claim path (`account.transferClaim`, server-run `requestAttach` on the owner's behalf,
    accepted with the claimant's own `delegations.acceptAttach`).
-3. Add `config_keys:` `account.autoDeletion.transfer.*`, `services.email.enabled.accountTransfer*`,
+3. Add `config_keys:` `account.autoDeletion.transfer.*`, `services.email.sendAccountTransfer*`
+   (`services.email.enabled.accountTransfer*` up to open-pryv.io 2.0.0-rc.90),
    `delegation.active` where the transfer's availability is cited.
 4. `docs:` the operator page's "Transfer to a beneficiary" section, once dev-site2 publishes it.
 5. Note on `gdpr.Art.32`: the operator read path for the name and date of birth is NOT shipped;

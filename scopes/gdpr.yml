@@ -1214,7 +1214,7 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, event, external-id-index]
     docs: [guides/consent.md, customer-resources/audit-setup.md]
-    config_keys: [services.email.enabled.externalIdReleased, services.email.externalIdReleasedTemplate]
+    config_keys: [services.email.sendExternalIdReleased, services.email.externalIdReleasedTemplate]
     tests: [XIDAR1, XIDAR3]
     overview: |
       Pryv keeps the
@@ -1242,7 +1242,9 @@ requirements:
       account held (`external-id-index` primitive), the account gets the
       `external-id-released` mail with the namespace label and the
       reason your administrator gave, never the id, when mail is
-      configured (`services.email.enabled.externalIdReleased`, default
+      configured (switch `services.email.sendExternalIdReleased` from
+      the release after open-pryv.io 2.0.0-rc.90,
+      `services.email.enabled.externalIdReleased` up to rc.90; default
       on; template `services.email.externalIdReleasedTemplate`), and an
       `account.externalIds.adminRelease` entry in its own audit trail
       `[XIDAR1]`, `[XIDAR3]`. The subject reads the reason as written:
@@ -1262,7 +1264,7 @@ requirements:
     draft: true
     pryv_primitives: [access, clientData, event, account-auto-deletion]
     docs: [guides/consent.md, guides/privacy-by-design.md, customer-resources/account-auto-deletion.md]
-    config_keys: [account.autoDeletion.inactivity.defaultDays, account.autoDeletion.inactivity.countAppUse, services.email.enabled.accountDeletionScheduled, services.email.enabled.accountDeletionReminder]
+    config_keys: [account.autoDeletion.inactivity.defaultDays, account.autoDeletion.inactivity.countAppUse, services.email.sendAccountDeletionScheduled, services.email.sendAccountDeletionReminder]
     tests: [ACST1, ACST2, ACST15A, ACST15B, ACRM1]
     planned:
       - kind: feature

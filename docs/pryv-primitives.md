@@ -138,8 +138,9 @@ seeing the identifier. Since open-pryv.io 2.0.0-rc.58
   holder gets an `account.externalIds.adminRelease` entry in its own
   audit trail (namespace and reason, never the value) and the
   `external-id-released` mail when mail is configured
-  (`services.email.enabled.externalIdReleased`,
-  `externalIdReleasedTemplate`); a failed mail never undoes the release
+  (`services.email.sendExternalIdReleased` from the release after
+  open-pryv.io 2.0.0-rc.90, `services.email.enabled.externalIdReleased`
+  up to rc.90; `externalIdReleasedTemplate`); a failed mail never undoes the release
   `[XIDAR1]`..`[XIDAR6]`, `[XIDS19]`.
 - **Where it lives**: the replicated platform DB holds
   `ext-id-ns/<namespace>` rows (label, default mode, salt) and
