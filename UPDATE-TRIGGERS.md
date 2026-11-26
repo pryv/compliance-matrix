@@ -253,9 +253,11 @@ the page (`docs:` + detail), its "MFA is pluggable" paragraph and the
 caveat pointing at the proposal replaced by the built-in methods and the
 per-method level, tier unchanged (`Implemented | High`);
 `hipaa-security.164.308(a)(5)(ii)(D)` cites the page and moves to
-`Configurable | High` (effort `medium` to `high`). Chips kept on both:
-the WebAuthn method is still outstanding. `iso-27001.A.8.5`, `A.5.17` and
-`diga.A1.2.4` not walked in this pass.
+`Configurable | High` (effort `medium` to `high`). The 164.312(d) chip stays
+(the WebAuthn method is still outstanding); the 164.308(a)(5)(ii)(D) chip
+is discharged 2026-11-26 (operator): SMS is no longer the default second
+factor since TOTP shipped, and WebAuthn leaves this row's tier unchanged.
+`iso-27001.A.8.5`, `A.5.17` and `diga.A1.2.4` not walked in this pass.
 
 **Where the work lives**: `open-pryv.io`
 (`components/business/src/mfa/`). WebAuthn method remains; TOTP and the
@@ -264,7 +266,6 @@ AAL-tier mapping docs done.
 | Scope | Ref | Kind | Impact | After shipping |
 |---|---|---|---|---|
 | hipaa-security | 164.312(d) | enhancement | medium | row tightens; cite reference plugins |
-| hipaa-security | 164.308(a)(5)(ii)(D) | enhancement | low | reduce SMS-OTP dependence |
 | iso-27001 | A.8.5 | enhancement | medium | strengthen A.8.5 evidence chain |
 | iso-27001 | A.5.17 | enhancement | low | broaden authentication-information catalogue |
 | diga | A1.2.4 | enhancement | medium | meet BfArM "strong authentication" bar without SMS-OTP |

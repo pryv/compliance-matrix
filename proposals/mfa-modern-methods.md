@@ -30,7 +30,8 @@ broader auth-modernisation plan).
 > the core, not a plugin (a push-provider example is not written, by design: the contract is
 > code-send and verify). `hipaa-security.164.312(d)` now cites the page instead of the caveat
 > below (tier unchanged); `hipaa-security.164.308(a)(5)(ii)(D)` cites it and moves to
-> `Configurable | High`. Step 3 (WebAuthn) remains; its chips stay.
+> `Configurable | High`. Step 3 (WebAuthn) remains; its chips stay, except the one on
+> 164.308(a)(5)(ii)(D), discharged 2026-11-26 (WebAuthn leaves that row unchanged).
 
 ## Today's posture (correct + currently understated)
 

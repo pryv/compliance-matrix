@@ -280,13 +280,6 @@ requirements:
     docs: [customer-resources/mfa.md#assurance-level-of-each-method]
     config_keys: [services.mfa.mode, auth.passwordRules, sso.enabled]
     tests: [MA15B, MA10A, MA3A, MA7A]
-    planned:
-      - kind: enhancement
-        summary: "Reference TOTP / WebAuthn plugins reduce dependence on SMS-OTP for the second factor"
-        proposal: proposals/mfa-modern-methods.md
-        backlog: MFA-MODERN-METHODS
-        tracking_url: https://github.com/orgs/pryv/projects/5?pane=issue&itemId=190467852&issue=pryv%7Copen-pryv.io%7C78
-        impact: low
     overview: |
       Pryv stores credentials on a privileged `system-stream`, separate
       from ordinary content. Password rules (complexity, rotation) are
