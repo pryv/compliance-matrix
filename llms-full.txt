@@ -7213,10 +7213,6 @@ when active, is still enforced on the federated path.
 - config keys: services.mfa.mode, auth.passwordRules, sso.enabled
 - primitives: system-streams, MFA, access
 
-**Planned changes**
-
-- enhancement: Reference TOTP / WebAuthn plugins reduce dependence on SMS-OTP for the second factor
-
 ### HIPAA-Security 164.308(a)(7)(ii)(A): Data backup plan, Required
 
 Coverage: implemented · effort saved: high · draft
