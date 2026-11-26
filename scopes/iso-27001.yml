@@ -2040,7 +2040,7 @@ requirements:
     pryv_primitives: [multi-core-mTLS, backup-restore, letsEncrypt-integration]
     derives_from: [iso-27001.A.5.23, hipaa-security.164.308(a)(7)(ii)(B)]
     config_keys: [storages.engines.rqlite.external, storages.engines.rqlite.readWaitMs]
-    tests: [PUCC6, RQNR1, RQNR2, RQNR3, RQNR4, RQNR5, RQNR6, RQNR7, RQNR8, PNAH1, PNAH2, PNAH3, IGNA1, ORNA1, DNNA1, DNNA2, DNNA3, DNNA4]
+    tests: [PUCC6, RQRC5, RQRC6, RQNR1, RQNR2, RQNR3, RQNR4, RQNR5, RQNR6, RQNR7, RQNR8, PNAH1, PNAH2, PNAH3, IGNA1, ORNA1, DNNA1, DNNA2, DNNA3, DNNA4]
     overview: |
       Multi-core Raft replication
       makes the platform DB (user-to-core index, shared settings,
