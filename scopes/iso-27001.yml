@@ -415,7 +415,7 @@ requirements:
     pryv_primitives: [event, stream, backup-restore, account-auto-deletion]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, account.autoDeletion.inactivity.defaultDays, accountErasure.ledger.retentionDays]
     docs: [customer-resources/account-auto-deletion.md, customer-resources/backup.md]
-    tests: [USAD, DLN1, DLN4, DLLW1, ACXP3, ACXP8, ADSW8, ADSW19, URB2, RCRG1, RCRG3, RCRG6, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, PGUG1, PGUG6, PGUG9, ERLG3, ERLG4, ERLG6, ERLA2, ERLA4, ERLA6, ERLT1, ERLT3, ERLT4, ERLR1, ERLR8]
+    tests: [USAD, DLN1, DLN4, DLLW1, ACXP3, ACXP8, ADSW8, ADSW19, URB2, RCRG1, RCRG3, RCRG6, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, PGUG1, PGUG6, PGUG9, ERLG3, ERLG4, ERLG6, ERLA2, ERLA4, ERLA6, ERLT1, ERLT3, ERLT4, ERLR1, ERLR8, AADL1, AADL4, AADLD]
     overview: |
       Per-user erasure: `system.users.delete` removes the user's data
       from the live store. Engine-dependent backup behaviour (SQLite
@@ -491,7 +491,13 @@ requirements:
       itself brought back `[ERLT3]`. A change of the ledger key
       disarms the lookup, the restore check and the replay for older
       records unless the old key is kept; the lookup counts them
-      (`otherKeyRecords`) `[ERLA6]`. See gdpr.Art.17.
+      (`otherKeyRecords`) `[ERLA6]`. See gdpr.Art.17. From the release
+      after open-pryv.io 2.0.0-rc.90, where you keep the account's audit
+      trail after the deletion (`audit.onUserDelete: keep`), that trail
+      also records it: `account.deleted`, written before any data goes,
+      with the same trigger as the ledger `[AADL1]`, `[AADL4]`, `[AADLD]`;
+      the ledger's `stepsCompleted` lists the step
+      (`recordAccountDeleted`) whether or not a record was written.
 
   - ref: A.8.13
     title: A.8.13 Information backup
@@ -505,7 +511,7 @@ requirements:
     draft: true
     pryv_primitives: [backup-restore, backup-payload-encryption, multi-core-mTLS, external-id-index]
     docs: [customer-resources/backup.md]
-    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1, XIDB2, XIDB3, XIDB4, XIDBK1, XIDBK2, BKAL1, BKAL3, BKSM1, BKSM2, BKSM3, BKSM4, BKSM5, BKSM6, BKSM7, BKSM8, BKIS1, BKIS2, BKIS3, BKDU1, RSFC1, RSFC3, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT3]
+    tests: [BKSR, BKEV, BKVR, BKPW1, BKPF1, BKRE1, BKRE4, BKRS1, BKRS4, BKRN1, RSOW1, BKC1, BKC2, BKC3, BKC4, BKC5, BKC6, BKC7, BKCC1, BKCS1, BKCU1, BKIC1, BKIC2, BKIC4, XIDB1, XIDB2, XIDB3, XIDB4, XIDBK1, XIDBK2, BKAL1, BKAL3, BKSM1, BKSM2, BKSM3, BKSM4, BKSM5, BKSM6, BKSM7, BKSM8, BKIS1, BKIS2, BKIS3, BKDU1, RSFC1, RSFC3, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT3, AARS1, AARS2, AARS3, AARS4, AARS5, AARS6, AARS7, AARS8, AARS9, AARSC, AARSD, AARSE, AARSF, AARSG, SQIM2]
     overview: |
       `bin/backup.js`
       produces per-user backup files, the only copy of user data Pryv
@@ -687,6 +693,25 @@ requirements:
       admin-key rotations: a purged record, or one under an older key,
       no longer stops a restore.
 
+      **The audit trail across a restore (the release after
+      open-pryv.io 2.0.0-rc.90).** Each account a restore brings back
+      and keeps gets an `account.restored` record in its own trail, after
+      the backup's records: the date of the backup's data, `target`
+      (`new`, or `existing` with `--overwrite`) and `afterErasure` (with
+      `--restore-erased`) `[AARS1]`..`[AARS6]`; none for an account
+      rolled back by `--verify-integrity` `[AARS7]`; a restore stopped by
+      a failure records the accounts it kept `[AARS8]`, `[AARSF]`; a
+      record that cannot be written does not fail the restore `[AARS9]`.
+      With `audit.onUserDelete: keep`, an overwrite, a roll-back and the
+      cleanup of a failed restore no longer remove the account's trail
+      (the records written since the backup stay, the backup's records
+      it lacks are added) `[AARSC]`, `[AARSD]`; only a trail the restore
+      created, for an account it removes, goes with it `[AARSE]`,
+      `[AARSG]`. On SQLite the audit import skips records already there,
+      as on PostgreSQL `[SQIM2]`; before, it stopped at the first one.
+      Include in the drill under `keep`: a restore of an erased account
+      reads `account.deleted`, then `account.restored` `[AARS5]`.
+
   - ref: A.8.15
     title: A.8.15 Logging
     text: |
@@ -698,7 +723,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [logs.file, logs.fileSync]
-    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1, OXN02, OXI06, OTX03, OCMDE13, OPIU3, AUAB3, AUG1, AUG3, ASM1, ASM4, SKMC, AACR1, AACR3, AACR4, AACR7, AACRA, AFGW]
+    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1, OXN02, OXI06, OTX03, OCMDE13, OPIU3, AUAB3, AUG1, AUG3, ASM1, ASM4, SKMC, AACR1, AACR3, AACR4, AACR7, AACRA, AFGW, AADL1, AADL2, AADL4, AADL5, AADL6, AADLA, AADLF, AARS1, AARS5, AARS9, AARSC, AARSD]
     planned:
       - kind: feature
         summary: "Chained / signed audit log adds the software-side tamper-resistance signal A.8.15 expects"
@@ -750,6 +775,21 @@ requirements:
       (`a.all`, `callBatch.all`) refuses the boot instead of selecting
       nothing behind a warning `[AFGW]`, so a typo can no longer switch a
       log off silently.
+
+      **From the release after open-pryv.io 2.0.0-rc.90**: where the
+      trail outlives the account (`audit.onUserDelete: keep`), it ends
+      with a record of the deletion (`account.deleted`: who, the erasure
+      ledger's trigger; for a holder's deletion, the client address and
+      the asking personal access), written before any data goes, whatever
+      erases the account `[AADL1]`, `[AADL2]`, `[AADL4]`, `[AADL6]`; a
+      restore by `bin/backup.js --restore` leaves `account.restored` (the
+      backup's date, `target`, `afterErasure`) `[AARS1]`, `[AARS5]`, and
+      under `keep` no longer removes the log it finds `[AARSC]`,
+      `[AARSD]`. Neither record ever stops the erasure or the restore it
+      records; one that cannot be written (for the erasure: within 10
+      seconds) is counted as lost `[AADL5]`, `[AADLF]`, `[AARS9]`. A
+      filter listing methods one by one must add both, `account.all` and
+      `all` select them `[AADLA]`.
 
       **Analysis by the account owner (open-pryv.io 2.0.0-rc.84).**
       The owner's `accesses.get` reports, per access, approximate

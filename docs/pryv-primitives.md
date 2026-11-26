@@ -281,7 +281,12 @@ Records API method invocations per user.
   leave a record in the trail of the account they concern. High-frequency
   series calls and image preview calls are not audited, nor are the lookups
   the server makes for itself inside a flow (OAuth consent, sign-in,
-  delivery), whose writes are. Corrected
+  delivery), whose writes are. The server also writes records about the
+  account itself in its trail (type `audit-log/account`): its creation
+  (`account.created`, from open-pryv.io 2.0.0-rc.90) and, from the
+  release after 2.0.0-rc.90, its deletion where the trail is kept after it
+  (`account.deleted`, `audit.onUserDelete: keep` only) and its restore
+  from a backup (`account.restored`). Corrected
   2026-11-24: several places of this matrix said "every API call" and
   "invariant, no opt-out".
 

@@ -1805,6 +1805,8 @@ primitive name open-pryv.io 2.0.0-rc.90. Test codes added to `tests:`:
 
 ### Mail switches are flat booleans (the release after open-pryv.io 2.0.0-rc.90, not yet merged to master; rows walked 2026-11-26)
 
+**Merged 2026-11-26** to open-pryv.io master (`0dfd6ec9`), not released.
+
 **Where the work lives**: open-pryv.io branch `feat/email-switches-flat`
 (to ship in the release after 2.0.0-rc.90; rc.90 does not carry it). No
 `planned:` chip was queued and no proposal mirror exists. Configuration
@@ -1850,6 +1852,98 @@ At release: replace "the release after open-pryv.io 2.0.0-rc.90" in the
 `gdpr.Art.12` detail and the primitive with the tag. If the release is
 rolled back to a version before it, put the former key names back in the
 two rows' `config_keys`.
+
+### Account deletion and restore records in the account's own trail (the release after open-pryv.io 2.0.0-rc.90; rows walked 2026-11-26)
+
+**Merged 2026-11-26** to open-pryv.io master (`803469b0`), not released. Also in that merge: a restore under another
+user id onto the id of an erased account is refused without `--restore-erased` (`ERLRT`).
+
+**Where the work lives**: open-pryv.io branch
+`feat/audit-account-closing-records` (not merged to master at this walk;
+ships in the release after 2.0.0-rc.90). No `planned:` chip was queued and
+no proposal mirror exists. Changes and their tests:
+- `account.deleted` (type `audit-log/account`), written in the account's
+  own trail only under `audit.onUserDelete: keep`, before any of the
+  account's data goes, for every erasure path (holder, admin key,
+  auto-deletion sweep, completion of an unfinished erasure,
+  `bin/erasures.js --replay`, `bin/reconcile-user-cores.js
+  --registrations`, roll-back of a delegated account's failed creation):
+  `source.name` (who), `record.trigger` (the erasure ledger's word, a
+  closed list, anything else `unknown`); the client address and the
+  personal access that asked for a holder deletion only. Recorded erasure
+  step `recordAccountDeleted` (after the teardown, before the first data
+  step), listed in the ledger's `stepsCompleted`. Bounded write: no answer
+  within 10 s counts as a lost record and the erasure goes on (the same
+  bound for the sweep's `account.autoDeletion.erase`). Code:
+  `components/business/src/auth/accountAudit.ts`,
+  `components/business/src/auth/deletion.ts`. Tests `[AADL1]`..`[AADL9]`,
+  `[AADLD]`, `[AADLF]` (`components/api-server/test/audit-account-deleted.test.js`),
+  `[AADL6]`, `[ADSW28]` (sweep), `[AADLA]` (`AuditFilter`), `[AADLB]`,
+  `[AADLE]` (breach-scope report), `[AADLC]` (method classes).
+- `account.restored`, written by `bin/backup.js --restore` in the trail of
+  each account restored and kept (after the backup's records; none for a
+  `--verify-integrity` roll-back): `record.backupDate` (UTC date of the
+  backup's data for the account, left out when implausible), `target`
+  (`new` / `existing`), `afterErasure` (`completed` / `unfinished`).
+  Code: `components/business/src/backup/RestoreOrchestrator.ts`,
+  `bin/backup.js`. Tests `[AARS1]`..`[AARS9]`, `[AARSA]`, `[AARSF]`
+  (`components/api-server/test/audit-account-restored.test.js`).
+- Under `keep`, a restore (`--overwrite`, roll-back, cleanup of a failed
+  restore) keeps the trail it finds; a trail the restore created for an
+  account it removes is deleted with it: `[AARSC]`, `[AARSD]`, `[AARSE]`,
+  `[AARSG]`.
+- SQLite audit import on restore skips ids already present, as
+  PostgreSQL does (the events import stays strict): `[SQIM1]`, `[SQIM2]`
+  (`storages/engines/sqlite/test/import-existing-id.test.js`), `[AARSB]`
+  (audit storage conformance, `storages/interfaces/`: outside the
+  validator's test glob, prose only).
+- The sweep's `account.autoDeletion.erase` audit copy no longer holds the
+  username: `[ADSW17]`.
+
+**Walked 2026-11-26** (no tier change; `reviewed_at` unchanged; prose
+names "the release after open-pryv.io 2.0.0-rc.90"; the test codes are in
+the rows' `tests:` already, the validator resolving them against the
+open-pryv.io checkout, which held the branch at this walk: **validate with
+open-pryv.io on that branch or on a master that merged it**):
+
+| Scope | Ref | What changed |
+|---|---|---|
+| hipaa-security | 164.312(b) | both records, their fields, the bound, filters and breach-scope; "not counted" exception for the erasure records |
+| hipaa-security | 164.316(b)(2)(i) | the kept trail records its end; a restore under `keep` no longer replaces the retained trail; sweep record without username |
+| hipaa-security | 164.308(a)(7)(ii)(B) | the audit trail across a restore |
+| iso-27001 | A.8.15 | both records, bounded, never blocking |
+| iso-27001 | A.8.13 | the audit trail across a restore, SQLite import, drill line |
+| iso-27001 | A.8.10 | the kept trail records the deletion, the ledger step |
+| gdpr | Art.17 | new paragraph "The kept trail records the erasure itself"; residual: the holder's address kept under `keep`; sweep record without username |
+| gdpr | Art.30 | the per-subject history records the account's end and restores |
+| ccpa | 1798.105 | the kept trail under a record-keeping exception; restore visible |
+| iso-27701 | A.7.4.5 | what a kept trail keeps after the deletion |
+| soc2 | CC6.5 | every destruction recorded under `keep`; sweep record without username |
+
+Also updated: `docs/pryv-primitives.md` (`audit`: the server's records
+about the account itself).
+
+Not walked: `gdpr.Art.5` (its accountability paragraph cites the ledger,
+which is unchanged; the new record is detailed on Art.17) and the MDR rows
+(no row cites `audit.onUserDelete`). The record is the last one the server
+writes on purpose, not a seal: under `keep` the trail stays open, so no
+integrity row should cite it as one.
+
+Section B:
+- **B.1** (new audit actions `account.deleted`, `account.restored`, in
+  `ALL_METHODS`, with a user; a filter listing methods one by one must add
+  them): cited on `hipaa-security.164.312(b)` and `iso-27001.A.8.15`.
+- **B.2** (`audit-log/account` description and fields, data-types 1.4.0,
+  unpublished; `account-auto-deletion` drops its username): re-walk
+  `hipaa-security.164.312(b)` when data-types 1.4.0 is published.
+- **B.11** (backup behaviour: a restore under `keep` keeps the trail; new
+  erasure step in the ledger): cited on `iso-27001.A.8.13`, `A.8.10`,
+  `hipaa-security.164.308(a)(7)(ii)(B)`. No new config key (the 10 s
+  bound is not configurable).
+- B.3 to B.10: none.
+At release: replace "the release after open-pryv.io 2.0.0-rc.90" in the
+eleven rows, the primitive and this entry with the tag, and record the
+merge SHA here.
 
 ## Section B: Trigger categories (no specific backlog slug yet)
 
