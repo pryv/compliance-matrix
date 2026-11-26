@@ -132,7 +132,7 @@ case.
   makes it refuse the chain (`[BKC7]`): retire whole chains, and state
   the delay. A write-only or locked bucket has the same effect. A restore refuses an account
   erased after the backup while the erasure ledger holds its record
-  (the release after 2.0.0-rc.88, `[ERLR1]`); set
+  (since 2.0.0-rc.89, `[ERLR1]`); set
   `accountErasure.ledger.retentionDays` at least as long as your
   oldest copy. See the backup paragraphs of `gdpr.Art.17`.
 - **Authenticity of the copy.** Encryption to a public key does not

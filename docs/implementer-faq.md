@@ -278,7 +278,7 @@ construction:
 | Body-content tampering | no sensitive content to tamper with |
 
 **Update (2026-11-21): signed calls from the release after
-open-pryv.io .0.0-rc.88.** Not needed to protect data, signing is
+open-pryv.io 2.0.0-rc.89.** Not needed to protect data, signing is
 now available so a receiver can check that a call comes from the
 platform without a secret in the webhook URL: `webhooks.create`
 returns a per-webhook secret once, each call carries a
@@ -1207,7 +1207,7 @@ force" claim can be proved rather than asserted, is planned (the
 `CONFIG-EFFECTIVE-EXPOSURE` backlog item).
 
 **Update (2026-11-23): shipped in the release after open-pryv.io
-.0.0-rc.88.** `GET /system/admin/config/effective` (admin key)
+2.0.0-rc.89.** `GET /system/admin/config/effective` (admin key)
 answers the configuration each core runs with, one entry per key with
 the layer that set it and its scope (`platform` or `core`), secrets
 redacted (presence, type and a keyed fingerprint, never a fragment),
@@ -1473,7 +1473,7 @@ exclude list.
    as a single JSON artefact ready to feed the operator's DPA
    register + Art.30 pipeline.
    **Update (2026-11-23):** the route shipped in the release after
-   open-pryv.io .0.0-rc.88. It lists what each core has
+   open-pryv.io 2.0.0-rc.89. It lists what each core has
    configured, but it is not a subprocessor list: the subtrees that
    can carry credentials (SMS provider endpoints, telemetry headers,
    data-store settings) show only that they are set, and some
@@ -1580,7 +1580,7 @@ exclude list.
    identifiers have no key in the schema, so no code path can
    emit them; a datapoint outside the vocabulary is dropped and
    counted under `telemetry.dropped` rather than sent. From the
-   release after open-pryv.io 2.0.0-rc.88 the counter
+   release after open-pryv.io 2.0.0-rc.89 the counter
    `audit.records.lost` (labels `audit.record.kind` and
    `audit.loss.reason`, fixed values) reports audit records that
    could not be written.
@@ -3011,7 +3011,7 @@ question or the processor relationship.
 | Is the provider a processor? | Yes: EDPB Guidelines 07/2020 treat a host that only stores encrypted data as one. If you are a processor, it is your sub-processor | Art.28 contract, register entry, controller's authorisation where needed |
 | What does Pryv do? | `bin/backup.js` encrypts the files before they reach the destination directory; with `--recipient-pubkey` the backup host cannot decrypt its own output | Turn it on, keep the private key out of the provider's reach, upload, sign the runs |
 | What can the provider still see? | User ids (directory names, `chain.json`), run dates, accounts appearing and disappearing, number and size of files, attachment ids. Not usernames or content | Wrap the directory in an archive you encrypt if that matters |
-| What about erasure? | One data key per run: one account cannot be made unreadable alone in a kept run. A restore refuses an account erased since, while the erasure ledger holds its record (the release after open-pryv.io 2.0.0-rc.88) | Retention that matches what you promise, stated in your notice |
+| What about erasure? | One data key per run: one account cannot be made unreadable alone in a kept run. A restore refuses an account erased since, while the erasure ledger holds its record (since open-pryv.io 2.0.0-rc.89) | Retention that matches what you promise, stated in your notice |
 
 With a passphrase instead of a recipient key, the host taking the
 backup holds the secret: if one provider runs both your core and your

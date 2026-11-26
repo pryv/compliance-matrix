@@ -58,8 +58,8 @@ requirements:
       PG row deletion), same notes as gdpr.Art.17 apply. Since
       open-pryv.io 2.0.0-rc.58 the deletion also releases the
       consumer's external ids (links to third-party record ids) at
-      once, on the home core and in the platform index `[XIDD2]`. From
-      the release after open-pryv.io 2.0.0-rc.88 each deletion leaves a
+      once, on the home core and in the platform index `[XIDD2]`. Since
+      open-pryv.io 2.0.0-rc.89 each deletion leaves a
       durable record without the consumer's data (the erasure ledger,
       see gdpr.Art.17), so you can confirm later that a consumer's
       account was deleted, and when `[ERLG4]`, `[ERLA4]`. The

@@ -1,9 +1,9 @@
 # Proposal: erasure ledger (durable proof of account erasure)
 
 **Status: shipped in open-pryv.io `83e14c94`** (the merge to master, after
-an independent review whose fixes it includes; it ships in
-the release after open-pryv.io 2.0.0-rc.88, not tagged at the walk: name the
-tag here once it is cut). Requested by an operator in
+an independent review whose fixes it includes), **released in open-pryv.io
+2.0.0-rc.89** (2026-11-26, tag on `4683a217`, a hotfix from 2.0.0-rc.88 that
+carries the ledger only). Requested by an operator in
 https://github.com/pryv/open-pryv.io/issues/154; earlier recorded as out of
 scope of the first account auto-deletion release
 (`proposals/account-auto-deletion.md`, backlog `COMPLIANCE-ERASURE-LEDGER`).

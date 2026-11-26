@@ -304,7 +304,7 @@ narrative recipe:
 > in force."*
 
 The snapshot is `GET /system/admin/config/effective` (admin key; the
-release after open-pryv.io 2.0.0-rc.88): each key with the layer that
+release after open-pryv.io 2.0.0-rc.89): each key with the layer that
 set it, so a value no other layer overrides reads
 `source: default-file`, secrets redacted, stamped with `coreId`,
 `snapshotAt` and SHA-256 digests. It shows configured values, not that
