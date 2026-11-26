@@ -13,6 +13,11 @@ snippets are not shipped (no chips; the nginx page states the same route table a
 verified end to end against an open-pryv.io 2.0.0-rc.87 core; not yet published on
 pryv.github.io. Cloudflare remains (no chips).
 
+**Update 2026-11-26:** the page is published on pryv.github.io with the HAProxy, Traefik and
+Caddy configurations, and a "Cloudflare in front" section (dev-site2 `ba8c2fa`): example rules
+and the client-address setup, following Cloudflare's documentation, not tested in front of a
+core. A verified Cloudflare configuration remains (no chips).
+
 **Update 2026-10-13:** open-pryv.io 2.0.0-rc.47 and 2.0.0-rc.50 added targeted in-code budgets
 (failed passwords per account and per client address across cores, live access requests per
 address, pending MFA sessions per account, batch / paging / upload / socket.io bounds, an

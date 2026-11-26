@@ -421,20 +421,26 @@ front" concern for the authentication and resource paths. A general
 opt-in per-core rate-limit middleware (request rates per token or
 route) remains a backlog candidate, not filed.
 
-## Reference configs (planned)
+## Reference configs (shipped)
 
-While general in-process rate-limiting stays out of scope, a **reference
-reverse-proxy configuration** now ships with the developer site:
-[Rate limiting and DoS protection](https://pryv.github.io/customer-resources/rate-limiting/)
-(nginx + fail2ban, verified end to end against a running core).
+While general in-process rate-limiting stays out of scope, **reference
+reverse-proxy configurations** ship with the developer site:
+[Rate limiting and DoS protection](https://pryv.github.io/customer-resources/rate-limiting/).
 It keys limits on the routes that matter (per IP on login, MFA,
 registration, password reset and access requests; per token on data
 reads and writes), caps bodies and slow clients, returns a JSON 429,
-bans addresses with fail2ban jails reading the nginx logs, gives
+bans addresses with fail2ban jails reading the proxy logs, gives
 limits for three workload profiles (consumer app, B2B research,
-hospital) and a load test that proves each limit fires. HAProxy,
-Cloudflare, Traefik and Caddy apply the same route table; dedicated
-snippets for them are not shipped yet.
+hospital) and a load test that proves each limit fires. The same route
+table ships as an nginx, an HAProxy, a Traefik and a Caddy
+configuration (Caddy with the third-party caddy-ratelimit module), each
+with its fail2ban filters and each verified end to end against a
+running core. Cloudflare is the one edge without a verified
+configuration: the page gives example rate-limiting rules and the
+client-address setup for Cloudflare in front, following Cloudflare's
+documentation, not tested in front of a core. The open-pryv.io
+repository's own `docs/nginx-ingress-sample.conf` is a routing vhost
+that rate limits the OAuth2 endpoints only.
 
 ## Related primitives
 

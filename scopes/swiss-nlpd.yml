@@ -340,7 +340,7 @@ requirements:
     pryv_primitives: [data-residency, CMC]
     derives_from: [gdpr.Art.44, gdpr.Art.46]
     config_keys: [auth.hostings]
-    tests: [BUNDLEENC, ACMEINT]
+    tests: [BUNDLEENC, ACMEINT, MCHR1, MC05E, MC05F]
     overview: |
       The `data-residency` primitive is the technical control here:
       bind each subject's data to a hosting whose jurisdiction matches

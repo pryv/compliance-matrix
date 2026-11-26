@@ -242,10 +242,10 @@ reverse-proxy / WAF / API-gateway stack.
 
 **Reference configuration (shipped):** the developer site's
 [Rate limiting and DoS protection](https://pryv.github.io/customer-resources/rate-limiting/)
-page gives a verified nginx + fail2ban setup, with limits per
-workload profile (consumer-app, B2B research, hospital). HAProxy,
-Cloudflare, Traefik and Caddy apply the same route table; dedicated
-snippets for them are still to come. Doesn't change the Pryv-side
+page gives verified nginx, HAProxy, Traefik and Caddy configurations,
+each with its fail2ban filters, with limits per workload profile
+(consumer-app, B2B research, hospital). For Cloudflare it gives example
+rules that were not tested in front of a core. Doesn't change the Pryv-side
 stance; closes the operator-experience gap of "what do I actually
 configure?"
 

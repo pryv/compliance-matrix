@@ -700,7 +700,7 @@ requirements:
     draft: true
     pryv_primitives: [audit, audit-event-stream, external-id-index]
     config_keys: [logs.file, logs.fileSync]
-    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1, OXN02, OXI06, OTX03, OCMDE13, OPIU3, AUAB3, AUG1, AUG3, ASM1, ASM4, SKMC]
+    tests: [AT01, AT02, AT03, AT51, AT52, AT53, AT61, AT65, OE07, BLGM1, BLGM2, BLGM3, BLGM4, RDL5, RDL8, RDLA, RAL1, UNXR1, PLFP1, BLFM1, XIDAR1, XIDG1, OXN02, OXI06, OTX03, OCMDE13, OPIU3, AUAB3, AUG1, AUG3, ASM1, ASM4, SKMC, AACR1, AACR3, AACR4, AACR7, AACRA, AFGW]
     planned:
       - kind: feature
         summary: "Chained / signed audit log adds the software-side tamper-resistance signal A.8.15 expects"
@@ -974,15 +974,18 @@ requirements:
       observability credentials, transfer identities): a second
       envelope version, bound to the row that holds it and with a
       pinned tag, is read from this release `[AREV1]`, `[AREV2]`;
-      2.0.0-rc.86 to rc.89 still write rows in the first version (no
-      binding) so that a core of the previous release can read them. The
-      release open-pryv.io 2.0.0-rc.90 writes version 2 `[AREV3]`:
-      every core must have run 2.0.0-rc.86 or later before it is
-      deployed, and going back to a release before 2.0.0-rc.86 is not
-      possible without restoring the rows. The configured
-      `letsEncrypt.atRestKey` is unchanged.
+      2.0.0-rc.86 to rc.89 wrote rows in the first version (no binding)
+      so that a core of the previous release could read them. The
+      configured `letsEncrypt.atRestKey` is unchanged.
 
-      **Changes in open-pryv.io 2.0.0-rc.90.** Random
+      **Changes in open-pryv.io 2.0.0-rc.90.** Keys stored encrypted at
+      rest are written in envelope version 2, bound to the row that holds
+      it (the first version only on explicit request) `[AREV3]`; rows
+      already stored are rewritten when written again (the ACME account
+      key once, at its next check). Every core of a platform must run
+      2.0.0-rc.86 or later before 2.0.0-rc.90 is deployed on any of them;
+      going back to 2.0.0-rc.86 to rc.89 stays possible, going back to an
+      earlier release is not without restoring the rows. Random
       secrets: the bearer tokens Pryv generates (access, personal and
       password-reset tokens, the default token of a cross-account
       access) are drawn from `node:crypto` without bias, never from a
@@ -2041,8 +2044,8 @@ requirements:
     draft: true
     pryv_primitives: [multi-core-mTLS, backup-restore, letsEncrypt-integration]
     derives_from: [iso-27001.A.5.23, hipaa-security.164.308(a)(7)(ii)(B)]
-    config_keys: [storages.engines.rqlite.external]
-    tests: [PUCC6]
+    config_keys: [storages.engines.rqlite.external, storages.engines.rqlite.readWaitMs]
+    tests: [PUCC6, RQNR1, RQNR2, RQNR3, RQNR4, RQNR5, RQNR6, RQNR7, RQNR8, PNAH1, PNAH2, PNAH3, IGNA1, ORNA1, DNNA1, DNNA2, DNNA3, DNNA4]
     overview: |
       Multi-core Raft replication
       makes the platform DB (user-to-core index, shared settings,

@@ -712,16 +712,16 @@ per-key purpose label (TLS certificate and ACME account keys: from
 
 - **Compliance role**: protects secrets (Let's Encrypt account keys,
   observability provider licence keys, future CMC keys) at rest.
-- **Envelope versions** (open-pryv.io 2.0.0-rc.86): a second envelope
-  version authenticates the row that holds it (an envelope moved to
-  another row of the same purpose fails to decrypt) and pins a 16-byte
-  tag; 2.0.0-rc.86 to rc.89 read both versions and still write the
-  first, so a core of the previous release keeps reading every row during
-  an upgrade and after a rollback. The release after open-pryv.io
-  2.0.0-rc.89 writes version 2 (the first only on explicit request):
-  every core of a platform must have run 2.0.0-rc.86 or later before it
-  is deployed, and going back to a release before 2.0.0-rc.86 is not
-  possible without restoring the rows. Rows already stored are rewritten
+- **Envelope versions** (read since open-pryv.io 2.0.0-rc.86, written
+  since 2.0.0-rc.90): a second envelope version authenticates the row
+  that holds it (an envelope moved to another row of the same purpose
+  fails to decrypt) and pins a 16-byte tag; 2.0.0-rc.86 to rc.89 read
+  both versions and wrote the first, so a core of the previous release
+  kept reading every row during an upgrade and after a rollback.
+  open-pryv.io 2.0.0-rc.90 writes version 2 (the first only on explicit
+  request): every core of a platform must run 2.0.0-rc.86 or later
+  before it is deployed on any of them, and going back to a release
+  before 2.0.0-rc.86 is not possible without restoring the rows. Rows already stored are rewritten
   when written again; a restore under another user id re-binds the
   account-transfer identity to the new id `[RSER16]`. The version 2
   envelope binds an authenticator (TOTP) secret to its purpose key, not

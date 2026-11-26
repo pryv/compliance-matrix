@@ -242,9 +242,24 @@ rows stay `Implemented | High` (A.8.5, 164.312(d)) and the chips stay (WebAuthn
 still outstanding). `RATE-LIMITING-RECIPES` chips unchanged: they cover password
 login and the rest of the API, which still rely on the edge.
 
+**Documentation step published 2026-11-26**: the developer site page
+[MFA](https://pryv.github.io/customer-resources/mfa/) has the section
+"Assurance level of each method" (NIST SP 800-63B: TOTP AAL2, SMS AAL1 in
+practice, AAL3 not reached; dev-site2 `ba8c2fa`), and the contributor note
+`open-pryv.io/components/business/src/mfa/README.md` (master `e11511a4`)
+states that the set of methods is closed (a new method is a change to the
+core, not a plugin). Walked 2026-11-26: `hipaa-security.164.312(d)` cites
+the page (`docs:` + detail), its "MFA is pluggable" paragraph and the
+caveat pointing at the proposal replaced by the built-in methods and the
+per-method level, tier unchanged (`Implemented | High`);
+`hipaa-security.164.308(a)(5)(ii)(D)` cites the page and moves to
+`Configurable | High` (effort `medium` to `high`). Chips kept on both:
+the WebAuthn method is still outstanding. `iso-27001.A.8.5`, `A.5.17` and
+`diga.A1.2.4` not walked in this pass.
+
 **Where the work lives**: `open-pryv.io`
-(`components/business/src/mfa/`). WebAuthn plugin + AAL-tier mapping docs
-remain; TOTP done.
+(`components/business/src/mfa/`). WebAuthn method remains; TOTP and the
+AAL-tier mapping docs done.
 
 | Scope | Ref | Kind | Impact | After shipping |
 |---|---|---|---|---|
@@ -371,7 +386,11 @@ snippet remains a backlog item with no chips: it would add no row shift. When
 the page is next published, refresh the sentence "HAProxy, Cloudflare, Traefik
 and Caddy apply the same route table; dedicated snippets ... not shipped yet"
 in `context/rate-limiting-and-dos-protection.md` and `docs/implementer-faq.md`
-(only Cloudflare is then missing). When the client-IP attribution changes (trusted-proxy list),
+(only Cloudflare is then missing). Done 2026-11-26 (the page is live with
+the HAProxy, Traefik and Caddy configurations and a "Cloudflare in front"
+section of example rules, not tested in front of a core): both sentences
+name the four verified configurations and the untested Cloudflare rules.
+When the client-IP attribution changes (trusted-proxy list),
 refresh the page's "How Pryv reads the client IP" paragraph.
 
 **Trigger fired (2026-10-13):** open-pryv.io 2.0.0-rc.47 introduced in-code
@@ -1734,8 +1753,8 @@ mirror exists. Changes and their tests:
   `[OSWM1]`..`[OSWM3]`.
 
 **Walked 2026-11-26** (no tier change; `reviewed_at` unchanged; prose names
-"open-pryv.io 2.0.0-rc.90"; prose only, the test codes
-join `tests:` once the branch is merged to master):
+"open-pryv.io 2.0.0-rc.90"; prose only at the walk, the test codes
+joined `tests:` at the release, see below):
 
 | Scope | Ref | What changed |
 |---|---|---|
@@ -1764,12 +1783,22 @@ Section B:
   catalogue from data-types 1.4.0): re-walk `hipaa-security.164.312(b)` if
   the catalogue changes its fields.
 - **B.11** (new config key `storages.engines.rqlite.readWaitMs`): cited on
-  `iso-27001.A.8.14` in prose; add it to that row's `config_keys` at the
-  merge.
+  `iso-27001.A.8.14` in prose; added to that row's `config_keys` at the
+  release.
 - B.3 to B.10: none.
-At release: replace "open-pryv.io 2.0.0-rc.90" in the
-seven rows and the primitive with the tag, and add the test codes above to
-the rows' `tests:`.
+
+**Released 2026-11-26** (tag `44a849db`): the seven rows and the
+primitive name open-pryv.io 2.0.0-rc.90. Test codes added to `tests:`:
+
+| Scope | Ref | Tests added |
+|---|---|---|
+| hipaa-security | 164.312(b) | `AACR1`..`AACR9`, `AACRA`..`AACRE` |
+| iso-27001 | A.8.15 | `AACR1`, `AACR3`, `AACR4`, `AACR7`, `AACRA`, `AFGW` |
+| gdpr | Art.30 | `AACR1`, `AACR3`, `AACR4` |
+| iso-27001 | A.8.14 | `RQNR1`..`RQNR8`, `PNAH1`..`PNAH3`, `IGNA1`, `ORNA1`, `DNNA1`..`DNNA4` (and `config_keys` `storages.engines.rqlite.readWaitMs`) |
+| gdpr | Art.3 | `MCHR1`, `MC05E`, `MC05F`, `MC05G` |
+| gdpr | Art.45 | `MCHR1`, `MC05E` |
+| swiss-nlpd | Art.34 | `MCHR1`, `MC05E`, `MC05F` |
 
 ## Section B: Trigger categories (no specific backlog slug yet)
 
@@ -4091,6 +4120,9 @@ configuration). What changed:
 Also updated: `docs/pryv-primitives.md` (`encryption-at-rest-secrets`,
 "Envelope versions": the write switch, the rollback bound, the restore
 re-bind).
+Released 2026-11-26 in 2.0.0-rc.90 (tag `44a849db`): the two rows and the
+primitive state the written behaviour under that release's name, and the
+Section C clause on envelope versions is discharged.
 Walked without change:
 - **At-rest and transport cryptography** (`soc2.CC6.1`,
   `hds.Activity.3.cryptography`, `diga.A1.2.1`,
@@ -4923,7 +4955,20 @@ ships the fix.
 
 | Added | Where | Gap | Remove when |
 |---|---|---|---|
-| 2026-11-17 | `encryption-at-rest-secrets` primitive ("Envelope versions"), `iso-27001.A.8.24` detail, `hipaa-security.164.312(a)(2)(iv)` technical | at-rest envelopes (TLS and ACME keys, authenticator secrets, observability credentials, transfer identities) are read in the authenticated version 2 since open-pryv.io 2.0.0-rc.86 but still written in version 1, so no stored row is bound to its row yet | the release that writes version 2: rewrite each place as the written behaviour, with that release's name and test codes. Rewritten 2026-11-19 as "open-pryv.io 2.0.0-rc.90" (merged on master `e74e7721`, B.11 walk of that date): at its tag, name it in the three places and move this clause to Discharged |
+| (none open) | | | |
+
+Discharged: the 2026-11-17 clause on at-rest envelopes read in the
+authenticated version 2 but still written in version 1 (TLS and ACME
+keys, authenticator secrets, observability credentials, transfer
+identities; open-pryv.io 2.0.0-rc.86 to rc.89; in the
+`encryption-at-rest-secrets` primitive ("Envelope versions"),
+`iso-27001.A.8.24` detail and `hipaa-security.164.312(a)(2)(iv)`
+technical). The write switch ships in 2.0.0-rc.90 (tag `44a849db`,
+2026-11-26; merged on master `e74e7721`, B.11 walk of 2026-11-19); each
+place was rewritten on 2026-11-26 as the written behaviour, naming the
+release and `[AREV3]`, with the upgrade contract: every core of a
+platform must run 2.0.0-rc.86 or later before 2.0.0-rc.90 is deployed on
+any of them.
 
 Discharged: the 2026-11-09 clause on `oauth.audienceBoundSessions`
 defaulting to `false` (open-pryv.io 2.0.0-rc.73 to rc.81; in

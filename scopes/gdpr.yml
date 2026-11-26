@@ -117,6 +117,7 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [data-residency]
+    tests: [MCHR1, MC05E, MC05F, MC05G]
     overview: |
       Whether GDPR applies
       to your Pryv deployment depends on where you're established and
@@ -2548,7 +2549,7 @@ requirements:
     reviewed_at: "2026-06-19"
     pryv_primitives: [access, clientData, audit, CMC, data-residency]
     docs: [customer-resources/audit-setup.md, guides/audit-logs.md]
-    tests: [UZEV, TJ8S, AA01, ERLG4, ERLT4, CFE1, CFE5, CFE6, CFC3]
+    tests: [UZEV, TJ8S, AA01, ERLG4, ERLT4, CFE1, CFE5, CFE6, CFC3, AACR1, AACR3, AACR4]
     planned:
       - kind: feature
         summary: "Chained / signed audit log makes the Article 30 register tamper-evident"
@@ -3595,7 +3596,7 @@ requirements:
     draft: true
     pryv_primitives: [data-residency, CMC]
     config_keys: [auth.hostings]
-    tests: [REGC, RC01, RC03]
+    tests: [REGC, RC01, RC03, MCHR1, MC05E]
     overview: |
       Configure your `auth.hostings` to declare only hostings that match
       adequate-protection regimes; route subjects to them as per your

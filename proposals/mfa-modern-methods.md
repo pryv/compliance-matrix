@@ -1,7 +1,7 @@
 # Proposal: MFA: document the extension point + ship reference plugins
 
 **Status:** step 2 (server-side TOTP) SHIPPED to `open-pryv.io` master
-(`b606b328`, 2026-09-02); steps 1 (full docs) and 3 (WebAuthn) future. Mirror of
+(`b606b328`, 2026-09-02); step 1 (docs) published 2026-11-26; step 3 (WebAuthn) future. Mirror of
 the macroPryv backlog item `_plans/XXX-Backlog/COMPLIANCE-MFA-MODERN-METHODS.md`,
 in the perspective of `_plans/40-OAUTH2-Account-based-signatures-later/` (the
 broader auth-modernisation plan).
@@ -21,6 +21,16 @@ broader auth-modernisation plan).
 > refresh is the remaining matrix-data step. Known post-ship hardening (per-user
 > rate limit, replay compare-and-set) tracked in Plan 119 sub-plan 1
 > (`_plans/XXX-Backlog/MFA-TOTP-HARDENING.md`; Plan 119 closed + archived).
+
+> **Step 1 published 2026-11-26.** The developer site page
+> https://pryv.github.io/customer-resources/mfa/#assurance-level-of-each-method states the
+> NIST SP 800-63B level of each method (TOTP AAL2, SMS AAL1 in practice, AAL3 not reached;
+> dev-site2 `ba8c2fa`), and `open-pryv.io/components/business/src/mfa/README.md` (master
+> `e11511a4`) describes the method contract: the set is closed, so a new method is a change to
+> the core, not a plugin (a push-provider example is not written, by design: the contract is
+> code-send and verify). `hipaa-security.164.312(d)` now cites the page instead of the caveat
+> below (tier unchanged); `hipaa-security.164.308(a)(5)(ii)(D)` cites it and moves to
+> `Configurable | High`. Step 3 (WebAuthn) remains; its chips stay.
 
 ## Today's posture (correct + currently understated)
 
