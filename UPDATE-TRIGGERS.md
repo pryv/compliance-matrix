@@ -3550,13 +3550,36 @@ are removed.
 `audit.record.kind` (3) and `audit.loss.reason` (4): at most twelve
 series, no method, account or message. Proof: constants pinned
 `[ALRS1]`, validation decisions for accepted and refused inputs
-`[ALRS2]`, wire enumeration of the sent payload `[ALRS3]`. The
-enumeration from a running deployment is owed at the release. Refreshed:
+`[ALRS2]`, wire enumeration of the sent payload `[ALRS3]`. Refreshed:
 `context/subprocessor-posture-and-data-flow.md`, `docs/pryv-primitives.md`
 (`observability-provider`), `docs/implementer-faq.md` (Layer 3),
 `gdpr.Art.28` Layer 3. The claim is unchanged. Also corrected: three of
 them still named the core FQDN as instance identity (the machine hostname
 since 2026-07-28).
+
+**Running deployment enumerated (2026-11-26, 2.0.0-rc.90 code)**: a core
+started with `bin/master.js` (two API workers, PostgreSQL audit storage)
+exporting to an OTLP/HTTP receiver on 127.0.0.1 that kept every request it
+got. Traffic: registration, sign-in, streams and events created and read,
+access-info, a wrong token in the query string, an unknown event id shaped
+like an attachment name, an unknown stream, then 8 audit writes refused by
+a database trigger. Everything the receiver got, listed:
+- requests: `POST /v1/metrics` only (no log records: no server fault);
+- metric names: `api.method.calls`, `api.method.duration`,
+  `api.method.errors`, `audit.records.lost`;
+- resource keys: `service.name`, `service.version`, `service.instance.id`
+  (the machine hostname), `service.worker`;
+- data point keys: `method.id`, `status.class`, `error.code`,
+  `audit.record.kind`, `audit.loss.reason`, every value from the closed
+  lists (8 registered method ids, `2xx` / `4xx`, two error ids; kinds
+  `valid` and `error`, reason `storage-write-failed`, 4 + 4 for the 8
+  refused writes);
+- none of the ten planted strings (username, token, password, email,
+  insurance number, event content, stream ids, the attachment-shaped id,
+  the forced error message, the core's address) in any payload.
+
+Still owed by the operator: the same enumeration on the backend the
+operated platform reports to, over the time since its rc.90 deploy.
 
 **Superseded pass (2026-07-27), kept for the audit trail**: the shipped
 New Relic adapter had been inert since observability first shipped, so
