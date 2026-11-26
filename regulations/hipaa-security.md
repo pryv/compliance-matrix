@@ -578,9 +578,21 @@ bootstrap bundle that rebuilds a core is authenticated with its
 version, salt and nonce from 2.0.0-rc.86 on, and a joining core
 must run that release or later to read it `[BNEV1]`.
 
+**The audit trail across a restore (the release after
+open-pryv.io 2.0.0-rc.90).** With `audit.onUserDelete: keep`, an
+overwrite, a roll-back and the cleanup of a failed restore leave
+the account's audit trail in place (the records written since the
+backup stay, the backup's missing ones are added) `[AARSC]`,
+`[AARSD]`; only a trail the restore created for an account it then
+removes goes with it `[AARSE]`, `[AARSG]`. Each account the restore
+keeps gets an `account.restored` record (the backup's date, whether
+it replaced an account of the core, whether it was erased after the
+backup) `[AARS1]`, `[AARS2]`, `[AARS5]`, `[AARS7]`, so the trail
+shows when the recovery put the account back.
+
 **Evidence**
 
-- tests: BKSR, BUNDLEENC, BKIC1, BKIC2, BKC7, UASF1, UASF2, BKSM2, BKSM4, BKIS3, RSFC1, RSFC2, RSFC3, BNEV1
+- tests: BKSR, BUNDLEENC, BKIC1, BKIC2, BKC7, UASF1, UASF2, BKSM2, BKSM4, BKIS3, RSFC1, RSFC2, RSFC3, BNEV1, AARS1, AARS2, AARS5, AARS7, AARSC, AARSD, AARSE, AARSG
 - docs: customer-resources/backup.md
 - config keys: cluster.discoveryEnabled, letsEncrypt.certRenewer
 - primitives: backup-restore, multi-core-mTLS, letsEncrypt-integration
@@ -1077,7 +1089,9 @@ core since it started `[ALRW2]`, and the opt-in telemetry sends
 answer `[ALRC7]`. Alert on any value above zero, on every core. A
 counted record is lost, not written later. Not counted: a process
 stopped between the answer and the write, a storage write that
-never ends, a syslog delivery error reported after the call. Under
+never ends (except, from the release after 2.0.0-rc.90, the records
+an erasure writes, counted after 10 seconds `[AADLF]`, `[ADSW28]`),
+a syslog delivery error reported after the call. Under
 `audit.onUserDelete: erase`, a record refused because its account
 was erased meanwhile is not a lost record (warning log) `[AGPE1]`.
 
@@ -1180,6 +1194,36 @@ first later call. A filter listing methods one by one leaves it
 out; `account.all` and `all` select it `[AACR7]`, `[AACRA]`. The
 breach-scope report lists it without counting it as a call
 `[AACR8]`, `[AACRB]`. Accounts created earlier have no such record.
+**Account deletion and restore, from the release after open-pryv.io
+2.0.0-rc.90:** where the trail outlives the account
+(`audit.onUserDelete: keep`), the erasure writes `account.deleted`
+(type `audit-log/account`) in it before any of the account's data
+goes, whatever erases the account (holder, administrator, the
+auto-deletion sweep, the completion of an unfinished erasure, the
+ledger replay, the repair of an unfinished registration, the
+roll-back of a failed creation): who (`source.name`) and the erasure
+ledger's `trigger`; for a deletion by the holder only, the client
+address and the personal access that asked (never an
+administrator's address); ids and fixed words only `[AADL1]`,
+`[AADL2]`, `[AADL6]`, `[AADL7]`, `[AADL9]`. It is written before the
+first step that removes data `[AADL4]`, `[AADLD]`, once per erasure
+`[AADL8]`, and not at all under `erase` `[AADL3]`; a record that
+cannot be written, or gets no answer within 10 seconds, is counted
+as lost and the erasure goes on `[AADL5]`, `[AADLF]`, `[ADSW28]`.
+`bin/backup.js --restore` writes `account.restored` in the trail of
+each account it restores and keeps, after the backup's records: the
+date of the backup's data, `target` (`new`, `existing`) and
+`afterErasure` (`completed`, `unfinished`); none for an account
+rolled back by `--verify-integrity`; a record that cannot be written
+does not fail the restore `[AARS1]`..`[AARS9]`, `[AARSA]`, `[AARSF]`.
+Under `keep` a restore keeps the trail it finds, so a restored kept
+trail reads `account.deleted`, then `account.restored` `[AARS5]`,
+`[AARSC]`, `[AARSD]`. The sweep's `account.autoDeletion.erase` record
+no longer holds the username `[ADSW17]`. A filter listing methods one
+by one leaves both out, `account.all` and `all` select them
+`[AADLA]`; the breach-scope report lists them without counting them
+as calls `[AADLB]`. Accounts erased or restored earlier have no such
+record.
 Not audited: requests on adapter routes
 (the sidecar audits them) and the `421` answers for an account
 served by another core (warning log only). The three address-alias
@@ -1298,7 +1342,7 @@ stalled reader could hold.
 
 **Evidence**
 
-- tests: AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC, RIDL3, RIDL4, RIDL5, ADCLI, ADCLW, BAUF1, BAUF2, ALRC1, ALRC2, ALRC7, ALRS3, ALRW2, IPAU1, IPAU2, IPAU4, IPAU5, IPAU6, IPAUA, AGPE1, AACR1, AACR2, AACR3, AACR4, AACR5, AACR6, AACR7, AACR8, AACR9, AACRA, AACRB, AACRC, AACRD, AACRE
+- tests: AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC, RIDL3, RIDL4, RIDL5, ADCLI, ADCLW, BAUF1, BAUF2, ALRC1, ALRC2, ALRC7, ALRS3, ALRW2, IPAU1, IPAU2, IPAU4, IPAU5, IPAU6, IPAUA, AGPE1, AACR1, AACR2, AACR3, AACR4, AACR5, AACR6, AACR7, AACR8, AACR9, AACRA, AACRB, AACRC, AACRD, AACRE, AADL1, AADL2, AADL3, AADL4, AADL5, AADL6, AADL7, AADL8, AADL9, AADLA, AADLB, AADLD, AADLF, ADSW17, ADSW28, AARS1, AARS2, AARS3, AARS4, AARS5, AARS6, AARS7, AARS8, AARS9, AARSA, AARSC, AARSD, AARSF
 - config keys: accesses.deletionRecords.retentionDays, limits.audit.maxConcurrentReadsPerAccess, limits.audit.maxReadWaitMs
 - primitives: audit, audit-event-stream, external-id-index
 - context notes: content-query-audit-semantics, delegation-model, workforce-access-patterns
@@ -2056,6 +2100,25 @@ empty databases next to the retained audit. The audit itself is
 read and written as before. Keep the marker when you archive or
 tidy such directories; a restore of the account removes it.
 
+**The kept trail records its own end, and a restore keeps it
+(from the release after open-pryv.io 2.0.0-rc.90).** With `keep`,
+every erasure writes `account.deleted` in the kept trail before any
+of the account's data goes (who, the erasure ledger's trigger, ids
+and fixed words only; not written under `erase`) `[AADL1]`,
+`[AADL3]`, `[AADL4]`, so the retained documentation says when and by
+whom the account was erased without the ledger. A restore
+(`--overwrite`, the roll-back of `--verify-integrity`, the cleanup of
+a failed restore) no longer removes a kept trail: the records
+written since the backup stay and the backup's records it lacks are
+added `[AARSC]`, `[AARSD]`; only a trail the restore itself created,
+for an account it then removes, goes with it `[AARSE]`, `[AARSG]`.
+On SQLite the audit import skips the records already there, as on
+PostgreSQL `[SQIM2]`. Before, an overwrite under `keep` replaced the
+retained trail with the backup's, losing the records written since:
+a loss of retained documentation by an operator tool. Each restored
+account gets `account.restored` (the backup's date) `[AARS1]`,
+`[AARS5]`.
+
 **Access deletion records** (open-pryv.io 2.0.0-rc.56). The
 record of a deleted access is what lets an audit row name the
 access that acted. It is kept until the account is deleted unless
@@ -2074,7 +2137,9 @@ remains; with `keep` (and the audit active) the trail survives and
 an `account.autoDeletion.erase` row (username, trigger, whether
 the holder or your preset set the schedule, deadline, when the
 notices were sent) is written in it before the erasure starts
-(`[ADSW17]`). A covered entity that
+(`[ADSW17]`); from the release after 2.0.0-rc.90 it no longer
+holds the username (the account id stays), and `account.deleted`
+follows it `[AADL6]`. A covered entity that
 enables account auto-deletion keeps `audit.onUserDelete: keep`
 and keeps those log lines for the six-year period if they are
 part of its documentation.
@@ -2095,7 +2160,7 @@ no longer match a lookup by id or name (the lookup counts them)
 
 **Evidence**
 
-- tests: DKP1, ADP1, ADSW17, ERMK1, ERMK3, ERLG3, ERLG4, ERLT4, ERLA6
+- tests: DKP1, ADP1, ADSW17, ERMK1, ERMK3, ERLG3, ERLG4, ERLT4, ERLA6, AADL1, AADL3, AADL4, AADL6, AARS1, AARS5, AARSC, AARSD, AARSE, AARSG, SQIM2
 - docs: customer-resources/account-auto-deletion.md, customer-resources/backup.md
 - config keys: audit.onUserDelete, accesses.deletionRecords.retentionDays, accountErasure.ledger.retentionDays, accountErasure.ledger.hmacKey
 - primitives: backup-restore, audit, account-auto-deletion

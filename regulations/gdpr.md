@@ -1270,7 +1270,9 @@ in this case: from 2.0.0-rc.60, when your administrator releases an external id 
 account held (`external-id-index` primitive), the account gets the
 `external-id-released` mail with the namespace label and the
 reason your administrator gave, never the id, when mail is
-configured (`services.email.enabled.externalIdReleased`, default
+configured (switch `services.email.sendExternalIdReleased` from
+the release after open-pryv.io 2.0.0-rc.90,
+`services.email.enabled.externalIdReleased` up to rc.90; default
 on; template `services.email.externalIdReleasedTemplate`), and an
 `account.externalIds.adminRelease` entry in its own audit trail
 `[XIDAR1]`, `[XIDAR3]`. The subject reads the reason as written:
@@ -1283,7 +1285,7 @@ mail did not go out.
 
 - tests: XIDAR1, XIDAR3
 - docs: guides/consent.md, customer-resources/audit-setup.md
-- config keys: services.email.enabled.externalIdReleased, services.email.externalIdReleasedTemplate
+- config keys: services.email.sendExternalIdReleased, services.email.externalIdReleasedTemplate
 - primitives: access, clientData, event, external-id-index
 
 ## GDPR Art.13: Information to be provided where data are collected from the data subject
@@ -1353,7 +1355,7 @@ whoever builds it must honour that notice as published.
 
 - tests: ACST1, ACST2, ACST15A, ACST15B, ACRM1
 - docs: guides/consent.md, guides/privacy-by-design.md, customer-resources/account-auto-deletion.md
-- config keys: account.autoDeletion.inactivity.defaultDays, account.autoDeletion.inactivity.countAppUse, services.email.enabled.accountDeletionScheduled, services.email.enabled.accountDeletionReminder
+- config keys: account.autoDeletion.inactivity.defaultDays, account.autoDeletion.inactivity.countAppUse, services.email.sendAccountDeletionScheduled, services.email.sendAccountDeletionReminder
 - primitives: access, clientData, event, account-auto-deletion
 - context notes: service-info-conventions, client-data-conventions, data-retention-operator-owned
 
@@ -1652,7 +1654,9 @@ deletion guards (a refusal holds the erasure and is mailed once,
 torn down, audit per `audit.onUserDelete`), logs it
 before and after, and with `audit.onUserDelete: keep` writes an
 `account.autoDeletion.erase` row in the account's trail first
-(`[ADSW17]`). An erasure interrupted halfway, by the sweep or by
+(`[ADSW17]`; from the release after 2.0.0-rc.90 without the
+username, and followed by `account.deleted`, `[AADL6]`). An
+erasure interrupted halfway, by the sweep or by
 a direct `auth.delete`, is completed at a later pass
 (`[ADSW19]`); `account.autoDeletion.maxDeletionsPerPass` (20)
 caps a pass (`[ADSW12]`). An operator preset (Art.5 §1(e)) uses
@@ -1758,6 +1762,32 @@ at its path in the user directory, readable by user id, and
 everything else in the directory is removed `[DKP1]` (before
 2.0.0-rc.46 the directory wipe erased it, so `keep` behaved like
 `erase` there; open-pryv.io#154).
+
+The kept trail records the erasure itself (the release after
+open-pryv.io 2.0.0-rc.90). Under `keep`, before any of the
+account's data goes, every erasure (holder, administrator,
+auto-deletion sweep, completion of an unfinished erasure,
+`bin/erasures.js --replay`, repair of an unfinished registration,
+roll-back of a failed creation) writes `account.deleted` in the
+kept trail: who erased it and the erasure ledger's trigger; for a
+deletion by the holder only, the holder's client address and the
+personal access that asked (as `account.created` does for a
+registration); never an administrator's address, no username,
+address of the account or free text `[AADL1]`, `[AADL2]`,
+`[AADL7]`, `[AADL9]`. Under `erase` (the default) nothing is
+written, so the trail still goes entirely with the account
+`[AADL3]`. The record never stops the erasure: one that cannot be
+written, or gets no answer within 10 seconds, is counted as lost
+`[AADL5]`, `[AADLF]`. The sweep's `account.autoDeletion.erase` row,
+written only under `keep`, no longer holds the username `[ADSW17]`.
+A restore under `keep` (`--overwrite`, the roll-back of
+`--verify-integrity`, the cleanup of a failed restore) keeps the
+trail it finds and adds the backup's records it lacks `[AARSC]`,
+`[AARSD]`, then writes `account.restored` `[AARS5]`: the trail of
+an account erased then restored shows both, in order. Residual to
+weigh in the lawful basis you document for `keep`: the holder's
+address and access id in `account.deleted` are personal data kept
+after the erasure, like the call rows of the same trail.
 
 What an account deletion reaches, as of open-pryv.io 2.0.0-rc.50
 (fixes from the 2026 code-level security review,
@@ -1946,7 +1976,7 @@ auth/delete.ts` (middleware registration).
 
 **Evidence**
 
-- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, ERMK5, PGUG1, PGUG3, PGUG6, PGUG9, CMCER6, ERLG3, ERLG4, ERLG5, ERLG6, ERLG7, ERLG8, ERLG9, ERLA1, ERLA2, ERLA3, ERLA4, ERLA5, ERLA6, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT1, ERLT2, ERLT3, ERLT4, ADCL3, ADCL5, ADCL6, ADCLH, ADCLI, ADCLR, ADCLS, ADCLQ
+- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, ERMK5, PGUG1, PGUG3, PGUG6, PGUG9, CMCER6, ERLG3, ERLG4, ERLG5, ERLG6, ERLG7, ERLG8, ERLG9, ERLA1, ERLA2, ERLA3, ERLA4, ERLA5, ERLA6, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT1, ERLT2, ERLT3, ERLT4, ADCL3, ADCL5, ADCL6, ADCLH, ADCLI, ADCLR, ADCLS, ADCLQ, AADL1, AADL2, AADL3, AADL5, AADL6, AADL7, AADL9, AADLF, AARS5, AARSC, AARSD
 - docs: customer-resources/account-auto-deletion.md, customer-resources/backup.md
 - config keys: storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass, accountErasure.ledger.enabled, accountErasure.ledger.retentionDays, accountErasure.ledger.hmacKey
 - primitives: event, stream, backup-restore, external-id-index, account-auto-deletion
@@ -2677,7 +2707,12 @@ open-pryv.io 2.0.0-rc.90 the per-subject history
 starts at the account's creation: `account.created` is the first
 record of a new account's trail (how it was created, its first
 personal access; ids only) `[AACR1]`, `[AACR3]`, `[AACR4]`.
-Accounts created earlier have no such record.
+Accounts created earlier have no such record. From the release
+after open-pryv.io 2.0.0-rc.90 it also records the account's end
+and its restores: under `audit.onUserDelete: keep`, the kept trail
+ends with `account.deleted` (who, the erasure ledger's trigger)
+`[AADL1]`, `[AADL2]`, and an account restored from a backup gets
+`account.restored` (the backup's date) `[AARS1]`, `[AARS5]`.
 
 **§1(g) general description of technical security measures**
 (open-pryv.io 2.0.0-rc.90, `21fd8085`):
@@ -2735,7 +2770,7 @@ not the subject's data. See
 
 **Evidence**
 
-- tests: UZEV, TJ8S, AA01, ERLG4, ERLT4, CFE1, CFE5, CFE6, CFC3, AACR1, AACR3, AACR4
+- tests: UZEV, TJ8S, AA01, ERLG4, ERLT4, CFE1, CFE5, CFE6, CFC3, AACR1, AACR3, AACR4, AADL1, AADL2, AARS1, AARS5
 - docs: customer-resources/audit-setup.md, guides/audit-logs.md
 - primitives: access, clientData, audit, CMC, data-residency
 - context notes: content-query-audit-semantics

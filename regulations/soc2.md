@@ -761,11 +761,16 @@ erasure is logged before and after, and kept as an audit row
 where `audit.onUserDelete: keep` (`[ADSW17]`); an erasure
 interrupted halfway is completed at a later pass (`[ADSW19]`),
 and `maxDeletionsPerPass` caps a pass (`[ADSW12]`). The backup
-reach above is unchanged.
+reach above is unchanged. From the release after open-pryv.io
+2.0.0-rc.90, under `keep`, every destruction of an account (not
+only a scheduled one) also writes `account.deleted` in the kept
+trail before any data goes (who, the trigger; ids and fixed words
+only) `[AADL1]`, `[AADL4]`, `[AADL6]`; the scheduled erasure's own
+row no longer holds the username `[ADSW17]`.
 
 **Evidence**
 
-- tests: USAD, ADSW8, ADSW17, ADSW19, ADSW12
+- tests: USAD, ADSW8, ADSW17, ADSW19, ADSW12, AADL1, AADL4, AADL6
 - docs: customer-resources/account-auto-deletion.md
 - config keys: storages.userAccountStorage.engine, audit.onUserDelete, account.autoDeletion.inactivity.defaultDays
 - derives from: iso-27001.A.8.10, gdpr.Art.17, hipaa-security.164.310(d)(1)
