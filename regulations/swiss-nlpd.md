@@ -387,8 +387,7 @@ which hosting (= jurisdiction) the receiving deployment lives
 in; document the legal basis (adequacy decision, BCRs, etc.) on
 the originating access's `clientData.cross_border_basis`.
 
-**Registration placement (the release after open-pryv.io
-2.0.0-rc.89).** A registration naming a CH `hosting` is created on
+**Registration placement (open-pryv.io 2.0.0-rc.90).** A registration naming a CH `hosting` is created on
 an available core of that hosting or refused (`400
 invalid-parameters-format`, `data.reason` `hosting-unknown` or
 `hosting-unavailable`), never created on a core of another hosting
@@ -410,7 +409,7 @@ records the Art.34 legal basis on the access.
 
 **Evidence**
 
-- tests: BUNDLEENC, ACMEINT
+- tests: BUNDLEENC, ACMEINT, MCHR1, MC05E, MC05F
 - config keys: auth.hostings
 - derives from: gdpr.Art.44, gdpr.Art.46
 - primitives: data-residency, CMC

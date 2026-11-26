@@ -50,8 +50,7 @@ incident tracking reports.
 API calls on an account are captured by Pryv's per-user audit log;
 the `audit.get` method exposes it for periodic review. Observability
 (opt-in telemetry emitter) gives system-level activity reports for
-the infrastructure side; from the release after open-pryv.io
-2.0.0-rc.89 it also reports how many audit records could not be
+the infrastructure side; from open-pryv.io 2.0.0-rc.90 it also reports how many audit records could not be
 written. The "regular review" cadence is your written procedure.
 
 **Detail**
@@ -289,7 +288,7 @@ change or delete these records; the owner can `[GA42]`. See
 
 ## HIPAA-Security 164.308(a)(5)(ii)(D): Password management, Addressable
 
-Coverage: configurable · effort saved: medium · draft
+Coverage: configurable · effort saved: high · draft
 
 Requirement: Procedures for creating, changing, and safeguarding passwords.
 
@@ -307,7 +306,12 @@ Password is one possible factor; MFA via the `mfa.*` API methods
 `[MA15B]`, `[MA10A]`, SMS supported `[MA3A]`) is the second factor
 when enabled. Recovery flows live alongside (`mfa.recover`) so an
 account is not lost when a device is `[MA7A]`. The implementer chooses whether MFA is required
-universally or per-role.
+universally or per-role. The developer site states the NIST
+SP 800-63B level each method reaches ([MFA, "Assurance level of
+each method"](https://pryv.github.io/customer-resources/mfa/#assurance-level-of-each-method)):
+TOTP AAL2, SMS AAL1 in practice, AAL3 not reached. Pick the method
+from the level your risk analysis requires; with TOTP no
+third-party service holds the second factor.
 
 An operator may also enable federated sign-in through an external
 OpenID Connect provider (`sso.*`, beta, off by default). It is gated
@@ -319,6 +323,7 @@ when active, is still enforced on the federated path.
 **Evidence**
 
 - tests: MA15B, MA10A, MA3A, MA7A
+- docs: customer-resources/mfa.md#assurance-level-of-each-method
 - config keys: services.mfa.mode, auth.passwordRules, sso.enabled
 - primitives: system-streams, MFA, access
 
@@ -1017,9 +1022,10 @@ Since open-pryv.io 2.0.0-rc.86 both read a second envelope version
 that authenticates its context (the at-rest row it is stored in;
 the bundle's version, salt and nonce) with a pinned 16-byte tag
 `[AREV1]`, `[BNEV1]`. Bundles are written in it from that release;
-at-rest rows from open-pryv.io 2.0.0-rc.90
-`[AREV3]` (2.0.0-rc.86 to rc.89 still write them in the first
-version, so a core of the previous release keeps reading them).
+at-rest rows from open-pryv.io 2.0.0-rc.90 `[AREV3]`, which every
+core of a platform must reach from 2.0.0-rc.86 or later
+(2.0.0-rc.86 to rc.89 wrote them in the first version, so a core of
+the previous release kept reading them).
 
 **Evidence**
 
@@ -1142,8 +1148,7 @@ the consent's own write: the grant's `accesses.create` or
 event that creates it (an app-account client), source `oauth2`,
 no address `[IPAU6]`, `[IPAUA]`. **Correction (2026-11-24):** an
 earlier version of this entry stated that row for every release
-since rc.68; it is written from the release after
-2.0.0-rc.89 only (before, the write left no row of its own). The
+since rc.68; it is written from 2.0.0-rc.90 only (before, the write left no row of its own). The
 same release records a delivery to an account of the same core
 `[IPAU1]`, `[IPAU2]` and the one-time secret of a credential
 hand-off `[IPAU4]` or of a third-party sign-in `[IPAU5]`. The
@@ -1275,8 +1280,8 @@ app and shared callers are refused `[ASM4]`, and the call is itself
 audited `[ASM9]`. The account app's next release draws its Activity
 chart and an Audit trail chart over a chosen period from it.
 
-**socket.io calls running at the same time (fix, the release after
-open-pryv.io 2.0.0-rc.89).** Every call on one socket.io connection
+**socket.io calls running at the same time (fix, open-pryv.io
+2.0.0-rc.90).** Every call on one socket.io connection
 used to share one context, so two calls running at once could swap
 their method id: the audit row (and the access usage count) of one
 call could name the other call's method. Each call now runs with
@@ -1297,7 +1302,7 @@ stalled reader could hold.
 
 **Evidence**
 
-- tests: AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC, RIDL3, RIDL4, RIDL5, ADCLI, ADCLW, BAUF1, BAUF2, ALRC1, ALRC2, ALRC7, ALRS3, ALRW2, IPAU1, IPAU2, IPAU4, IPAU5, IPAU6, IPAUA, AGPE1
+- tests: AT01, AT02, AT51, AT52, AT53, AT61, AT65, OE07, DCH05, GA10, GA20, GA22, GA30, MA41, ADP1, ADR5, XIDAR1, XIDG1, OXN02, OPUE2, OPIU3, OXI06, OTX03, OCMDE13, ORL12, OPAL2, AUAB3, OPUE22, AUG1, AUG2, AUG3, QK5F, ASM1, ASM2, ASM4, ASM9, SKMC, RIDL3, RIDL4, RIDL5, ADCLI, ADCLW, BAUF1, BAUF2, ALRC1, ALRC2, ALRC7, ALRS3, ALRW2, IPAU1, IPAU2, IPAU4, IPAU5, IPAU6, IPAUA, AGPE1, AACR1, AACR2, AACR3, AACR4, AACR5, AACR6, AACR7, AACR8, AACR9, AACRA, AACRB, AACRC, AACRD, AACRE
 - config keys: accesses.deletionRecords.retentionDays, limits.audit.maxConcurrentReadsPerAccess, limits.audit.maxReadWaitMs
 - primitives: audit, audit-event-stream, external-id-index
 - context notes: content-query-audit-semantics, delegation-model, workforce-access-patterns
@@ -1458,26 +1463,28 @@ device is lost.
 
 **Detail**
 
-**MFA is pluggable.** The `Service` base class
-(`components/business/src/mfa/Service.ts`) defines
-`challenge()` + `verify()` methods; two subclasses ship
-(`ChallengeVerifyService`, `SingleService`) targeting
-HTTP-callable external providers (SMS). An
-operator can plug in any provider matching the
-challenge/verify shape via `services.mfa` config (Twilio Authy,
-Auth0 MFA, Duo Web push, …) without writing code, or extend
-`Service` to implement any in-process method. Since open-pryv.io
-2.0.0-rc.14 (`b606b328`) an in-process authenticator-app factor
-(TOTP, RFC 6238, secrets encrypted at rest) is built in and is
-the default method; SMS stays supported.
+**Two built-in methods.** Since open-pryv.io 2.0.0-rc.14
+(`b606b328`) an in-process authenticator-app factor (TOTP,
+RFC 6238, secrets encrypted at rest) is built in and is the
+default method. SMS stays supported, through any HTTP message
+provider you configure under `services.mfa` (`single` or
+`challenge-verify` mode). The set of methods is closed: a third
+one (WebAuthn, for example) is a change to open-pryv.io itself,
+described in `open-pryv.io/components/business/src/mfa/README.md`,
+not a plugin you add.
 
-NIST AAL framing: the achievable AAL depends on which method
-is configured. SMS-only is AAL1 under NIST SP 800-63B Rev 3.
-TOTP + push or WebAuthn-based providers reach AAL2. The
-remaining WebAuthn plugin is tracked under
-internal backlog slug `MFA-MODERN-METHODS` (matrix-side mirror
-at `proposals/mfa-modern-methods.md`); the broader OAuth2
-auth-stack modernisation arc subsumes this work.
+**Assurance level of each method**, documented on the developer
+site ([MFA, "Assurance level of each method"](https://pryv.github.io/customer-resources/mfa/#assurance-level-of-each-method)),
+read against NIST SP 800-63B: TOTP reaches AAL2 (password plus a
+single-factor OTP device, verified in-process with a replay
+guard); SMS, or another message channel, is AAL1 in practice (a
+provider sending over a stronger channel, an app push for example,
+is still a code sent and verified, so its level is the provider's
+to establish); AAL3 is not reached, as no hardware-based
+cryptographic authenticator ships. The other AAL2 requirements
+stay with your deployment: TLS on every route, reauthentication
+rules for long sessions, limits on failed password attempts. A
+WebAuthn method is planned (`proposals/mfa-modern-methods.md`).
 
 MFA is opt-in per operator; once enabled, it can be required
 at login, at sensitive operations, or both. The MFA tests
@@ -1537,8 +1544,8 @@ can be retried as is; an authorization code is single-use, so a
 refused code exchange spends it and revokes its access, and the
 client starts a new authorization `[OPCL4]`.
 
-**A chosen access token cannot be short (the release after
-open-pryv.io 2.0.0-rc.89).** Since the bearer of a valid token is
+**A chosen access token cannot be short (open-pryv.io
+2.0.0-rc.90).** Since the bearer of a valid token is
 authenticated, a short token is a guessable one. `accesses.create`
 with an explicit `token` refuses one shorter than 16 characters,
 measured after slugification, with `400
@@ -1651,6 +1658,7 @@ open-pryv.io 2.0.0-rc.23.
 **Evidence**
 
 - tests: MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3, CLIB2, PCLM1, PCLM2, OPCL2, OPCL3, OPCL4, TKMN1, SCTK2, SCTK3
+- docs: customer-resources/mfa.md#assurance-level-of-each-method
 - config keys: services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds, oauth.signingKeys, oauth.idTokenTTL, oauth.stateKey, oauth.perUserIssuer, auth.passwordCheckConcurrency, auth.passwordCheckQueue
 - primitives: access, MFA, system-streams, delegation
 - context notes: delegation-model
@@ -2341,8 +2349,7 @@ vulnerability reporting enabled on the published
 repositories), and the code-level security review of
 open-pryv.io (2026-06 to 2026-10, fixes in 2.0.0-rc.40 to
 2.0.0-rc.51, public report `SECURITY-AUDIT.md` published
-2026-10-14), and, from the release after open-pryv.io
-2.0.0-rc.89, a technical baseline per core: the effective
+2026-10-14), and, from open-pryv.io 2.0.0-rc.90, a technical baseline per core: the effective
 configuration with its digests (see detail). The assessment
 write-up is operator-side.
 
@@ -2374,8 +2381,8 @@ added applications and procedures, and the "in response to
 environmental or operational changes" trigger, are evaluated by you.
 It was performed by the maintainers, not an independent assessor.
 
-**A technical baseline to evaluate against** (the release after
-open-pryv.io 2.0.0-rc.89, `21fd8085`): the admin route
+**A technical baseline to evaluate against** (open-pryv.io
+2.0.0-rc.90, `21fd8085`): the admin route
 `GET /system/admin/config/effective` answers the configuration
 each core runs with, secrets redacted (presence, type and a
 keyed fingerprint only) `[CFE5]`, and two SHA-256 digests. The

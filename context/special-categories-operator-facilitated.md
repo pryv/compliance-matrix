@@ -131,8 +131,8 @@ their export tooling uses them to drive a "you're exporting Art.9
 data, confirm exception applies" warning; their DPIA tooling reads
 them from the catalogue for the deployment summary. The
 effective-configuration admin route
-(`GET /system/admin/config/effective`, the release after
-open-pryv.io 2.0.0-rc.89) does not carry these annotations: it
+(`GET /system/admin/config/effective`, open-pryv.io
+2.0.0-rc.90) does not carry these annotations: it
 reports each core's configuration (for example which event-type
 catalogue URL the core is set to), so the DPIA tooling combines the
 two.

@@ -259,8 +259,7 @@ Rows whose `detail` should call out the operator-side responsibility
   in a row. Tests: storage engine `[PGLM1]`..`[PGLM5]`,
   `[PGSS1]`..`[PGSS4]`, `[PGSI1]`..`[PGSI4]`, `[PGSX1]`, `[PGSX2]`;
   `[UNXS1]`..`[UNXS4]`, `[MNSC1]`..`[MNSC3]`, `[STMC1]`, `[STMC2]`.
-- **Calls in progress per account and per access** (the release after
-  2.0.0-rc.89; on by default). Authenticated calls running at once on
+- **Calls in progress per account and per access** (2.0.0-rc.90; on by default). Authenticated calls running at once on
   an API worker (HTTP, socket.io, a batch counted once and its inner
   calls not again) are capped per account
   (`limits.requests.maxInflightPerUser`, default 64) and per access
@@ -296,8 +295,7 @@ Rows whose `detail` should call out the operator-side responsibility
   most once per second `[SIOL8]`.
   These caps bound concurrent work per worker, not request rates: per-token
   request rates on data routes stay at the edge.
-- **Stream tree and stream ids per event** (the release after
-  2.0.0-rc.89; on by default, `0` turns each off). A stream sits at
+- **Stream tree and stream ids per event** (2.0.0-rc.90; on by default, `0` turns each off). A stream sits at
   most `limits.streams.maxDepth` levels deep (default 32, a root
   stream is level 1), on creation and on a move (the moved subtree
   counts); an account holds at most `limits.streams.maxPerAccount`
@@ -421,20 +419,26 @@ front" concern for the authentication and resource paths. A general
 opt-in per-core rate-limit middleware (request rates per token or
 route) remains a backlog candidate, not filed.
 
-## Reference configs (planned)
+## Reference configs (shipped)
 
-While general in-process rate-limiting stays out of scope, a **reference
-reverse-proxy configuration** now ships with the developer site:
-[Rate limiting and DoS protection](https://pryv.github.io/customer-resources/rate-limiting/)
-(nginx + fail2ban, verified end to end against a running core).
+While general in-process rate-limiting stays out of scope, **reference
+reverse-proxy configurations** ship with the developer site:
+[Rate limiting and DoS protection](https://pryv.github.io/customer-resources/rate-limiting/).
 It keys limits on the routes that matter (per IP on login, MFA,
 registration, password reset and access requests; per token on data
 reads and writes), caps bodies and slow clients, returns a JSON 429,
-bans addresses with fail2ban jails reading the nginx logs, gives
+bans addresses with fail2ban jails reading the proxy logs, gives
 limits for three workload profiles (consumer app, B2B research,
-hospital) and a load test that proves each limit fires. HAProxy,
-Cloudflare, Traefik and Caddy apply the same route table; dedicated
-snippets for them are not shipped yet.
+hospital) and a load test that proves each limit fires. The same route
+table ships as an nginx, an HAProxy, a Traefik and a Caddy
+configuration (Caddy with the third-party caddy-ratelimit module), each
+with its fail2ban filters and each verified end to end against a
+running core. Cloudflare is the one edge without a verified
+configuration: the page gives example rate-limiting rules and the
+client-address setup for Cloudflare in front, following Cloudflare's
+documentation, not tested in front of a core. The open-pryv.io
+repository's own `docs/nginx-ingress-sample.conf` is a routing vhost
+that rate limits the OAuth2 endpoints only.
 
 ## Related primitives
 

@@ -372,8 +372,8 @@ of PHI disclosed, purpose. Each field has a Pryv source:
   - description → API method + URL query parameters recorded
     in audit, not the path (for example the id in
     `events.getOne`; the rows of `accesses.update` and
-    `accesses.delete` name the access from the release after
-    open-pryv.io 2.0.0-rc.89). **The audit log does NOT capture
+    `accesses.delete` name the access from open-pryv.io
+    2.0.0-rc.90). **The audit log does NOT capture
     the request body**, so the description is "what was disclosed" at the
     API-shape level (e.g., `events.get` on a given stream),
     not the per-event content, sufficient under §164.528 and
@@ -383,8 +383,7 @@ of PHI disclosed, purpose. Each field has a Pryv source:
     capture catalogue.
   - purpose → `access.clientData.purpose` recorded at grant time
 A record that cannot be written is a disclosure the trail cannot
-account for: it is logged and, from the release after open-pryv.io
-2.0.0-rc.89, counted (see hipaa-security 164.312(b)); it is not
+account for: it is logged and, from open-pryv.io 2.0.0-rc.90, counted (see hipaa-security 164.312(b)); it is not
 recovered.
 To whom access was open, and until when, is on the trail too: from
 the same release each app or shared access the server itself

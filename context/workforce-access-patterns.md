@@ -292,8 +292,8 @@ anything.
    `accesses.delete` deletion since 2.0.0-rc.53, so it leaves a
    deletion record readable with `includeDeletions` `[GA22]`,
    `[GA30]`. A patient who accepts the group's invite again on the same
-   scope replaces the earlier grant (since the release after
-   open-pryv.io 2.0.0-rc.89): the patient's core deletes it with its
+   scope replaces the earlier grant (since open-pryv.io
+   2.0.0-rc.90): the patient's core deletes it with its
    member children once the group's core has taken the new one, the
    group's core deletes through it the children it holds and marks the
    earlier invite `revoked` with `replacedBy`, so no grant is left on

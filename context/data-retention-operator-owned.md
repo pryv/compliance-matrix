@@ -300,9 +300,10 @@ one on gives dormant accounts the full schedule, and lowering it
 restarts the clock; at the deadline the core's sweep re-reads the
 account's use, runs the deletion guards of `auth.delete` (a refusal
 is held and mailed once), then erases exactly as `auth.delete`
-does, relationships torn down included. Since the release after
-open-pryv.io 2.0.0-rc.89 it also reads the holder's setting, the
-schedule and the transfer record again right before acting, and a
+does, relationships torn down included. Since open-pryv.io
+2.0.0-rc.90 it also reads the holder's setting and the
+schedule (with the account transfer, not released yet, also the
+transfer record) again right before acting, and a
 change made meanwhile stops that account's pass. One sweep per
 core, no cluster coordination (an account lives on one core).
 
@@ -357,8 +358,8 @@ core, no cluster coordination (an account lives on one core).
    stops the sweep entirely, holders' own schedules included).
    Build your litigation-hold procedure on those switches, or keep
    the preset off where holds are frequent. For one account (a
-   holder who cannot sign in in time), the release after
-   open-pryv.io 2.0.0-rc.89 adds a support reset, `POST
+   holder who cannot sign in in time), open-pryv.io
+   2.0.0-rc.90 adds a support reset, `POST
    /system/admin/auto-deletion/clear` (admin key, `username`,
    `reason`): by default the pending schedule restarts from now
    with its full period and reminders, the policy unchanged; a
