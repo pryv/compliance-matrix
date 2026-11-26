@@ -267,7 +267,7 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
   the 5 transfer chips stay `planned`.
 - 2026-11-01: transfer merged to open-pryv.io master (`2bd4778b`); still not released (the release
   waits for the Art.14(5)(b) reading); the 5 transfer chips stay `planned`.
-- 2026-11-23: open-pryv.io master `98b286d5` (the release after 2.0.0-rc.89): the support reset
+- 2026-11-23: open-pryv.io master `98b286d5` (2.0.0-rc.90): the support reset
   `system.autoDeletion.reset` (`POST /system/admin/auto-deletion/clear`; the "admin method to
   clear a schedule" the context note listed as later work; not a hold), the sweep's re-read before acting,
   and the transfer claim-invite check (a cancelled or lapsed transfer can no longer be completed

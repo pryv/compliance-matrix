@@ -157,7 +157,7 @@ requirements:
       them lasted until its own expiry. When the group account itself is
       deleted, its members' accesses are deleted on the patient cores
       before the erasure, and no record is kept `[GA40]`. Since the
-      release after open-pryv.io 2.0.0-rc.89 (merged on master
+      release open-pryv.io 2.0.0-rc.90 (merged on master
       `42c6bd03`, not yet released), an access is recorded `absent` only
       when the patient's core confirmed it gone: a refused deletion
       stays `residual` (`peer-rejected`), and so does an access whose
@@ -905,7 +905,7 @@ requirements:
       interactive workforce sessions) with per-grant `access.expires`
       (for app-driven background processes) covers both shapes.
       `auth.sessionMaxAge` counts from the last activity: from the
-      release after open-pryv.io 2.0.0-rc.89, an open socket.io
+      release open-pryv.io 2.0.0-rc.90, an open socket.io
       connection no longer extends the session by itself (its periodic
       re-validation re-checks it without extending it), only calls
       made on it do, and a session that has expired is never extended
@@ -972,7 +972,7 @@ requirements:
       that authenticates its context (the at-rest row it is stored in;
       the bundle's version, salt and nonce) with a pinned 16-byte tag
       `[AREV1]`, `[BNEV1]`. Bundles are written in it from that release;
-      at-rest rows from the release after open-pryv.io 2.0.0-rc.89
+      at-rest rows from open-pryv.io 2.0.0-rc.90
       `[AREV3]` (2.0.0-rc.86 to rc.89 still write them in the first
       version, so a core of the previous release keeps reading them).
 
@@ -1019,7 +1019,7 @@ requirements:
       `[BAUF2]`. A failed write is never replaced by a false error
       record.
 
-      From the release after 2.0.0-rc.89 (open-pryv.io `12b43736`) each
+      From 2.0.0-rc.90 (open-pryv.io `12b43736`) each
       record that could not be written is also counted, by kind and
       cause, with no method, account or message `[ALRC1]`, `[ALRC2]`:
       `GET /system/audit-status` (admin key) answers the totals of the
@@ -1064,7 +1064,7 @@ requirements:
       same pipeline: `sso.login` (user-resolved, in the account's trail)
       and `sso.refused` (pre-identification: no-account / unproved email,
       syslog), so an attempted account takeover through an external
-      identity is itself auditable. From the release after 2.0.0-rc.89 a
+      identity is itself auditable. From 2.0.0-rc.90 a
       sign-in that fails after its account was found (session or hand-off
       not made) is `sso.failed` in that account's trail `[SSOE10]`; before,
       it was `sso.refused` in syslog only.
@@ -1115,7 +1115,7 @@ requirements:
       the sign-in. A refused `accesses.update` / `delete` does not name
       its target. Before this release the server's own writes left the
       triggering call's row, or none. **Account creation, from the
-      release after open-pryv.io 2.0.0-rc.89:** the creation of an
+      release open-pryv.io 2.0.0-rc.90:** the creation of an
       account (registration, `system.createUser`,
       `delegations.createAccount`) is the first record of the account's
       own trail, `account.created` (type `audit-log/account`): how it was
@@ -1191,7 +1191,7 @@ requirements:
       2.0.0-rc.59), both reads that name no account.
 
       **Account auto-deletion, administrator's reset** (the release
-      after open-pryv.io 2.0.0-rc.89). An administrator stopping or
+      open-pryv.io 2.0.0-rc.90). An administrator stopping or
       restarting an account's pending deletion (`POST
       /system/admin/auto-deletion/clear`, admin key) is recorded twice,
       like the external-id release: the admin call itself without a user
@@ -1632,7 +1632,7 @@ requirements:
       `tls-acme-account`; rotation triggers `https.Server.setSecureContext`
       via cluster IPC for live key swap without downtime. The cluster CA
       lives outside the LE chain, operator-rooted, used only between
-      cores. From the release after open-pryv.io 2.0.0-rc.89, a newly
+      cores. From open-pryv.io 2.0.0-rc.90, a newly
       created cluster CA may sign end-entity certificates only
       (`pathlen:0`) `[CLCX1]`, and each node certificate is marked as an
       end entity for TLS server and client authentication, so a core's
@@ -1648,7 +1648,7 @@ requirements:
       narrows accordingly. See `context/webhooks-signal-only.md` for
       the full design rationale + operational caveats (TLS-on-
       delivery, retry semantics, poison-pill protection). From the
-      release after open-pryv.io 2.0.0-rc.89 the calls are also
+      release open-pryv.io 2.0.0-rc.90 the calls are also
       signed, so your receiver can check that a call comes from your
       platform: `webhooks.create` returns a per-webhook secret once
       `[WHSG5]`, every call (retries included) carries a
@@ -1963,7 +1963,7 @@ requirements:
       removed `[DKP1]`. Before 2.0.0-rc.46 the SQLite directory wipe
       erased it, so `keep` behaved like `erase` on SQLite: if you
       relied on `keep` there, audit of accounts deleted earlier is
-      gone. From the release after open-pryv.io 2.0.0-rc.89 the kept
+      gone. From open-pryv.io 2.0.0-rc.90 the kept
       directory also holds an `erased.json` marker (no username) and
       nothing else besides the audit files `[CMCER4]`: while it is
       there no new file is created in the directory, in any process of

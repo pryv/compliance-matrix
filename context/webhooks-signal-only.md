@@ -37,7 +37,7 @@ push-with-content webhooks:
 
 | Concern with push-with-content | Pryv signal-only consequence |
 |---|---|
-| HMAC signing of body so receiver can authenticate the sender | Not required for data protection: no sensitive content in the body to authenticate. Forged signal → at worst an extra authenticated GET that returns the same data. Available all the same from the release after open-pryv.io 2.0.0-rc.89: a per-webhook secret and a `Pryv-Signature` header (see "Signed calls" below). |
+| HMAC signing of body so receiver can authenticate the sender | Not required for data protection: no sensitive content in the body to authenticate. Forged signal → at worst an extra authenticated GET that returns the same data. Available all the same from open-pryv.io 2.0.0-rc.90: a per-webhook secret and a `Pryv-Signature` header (see "Signed calls" below). |
 | Per-delivery nonce + replay window | Not required for data integrity: replayed signal → idempotent GET. Receiver de-dupes by event state. The signature carries a timestamp, so a receiver can refuse a call outside a 300 s window; no nonce. |
 | Token leakage in webhook body | Impossible by construction: tokens stay with the receiver, not in the wire payload. |
 | Body-content tampering by attacker proxy | No sensitive content to tamper with. |
@@ -99,7 +99,7 @@ This is a **data-minimisation** improvement (the receiver is woken only for the
 slices it declared, bounded by its grant) on top of the existing transmission-
 surface narrowing.
 
-## Signed calls (the release after open-pryv.io 2.0.0-rc.89)
+## Signed calls (open-pryv.io 2.0.0-rc.90)
 
 Signal-only keeps data off the push path; it does not tell your receiver that
 a call really comes from your platform. Before this release the only way was a

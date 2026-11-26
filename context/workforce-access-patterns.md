@@ -228,7 +228,7 @@ anything.
    logged, or retried `[GA10]`, `[MA50]`. Asking again for the same
    patient with the same permissions returns the same child while it
    has more than five minutes left; other permissions replace it
-   `[GA11]`. Since the release after open-pryv.io 2.0.0-rc.89 (merged
+   `[GA11]`. Since open-pryv.io 2.0.0-rc.90 (merged
    on master `42c6bd03`, not yet released), a member asking again after
    the patient accepted the group's invite a second time on the same
    scope gets a child through the current grant (named
@@ -267,7 +267,7 @@ anything.
    periodic pass need `cmc.retryLoop.enabled`, `true` by default since
    2.0.0-rc.53; with `false` a warning is logged at boot and a
    residual stays until the child expires `[MR42]`. Since the release
-   after open-pryv.io 2.0.0-rc.89, a child is recorded `absent` only
+   open-pryv.io 2.0.0-rc.90, a child is recorded `absent` only
    when the patient's core confirmed it gone; otherwise it stays
    `residual` with a reason, among them `peer-rejected` (a refusal is no
    longer overturned by the child missing from the grant's list),

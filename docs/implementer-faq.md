@@ -1580,7 +1580,7 @@ exclude list.
    identifiers have no key in the schema, so no code path can
    emit them; a datapoint outside the vocabulary is dropped and
    counted under `telemetry.dropped` rather than sent. From the
-   release after open-pryv.io 2.0.0-rc.89 the counter
+   release open-pryv.io 2.0.0-rc.90 the counter
    `audit.records.lost` (labels `audit.record.kind` and
    `audit.loss.reason`, fixed values) reports audit records that
    could not be written.

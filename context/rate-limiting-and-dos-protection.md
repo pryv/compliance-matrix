@@ -14,7 +14,7 @@ invitation-check budget, a `webhooks.test` interval, a preview
 pixel cap and render concurrency, an SMS cost cap per core and a
 restart backoff for crashing workers; 2.0.0-rc.87 bounds password
 checks per API worker and, on PostgreSQL, the
-database time of an API request; the release after 2.0.0-rc.89 caps the calls
+database time of an API request; 2.0.0-rc.90 caps the calls
 running at once per account, per access and per socket.io connection,
 socket.io connections per access and per account, the nesting and
 size of call parameters, the depth and size of an account's stream
@@ -127,7 +127,7 @@ Rows whose `detail` should call out the operator-side responsibility
 
 - HTTPS body size limits (Express body-parser defaults).
 - Connection timeouts at the Node.js HTTP server layer: Node's
-  defaults, plus, from the release after 2.0.0-rc.89, an idle timeout
+  defaults, plus, from 2.0.0-rc.90, an idle timeout
   on HTTP connections (`http.responseIdleTimeoutMs`, see "Stalled
   readers" below). Slow-client timeouts on requests still belong at
   the proxy.
@@ -174,7 +174,7 @@ Rows whose `detail` should call out the operator-side responsibility
   requests (default 50), and an unread request lives
   `access.unopenedRequestTtl` (600 s) `[RAI1]`, `[RAU1]`. Any read
   opens a request by default, the app's own polls included; from the
-  release after 2.0.0-rc.89, `access.openedOnlyByAuthPage: true`
+  release 2.0.0-rc.90, `access.openedOnlyByAuthPage: true`
   (default `false`) lets only the auth page's read (`?authPage=1`)
   open it, so polling no longer keeps unseen requests alive for the
   hour `[RAU3]`, `[RAU4]` (a courtesy flag anyone can add; the
@@ -196,7 +196,7 @@ Rows whose `detail` should call out the operator-side responsibility
   core (`services.mfa.methods.sms.sendLimits.perCorePerHour`, default
   100, the toll-fraud cost cap) `[MSSL1]`, `[MSSL11]`;
   `webhooks.test` once per webhook interval `[WHTT1]`. From the release
-  after 2.0.0-rc.89, at most `webhooks.maxPerAccess` webhooks per access
+  2.0.0-rc.90, at most `webhooks.maxPerAccess` webhooks per access
   (default 10) and `webhooks.maxPerUser` per account (default 100), past
   either `webhooks.create` answers `400 invalid-operation`, and at most
   `webhooks.maxScopes` scopes per webhook (default 20, `400

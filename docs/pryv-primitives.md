@@ -486,7 +486,7 @@ flow.
   signing, per-delivery nonces, replay windows) for the data-
   integrity dimension. TLS-on-delivery + delivery retry semantics
   still matter operationally.
-- **Signed calls** (the release after open-pryv.io 2.0.0-rc.89): so
+- **Signed calls** (open-pryv.io 2.0.0-rc.90): so
   that a receiver can tell a call comes from the platform,
   `webhooks.create` returns a per-webhook `secret` once, every call
   carries `Pryv-Signature: t=<unix seconds>,v1=<HMAC-SHA256 of t and
@@ -775,7 +775,7 @@ hostings (different countries / cloud regions / on-premise locations).
   acting on their behalf) picks a hosting. The chosen core hosts that
   user's data permanently. `system.users.get` exposes the per-user
   `hosting` field so the implementer can show "your data is in <region>"
-  in the app. From the release after open-pryv.io 2.0.0-rc.89, a
+  in the app. From open-pryv.io 2.0.0-rc.90, a
   registration naming a hosting that no available core serves is refused
   (`400 invalid-parameters-format`, `data.reason` `hosting-unknown` or
   `hosting-unavailable`) before anything is reserved, instead of being
@@ -1064,10 +1064,10 @@ mails (open-pryv.io 2.0.0-rc.66, `8521c8d5`; per-core block
   WARN log line before and after, an `account.autoDeletion.erase` audit row with
   `audit.onUserDelete: keep` `[ADSW17]`; `dryRun` `[ADSW13]`,
   `maxDeletionsPerPass` `[ADSW12]`; an interrupted erasure completes later
-  `[ADSW19]`. Since the release after open-pryv.io 2.0.0-rc.89 it reads the
+  `[ADSW19]`. Since open-pryv.io 2.0.0-rc.90 it reads the
   setting, the schedule and the transfer record again before acting and never
   writes over a change made meanwhile `[ADCLR]`, `[ADCLS]`.
-- **Support reset** (the release after open-pryv.io 2.0.0-rc.89):
+- **Support reset** (open-pryv.io 2.0.0-rc.90):
   `system.autoDeletion.reset` (`POST /system/admin/auto-deletion/clear`, admin
   key) restarts a pending schedule from now, or with `removeSetting: true`
   removes the holder's own one; reasoned, mailed to the holder, recorded in the
