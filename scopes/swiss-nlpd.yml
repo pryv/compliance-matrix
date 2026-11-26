@@ -356,6 +356,16 @@ requirements:
       in; document the legal basis (adequacy decision, BCRs, etc.) on
       the originating access's `clientData.cross_border_basis`.
 
+      **Registration placement (the release after open-pryv.io
+      2.0.0-rc.89).** A registration naming a CH `hosting` is created on
+      an available core of that hosting or refused (`400
+      invalid-parameters-format`, `data.reason` `hosting-unknown` or
+      `hosting-unavailable`), never created on a core of another hosting
+      `[MCHR1]`, `[MC05E]`; earlier releases created it on the core that
+      received the request. A registration without a hosting goes to any
+      available core `[MC05F]`: send the hosting whenever the subject's
+      data must stay in Switzerland.
+
       **Residency guarantee level**: core-level, enforced by
       architecture (see `context/core-affinity-architecture.md`).
       Cores share no event / stream / audit data; the data plane is

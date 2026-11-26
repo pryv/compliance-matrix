@@ -744,6 +744,16 @@ requirements:
       row and the access usage counts `[SKMC]`. Full list on
       `hipaa-security.164.312(b)`.
 
+      **From the release after open-pryv.io 2.0.0-rc.89**: the creation
+      of an account is the first record of its own trail
+      (`account.created`, type `audit-log/account`, ids and fixed words
+      only) `[AACR1]`, `[AACR3]`, `[AACR4]`; a filter listing methods one
+      by one must add it, `account.all` and `all` select it `[AACR7]`.
+      An audit filter entry `<group>.all` whose group is not a whole name
+      (`a.all`, `callBatch.all`) refuses the boot instead of selecting
+      nothing behind a warning `[AFGW]`, so a typo can no longer switch a
+      log off silently.
+
       **Analysis by the account owner (open-pryv.io 2.0.0-rc.84).**
       The owner's `accesses.get` reports, per access, approximate
       lifetime call counts by method (`usage`; never returned to an app
@@ -2071,6 +2081,28 @@ requirements:
       release a platform write that rqlite answers without a result
       (leader unreachable) is an error, where it was silently lost
       `[RQNA1]`.
+
+      **Reads without an answer (the release after open-pryv.io
+      2.0.0-rc.89).** During a leader change, or when a core cannot
+      reach its local rqlited, a platform read that gets no answer is
+      sent again every 100 ms for up to
+      `storages.engines.rqlite.readWaitMs` (default 3000 ms, `0` = one
+      attempt) `[RQNR3]`, `[RQNR4]`, `[RQNR7]`. Still unanswered, the
+      call fails instead of acting on an absent row (a valid invitation
+      or OAuth code read as invalid, a name just reserved read as taken,
+      a held certificate as missing, a core as unknown) `[RQNR1]`,
+      `[RQNR5]`: the API methods, the routing of `/{username}/*`
+      requests, the `/reg/*` routes and the adapter ingress answer `503
+      api-unavailable` with `Retry-After: 2` `[PNAH1]`, `[PNAH2]`,
+      `[IGNA1]`, the OAuth endpoints `503 temporarily_unavailable`
+      `[ORNA1]`, and the embedded DNS `SERVFAIL` with no SOA, keeping the
+      records it holds `[DNNA1]`, `[DNNA2]`, `[DNNA3]`. An unanswered
+      platform write answers the same 503 (was 500). After one read
+      waited in vain, the next fail at once until one is answered, so a
+      long outage does not hold every request for the full wait
+      `[RQNR4]`. What stays yours: retry on 503 with `Retry-After` in
+      your clients and load balancer, and size `readWaitMs` to your
+      measured election time.
 
   - ref: A.8.17
     title: A.8.17 Clock synchronization

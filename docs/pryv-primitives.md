@@ -775,7 +775,13 @@ hostings (different countries / cloud regions / on-premise locations).
   acting on their behalf) picks a hosting. The chosen core hosts that
   user's data permanently. `system.users.get` exposes the per-user
   `hosting` field so the implementer can show "your data is in <region>"
-  in the app.
+  in the app. From the release after open-pryv.io 2.0.0-rc.89, a
+  registration naming a hosting that no available core serves is refused
+  (`400 invalid-parameters-format`, `data.reason` `hosting-unknown` or
+  `hosting-unavailable`) before anything is reserved, instead of being
+  created on the core that received it; a core without a hosting label is
+  the hosting `default`; a registration without a hosting goes to any
+  available core.
 - **Two policies the implementer chooses between**:
   1. **End-user choice**: implementer's registration UI presents the
      available hostings; user picks. Useful for consumer apps where

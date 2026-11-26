@@ -143,6 +143,20 @@ requirements:
       `system.users.get` exposes the per-user hosting so you can surface
       it in the app ("your data is stored in <region>").
 
+      **A hosting no core serves is refused (the release after
+      open-pryv.io 2.0.0-rc.89).** A registration that names a `hosting`
+      is created on an available core of that hosting, whichever core
+      received it. When no available core serves it, the registration is
+      refused (`400 invalid-parameters-format`, `data.reason`
+      `hosting-unknown` or `hosting-unavailable`) before anything is
+      reserved `[MCHR1]`, `[MC05E]`. Earlier releases created the
+      account on the core that received the request, whatever its
+      hosting: a subject could end up under another hosting's rules with
+      no sign of it. A registration without a hosting still goes to any
+      available core `[MC05F]`, and a core without a hosting label is
+      the hosting `default` `[MC05G]`: when your policy binds subjects
+      to a jurisdiction, always send the `hosting` at registration.
+
       Note: even with EU-only hosting, if you have a non-EU establishment
       offering services to EU subjects, Art.3(2) still pulls you into
       GDPR.
@@ -2561,7 +2575,12 @@ requirements:
       | Security measures | covered in Art.32; per core, the effective-configuration document below |
 
       Audit row → access ref (with serial) → consent state at that moment.
-      Recoverable per data-subject + per-time-window + per-purpose.
+      Recoverable per data-subject + per-time-window + per-purpose. From
+      the release after open-pryv.io 2.0.0-rc.89 the per-subject history
+      starts at the account's creation: `account.created` is the first
+      record of a new account's trail (how it was created, its first
+      personal access; ids only) `[AACR1]`, `[AACR3]`, `[AACR4]`.
+      Accounts created earlier have no such record.
 
       **§1(g) general description of technical security measures**
       (the release after open-pryv.io 2.0.0-rc.88, `21fd8085`):
@@ -3583,6 +3602,9 @@ requirements:
       `system.users.get` proves residency for auditor questions.
       Maintenance of which countries currently hold adequacy (EU-US
       DPF, Switzerland, UK, etc.) is operator-side regulatory tracking.
+      From the release after open-pryv.io 2.0.0-rc.89 a registration
+      for a hosting that no available core serves is refused rather
+      than created on another core (see Art.3) `[MCHR1]`, `[MC05E]`.
 
   - ref: Art.46
     title: Transfers subject to appropriate safeguards

@@ -1700,6 +1700,73 @@ coverage), the keyspace table and option statuses of
   Guidelines 07/2020, or guidance on encrypted data follows the Court's
   judgment in C-413/23 P.
 
+### Account creation audit record, hosting refusal, platform reads without an answer (the release after open-pryv.io 2.0.0-rc.89, not yet merged to master; rows walked 2026-11-26)
+
+**Where the work lives**: open-pryv.io branch `integ/round17` (to ship in
+the release after 2.0.0-rc.89; 2.0.0-rc.89 is a hotfix of 2.0.0-rc.88 and
+carries none of this). No `planned:` chip was queued and no proposal
+mirror exists. Changes and their tests:
+- `account.created` (type `audit-log/account`), the first record of a new
+  account's own trail, for a registration, `system.createUser` and
+  `delegations.createAccount`: `components/api-server/src/methods/helpers/
+  accountCreationAudit.ts`; tests `[AACR1]`..`[AACR9]`, `[AACRC]`..`[AACRE]`
+  (`components/api-server/test/audit-account-created.test.js`), `[AACRA]`
+  (`AuditFilter`), `[AACRB]` (breach-scope report).
+- An audit filter group that is not a whole name refuses the boot `[AFGW]`.
+- A registration for a hosting no available core serves is refused (`400
+  invalid-parameters-format`, `data.param: 'hosting'`, `reason`
+  `hosting-unknown` or `hosting-unavailable`): `components/platform/src/
+  Platform.ts` `selectCoreForRegistration`; tests `[MCHR1]`, `[MC05E]`,
+  `[MC05F]`, `[MC05G]` (`reg-multicore.test.js`).
+- Platform reads without an answer wait up to
+  `storages.engines.rqlite.readWaitMs` (3000 ms), then answer `503
+  api-unavailable` with `Retry-After: 2` (OAuth `temporarily_unavailable`,
+  DNS `SERVFAIL`): tests `[RQNR1]`..`[RQNR8]`, `[PNAH1]`..`[PNAH3]`,
+  `[IGNA1]`, `[ORNA1]`, `[DNNA1]`..`[DNNA4]`.
+- Error id `unsupported-operation` (501) replaces `api-unavailable` for an
+  operation a data store does not support `[UNSO1]`; a custom data store's
+  own `@pryv/datastore` copy keeps its error ids `[XDSE1]`..`[XDSE4]`; the
+  OAuth sweep removes an orphan session like a failed code exchange
+  `[OSWM1]`..`[OSWM3]`.
+
+**Walked 2026-11-26** (no tier change; `reviewed_at` unchanged; prose names
+"the release after open-pryv.io 2.0.0-rc.89"; prose only, the test codes
+join `tests:` once the branch is merged to master):
+
+| Scope | Ref | What changed |
+|---|---|---|
+| hipaa-security | 164.312(b) | account creation is the first record of the account's trail; filter, breach-scope and forwarded-registration behaviour |
+| iso-27001 | A.8.15 | `account.created`; a filter group that is not a whole name refuses the boot |
+| gdpr | Art.30 | the per-subject history starts at the account's creation |
+| iso-27001 | A.8.14 | reads without an answer: bounded wait, `503` + `Retry-After`, DNS `SERVFAIL`, `readWaitMs` |
+| gdpr | Art.3 | a hosting no core serves is refused instead of a placement on the receiving core |
+| gdpr | Art.45 | same, one sentence |
+| swiss-nlpd | Art.34 | registration placement for a CH hosting |
+
+Also updated: `docs/pryv-primitives.md` (`data-residency`: the refusal).
+
+Rows walked without a change:
+- `gdpr.Art.44`, `Art.46`: unchanged (they describe where data sits once
+  placed; the placement rule lives on Art.3).
+- Data-store and OAuth rows: unchanged (the error id change, the foreign
+  data-store error ids and the orphan sweep make no matrix claim false).
+
+Section B:
+- **B.1** (changed error id `unsupported-operation`; new refusal reasons
+  `hosting-unknown`, `hosting-unavailable`; a new `503` meaning of
+  `api-unavailable`): cited in the rows above; no row named the former 501
+  id.
+- **B.2** (new audit type `audit-log/account`, listed by the event-type
+  catalogue from data-types 1.4.0): re-walk `hipaa-security.164.312(b)` if
+  the catalogue changes its fields.
+- **B.11** (new config key `storages.engines.rqlite.readWaitMs`): cited on
+  `iso-27001.A.8.14` in prose; add it to that row's `config_keys` at the
+  merge.
+- B.3 to B.10: none.
+At release: replace "the release after open-pryv.io 2.0.0-rc.89" in the
+seven rows and the primitive with the tag, and add the test codes above to
+the rows' `tests:`.
+
 ## Section B: Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued

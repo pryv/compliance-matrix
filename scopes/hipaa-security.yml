@@ -1114,7 +1114,25 @@ requirements:
       exchanged, one-off upgrade tools; personal accesses are recorded by
       the sign-in. A refused `accesses.update` / `delete` does not name
       its target. Before this release the server's own writes left the
-      triggering call's row, or none. Not audited: requests on adapter routes
+      triggering call's row, or none. **Account creation, from the
+      release after open-pryv.io 2.0.0-rc.89:** the creation of an
+      account (registration, `system.createUser`,
+      `delegations.createAccount`) is the first record of the account's
+      own trail, `account.created` (type `audit-log/account`): how it was
+      made (`registration`, `system`, `delegation`), the client address
+      for a registration only, and the first personal access, which
+      starts that access's history; ids and fixed words only `[AACR1]`,
+      `[AACR2]`, `[AACR3]`, `[AACR4]`. A refused registration leaves no
+      record `[AACR5]`; a record that cannot be written is counted as
+      lost and does not fail the creation `[AACR6]`; a registration
+      forwarded to another core is recorded on the core that creates the
+      account `[AACRC]`, `[AACRD]`. Before, the creating call was audited
+      without a user, so the trail of a new account started with its
+      first later call. A filter listing methods one by one leaves it
+      out; `account.all` and `all` select it `[AACR7]`, `[AACRA]`. The
+      breach-scope report lists it without counting it as a call
+      `[AACR8]`, `[AACRB]`. Accounts created earlier have no such record.
+      Not audited: requests on adapter routes
       (the sidecar audits them) and the `421` answers for an account
       served by another core (warning log only). The three address-alias
       methods (rc.76) are audited like any API call `[OPAL2]`.
