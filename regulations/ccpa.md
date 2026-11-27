@@ -75,8 +75,8 @@ your own process outside it).
 
 Where you keep the audit trail after a deletion
 (`audit.onUserDelete: keep`, a §1798.105(d) record-keeping
-exception of yours), from the release after open-pryv.io
-2.0.0-rc.90 the kept trail ends with an `account.deleted` record
+exception of yours), from open-pryv.io
+2.0.0-rc.91 the kept trail ends with an `account.deleted` record
 written before any of the consumer's data goes: who deleted the
 account and the ledger's trigger, plus, for a deletion by the
 consumer, their client address and the personal access that asked;

@@ -1271,7 +1271,7 @@ account held (`external-id-index` primitive), the account gets the
 `external-id-released` mail with the namespace label and the
 reason your administrator gave, never the id, when mail is
 configured (switch `services.email.sendExternalIdReleased` from
-the release after open-pryv.io 2.0.0-rc.90,
+open-pryv.io 2.0.0-rc.91,
 `services.email.enabled.externalIdReleased` up to rc.90; default
 on; template `services.email.externalIdReleasedTemplate`), and an
 `account.externalIds.adminRelease` entry in its own audit trail
@@ -1654,7 +1654,7 @@ deletion guards (a refusal holds the erasure and is mailed once,
 torn down, audit per `audit.onUserDelete`), logs it
 before and after, and with `audit.onUserDelete: keep` writes an
 `account.autoDeletion.erase` row in the account's trail first
-(`[ADSW17]`; from the release after 2.0.0-rc.90 without the
+(`[ADSW17]`; from 2.0.0-rc.91 without the
 username, and followed by `account.deleted`, `[AADL6]`). An
 erasure interrupted halfway, by the sweep or by
 a direct `auth.delete`, is completed at a later pass
@@ -1763,8 +1763,8 @@ everything else in the directory is removed `[DKP1]` (before
 2.0.0-rc.46 the directory wipe erased it, so `keep` behaved like
 `erase` there; open-pryv.io#154).
 
-The kept trail records the erasure itself (the release after
-open-pryv.io 2.0.0-rc.90). Under `keep`, before any of the
+The kept trail records the erasure itself (open-pryv.io
+2.0.0-rc.91). Under `keep`, before any of the
 account's data goes, every erasure (holder, administrator,
 auto-deletion sweep, completion of an unfinished erasure,
 `bin/erasures.js --replay`, repair of an unfinished registration,
@@ -2707,8 +2707,8 @@ open-pryv.io 2.0.0-rc.90 the per-subject history
 starts at the account's creation: `account.created` is the first
 record of a new account's trail (how it was created, its first
 personal access; ids only) `[AACR1]`, `[AACR3]`, `[AACR4]`.
-Accounts created earlier have no such record. From the release
-after open-pryv.io 2.0.0-rc.90 it also records the account's end
+Accounts created earlier have no such record. From open-pryv.io
+2.0.0-rc.91 it also records the account's end
 and its restores: under `audit.onUserDelete: keep`, the kept trail
 ends with `account.deleted` (who, the erasure ledger's trigger)
 `[AADL1]`, `[AADL2]`, and an account restored from a backup gets

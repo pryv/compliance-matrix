@@ -761,8 +761,8 @@ erasure is logged before and after, and kept as an audit row
 where `audit.onUserDelete: keep` (`[ADSW17]`); an erasure
 interrupted halfway is completed at a later pass (`[ADSW19]`),
 and `maxDeletionsPerPass` caps a pass (`[ADSW12]`). The backup
-reach above is unchanged. From the release after open-pryv.io
-2.0.0-rc.90, under `keep`, every destruction of an account (not
+reach above is unchanged. From open-pryv.io
+2.0.0-rc.91, under `keep`, every destruction of an account (not
 only a scheduled one) also writes `account.deleted` in the kept
 trail before any data goes (who, the trigger; ids and fixed words
 only) `[AADL1]`, `[AADL4]`, `[AADL6]`; the scheduled erasure's own
