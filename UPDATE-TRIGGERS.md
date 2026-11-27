@@ -1953,6 +1953,134 @@ Section B:
 Released in open-pryv.io 2.0.0-rc.91 (2026-11-27): the eleven rows, the
 primitive and this entry name that release; merge SHA `803469b0`.
 
+### Access tokens and session ids at rest; PostgreSQL unindexed-user guard by advisory lock (the release after open-pryv.io 2.0.0-rc.91, merged to master `3aa9dd30`, not released; rows walked 2026-11-27)
+
+**Where the work lives**: open-pryv.io master `3aa9dd30` (merged
+2026-11-27, after the 2.0.0-rc.91 tag); both changes ship in the release
+after 2.0.0-rc.91. No `planned:` chip was queued and no proposal exists for
+them.
+
+**Change 1, access tokens and personal session ids at rest.** Up to
+2.0.0-rc.91 they are stored in clear and looked up by value. From the
+release after it:
+- Each one is stored as a keyed hash (HMAC-SHA256 over the account id and
+  the token; the session hash without the account id), the only lookup
+  key, plus an AES-256-GCM copy in the version 2 at-rest envelope, its
+  context binding the account id and the hash; `accesses.get` still
+  returns `token`, clients see no change. Four keys derived by HKDF-SHA256
+  (labels `access-token-hash-v1`, `access-token-enc-v1`,
+  `session-id-hash-v1`, `session-id-enc-v1`) from the new optional SECRET
+  `auth.accessTokensKey` (base64, 32 bytes, YAML only, a placeholder
+  refuses the boot), else from `auth.adminAccessKey`; no unkeyed
+  fallback. Code: `components/business/src/accesses/tokenProtection.ts`,
+  contract `storages/interfaces/_shared/tokenProtection.ts`, engines
+  `storages/engines/{postgresql,sqlite}` (PostgreSQL migrations
+  `20261127_120000` to `20261127_120200`).
+- First start converts every stored token in place before the workers
+  start; with `migrations.autoRunOnStart: false` the core refuses to start
+  while rows wait for the conversion (`node bin/migrate.js up`). A core
+  finding tokens under another key root refuses to start.
+  `bin/access-tokens.js status` / `rekey --previous-key-file <path>` /
+  `unprotect --yes` (rollback to an earlier image).
+- Not covered: backups written by `bin/backup.js` (tokens in clear, so
+  they restore under another key), copies taken before the upgrade, old
+  row versions until `VACUUM` (PostgreSQL `VACUUM (FULL) accesses,
+  sessions;`; SQLite vacuumed at the first start), a PostgreSQL log of
+  bound parameters during the conversion, and tokens held elsewhere (the
+  `/reg/access` polling state, the endpoint of a pending deletion notice to
+  a peer core, CMC credential URLs in `clientData`).
+- Residual accepted by the operator for this release: while
+  `integrity.isActive.accesses` is on (the default), each access row
+  keeps its unkeyed `integrity` hash over the access, token included, so
+  a low-entropy chosen or legacy token can be tested offline from a dump;
+  server-generated tokens are out of reach.
+- Storage interface `baseStorage` goes to version 2: an engine written for
+  version 1 keeps tokens in clear and is refused at boot.
+- Tests: `[TKPA]` (unit; `[TKPA4]` envelope version, `[TKPA5]` optional
+  secret), `[TKBT]` (start logic), `[TKAR]` with `[TKST]`, `[TKSS]`,
+  `[TKMG]`, `[TKTL]`, `[TKSQ]` (`components/storage/test/unit/accessTokensAtRest.test.js`,
+  both engines, raw rows asserted), `[TKAP2]` (cache).
+
+**Change 2, PostgreSQL unindexed-user guard.** `refuse_unindexed_user()`
+takes a shared per-account transaction advisory lock and probes
+`users_index` without a row lock; a new trigger `lock_user_index_removal`
+on `users_index` (`BEFORE DELETE OR UPDATE OF user_id`) takes it
+exclusive, so an erasure still waits for the inserts in flight and no row
+is stored after the index entry is gone. Fewer MultiXacts, no contention
+on one account's index row. If the removal trigger cannot be installed,
+inserts keep the row lock (complete in every state); outside READ
+COMMITTED inserts keep the row lock. A tool that deletes from
+`users_index` with triggers off (`session_replication_role = replica`,
+`pg_restore --disable-triggers`) no longer waits: run it with every
+process stopped. Code `storages/engines/postgresql/src/unindexedWritesGuard.ts`;
+tests `[PGAL1]`..`[PGAL9]` (`storages/engines/postgresql/test/unindexed-user-guard.test.js`),
+`[PGUG*]` unchanged.
+
+**Walked 2026-11-27** (no tier change; `reviewed_at` unchanged; prose
+names "the release after open-pryv.io 2.0.0-rc.91", marked "implemented,
+not released"; prose only at the walk: the test codes and the config key
+join `tests:` / `config_keys:` at the release, as the branches are not on
+the open-pryv.io checkout the validator reads):
+
+| Scope | Ref | What changed |
+|---|---|---|
+| iso-27001 | A.8.5 | new paragraph "Access tokens and session ids at rest": stored form, key root, first-start conversion, key-change refusal, `rekey`, `unprotect`, `status`, copies left in clear, `integrity` residual, tokens held elsewhere (the full operator record; other rows point here) |
+| iso-27001 | A.8.24 | webhook secret sentence no longer says "like the access token"; new paragraph "Changes in the release after open-pryv.io 2.0.0-rc.91" (HKDF labels, envelope context, key id, key inventory, a lost key) |
+| iso-27001 | A.5.17 | new paragraph: the key root in the key inventory, key change needs `rekey`, backups in clear |
+| gdpr | Art.32 | new bullet "Access tokens at rest" (stored form, residual, not covered) |
+| gdpr | Art.17 | "Work still running when the account is erased": the insert no longer holds the index entry by a row lock but a per-account lock the removal takes exclusive; same guarantee; tools deleting from the index with triggers off |
+| hipaa-security | 164.312(a)(2)(iv) | detail: tokens and session ids encrypted at rest by default, backups in clear; technical: code paths and the tool |
+| hipaa-security | 164.312(d) | new paragraph "A stored token no longer authenticates whoever reads the database" (dump, residual, backups) |
+| soc2 | CC6.1 | new paragraph "Credentials at rest", pointer to `iso-27001.A.8.5` |
+
+Also updated: `docs/pryv-primitives.md` (`access`: stored form of the
+token; `encryption-at-rest-secrets`: the same envelope holds the token
+copies), `context/webhooks-signal-only.md` (the webhook secret stored "like
+the access token"), `context/encrypted-offhost-backups.md` and
+`context/operator-backup-coverage.md` (the operator backup still carries
+tokens in clear).
+
+Rows walked without a change:
+- `gdpr.Art.25` (its by-default catalogue lists data-minimising defaults
+  and the encrypted PlatformDB secrets; the token storage is recorded on
+  Art.32), `iso-27001.A.8.11` (keyed hashes of store keys are masking; a
+  token hash is credential protection, recorded on A.8.5).
+- `hipaa-security.164.308(a)(1)(i)` (no row exists for
+  164.308(a)(1)(ii)(B); the residual is on the rows that state the
+  protection), `hipaa-security.164.308(a)(5)(ii)(D)` (password management;
+  no token storage claim).
+- Backup rows (`hipaa-security.164.308(a)(7)(ii)(A)`, `iso-27001.A.8.13`,
+  the `backup-restore` primitive): unchanged, `bin/backup.js` output is
+  unchanged (tokens in clear as before); the context notes above say so.
+- Guard rows: `iso-27001.A.8.10` ("sees any insert that was in flight")
+  and `context/operator-backup-coverage.md` (the PostgreSQL bullet) name
+  no lock mechanism; unchanged. The walk record of 2026-11-21 in B.11
+  keeps its wording (what was cited at the time).
+- Section C: no "Known gap" clause named tokens in clear; the `integrity`
+  residual is not added as one (accepted for this release, no fix
+  scheduled; it is stated on the rows).
+
+Section B:
+- **B.11** (new SECRET config key `auth.accessTokensKey`; storage behaviour
+  of tokens; backup behaviour stated; the guard's lock): the rows above.
+- **B.3** (storage engines: `baseStorage` interface version 2, an engine
+  for version 1 refused at boot): no matrix row names engine interface
+  versions; none changed.
+- B.1 (no new API method; `bin/access-tokens.js` is an operator tool), B.2,
+  B.4 to B.10: none.
+
+At merge: record both merge SHAs here. At release: replace "the release
+after open-pryv.io 2.0.0-rc.91" and "implemented, not released" with the
+tag in the eight rows, the primitives and the three context notes; add
+`auth.accessTokensKey` to the `config_keys:` of `iso-27001.A.8.5`,
+`A.8.24`, `A.5.17` and `hipaa-security.164.312(a)(2)(iv)`; add to
+`tests:` the full codes as they appear in the test files (`TKPA*`,
+`TKBT*`, `TKAR*`, `TKST*`, `TKSS*`, `TKMG*`, `TKTL*`, `TKSQ*`, `TKAP2`)
+on `iso-27001.A.8.5`, `A.8.24`, `hipaa-security.164.312(a)(2)(iv)`,
+`164.312(d)`, and `PGAL1`..`PGAL9` on `gdpr.Art.17`. If the release is
+rolled back to a version before it (`bin/access-tokens.js unprotect`), put
+"stored in clear" back in these places.
+
 ## Section B: Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued

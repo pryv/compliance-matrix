@@ -24,6 +24,17 @@ A grant of permission to act on a user's data.
   open-pryv.io 2.0.0-rc.84 `[AUG1]`, `[AUG3]`), an `integrity` checksum
   (verifiable on the returned form also after an update since 2.0.0-rc.84
   `[AIWF]`; `usage` is not part of it).
+- **Stored form of the token** (the release after open-pryv.io
+  2.0.0-rc.91; implemented, not released): up to 2.0.0-rc.91 access
+  tokens and personal session ids are stored in clear; from the release
+  after it, as a keyed hash (HMAC-SHA256, the lookup key) plus an
+  AES-256-GCM encrypted copy, keys from `auth.accessTokensKey`, else
+  derived from `auth.adminAccessKey`; `accesses.get` still returns the
+  token. The `integrity` checksum still covers the token, so a
+  low-entropy chosen token can be tested offline from a dump; backups
+  written by `bin/backup.js` keep tokens in clear. Operator tool
+  `bin/access-tokens.js` (`status`, `rekey`, `unprotect`). See
+  `iso-27001.A.8.5`.
 - **Compliance role**: the access IS the durable, versioned consent /
   authorization contract. `clientData` can carry the consent text shown +
   the lawful-basis + the purposes + retention metadata. Permissions enforce
@@ -732,6 +743,11 @@ per-key purpose label (TLS certificate and ACME account keys: from
   account-transfer identity to the new id `[RSER16]`. The version 2
   envelope binds an authenticator (TOTP) secret to its purpose key, not
   to its account. Tests: `[AREV1]` to `[AREV3]`.
+- **Access tokens and session ids** (the release after open-pryv.io
+  2.0.0-rc.91; implemented, not released): the same version 2 envelope
+  holds the encrypted copy of each stored access token and personal
+  session id, in the user-data store, under keys derived from
+  `auth.accessTokensKey` (else `auth.adminAccessKey`). See `access`.
 
 ### `encryption-at-rest-user-data`
 

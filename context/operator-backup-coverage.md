@@ -52,7 +52,7 @@ Operator-hosted Express service that wrapped `@pryv/account-backup` 1.0.x behind
 | Resource | Operator `bin/backup.js` | Subject `@pryv/account-backup` v0.7.0 (CLI + webapp) | Notes |
 |---|---|---|---|
 | streams | ✅ raw rows (`storageLayer.streams.exportAll`) | ✅ `/streams[?state=all]` | symmetric coverage; subject sees wire shape, operator sees row shape |
-| accesses (current) | ✅ raw rows | ✅ `/accesses` → `accesses.json` | wire format on subject side carries `clientData.cmc` for CMC counterparties (see CMC row) |
+| accesses (current) | ✅ raw rows | ✅ `/accesses` → `accesses.json` | wire format on subject side carries `clientData.cmc` for CMC counterparties (see CMC row); from the release after open-pryv.io 2.0.0-rc.91 the core stores tokens as a keyed hash plus an encrypted copy, but `bin/backup.js` still writes them in clear (so a backup restores on a core with another key): the operator backup is a credential store, encrypt it |
 | accesses (deletions + expired) | ✅ raw rows (`exportAll` includes soft-deleted) | ✅ **0.5.0+** `/accesses?includeDeletions=true&includeExpired=true` → `accesses-all.json` | adds `accessDeletions[]` array |
 | accesses (per-access history) | ✅ raw history rows | ✅ **0.5.0+** opt-in: `accesses-history/<accessId>.json` per access, fetched via `GET /accesses/<id>?includeHistory=true`. CLI prompts; off by default (O(N) calls) | symmetric coverage when the operator opts in |
 | profile (private + public + per-app) | ✅ raw rows | ✅ `/profile/private` + `/profile/public` + per-app `/profile/app` | symmetric |
