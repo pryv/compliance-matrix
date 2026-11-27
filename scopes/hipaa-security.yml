@@ -551,8 +551,8 @@ requirements:
       version, salt and nonce from 2.0.0-rc.86 on, and a joining core
       must run that release or later to read it `[BNEV1]`.
 
-      **The audit trail across a restore (the release after
-      open-pryv.io 2.0.0-rc.90).** With `audit.onUserDelete: keep`, an
+      **The audit trail across a restore (open-pryv.io
+      2.0.0-rc.91).** With `audit.onUserDelete: keep`, an
       overwrite, a roll-back and the cleanup of a failed restore leave
       the account's audit trail in place (the records written since the
       backup stay, the backup's missing ones are added) `[AARSC]`,
@@ -1039,7 +1039,7 @@ requirements:
       answer `[ALRC7]`. Alert on any value above zero, on every core. A
       counted record is lost, not written later. Not counted: a process
       stopped between the answer and the write, a storage write that
-      never ends (except, from the release after 2.0.0-rc.90, the records
+      never ends (except, from 2.0.0-rc.91, the records
       an erasure writes, counted after 10 seconds `[AADLF]`, `[ADSW28]`),
       a syslog delivery error reported after the call. Under
       `audit.onUserDelete: erase`, a record refused because its account
@@ -1144,8 +1144,8 @@ requirements:
       out; `account.all` and `all` select it `[AACR7]`, `[AACRA]`. The
       breach-scope report lists it without counting it as a call
       `[AACR8]`, `[AACRB]`. Accounts created earlier have no such record.
-      **Account deletion and restore, from the release after open-pryv.io
-      2.0.0-rc.90:** where the trail outlives the account
+      **Account deletion and restore, from open-pryv.io
+      2.0.0-rc.91:** where the trail outlives the account
       (`audit.onUserDelete: keep`), the erasure writes `account.deleted`
       (type `audit-log/account`) in it before any of the account's data
       goes, whatever erases the account (holder, administrator, the
@@ -2019,7 +2019,7 @@ requirements:
       tidy such directories; a restore of the account removes it.
 
       **The kept trail records its own end, and a restore keeps it
-      (from the release after open-pryv.io 2.0.0-rc.90).** With `keep`,
+      (from open-pryv.io 2.0.0-rc.91).** With `keep`,
       every erasure writes `account.deleted` in the kept trail before any
       of the account's data goes (who, the erasure ledger's trigger, ids
       and fixed words only; not written under `erase`) `[AADL1]`,
@@ -2055,7 +2055,7 @@ requirements:
       an `account.autoDeletion.erase` row (username, trigger, whether
       the holder or your preset set the schedule, deadline, when the
       notices were sent) is written in it before the erasure starts
-      (`[ADSW17]`); from the release after 2.0.0-rc.90 it no longer
+      (`[ADSW17]`); from 2.0.0-rc.91 it no longer
       holds the username (the account id stays), and `account.deleted`
       follows it `[AADL6]`. A covered entity that
       enables account auto-deletion keeps `audit.onUserDelete: keep`

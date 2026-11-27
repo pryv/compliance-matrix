@@ -1038,7 +1038,7 @@ throttles), `[EMLK1-2]` (link format), `[CV-GA1-4]` / `[CKCF1-3]` (the
 default-on validator), `[SSOLI7]` (a code-proved address links on first
 sign-in). Config keys: `account.emailVerification.*`,
 `services.email.enabled.verifyEmail` (`services.email.sendVerifyEmail` from
-the release after open-pryv.io 2.0.0-rc.90, see "Mail switches are flat
+open-pryv.io 2.0.0-rc.91, see "Mail switches are flat
 booleans" below), `services.email.emailChallengeTemplate`.
 
 No `proposals/<slug>.md` mirror: the work is **shipped**, not planned, so it
@@ -1809,12 +1809,15 @@ primitive name open-pryv.io 2.0.0-rc.90. Test codes added to `tests:`:
 | gdpr | Art.45 | `MCHR1`, `MC05E` |
 | swiss-nlpd | Art.34 | `MCHR1`, `MC05E`, `MC05F` |
 
-### Mail switches are flat booleans (the release after open-pryv.io 2.0.0-rc.90, not yet merged to master; rows walked 2026-11-26)
+### Mail switches are flat booleans (open-pryv.io 2.0.0-rc.91; rows walked 2026-11-26)
 
-**Merged 2026-11-26** to open-pryv.io master (`0dfd6ec9`), not released.
+**Merged 2026-11-26** to open-pryv.io master (`0dfd6ec9`); **released
+2026-11-27** in open-pryv.io 2.0.0-rc.91, with the 8 switches below that
+are not the account transfer's (the six `sendAccountTransfer...` come with
+the transfer, which rc.91 does not carry).
 
 **Where the work lives**: open-pryv.io branch `feat/email-switches-flat`
-(to ship in the release after 2.0.0-rc.90; rc.90 does not carry it). No
+(shipped in 2.0.0-rc.91; rc.90 does not carry it). No
 `planned:` chip was queued and no proposal mirror exists. Configuration
 change, BREAKING for operators:
 - `services.email.enabled` is always a boolean, the whole-mail switch
@@ -1854,19 +1857,19 @@ Section B:
 - **B.11** (renamed config keys; a former shape that refuses the boot):
   the two rows above; no other row cites a mail switch.
 - B.1 to B.10: none.
-At release: replace "the release after open-pryv.io 2.0.0-rc.90" in the
-`gdpr.Art.12` detail and the primitive with the tag. If the release is
+Released in open-pryv.io 2.0.0-rc.91 (2026-11-27): the `gdpr.Art.12`
+detail and the primitive name that release. If the release is
 rolled back to a version before it, put the former key names back in the
 two rows' `config_keys`.
 
-### Account deletion and restore records in the account's own trail (the release after open-pryv.io 2.0.0-rc.90; rows walked 2026-11-26)
+### Account deletion and restore records in the account's own trail (open-pryv.io 2.0.0-rc.91; rows walked 2026-11-26)
 
-**Merged 2026-11-26** to open-pryv.io master (`803469b0`), not released. Also in that merge: a restore under another
+**Merged 2026-11-26** to open-pryv.io master (`803469b0`); **released 2026-11-27** in open-pryv.io 2.0.0-rc.91. Also in that merge: a restore under another
 user id onto the id of an erased account is refused without `--restore-erased` (`ERLRT`).
 
 **Where the work lives**: open-pryv.io branch
 `feat/audit-account-closing-records` (not merged to master at this walk;
-ships in the release after 2.0.0-rc.90). No `planned:` chip was queued and
+shipped in 2.0.0-rc.91). No `planned:` chip was queued and
 no proposal mirror exists. Changes and their tests:
 - `account.deleted` (type `audit-log/account`), written in the account's
   own trail only under `audit.onUserDelete: keep`, before any of the
@@ -1907,7 +1910,7 @@ no proposal mirror exists. Changes and their tests:
   username: `[ADSW17]`.
 
 **Walked 2026-11-26** (no tier change; `reviewed_at` unchanged; prose
-names "the release after open-pryv.io 2.0.0-rc.90"; the test codes are in
+names "open-pryv.io 2.0.0-rc.91"; the test codes are in
 the rows' `tests:` already, the validator resolving them against the
 open-pryv.io checkout, which held the branch at this walk: **validate with
 open-pryv.io on that branch or on a master that merged it**):
@@ -1947,9 +1950,8 @@ Section B:
   `hipaa-security.164.308(a)(7)(ii)(B)`. No new config key (the 10 s
   bound is not configurable).
 - B.3 to B.10: none.
-At release: replace "the release after open-pryv.io 2.0.0-rc.90" in the
-eleven rows, the primitive and this entry with the tag, and record the
-merge SHA here.
+Released in open-pryv.io 2.0.0-rc.91 (2026-11-27): the eleven rows, the
+primitive and this entry name that release; merge SHA `803469b0`.
 
 ## Section B: Trigger categories (no specific backlog slug yet)
 

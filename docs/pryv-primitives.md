@@ -138,8 +138,8 @@ seeing the identifier. Since open-pryv.io 2.0.0-rc.58
   holder gets an `account.externalIds.adminRelease` entry in its own
   audit trail (namespace and reason, never the value) and the
   `external-id-released` mail when mail is configured
-  (`services.email.sendExternalIdReleased` from the release after
-  open-pryv.io 2.0.0-rc.90, `services.email.enabled.externalIdReleased`
+  (`services.email.sendExternalIdReleased` from open-pryv.io
+  2.0.0-rc.91, `services.email.enabled.externalIdReleased`
   up to rc.90; `externalIdReleasedTemplate`); a failed mail never undoes the release
   `[XIDAR1]`..`[XIDAR6]`, `[XIDS19]`.
 - **Where it lives**: the replicated platform DB holds
@@ -283,8 +283,8 @@ Records API method invocations per user.
   the server makes for itself inside a flow (OAuth consent, sign-in,
   delivery), whose writes are. The server also writes records about the
   account itself in its trail (type `audit-log/account`): its creation
-  (`account.created`, from open-pryv.io 2.0.0-rc.90) and, from the
-  release after 2.0.0-rc.90, its deletion where the trail is kept after it
+  (`account.created`, from open-pryv.io 2.0.0-rc.90) and, from
+  2.0.0-rc.91, its deletion where the trail is kept after it
   (`account.deleted`, `audit.onUserDelete: keep` only) and its restore
   from a backup (`account.restored`). Corrected
   2026-11-24: several places of this matrix said "every API call" and

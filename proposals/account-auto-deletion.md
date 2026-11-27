@@ -214,7 +214,7 @@ and `gdpr.Art.8` (as far as their delegation text names how a controller is set)
    (login), `[ACCF1-8]`, `[CVAD1-4]`, `[CKCF7]` (config), `[ADKS1-6]`, `[ADKR1-4]` (state).
 2. Add `config_keys:` `account.autoDeletion.*` (and `accessTracking.isActive` where inactivity
    is cited), `services.email.enabled.accountDeletion*` (flat `services.email.sendAccountDeletion*`
-   from the release after open-pryv.io 2.0.0-rc.90; the rows cite the new names).
+   from open-pryv.io 2.0.0-rc.91; the rows cite the new names).
 3. Cite the operator page `customer-resources/account-auto-deletion.md` in `docs:` once
    dev-site2 publishes it.
 4. Decide whether a new primitive (`account-auto-deletion`) enters `docs/pryv-primitives.md`.

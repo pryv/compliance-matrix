@@ -298,8 +298,8 @@ requirements:
       is `system.users.delete`'s, guards included (`[ADSW8]`).
       Per-record retention and de-identification stay as above.
 
-      What the audit trail keeps after the deletion, from the release
-      after open-pryv.io 2.0.0-rc.90. With `audit.onUserDelete: erase`
+      What the audit trail keeps after the deletion, from open-pryv.io
+      2.0.0-rc.91. With `audit.onUserDelete: erase`
       (the default) the trail goes with the account and nothing is
       written about the deletion in it `[AADL3]`. With `keep`, the kept
       trail ends with `account.deleted` (who, the erasure ledger's

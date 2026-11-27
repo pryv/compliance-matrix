@@ -491,8 +491,8 @@ requirements:
       itself brought back `[ERLT3]`. A change of the ledger key
       disarms the lookup, the restore check and the replay for older
       records unless the old key is kept; the lookup counts them
-      (`otherKeyRecords`) `[ERLA6]`. See gdpr.Art.17. From the release
-      after open-pryv.io 2.0.0-rc.90, where you keep the account's audit
+      (`otherKeyRecords`) `[ERLA6]`. See gdpr.Art.17. From open-pryv.io
+      2.0.0-rc.91, where you keep the account's audit
       trail after the deletion (`audit.onUserDelete: keep`), that trail
       also records it: `account.deleted`, written before any data goes,
       with the same trigger as the ledger `[AADL1]`, `[AADL4]`, `[AADLD]`;
@@ -693,8 +693,8 @@ requirements:
       admin-key rotations: a purged record, or one under an older key,
       no longer stops a restore.
 
-      **The audit trail across a restore (the release after
-      open-pryv.io 2.0.0-rc.90).** Each account a restore brings back
+      **The audit trail across a restore (open-pryv.io
+      2.0.0-rc.91).** Each account a restore brings back
       and keeps gets an `account.restored` record in its own trail, after
       the backup's records: the date of the backup's data, `target`
       (`new`, or `existing` with `--overwrite`) and `afterErasure` (with
@@ -776,7 +776,7 @@ requirements:
       nothing behind a warning `[AFGW]`, so a typo can no longer switch a
       log off silently.
 
-      **From the release after open-pryv.io 2.0.0-rc.90**: where the
+      **From open-pryv.io 2.0.0-rc.91**: where the
       trail outlives the account (`audit.onUserDelete: keep`), it ends
       with a record of the deletion (`account.deleted`: who, the erasure
       ledger's trigger; for a holder's deletion, the client address and
