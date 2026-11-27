@@ -30,9 +30,13 @@ A grant of permission to act on a user's data.
   after it, as a keyed hash (HMAC-SHA256, the lookup key) plus an
   AES-256-GCM encrypted copy, keys from `auth.accessTokensKey`, else
   derived from `auth.adminAccessKey`; `accesses.get` still returns the
-  token. The `integrity` checksum still covers the token, so a
-  low-entropy chosen token can be tested offline from a dump; backups
-  written by `bin/backup.js` keep tokens in clear. Operator tool
+  token. The `integrity` checksum covers the token; in the same
+  release (merged to master `9ba4429a`, not released) it is sealed
+  at rest the same way (the returned value is unchanged), audit records
+  of access creations carry the key only, and deleted accesses and
+  their earlier versions keep no token, so a dump no longer lets a
+  low-entropy chosen token be tested offline. Backups written by
+  `bin/backup.js` keep tokens in clear. Operator tool
   `bin/access-tokens.js` (`status`, `rekey`, `unprotect`). See
   `iso-27001.A.8.5`.
 - **Compliance role**: the access IS the durable, versioned consent /
@@ -213,6 +217,16 @@ The set of stream+level tuples carried by an access.
 - **Granularity**: per `streamId` (incl. wildcards like `*`).
 - **Enforcement**: blocked at the API surface; every read/write request
   is checked against the access's permissions for the relevant streams.
+- **Events in several streams**: reads hide an event from an app or
+  shared access when one of its streams is held at `none` or
+  `create-only` (own grant or inherited), or when it lies outside the
+  forced streams of an access migrated from v1. From the release after
+  open-pryv.io 2.0.0-rc.91 (merged to master `9ba4429a`, not
+  released) `events.update`, `events.delete` and
+  `events.deleteAttachment` refuse such an event with the same
+  `403 forbidden`; up to 2.0.0-rc.91 `contribute` on any one of its
+  streams was enough to write it. Series appends and `streams.delete`
+  keep their own rules. See `iso-27001.A.8.3`.
 - **Compliance role**: technical purpose-limitation control. The
   consent-granted scope is the scope the API enforces, not a policy /
   documentation control.
@@ -747,7 +761,11 @@ per-key purpose label (TLS certificate and ACME account keys: from
   2.0.0-rc.91; implemented, not released): the same version 2 envelope
   holds the encrypted copy of each stored access token and personal
   session id, in the user-data store, under keys derived from
-  `auth.accessTokensKey` (else `auth.adminAccessKey`). See `access`.
+  `auth.accessTokensKey` (else `auth.adminAccessKey`). See `access`. In
+  the same release (merged to master `9ba4429a`, not released) it also
+  holds each access's stored `integrity` value (bound to the account)
+  and the endpoint of a pending revoke notice to a peer platform (bound
+  to the notice), under two more keys derived from the same root.
 
 ### `encryption-at-rest-user-data`
 

@@ -2871,7 +2871,16 @@ requirements:
           store-prefixed spelling of an account field was not
           recognised by them, so an access holding `contribute` on the
           email field could change the primary email (the
-          password-reset address) through the events API.
+          password-reset address) through the events API. From the
+          release after open-pryv.io 2.0.0-rc.91 (merged to master
+          `9ba4429a`, not released) `events.update`, `events.delete`
+          and `events.deleteAttachment` refuse an event that
+          `events.getOne` hides from the access (one of its streams
+          held at `none` or `create-only`, or outside an access's
+          forced streams) with the same `403 forbidden`; up to
+          2.0.0-rc.91 `contribute` on any one of its streams let an app
+          or shared access change or delete an event it was not
+          allowed to read (see `iso-27001.A.8.3`).
         - Integrity of stored records: IMPLEMENTED for the built-in
           stores, an `events.update`, a trash (a shared-secret event
           excepted, trashed by compare-and-set) or an attachment
@@ -3013,18 +3022,27 @@ requirements:
           set, else from `auth.adminAccessKey`; the keys never enter
           the database and clients see no change. A database dump or a
           stolen data file then holds no server-generated token in
-          clear. Residual: while access integrity is on
-          (`integrity.isActive.accesses`, the default), each access row
-          also keeps an unkeyed `integrity` hash over the access, token
-          included, so a low-entropy token chosen by a caller, or a
-          short legacy one, can still be tested offline from a dump;
-          generated tokens are out of reach. Not covered: backups
-          written by `bin/backup.js` (tokens in clear: encrypt them),
-          copies taken before the upgrade, and tokens held elsewhere
-          (the `/reg/access` polling state, pending deletion notices to
-          a peer core, CMC credential URLs in an access's
-          `clientData`). Upgrade, key change and rollback: see
-          `iso-27001.A.8.5`.
+          clear. In the same release (merged to master `9ba4429a`,
+          not released) the copies next to the tokens go too: the
+          stored `integrity` of an access (an unkeyed hash over the
+          access, token included, against which a low-entropy token
+          chosen by a caller, or a short legacy one, could be tested
+          offline from a dump) is sealed the same way, the audit record
+          of an access creation carries the access key only (the hash
+          is removed from the records already stored), deleted accesses
+          and their earlier versions keep no token, and the endpoint of
+          a pending revoke notice to a peer platform is sealed while it
+          waits. A dump then holds no value to test a guessed token
+          against, whoever chose the token. The sign-in polling state
+          of `/reg/access` is held in memory only, never at rest. Not
+          covered: backups written by `bin/backup.js` (tokens in clear:
+          encrypt them), copies taken before the upgrade (dumps,
+          backups, syslog lines already sent), and credentials held
+          elsewhere in the stores (CMC credential URLs in an access's
+          `clientData`, the retry queue of an account's CMC deliveries
+          for up to about 30 hours, a token handed over through a
+          one-time shared secret until it is consumed). Upgrade, key
+          change and rollback: see `iso-27001.A.8.5`.
         - Data residency: CONFIGURABLE, multi-hosting puts data where
           your subjects (or your policy) require, bounding exposure
           surface.

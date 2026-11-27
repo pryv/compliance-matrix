@@ -1993,7 +1993,10 @@ release after it:
   `integrity.isActive.accesses` is on (the default), each access row
   keeps its unkeyed `integrity` hash over the access, token included, so
   a low-entropy chosen or legacy token can be tested offline from a dump;
-  server-generated tokens are out of reach.
+  server-generated tokens are out of reach. Closed in the same release by
+  the next entry (sealed `integrity`, audit copy removed, deleted
+  accesses without token, pending deletion notices sealed; the
+  `/reg/access` polling state turned out to be memory only).
 - Storage interface `baseStorage` goes to version 2: an engine written for
   version 1 keeps tokens in clear and is refused at boot.
 - Tests: `[TKPA]` (unit; `[TKPA4]` envelope version, `[TKPA5]` optional
@@ -2080,6 +2083,156 @@ on `iso-27001.A.8.5`, `A.8.24`, `hipaa-security.164.312(a)(2)(iv)`,
 `164.312(d)`, and `PGAL1`..`PGAL9` on `gdpr.Art.17`. If the release is
 rolled back to a version before it (`bin/access-tokens.js unprotect`), put
 "stored in clear" back in these places.
+
+### Token copies next to the tokens at rest; event writes follow event reads (the release after open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not released; rows walked 2026-11-27)
+
+**Where the work lives**: open-pryv.io master `9ba4429a` (merged
+2026-11-27, after the 2.0.0-rc.91 tag, with the entry above); ships in the
+release after 2.0.0-rc.91. No `planned:` chip was queued and no proposal
+exists for these changes.
+
+**Change 1, the token copies left by the entry above.**
+- The stored `integrity` of an access is sealed at rest: `sealed:<kid>.`
+  plus a version 2 envelope (AES-256-GCM, key by HKDF-SHA256 label
+  `access-integrity-enc-v1` from the same key root as the tokens, context
+  binding the account id), opened when the access is read; the API, backups
+  and `bin/integrity-check.js` see the same `ACCESS:0:...` value. A dump no
+  longer holds a value to test a guessed token against; a database-only
+  writer can no longer compute a matching value for an altered access. An
+  access query by an integrity value is refused. PostgreSQL migration
+  `20261127_120400` (indexes, then the pass).
+- The audit record of `accesses.create` carries `content.record.key` only;
+  the copy of the integrity hash is no longer written and is removed from
+  stored records, in whichever engine holds the audit (PostgreSQL migration
+  `20261127_120500` plus a cheap statement at every start; SQLite one walk
+  with a marker file and VACUUM). Syslog lines already sent and earlier
+  exports keep it.
+- Deleted accesses and the history rows of a deleted access keep no token
+  (dropped at deletion, at the first start for earlier deletions, and at a
+  restore); the deletion record's integrity is computed without the token
+  and verifies as returned (`[AIWN]` changed accordingly).
+  `bin/hfs-author-scrub.js` must run before the first start on a core from
+  before 2.0.0-rc.40 that never ran it.
+- The endpoint of a pending revoke notice to a peer platform is sealed while
+  pending (label `outbound-credential-enc-v1`, context binding the notice
+  id); one that does not open is given up unsent
+  (`cmc-notice-credential-unreadable`).
+- The `/reg/access` polling state is held in the memory of each core's
+  master process, never at rest: the clause naming it as a stored token copy
+  was wrong and is removed from the rows.
+- Still in clear in the stores: CMC credential URLs in `clientData`, the
+  retry queue of an account's CMC deliveries (up to about 30 h), a token
+  handed over through a one-time shared secret until consumed, and backups
+  written by `bin/backup.js`.
+- `bin/access-tokens.js` `status` / `rekey` / `unprotect` cover integrity
+  values and notices; `rekey` goes on past an unreadable integrity value,
+  names it and exits 2.
+- Tests: `[TKPA6]`, `[TKBT4]`, `[TKIN]`, `[TKIM1]`, `[TKIR1]`, `[TKUP1]`,
+  `[TKDL]`, `[TKDN]`, `[TKIA]` (both engines where the engine applies),
+  `[AIWN]` (changed).
+
+**Change 2, event writes follow event reads.** `events.update`,
+`events.delete` and `events.deleteAttachment` refuse an event that
+`events.getOne` hides from an app or shared access (one of its streams at
+`none` or `create-only`, own grant or inherited; or outside the forced
+streams of an access migrated from v1, judged per store), with the same
+`403 forbidden`; up to 2.0.0-rc.91 `contribute` on any one of its streams
+was enough. A deleted event's id answers `404 unknown-resource`. Events of
+the CMC and delegation plugin-internal subtrees answer `404
+unknown-resource` to these writes for every access, personal included, as
+`events.getOne`; `events.deleteAttachment` applies the refusals of
+`events.delete`. Kept by design: HF series appends by a `create-only` or
+`contribute` producer, and `streams.delete` within its `manage` scope.
+Code `components/business/src/accesses/canReadEvent.ts`
+(`isEventHiddenByGrants`), `components/api-server/src/methods/events.ts`;
+tests `[WRHD]`, `[WRFD]`, `[SRCU]` (`[SRC7]`, `[SRC8]`), `[SRDX]` (`[SRD7]`),
+`[DLIW]`, `[CRFS]`.
+
+**Change 3, follow-ups of the entry above**: start checks read indexes
+only (PostgreSQL migration `20261127_120300`, `ANALYZE` after a
+conversion), a conversion pass safe with two masters, unreadable token rows
+reported per access by `bin/integrity-check.js`, `bin/access-tokens.js
+--config`. No row states start-check cost or the conversion's
+concurrency; not row-relevant.
+
+**Walked 2026-11-27** (no tier change; `reviewed_at` unchanged; prose
+names "the release after open-pryv.io 2.0.0-rc.91, merged to master
+`9ba4429a`, not released"; prose only at the walk, test codes join
+`tests:` at the release):
+
+| Scope | Ref | What changed |
+|---|---|---|
+| iso-27001 | A.8.5 | the `integrity` residual paragraph becomes "The remaining token copies": sealed integrity, audit copy removed, deleted accesses without token (with the `hfs-author-scrub` step), sealed notices, `/reg/access` memory only, what stays in clear, VACUUM; `status` / `rekey` / `unprotect` cover the new values |
+| iso-27001 | A.8.24 | the "Changes in the release after" paragraph: two more HKDF labels, envelope contexts, a lost key also loses the sealed integrity values and pending notices |
+| iso-27001 | A.8.3 | new paragraph "Writes on an event the access cannot read" (the full record; other rows point here) |
+| iso-27001 | A.5.15 | new paragraph "Writes follow reads on events in several streams", pointer to A.8.3 |
+| gdpr | Art.32 | "Access tokens at rest" bullet: residual closed, `/reg/access` corrected, what stays in clear; access-control bullet: event writes follow reads |
+| hipaa-security | 164.312(a)(1) | new paragraph "Writes on an event the access cannot read" |
+| hipaa-security | 164.312(a)(2)(iv) | detail: integrity and notice endpoints encrypted the same way; technical: seal helper and migrations |
+| hipaa-security | 164.312(c)(1) | access paragraph: deletion records verify as returned, stored value sealed (an altered access cannot get a matching value from the database alone), audit record key only, integrity-off case |
+| hipaa-security | 164.312(d) | the residual sentence reads closed by the companion change; short chosen tokens still to replace (online guessing) |
+| soc2 | CC6.1 | "Credentials at rest": residual closed, what stays in clear |
+| soc2 | CC6.3 | new paragraph "Least privilege on events in several streams" (correction: the overview's "cannot touch out-of-scope data" did not hold for such writes) |
+
+Also updated: `docs/pryv-primitives.md` (`access`: integrity sealed, audit
+key only, deleted accesses without token; `encryption-at-rest-secrets`: the
+envelope also holds integrity values and notice endpoints; `permissions`:
+new "Events in several streams" bullet), `context/operator-backup-coverage.md`
+(deletion and history rows of deleted accesses carry no token),
+`context/cmc-consent-primitives.md` (internal events answer 404 to writes),
+`context/delegation-model.md` (internal events answer 404 to writes, root
+keeps `delegation-managed-resource`).
+
+Rows walked without a change:
+- `iso-27001.A.5.17` (key inventory: the key root is the same; the lost-key
+  consequence is on A.8.24), `iso-27001.A.8.11` (masking, not credential
+  protection).
+- Audit-content rows (`iso-27001.A.8.15` and `A.8.11`, "access ref +
+  integrity hash", `gdpr.Art.33` breach-scope "integrity hashes",
+  `context/event-history.md`, `context/privacy-by-design-and-default.md`):
+  they describe event writes, unchanged; an access creation's record now
+  holds less (the key only), which no row claims otherwise.
+- Backup rows (`hipaa-security.164.308(a)(7)(ii)(A)`, `iso-27001.A.8.13`,
+  the `backup-restore` primitive) and `context/encrypted-offhost-backups.md`:
+  `bin/backup.js` still writes live tokens in clear and the integrity value
+  in its public form; unchanged.
+- `context/webhooks-signal-only.md`: the webhook secret comparison holds.
+- `context/core-affinity-architecture.md`,
+  `context/cross-border-platformdb-implications.md`: already say the
+  `/reg/access` state is core-local memory (`cluster_kv`); unchanged.
+- Event-write rows of the rectification and erasure family (`gdpr.Art.16`,
+  `Art.17`, `swiss-nlpd`, `ccpa`, `pipeda`, `iso-27701`, `hipaa-privacy`
+  amendment rows, `soc2.PI1.*`): they describe what the owner or a granted
+  access does with `events.update` / `events.delete`; a writer that could
+  not read the event is refused, nothing they claim changes.
+- `iso-27001.A.5.18`, `soc2.CC6.2`, `iso-27001.A.5.16`: lifecycle of access
+  rights and identities unchanged.
+- Section C: no "Known gap" clause named the integrity residual or the
+  any-one-stream write rule.
+
+Section B:
+- **B.11** (storage and backup behaviour of credentials: sealed integrity,
+  deleted tokens, sealed notices; audit storage content): the rows above.
+- **B.1**: no new API method; `events.update`, `events.delete`,
+  `events.deleteAttachment` change their refusals (existing error ids
+  `forbidden`, `unknown-resource`, `cmc-protected-event-write`,
+  `emails-reserved-stream`, `shared-secret-immutable`), cited where the rows
+  need them.
+- B.2 to B.10: none (`baseStorage` interface unchanged by these changes).
+
+At release: replace "the release after open-pryv.io 2.0.0-rc.91, merged to
+master `9ba4429a`, not released" with the tag in the eleven rows, the
+three primitives and the four context notes (together with the entry
+above); add to `tests:` the full codes as they appear in the test files:
+`TKPA6`, `TKBT4`, `TKIN*`, `TKIM1`, `TKIR1`, `TKUP1`, `TKDL*`, `TKDN*`,
+`TKIA*` on `iso-27001.A.8.5`, `hipaa-security.164.312(a)(2)(iv)`,
+`164.312(d)`; `AIWN` stays on `hipaa-security.164.312(c)(1)`; `WRN*`,
+`WRC*`, `WRR1`, `WRP1`, `WRD1`, `WRF*`, `SRC7`, `SRC8`, `SRD7`, `DLI1`,
+`DLI2`, `CRF*` on `iso-27001.A.8.3`, `A.5.15`,
+`hipaa-security.164.312(a)(1)`, `soc2.CC6.3`, `gdpr.Art.32`. If the release
+is rolled back (`bin/access-tokens.js unprotect` writes the integrity
+values and notice endpoints back in clear; dropped tokens stay dropped),
+restore the residual wording of the entry above.
 
 ## Section B: Trigger categories (no specific backlog slug yet)
 

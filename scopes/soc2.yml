@@ -438,10 +438,14 @@ requirements:
       2.0.0-rc.91; implemented, not released). Access tokens and
       personal session ids are stored as a keyed hash plus an encrypted
       copy, no longer in clear, so a copy of the database does not hand
-      out working generated tokens. Residuals (a low-entropy chosen
-      token tested against the stored `integrity` hash, backups written
-      by `bin/backup.js` in clear) and the operator steps are on
-      `iso-27001.A.8.5`.
+      out working generated tokens. In the same release (merged to
+      master `9ba4429a`, not released) the stored `integrity` hash of
+      an access, against which a low-entropy chosen token could
+      otherwise be tested offline, is sealed too, audit records of
+      access creations no longer copy it, and deleted accesses keep no
+      token. What stays in clear (backups written by `bin/backup.js`,
+      cross-account credential URLs in an access's `clientData`) and
+      the operator steps are on `iso-27001.A.8.5`.
 
       **Delegate-account access path.** Account delegation
       (`open-pryv.io/components/delegation/`) lets one account hold an
@@ -644,6 +648,22 @@ requirements:
       along into the target parent's inherited permissions, so the
       "cannot touch out-of-scope data" property above did not hold for
       stream moves.
+
+      **Least privilege on events in several streams** (the release
+      after open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not
+      released). `events.update`, `events.delete` and
+      `events.deleteAttachment` now refuse an event that `events.getOne`
+      hides from the access (one of its streams held at `none` or
+      `create-only`, own grant or inherited, or the event outside the
+      forced streams of an access migrated from v1), with the same
+      `403 forbidden`, and leave it as it was. Up to 2.0.0-rc.91
+      `contribute` on any one of the event's streams was enough, so the
+      "cannot touch out-of-scope data" property above did not hold for
+      writes on such events: a `none` or `create-only` grant kept the
+      event out of reads, not out of updates and deletions. Personal
+      accesses are unchanged; what is kept by design (series appends,
+      `streams.delete` within its `manage` scope) is on
+      `iso-27001.A.8.3`.
 
       **OAuth2 revoke + refresh-chain teardown.** For delegated apps,
       the durable consent behind an OAuth2 grant is a cross-account CMC

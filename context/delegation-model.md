@@ -105,7 +105,12 @@ routes, and no `delegation/*`-typed event may be written by any token
 `{streamId}`, and logical `{any|all|not}`), because its mirror events carry a
 control-channel bearer that must never reach a client; and a wildcard `*`
 event read excludes the hidden plugin-internal namespaces so a broad read
-cannot exfiltrate them either.
+cannot exfiltrate them either. From the release after open-pryv.io
+2.0.0-rc.91 (merged to master `9ba4429a`, not released) `events.update`,
+`events.delete` and `events.deleteAttachment` on an internal event answer
+`404 unknown-resource` for every access, personal included, as
+`events.getOne` does (they answered `400 delegation-managed-resource`); an
+event on the namespace root keeps `delegation-managed-resource`.
 
 Since open-pryv.io 2.0.0-rc.56 these guards judge the stream an id resolves
 to, whatever spelling a request uses: the store-prefixed form (`:local:<id>`,
