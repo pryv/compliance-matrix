@@ -759,6 +759,26 @@ it, a child granted to that access at a lower level moved along
 into the target parent's inherited permissions, reaching accesses
 that had not been granted it.
 
+**Writes on an event the access cannot read** (the release after
+open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not
+released). An event in several streams is hidden from an app or
+shared access when one of its streams is held at `none` or
+`create-only` (own grant or inherited), or lies outside the forced
+streams of an access migrated from v1. Up to 2.0.0-rc.91
+`events.update`, `events.delete` and `events.deleteAttachment`
+accepted such an event on `contribute` on any one of its other
+streams, so a program could change or delete ePHI it had not been
+granted to read. From that release they refuse it with the error
+`events.getOne` gives (`403 forbidden`), the event left as it was;
+personal accesses are unchanged. Events of the plugin-internal
+subtrees of cross-account consent and account delegation answer
+`404 unknown-resource` to these writes for every access, as to
+reads, and `events.deleteAttachment` applies the refusals of
+`events.delete`. Kept by design: high-frequency points appended
+by a producer with `create-only` or `contribute` on one stream of
+a series event (no content returned), and `streams.delete` within
+its `manage` scope. See `iso-27001.A.8.3`.
+
 **Apps granted access through a delegation.** When a delegate
 grants a software program access to the controlled account, the
 program receives an ordinary `app` access bound to the requested
@@ -1023,9 +1043,16 @@ longer stores them in clear but as a keyed hash plus an
 AES-256-GCM encrypted copy, on by default with nothing to
 configure (keys from `auth.accessTokensKey`, else derived from
 `auth.adminAccessKey`), so a database dump no longer hands out a
-server-generated credential that reads ePHI. Backups written by
-`bin/backup.js` still carry tokens in clear: encrypt them. Upgrade,
-rollback and residuals: `iso-27001.A.8.5`.
+server-generated credential that reads ePHI. In the same release
+(merged to master `9ba4429a`, not released) the stored
+`integrity` of each access, an unkeyed hash that covers its token,
+and the endpoint of a pending revoke notice to a peer platform are
+encrypted the same way, deleted accesses keep no token, and audit
+records of access creations carry the access key only, so a dump
+no longer lets a weak chosen token be tested offline either.
+Backups written by `bin/backup.js` still carry tokens in clear:
+encrypt them. Upgrade, rollback and what stays in clear:
+`iso-27001.A.8.5`.
 
 Longer-term direction: end-to-end encryption where the server never
 holds plaintext, research direction tracked under internal backlog
@@ -1048,7 +1075,10 @@ Access tokens and session ids at rest (the release after
 open-pryv.io 2.0.0-rc.91): `open-pryv.io/components/business/src/accesses/tokenProtection.ts`
 (contract in `open-pryv.io/storages/interfaces/_shared/tokenProtection.ts`),
 the same version 2 envelope; operator tool `bin/access-tokens.js`
-(`status`, `rekey`, `unprotect`).
+(`status`, `rekey`, `unprotect`). Sealed access `integrity` and
+pending revoke-notice endpoints (merged to master `9ba4429a`):
+the same module, `open-pryv.io/storages/interfaces/_shared/deletionNoticeSeal.ts`,
+PostgreSQL migrations `20261127_120400` and `20261127_120500`.
 
 **Evidence**
 
@@ -1459,10 +1489,24 @@ reports them).
 update (composite `id` and `modifiedBy`), on `accesses.update`,
 `accesses.get`, `accesses.getOne` (current and older versions,
 `includeHistory`) and deletion records `[AIWF]`, `[AIWG]`,
-`[AIWK]`, `[AIWM]` (a copy returned without its token, as a
-deletion record is, verifies once a holder of the token restores
-it `[AIWN]`); before, the value of an updated access was
-computed on the stored form and a client could not verify it. The
+`[AIWK]`, `[AIWM]` (up to 2.0.0-rc.91 a copy returned without its
+token, as a deletion record is, verifies once a holder of the token
+restores it; from the release after open-pryv.io 2.0.0-rc.91,
+merged to master `9ba4429a`, not released, a deletion record
+keeps no token and its value is computed without it, so it
+verifies as returned `[AIWN]`); before, the value of an updated
+access was computed on the stored form and a client could not
+verify it. From that same release the stored access value is
+sealed at rest (authenticated encryption under a key outside the
+database, bound to the account) and opened when read: a writer of
+the database alone can no longer write a matching value for an
+access it altered (putting back a whole earlier copy of the row
+still goes unnoticed), and
+the audit record of an access creation names the access by its key
+only (it no longer copies the value). With access integrity off, a
+deletion record keeps the value it had, which no longer verifies;
+`bin/integrity-check.js` reports such records if integrity is
+switched on again. The
 upgrade recomputes the stored values once (a PostgreSQL migration,
 a one-shot pass on SQLite), rewriting a row only when it holds the
 previous form's value; anything else is left for
@@ -1619,11 +1663,16 @@ session ids sit in clear in the user-data store, so a database
 dump or a stolen data file is a set of working credentials. From
 this release the core stores a keyed hash (the lookup key) and an
 encrypted copy instead; clients see no change. A dump then yields
-no generated token. A low-entropy token chosen by a caller, or a
-short legacy one, can still be tested offline against the access's
-stored `integrity` hash while access integrity is on (the
-default): replace short chosen tokens. Backups written by
-`bin/backup.js` still hold tokens in clear. Details in
+no generated token. Without the companion change of the same
+release (merged to master `9ba4429a`, not released), a
+low-entropy token chosen by a caller, or a short legacy one, could
+still be tested offline against the access's stored `integrity`
+hash while access integrity is on (the default); with it, that
+hash is sealed too, the audit record of an access creation no
+longer copies it, and deleted accesses keep no token, so a dump
+yields no value to test a guessed token against. Short chosen
+tokens remain weak against online guessing: replace them. Backups
+written by `bin/backup.js` still hold tokens in clear. Details in
 `iso-27001.A.8.5`.
 
 **A second authentication path, OAuth2.** Beyond the token +
