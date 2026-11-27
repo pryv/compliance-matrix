@@ -393,6 +393,12 @@ section of example rules, not tested in front of a core): both sentences
 name the four verified configurations and the untested Cloudflare rules.
 When the client-IP attribution changes (trusted-proxy list),
 refresh the page's "How Pryv reads the client IP" paragraph.
+**2026-11-27:** the page gained a "Cores in different regions" note (one edge per
+region where data-residency or transfer rules differ; dev-site2 `c062c9f`,
+unpublished), and open-pryv.io's reference vhost `docs/nginx-ingress-sample.conf`
+now matches the OAuth endpoints case-insensitively with an optional trailing
+slash (master `dafdad41`, unreleased). The recipe backlog has no item left; rows
+unchanged (the contribution stays facilitated).
 
 **Trigger fired (2026-10-13):** open-pryv.io 2.0.0-rc.47 introduced in-code
 budgets keyed on the client address read through `http.trustedProxies` only,
