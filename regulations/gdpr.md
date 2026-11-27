@@ -1884,9 +1884,17 @@ while it is erased can no longer store data for it. On
 PostgreSQL the database refuses a new row for an id the users
 index does not hold, in the events, streams, accesses, profile,
 webhooks, account-field, password and store-key tables `[PGUG1]`;
-the erasure removes the index entry first and an insert in flight
-holds that entry until it commits, so the data removal after it
-sees the row `[PGUG3]`. An erased account stays refused until it
+the erasure removes the index entry first and waits for the
+inserts in flight for that account to commit, so the data removal
+after it sees their rows `[PGUG3]` (up to 2.0.0-rc.91 each insert
+held the index entry with a row lock; from the release after it,
+a shared per-account lock that the index removal takes exclusive,
+so concurrent writers of one account no longer contend on that
+entry; same guarantee, implemented, not released; from that
+release a tool that deletes from the users index with triggers
+off, `session_replication_role = replica` or `pg_restore
+--disable-triggers`, no longer waits for inserts in flight: run
+it with every process stopped). An erased account stays refused until it
 is restored `[PGUG6]`, a write that bypasses the CMC guard is
 refused as for a gone account `[CMCER6]`, and an event's stream
 links are written only while the event exists `[PGUG9]`. Not
@@ -3089,6 +3097,28 @@ Per-aspect:
     An optional signature (passphrase or client-computed HMAC
     whose verifier secret never reaches the server) adds a
     second factor to the redemption.
+  - Access tokens at rest: IMPLEMENTED from the release after
+    open-pryv.io 2.0.0-rc.91 (implemented, not released; up to
+    2.0.0-rc.91 the core stores access tokens and personal
+    session ids in clear). Every access token and personal
+    session id is stored as a keyed hash (HMAC-SHA256, the only
+    lookup key) plus an AES-256-GCM encrypted copy bound to its
+    account, under keys derived from `auth.accessTokensKey` when
+    set, else from `auth.adminAccessKey`; the keys never enter
+    the database and clients see no change. A database dump or a
+    stolen data file then holds no server-generated token in
+    clear. Residual: while access integrity is on
+    (`integrity.isActive.accesses`, the default), each access row
+    also keeps an unkeyed `integrity` hash over the access, token
+    included, so a low-entropy token chosen by a caller, or a
+    short legacy one, can still be tested offline from a dump;
+    generated tokens are out of reach. Not covered: backups
+    written by `bin/backup.js` (tokens in clear: encrypt them),
+    copies taken before the upgrade, and tokens held elsewhere
+    (the `/reg/access` polling state, pending deletion notices to
+    a peer core, CMC credential URLs in an access's
+    `clientData`). Upgrade, key change and rollback: see
+    `iso-27001.A.8.5`.
   - Data residency: CONFIGURABLE, multi-hosting puts data where
     your subjects (or your policy) require, bounding exposure
     surface.

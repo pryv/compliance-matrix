@@ -107,8 +107,10 @@ secret placed in the webhook URL. From open-pryv.io 2.0.0-rc.90 each webhook can
 
 - **The secret.** `webhooks.create` returns `secret` (`whsec_` followed by 32
   random bytes in base64url) in its result, once; no other method returns it
-  `[WHSG5]`, `[WHSG8]`. It is stored with the webhook in the account's
-  database, like the access token, and travels with a server backup, so a
+  `[WHSG5]`, `[WHSG8]`. It is stored in clear with the webhook in the account's
+  database (as access tokens are up to 2.0.0-rc.91; from the release after it,
+  access tokens are stored as a keyed hash plus an encrypted copy, the webhook
+  secret is not), and travels with a server backup, so a
   restore keeps signing with the same value `[WHSR5]`; a deleted webhook keeps
   no secret `[WHSR4]`. It never enters the messages the API processes exchange
   to start or reload a webhook `[WHSG7]`, `[WHSM1]`.

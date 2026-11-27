@@ -1017,6 +1017,16 @@ The platform-secret at-rest encryption (Let's Encrypt account keys,
 observability tokens, cluster bootstrap bundles) remains on by
 default (`encryption-at-rest-secrets`).
 
+Access tokens and personal session ids (the release after
+open-pryv.io 2.0.0-rc.91; implemented, not released): the core no
+longer stores them in clear but as a keyed hash plus an
+AES-256-GCM encrypted copy, on by default with nothing to
+configure (keys from `auth.accessTokensKey`, else derived from
+`auth.adminAccessKey`), so a database dump no longer hands out a
+server-generated credential that reads ePHI. Backups written by
+`bin/backup.js` still carry tokens in clear: encrypt them. Upgrade,
+rollback and residuals: `iso-27001.A.8.5`.
+
 Longer-term direction: end-to-end encryption where the server never
 holds plaintext, research direction tracked under internal backlog
 slug `E2E-ENCRYPTION` (proxy re-encryption); per-row impact in
@@ -1034,6 +1044,11 @@ at-rest rows from open-pryv.io 2.0.0-rc.90 `[AREV3]`, which every
 core of a platform must reach from 2.0.0-rc.86 or later
 (2.0.0-rc.86 to rc.89 wrote them in the first version, so a core of
 the previous release kept reading them).
+Access tokens and session ids at rest (the release after
+open-pryv.io 2.0.0-rc.91): `open-pryv.io/components/business/src/accesses/tokenProtection.ts`
+(contract in `open-pryv.io/storages/interfaces/_shared/tokenProtection.ts`),
+the same version 2 envelope; operator tool `bin/access-tokens.js`
+(`status`, `rekey`, `unprotect`).
 
 **Evidence**
 
@@ -1596,6 +1611,20 @@ tokens Pryv generates (access, personal and password-reset
 tokens) are drawn from the system's secure random source
 (`node:crypto`), never from a non-cryptographic fallback, in the
 same shape as before `[SCTK2]`, `[SCTK3]`.
+
+**A stored token no longer authenticates whoever reads the
+database (the release after open-pryv.io 2.0.0-rc.91; implemented,
+not released).** Up to 2.0.0-rc.91 access tokens and personal
+session ids sit in clear in the user-data store, so a database
+dump or a stolen data file is a set of working credentials. From
+this release the core stores a keyed hash (the lookup key) and an
+encrypted copy instead; clients see no change. A dump then yields
+no generated token. A low-entropy token chosen by a caller, or a
+short legacy one, can still be tested offline against the access's
+stored `integrity` hash while access integrity is on (the
+default): replace short chosen tokens. Backups written by
+`bin/backup.js` still hold tokens in clear. Details in
+`iso-27001.A.8.5`.
 
 **A second authentication path, OAuth2.** Beyond the token +
 MFA stack above, Pryv can authenticate delegated apps through a

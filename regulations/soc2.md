@@ -406,6 +406,15 @@ child accesses and not strippable via `accesses.update`, lets
 you exclude designated access classes from minting shared
 secrets at all.
 
+**Credentials at rest** (the release after open-pryv.io
+2.0.0-rc.91; implemented, not released). Access tokens and
+personal session ids are stored as a keyed hash plus an encrypted
+copy, no longer in clear, so a copy of the database does not hand
+out working generated tokens. Residuals (a low-entropy chosen
+token tested against the stored `integrity` hash, backups written
+by `bin/backup.js` in clear) and the operator steps are on
+`iso-27001.A.8.5`.
+
 **Delegate-account access path.** Account delegation
 (`open-pryv.io/components/delegation/`) lets one account hold an
 owner-equivalent delegate token over another. It rides the same
