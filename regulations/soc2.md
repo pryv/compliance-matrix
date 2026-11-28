@@ -406,12 +406,11 @@ child accesses and not strippable via `accesses.update`, lets
 you exclude designated access classes from minting shared
 secrets at all.
 
-**Credentials at rest** (the release after open-pryv.io
-2.0.0-rc.91; implemented, not released). Access tokens and
-personal session ids are stored as a keyed hash plus an encrypted
-copy, no longer in clear, so a copy of the database does not hand
-out working generated tokens. In the same release (merged to
-master `9ba4429a`, not released) the stored `integrity` hash of
+**Credentials at rest** (from open-pryv.io 2.0.0-rc.92). Access
+tokens and personal session ids are stored as a keyed hash plus an
+encrypted copy, no longer in clear, so a copy of the database does
+not hand out working generated tokens. In the same release the
+stored `integrity` hash of
 an access, against which a low-entropy chosen token could
 otherwise be tested offline, is sealed too, audit records of
 access creations no longer copy it, and deleted accesses keep no
@@ -638,9 +637,8 @@ along into the target parent's inherited permissions, so the
 "cannot touch out-of-scope data" property above did not hold for
 stream moves.
 
-**Least privilege on events in several streams** (the release
-after open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not
-released). `events.update`, `events.delete` and
+**Least privilege on events in several streams** (from
+open-pryv.io 2.0.0-rc.92). `events.update`, `events.delete` and
 `events.deleteAttachment` now refuse an event that `events.getOne`
 hides from the access (one of its streams held at `none` or
 `create-only`, own grant or inherited, or the event outside the
@@ -736,7 +734,7 @@ removed `[DCH12]`. In open-pryv.io 2.0.0-rc.23.
 
 **Evidence**
 
-- tests: AA01, AA02, ACCP, DCH06, DCH08, DCH09, DCH12, CMCMA, GA02, GA12, GA14, GA15, GA20, MB21, MB34, SMV1, SMV2, SMV3, SMV4, SMV10, OE31, OSUB3, PMRG2, ORVK1, ORET1, ORL04, ORF1, ORGP1, OCR02, OCMD18, OPAL4
+- tests: AA01, AA02, ACCP, DCH06, DCH08, DCH09, DCH12, CMCMA, GA02, GA12, GA14, GA15, GA20, MB21, MB34, SMV1, SMV2, SMV3, SMV4, SMV10, OE31, OSUB3, PMRG2, ORVK1, ORET1, ORL04, ORF1, ORGP1, OCR02, OCMD18, OPAL4, WRHD, WRR1, WRP1, WRD1, WRFD, WRF1, WRF2, WRF3, WRF4, WRF5, SRC7, SRC8, SRD7, DLI1, DLI2, CRFS, CRF1, CRF2, CRF3, CRF4
 - config keys: oauth.refreshRetireGraceSeconds, oauth.clientRevokeCheckSeconds
 - derives from: iso-27001.A.5.15, iso-27001.A.5.18, iso-27001.A.5.3
 - primitives: access, permissions, system-streams, audit, delegation, CMC

@@ -92,7 +92,7 @@ the core backed up, as they are stored: usernames and unique values are
 keyed hashes with `platform.piiMode: hashed` (the default), in clear
 otherwise, and indexed values are as given (see `context/cross-border-platformdb-implications.md`,
 Tier 1), and the per-user files carry access tokens (in clear, also from
-the release after open-pryv.io 2.0.0-rc.91, where the core itself stores
+open-pryv.io 2.0.0-rc.92, where the core itself stores
 them as a keyed hash plus an encrypted copy), webhook signing
 secrets and encrypted second-factor secrets (see
 `context/operator-backup-coverage.md`).

@@ -551,8 +551,7 @@ Pattern 3. What it means for the consent record:
   membership included, cannot update or delete a
   `consent/member-access-cmc` or `consent/member-revoke-cmc` event,
   nor delete an inbox or internal event (`cmc-protected-event-write`)
-  `[GA42]`, `[CHD1]`. From the release after open-pryv.io 2.0.0-rc.91
-  (merged to master `9ba4429a`, not released) an internal event
+  `[GA42]`, `[CHD1]`. From open-pryv.io 2.0.0-rc.92 an internal event
   answers `events.update`, `events.delete` and `events.deleteAttachment`
   with `404 unknown-resource` for every access, personal included, as
   `events.getOne` does; inbox events and member records keep

@@ -3204,11 +3204,11 @@ webhooks, account-field, password and store-key tables `[PGUG1]`;
 the erasure removes the index entry first and waits for the
 inserts in flight for that account to commit, so the data removal
 after it sees their rows `[PGUG3]` (up to 2.0.0-rc.91 each insert
-held the index entry with a row lock; from the release after it,
-a shared per-account lock that the index removal takes exclusive,
-so concurrent writers of one account no longer contend on that
-entry; same guarantee, implemented, not released; from that
-release a tool that deletes from the users index with triggers
+held the index entry with a row lock; from open-pryv.io
+2.0.0-rc.92, a shared per-account lock that the index removal
+takes exclusive, so concurrent writers of one account no longer
+contend on that entry; same guarantee `[PGAL1]` to `[PGAL9]`; from
+that release a tool that deletes from the users index with triggers
 off, `session_replication_role = replica` or `pg_restore
 --disable-triggers`, no longer waits for inserts in flight: run
 it with every process stopped). An erased account stays refused until it
@@ -3301,7 +3301,7 @@ auth/delete.ts` (middleware registration).
 
 **Evidence**
 
-- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, ERMK5, PGUG1, PGUG3, PGUG6, PGUG9, CMCER6, ERLG3, ERLG4, ERLG5, ERLG6, ERLG7, ERLG8, ERLG9, ERLA1, ERLA2, ERLA3, ERLA4, ERLA5, ERLA6, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT1, ERLT2, ERLT3, ERLT4, ADCL3, ADCL5, ADCL6, ADCLH, ADCLI, ADCLR, ADCLS, ADCLQ, AADL1, AADL2, AADL3, AADL5, AADL6, AADL7, AADL9, AADLF, AARS5, AARSC, AARSD
+- tests: USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, ERMK5, PGUG1, PGUG3, PGUG6, PGUG9, CMCER6, ERLG3, ERLG4, ERLG5, ERLG6, ERLG7, ERLG8, ERLG9, ERLA1, ERLA2, ERLA3, ERLA4, ERLA5, ERLA6, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT1, ERLT2, ERLT3, ERLT4, ADCL3, ADCL5, ADCL6, ADCLH, ADCLI, ADCLR, ADCLS, ADCLQ, AADL1, AADL2, AADL3, AADL5, AADL6, AADL7, AADL9, AADLF, AARS5, AARSC, AARSD, PGAL1, PGAL2, PGAL3, PGAL4, PGAL5, PGAL6, PGAL7, PGAL8, PGAL9
 - docs: customer-resources/account-auto-deletion.md, customer-resources/backup.md
 - config keys: storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass, accountErasure.ledger.enabled, accountErasure.ledger.retentionDays, accountErasure.ledger.hmacKey
 - primitives: event, stream, backup-restore, external-id-index, account-auto-deletion
@@ -4282,9 +4282,8 @@ Per-aspect:
     store-prefixed spelling of an account field was not
     recognised by them, so an access holding `contribute` on the
     email field could change the primary email (the
-    password-reset address) through the events API. From the
-    release after open-pryv.io 2.0.0-rc.91 (merged to master
-    `9ba4429a`, not released) `events.update`, `events.delete`
+    password-reset address) through the events API. From
+    open-pryv.io 2.0.0-rc.92 `events.update`, `events.delete`
     and `events.deleteAttachment` refuse an event that
     `events.getOne` hides from the access (one of its streams
     held at `none` or `create-only`, or outside an access's
@@ -4423,18 +4422,17 @@ Per-aspect:
     An optional signature (passphrase or client-computed HMAC
     whose verifier secret never reaches the server) adds a
     second factor to the redemption.
-  - Access tokens at rest: IMPLEMENTED from the release after
-    open-pryv.io 2.0.0-rc.91 (implemented, not released; up to
-    2.0.0-rc.91 the core stores access tokens and personal
-    session ids in clear). Every access token and personal
+  - Access tokens at rest: IMPLEMENTED from open-pryv.io
+    2.0.0-rc.92 (up to 2.0.0-rc.91 the core stores access tokens
+    and personal session ids in clear). Every access token and personal
     session id is stored as a keyed hash (HMAC-SHA256, the only
     lookup key) plus an AES-256-GCM encrypted copy bound to its
     account, under keys derived from `auth.accessTokensKey` when
     set, else from `auth.adminAccessKey`; the keys never enter
     the database and clients see no change. A database dump or a
     stolen data file then holds no server-generated token in
-    clear. In the same release (merged to master `9ba4429a`,
-    not released) the copies next to the tokens go too: the
+    clear. In the same release the copies next to the tokens go
+    too: the
     stored `integrity` of an access (an unkeyed hash over the
     access, token included, against which a low-entropy token
     chosen by a caller, or a short legacy one, could be tested
@@ -4629,7 +4627,7 @@ Per-aspect:
 
 **Evidence**
 
-- tests: HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3, WHSG2, WHSG5, WHSG6, WHSR1, CFE2, CFE5, CFE8, CFC3, CFC7
+- tests: HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3, WHSG2, WHSG5, WHSG6, WHSR1, CFE2, CFE5, CFE8, CFC3, CFC7, WRHD, WRR1, WRP1, WRD1, WRFD, WRF1, WRF2, WRF3, WRF4, WRF5, SRC7, SRC8, SRD7, DLI1, DLI2, CRFS, CRF1, CRF2, CRF3, CRF4
 - docs: customer-resources/auth-oauth2.md, customer-resources/adapter-routes.md
 - config keys: hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount, oauth.audienceBoundSessions, oauth.stateKey, oauth.perUserIssuer, oauth.clientMetadataDocuments.mode, adapterRoutes
 - primitives: permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion, webhooks
@@ -7742,9 +7740,8 @@ it, a child granted to that access at a lower level moved along
 into the target parent's inherited permissions, reaching accesses
 that had not been granted it.
 
-**Writes on an event the access cannot read** (the release after
-open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not
-released). An event in several streams is hidden from an app or
+**Writes on an event the access cannot read** (open-pryv.io
+2.0.0-rc.92). An event in several streams is hidden from an app or
 shared access when one of its streams is held at `none` or
 `create-only` (own grant or inherited), or lies outside the forced
 streams of an access migrated from v1. Up to 2.0.0-rc.91
@@ -7854,7 +7851,7 @@ Pattern 3.
 
 **Evidence**
 
-- tests: AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10, MAAC, CMCGA, CMCMA, GA01, GA10, GA11, GA12, GA14, GA15, GA16, GA17, MA20, MA22, GA24, GA31, MB10, MB12, MB13, CNRP1, CNRP6, CNRP7, DSC05, ASA1, ASA2, ASA3, ASA6, CNM2B, RQ32, SMV1, SMV4, OE31, OSUB1, OSUB3, ACSW1, ACSW2, OACR1, OACR2, AL13, OPSE5, OPUE2, OPAL2, ORF1, OTX05, OTXE04, OTXE02
+- tests: AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10, MAAC, CMCGA, CMCMA, GA01, GA10, GA11, GA12, GA14, GA15, GA16, GA17, MA20, MA22, GA24, GA31, MB10, MB12, MB13, CNRP1, CNRP6, CNRP7, DSC05, ASA1, ASA2, ASA3, ASA6, CNM2B, RQ32, SMV1, SMV4, OE31, OSUB1, OSUB3, ACSW1, ACSW2, OACR1, OACR2, AL13, OPSE5, OPUE2, OPAL2, ORF1, OTX05, OTXE04, OTXE02, WRHD, WRR1, WRP1, WRD1, WRFD, WRF1, WRF2, WRF3, WRF4, WRF5, SRC7, SRC8, SRD7, DLI1, DLI2, CRFS, CRF1, CRF2, CRF3, CRF4
 - config keys: cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl, cmc.memberAccess.ratePerMinute, cmc.memberAccess.mintBurst, cmc.memberAccess.askRatePerMinute, cmc.memberAccess.askBurst, cmc.memberAccess.maxInFlightPerMembership, cmc.memberAccess.allowNameOnly, cmc.retryLoop.enabled, oauth.clientRevokeCheckSeconds, oauth.audienceBoundSessions, adapterRoutes
 - primitives: access, permissions, system-streams, delegation, CMC
 - context notes: per-engine-isolation, delegation-model, workforce-access-patterns
@@ -8020,14 +8017,13 @@ The platform-secret at-rest encryption (Let's Encrypt account keys,
 observability tokens, cluster bootstrap bundles) remains on by
 default (`encryption-at-rest-secrets`).
 
-Access tokens and personal session ids (the release after
-open-pryv.io 2.0.0-rc.91; implemented, not released): the core no
-longer stores them in clear but as a keyed hash plus an
+Access tokens and personal session ids (from open-pryv.io
+2.0.0-rc.92): the core no longer stores them in clear but as a keyed hash plus an
 AES-256-GCM encrypted copy, on by default with nothing to
 configure (keys from `auth.accessTokensKey`, else derived from
 `auth.adminAccessKey`), so a database dump no longer hands out a
 server-generated credential that reads ePHI. In the same release
-(merged to master `9ba4429a`, not released) the stored
+the stored
 `integrity` of each access, an unkeyed hash that covers its token,
 and the endpoint of a pending revoke notice to a peer platform are
 encrypted the same way, deleted accesses keep no token, and audit
@@ -8054,19 +8050,19 @@ at-rest rows from open-pryv.io 2.0.0-rc.90 `[AREV3]`, which every
 core of a platform must reach from 2.0.0-rc.86 or later
 (2.0.0-rc.86 to rc.89 wrote them in the first version, so a core of
 the previous release kept reading them).
-Access tokens and session ids at rest (the release after
-open-pryv.io 2.0.0-rc.91): `open-pryv.io/components/business/src/accesses/tokenProtection.ts`
+Access tokens and session ids at rest (open-pryv.io
+2.0.0-rc.92): `open-pryv.io/components/business/src/accesses/tokenProtection.ts`
 (contract in `open-pryv.io/storages/interfaces/_shared/tokenProtection.ts`),
 the same version 2 envelope; operator tool `bin/access-tokens.js`
 (`status`, `rekey`, `unprotect`). Sealed access `integrity` and
-pending revoke-notice endpoints (merged to master `9ba4429a`):
+pending revoke-notice endpoints (same release):
 the same module, `open-pryv.io/storages/interfaces/_shared/deletionNoticeSeal.ts`,
 PostgreSQL migrations `20261127_120400` and `20261127_120500`.
 
 **Evidence**
 
-- tests: ACMEINT, BUNDLEENC, CERTUTILS, AREV3
-- config keys: CEV_ENABLED, letsEncrypt.atRestKey, storages.engines.postgresql.ssl
+- tests: ACMEINT, BUNDLEENC, CERTUTILS, AREV3, TKPA1, TKPA2, TKPA3, TKPA4, TKPA5, TKPA6, TKBT1, TKBT2, TKBT3, TKBT4, TKAR, TKST1, TKST2, TKST3, TKST4, TKST5, TKST6, TKST7, TKST8, TKST9, TKSS1, TKSS2, TKSS3, TKSS4, TKSS5, TKMG1, TKMG2, TKMG3, TKMG4, TKMG5, TKMG6, TKMG7, TKMG8, TKTL1, TKTL2, TKTL3, TKTL4, TKTL5, TKTL6, TKTL7, TKSQ1, TKSQ2, TKSQ3, TKAP2, TKIN0, TKIN1, TKIN2, TKIN3, TKIN4, TKIN5, TKIN6, TKIN7, TKIN8, TKIN9, TKIM1, TKIR1, TKUP1, TKDL1, TKDL2, TKDL3, TKDL4, TKDL5, TKDN1, TKDN2, TKDN3, TKDN4, TKDN5, TKIA1, TKIA2, TKIA3, TKIA4
+- config keys: CEV_ENABLED, letsEncrypt.atRestKey, storages.engines.postgresql.ssl, auth.accessTokensKey
 - primitives: encryption-at-rest-user-data, encryption-at-rest-secrets, letsEncrypt-integration
 
 **Planned changes**
@@ -8474,8 +8470,7 @@ update (composite `id` and `modifiedBy`), on `accesses.update`,
 `includeHistory`) and deletion records `[AIWF]`, `[AIWG]`,
 `[AIWK]`, `[AIWM]` (up to 2.0.0-rc.91 a copy returned without its
 token, as a deletion record is, verifies once a holder of the token
-restores it; from the release after open-pryv.io 2.0.0-rc.91,
-merged to master `9ba4429a`, not released, a deletion record
+restores it; from open-pryv.io 2.0.0-rc.92 a deletion record
 keeps no token and its value is computed without it, so it
 verifies as returned `[AIWN]`); before, the value of an updated
 access was computed on the stored form and a client could not
@@ -8640,14 +8635,13 @@ tokens) are drawn from the system's secure random source
 same shape as before `[SCTK2]`, `[SCTK3]`.
 
 **A stored token no longer authenticates whoever reads the
-database (the release after open-pryv.io 2.0.0-rc.91; implemented,
-not released).** Up to 2.0.0-rc.91 access tokens and personal
-session ids sit in clear in the user-data store, so a database
-dump or a stolen data file is a set of working credentials. From
-this release the core stores a keyed hash (the lookup key) and an
-encrypted copy instead; clients see no change. A dump then yields
-no generated token. Without the companion change of the same
-release (merged to master `9ba4429a`, not released), a
+database (from open-pryv.io 2.0.0-rc.92).** Up to 2.0.0-rc.91
+access tokens and personal session ids sit in clear in the
+user-data store, so a database dump or a stolen data file is a set
+of working credentials. From 2.0.0-rc.92 the core stores a keyed
+hash (the lookup key) and an encrypted copy instead; clients see no
+change. A dump then yields no generated token. Without the
+companion change of the same release, a
 low-entropy token chosen by a caller, or a short legacy one, could
 still be tested offline against the access's stored `integrity`
 hash while access integrity is on (the default); with it, that
@@ -8758,7 +8752,7 @@ open-pryv.io 2.0.0-rc.23.
 
 **Evidence**
 
-- tests: MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3, CLIB2, PCLM1, PCLM2, OPCL2, OPCL3, OPCL4, TKMN1, SCTK2, SCTK3
+- tests: MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3, CLIB2, PCLM1, PCLM2, OPCL2, OPCL3, OPCL4, TKMN1, SCTK2, SCTK3, TKPA1, TKPA2, TKPA3, TKPA4, TKPA5, TKPA6, TKBT1, TKBT2, TKBT3, TKBT4, TKAR, TKST1, TKST2, TKST3, TKST4, TKST5, TKST6, TKST7, TKST8, TKST9, TKSS1, TKSS2, TKSS3, TKSS4, TKSS5, TKMG1, TKMG2, TKMG3, TKMG4, TKMG5, TKMG6, TKMG7, TKMG8, TKTL1, TKTL2, TKTL3, TKTL4, TKTL5, TKTL6, TKTL7, TKSQ1, TKSQ2, TKSQ3, TKAP2, TKIN0, TKIN1, TKIN2, TKIN3, TKIN4, TKIN5, TKIN6, TKIN7, TKIN8, TKIN9, TKIM1, TKIR1, TKUP1, TKDL1, TKDL2, TKDL3, TKDL4, TKDL5, TKDN1, TKDN2, TKDN3, TKDN4, TKDN5, TKIA1, TKIA2, TKIA3, TKIA4
 - docs: customer-resources/mfa.md#assurance-level-of-each-method
 - config keys: services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds, oauth.signingKeys, oauth.idTokenTTL, oauth.stateKey, oauth.perUserIssuer, auth.passwordCheckConcurrency, auth.passwordCheckQueue
 - primitives: access, MFA, system-streams, delegation
@@ -9999,9 +9993,8 @@ subtree is refused for every access `[SMV10]`. Before it, a child
 granted to the moving access at a lower level travelled into the
 target parent's inherited permissions.
 
-**Writes follow reads on events in several streams** (the release
-after open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not
-released). `events.update`, `events.delete` and
+**Writes follow reads on events in several streams** (open-pryv.io
+2.0.0-rc.92). `events.update`, `events.delete` and
 `events.deleteAttachment` refuse an event that `events.getOne`
 hides from the access (one of its streams at `none` or
 `create-only`, or outside an access's forced streams), with the
@@ -10046,7 +10039,7 @@ cannot manage accesses and is deleted when the membership ends
 
 **Evidence**
 
-- tests: AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CMCGA, CMCMA, GA12, GA14, GA15, GA20, GA24, MB10, CNRP1, CNRP6, CNRP7, DSC05, ASA3, ASA6, SMV1, SMV4, SMV10, OE31, OSUB3, OACR1, AL13, OPUE2, OTX05, OTXE02
+- tests: AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CMCGA, CMCMA, GA12, GA14, GA15, GA20, GA24, MB10, CNRP1, CNRP6, CNRP7, DSC05, ASA3, ASA6, SMV1, SMV4, SMV10, OE31, OSUB3, OACR1, AL13, OPUE2, OTX05, OTXE02, WRHD, WRR1, WRP1, WRD1, WRFD, WRF1, WRF2, WRF3, WRF4, WRF5, SRC7, SRC8, SRD7, DLI1, DLI2, CRFS, CRF1, CRF2, CRF3, CRF4
 - config keys: cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl, oauth.audienceBoundSessions
 - primitives: access, permissions, system-streams, delegation, CMC
 - context notes: delegation-model, workforce-access-patterns
@@ -10162,9 +10155,8 @@ to the moving access at a lower level (`read`, `create-only`,
 held on the target parent. Renames and updates that keep the
 current `parentId` are unchanged.
 
-**Writes on an event the access cannot read** (the release after
-open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not
-released). An event can sit in several streams. `events.getOne`
+**Writes on an event the access cannot read** (open-pryv.io
+2.0.0-rc.92). An event can sit in several streams. `events.getOne`
 hides it from an app or shared access when one of its streams is
 held at `none` or `create-only` (own grant or inherited), or, for
 an access migrated from v1 that carries forced streams, when the
@@ -10191,7 +10183,7 @@ in a stream the access cannot read. Tests `[WRHD]`, `[WRFD]`,
 
 **Evidence**
 
-- tests: AA01, AA02, ACCP, SMV1, SMV2, SMV3, SMV4, SMV5, SMV10
+- tests: AA01, AA02, ACCP, SMV1, SMV2, SMV3, SMV4, SMV5, SMV10, WRHD, WRR1, WRP1, WRD1, WRFD, WRF1, WRF2, WRF3, WRF4, WRF5, SRC7, SRC8, SRD7, DLI1, DLI2, CRFS, CRF1, CRF2, CRF3, CRF4
 - primitives: access, permissions, stream
 
 ### ISO 27001 A.8.5: A.8.5 Secure authentication
@@ -10294,10 +10286,10 @@ unchanged (24 lowercase letters and digits, a letter first):
 clients that check the format see no difference, and tokens
 already issued stay valid. Record ids keep their own generator.
 
-**Access tokens and session ids at rest (the release after
-open-pryv.io 2.0.0-rc.91; implemented, not released).** Up to
-2.0.0-rc.91 the core stores access tokens and personal session ids
-in clear and looks them up by that value. From this release each
+**Access tokens and session ids at rest (open-pryv.io
+2.0.0-rc.92).** Up to 2.0.0-rc.91 the core stores access tokens
+and personal session ids in clear and looks them up by that value.
+From 2.0.0-rc.92 each
 one is stored as a keyed hash (HMAC-SHA256 over the account id and
 the token, the only lookup key) plus an AES-256-GCM encrypted copy
 bound to the account and the hash, opened only when the access is
@@ -10324,9 +10316,8 @@ database. What you operate:
   unprotect --yes` first, run with this image and the core stopped
   (it writes the tokens back in clear); `node bin/access-tokens.js
   status` counts the rows in clear, under the configured key and
-  under other keys (from the release after open-pryv.io
-  2.0.0-rc.91, merged to master `9ba4429a`, not released, also
-  the access `integrity` values and pending deletion notices,
+  under other keys (also the access `integrity` values and
+  pending deletion notices,
   which `rekey` and `unprotect` cover too).
 - Copies the upgrade cannot reach keep tokens in clear: dumps and
   backups taken before it, old row versions until vacuum (on
@@ -10339,8 +10330,7 @@ database. What you operate:
 Tests `[TKPA]`, `[TKBT]`, `[TKAR]` (both engines, stored rows
 asserted), `[TKAP2]` (cache).
 
-**The remaining token copies (the release after open-pryv.io
-2.0.0-rc.91, merged to master `9ba4429a`, not released; the same
+**The remaining token copies (open-pryv.io 2.0.0-rc.92, the same
 release as the paragraph above).** Without this change one copy
 was left: while access integrity is on
 (`integrity.isActive.accesses`, the default), each access row
@@ -10390,8 +10380,8 @@ nor a database converted later, at its first use.
 
 **Evidence**
 
-- tests: MFAA, MA15A, MA15C, MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1, MLSX1, MACC2, PCLM1, PCLM2, PCLM3, OPCL2, TKMN1, SCTK1, SCTK2, SCTK3
-- config keys: services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, services.mfa.methods.sms.sendLimits, services.mfa.sessions.maxPendingPerUser, auth.passwordCheckConcurrency, auth.passwordCheckQueue
+- tests: MFAA, MA15A, MA15C, MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1, MLSX1, MACC2, PCLM1, PCLM2, PCLM3, OPCL2, TKMN1, SCTK1, SCTK2, SCTK3, TKPA1, TKPA2, TKPA3, TKPA4, TKPA5, TKPA6, TKBT1, TKBT2, TKBT3, TKBT4, TKAR, TKST1, TKST2, TKST3, TKST4, TKST5, TKST6, TKST7, TKST8, TKST9, TKSS1, TKSS2, TKSS3, TKSS4, TKSS5, TKMG1, TKMG2, TKMG3, TKMG4, TKMG5, TKMG6, TKMG7, TKMG8, TKTL1, TKTL2, TKTL3, TKTL4, TKTL5, TKTL6, TKTL7, TKSQ1, TKSQ2, TKSQ3, TKAP2, TKIN0, TKIN1, TKIN2, TKIN3, TKIN4, TKIN5, TKIN6, TKIN7, TKIN8, TKIN9, TKIM1, TKIR1, TKUP1, TKDL1, TKDL2, TKDL3, TKDL4, TKDL5, TKDN1, TKDN2, TKDN3, TKDN4, TKDN5, TKIA1, TKIA2, TKIA3, TKIA4
+- config keys: services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, services.mfa.methods.sms.sendLimits, services.mfa.sessions.maxPendingPerUser, auth.passwordCheckConcurrency, auth.passwordCheckQueue, auth.accessTokensKey
 - primitives: access, MFA, system-streams
 
 **Planned changes**
@@ -11051,8 +11041,7 @@ the client once, and is replaced with `webhooks.rotateSecret`
 (no overlap window); its custody on the receiving side is your
 integrators'.
 
-**Changes in the release after open-pryv.io 2.0.0-rc.91
-(implemented, not released).** Access tokens and personal session
+**Changes in open-pryv.io 2.0.0-rc.92.** Access tokens and personal session
 ids at rest: an HMAC-SHA256 lookup hash and an AES-256-GCM copy in
 the version 2 envelope, its context binding the account id and the
 hash, under four keys derived by HKDF-SHA256 with distinct labels
@@ -11067,8 +11056,8 @@ the key root to your key inventory: the cores of a platform may
 hold different values of `auth.accessTokensKey`, and a lost key
 leaves every stored token unusable. Backups written by
 `bin/backup.js` keep tokens in clear. Operator steps and residuals:
-A.8.5. In the same release (merged to master `9ba4429a`, not
-released) two more keys derive from that key root, with their own
+A.8.5. In the same release two more keys derive from that key
+root, with their own
 labels (`access-integrity-enc-v1`, `outbound-credential-enc-v1`):
 the stored `integrity` of an access (an unkeyed hash over the
 access, token included) is sealed in the version 2 envelope, its
@@ -11080,8 +11069,8 @@ it) and gives up the pending notices unsent.
 
 **Evidence**
 
-- tests: ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, AREV3, BNEV1, BKSM4, SCTK1, SCTK2, CLCX1, CLCX2, CLCX3, WHSG1, WHSG8, WHSR5
-- config keys: letsEncrypt.atRestKey
+- tests: ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, AREV3, BNEV1, BKSM4, SCTK1, SCTK2, CLCX1, CLCX2, CLCX3, WHSG1, WHSG8, WHSR5, TKPA1, TKPA2, TKPA3, TKPA4, TKPA5, TKPA6, TKBT1, TKBT2, TKBT3, TKBT4, TKAR, TKST1, TKST2, TKST3, TKST4, TKST5, TKST6, TKST7, TKST8, TKST9, TKSS1, TKSS2, TKSS3, TKSS4, TKSS5, TKMG1, TKMG2, TKMG3, TKMG4, TKMG5, TKMG6, TKMG7, TKMG8, TKTL1, TKTL2, TKTL3, TKTL4, TKTL5, TKTL6, TKTL7, TKSQ1, TKSQ2, TKSQ3, TKAP2
+- config keys: letsEncrypt.atRestKey, auth.accessTokensKey
 - primitives: letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, backup-payload-encryption
 
 **Planned changes**
@@ -11829,9 +11818,8 @@ characters, as before) are drawn from the system's secure random
 source, never from a non-cryptographic fallback `[SCTK2]`,
 `[SCTK3]`. See A.8.5.
 
-**Access tokens and session ids at rest (the release after
-open-pryv.io 2.0.0-rc.91; implemented, not released).** The core
-stores each access token and personal session id as a keyed hash
+**Access tokens and session ids at rest (from open-pryv.io
+2.0.0-rc.92).** The core stores each access token and personal session id as a keyed hash
 plus an encrypted copy, no longer in clear. Add the key root to
 your key inventory: `auth.accessTokensKey` (optional, base64, 32
 bytes, YAML only, may differ between the cores of a platform),
@@ -11843,7 +11831,7 @@ carry tokens in clear. See A.8.5.
 **Evidence**
 
 - tests: ORET1, ORL04, ORL12, OCAK14, OCAK2, OCAK7, OCAK23, OXK01, OXSK1, CKOC2, TKMN1, SCTK2, SCTK3
-- config keys: oauth.refreshRetireGraceSeconds, oauth.signingKeys, oauth.stateKey, sso.stateKey
+- config keys: oauth.refreshRetireGraceSeconds, oauth.signingKeys, oauth.stateKey, sso.stateKey, auth.accessTokensKey
 - primitives: system-streams, MFA, encryption-at-rest-secrets, shared-secrets
 
 **Planned changes**
@@ -14992,12 +14980,11 @@ child accesses and not strippable via `accesses.update`, lets
 you exclude designated access classes from minting shared
 secrets at all.
 
-**Credentials at rest** (the release after open-pryv.io
-2.0.0-rc.91; implemented, not released). Access tokens and
-personal session ids are stored as a keyed hash plus an encrypted
-copy, no longer in clear, so a copy of the database does not hand
-out working generated tokens. In the same release (merged to
-master `9ba4429a`, not released) the stored `integrity` hash of
+**Credentials at rest** (from open-pryv.io 2.0.0-rc.92). Access
+tokens and personal session ids are stored as a keyed hash plus an
+encrypted copy, no longer in clear, so a copy of the database does
+not hand out working generated tokens. In the same release the
+stored `integrity` hash of
 an access, against which a low-entropy chosen token could
 otherwise be tested offline, is sealed too, audit records of
 access creations no longer copy it, and deleted accesses keep no
@@ -15224,9 +15211,8 @@ along into the target parent's inherited permissions, so the
 "cannot touch out-of-scope data" property above did not hold for
 stream moves.
 
-**Least privilege on events in several streams** (the release
-after open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not
-released). `events.update`, `events.delete` and
+**Least privilege on events in several streams** (from
+open-pryv.io 2.0.0-rc.92). `events.update`, `events.delete` and
 `events.deleteAttachment` now refuse an event that `events.getOne`
 hides from the access (one of its streams held at `none` or
 `create-only`, own grant or inherited, or the event outside the
@@ -15322,7 +15308,7 @@ removed `[DCH12]`. In open-pryv.io 2.0.0-rc.23.
 
 **Evidence**
 
-- tests: AA01, AA02, ACCP, DCH06, DCH08, DCH09, DCH12, CMCMA, GA02, GA12, GA14, GA15, GA20, MB21, MB34, SMV1, SMV2, SMV3, SMV4, SMV10, OE31, OSUB3, PMRG2, ORVK1, ORET1, ORL04, ORF1, ORGP1, OCR02, OCMD18, OPAL4
+- tests: AA01, AA02, ACCP, DCH06, DCH08, DCH09, DCH12, CMCMA, GA02, GA12, GA14, GA15, GA20, MB21, MB34, SMV1, SMV2, SMV3, SMV4, SMV10, OE31, OSUB3, PMRG2, ORVK1, ORET1, ORL04, ORF1, ORGP1, OCR02, OCMD18, OPAL4, WRHD, WRR1, WRP1, WRD1, WRFD, WRF1, WRF2, WRF3, WRF4, WRF5, SRC7, SRC8, SRD7, DLI1, DLI2, CRFS, CRF1, CRF2, CRF3, CRF4
 - config keys: oauth.refreshRetireGraceSeconds, oauth.clientRevokeCheckSeconds
 - derives from: iso-27001.A.5.15, iso-27001.A.5.18, iso-27001.A.5.3
 - primitives: access, permissions, system-streams, audit, delegation, CMC
