@@ -1069,7 +1069,15 @@ requirements:
       intervention required. `create-from-delegate` (with an
       optional email/password seed) covers the "guardian sets up
       the account first" flow while still leaving the child a
-      genuine login for later reclaim. See
+      genuine login for later reclaim. The child can also see how
+      each guardian came to manage the account: from the release
+      after open-pryv.io 2.0.0-rc.92 (merged to master `26d17c9b`,
+      not released), each entry of the child's
+      `delegations.listDelegates` carries a read-only `origin`,
+      `created` when the guardian created the account, `attached`
+      when the account invited the guardian, set by the core and not
+      writable by any client (for relationships made before that
+      release, derived from their timestamps). See
       `context/delegation-model.md`.
 
       **The parent consents to an app for the child.** Through the

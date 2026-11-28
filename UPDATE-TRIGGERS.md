@@ -2251,6 +2251,117 @@ is rolled back (`bin/access-tokens.js unprotect` writes the integrity
 values and notice endpoints back in clear; dropped tokens stay dropped),
 restore the residual wording of the entry above.
 
+### Delegation `origin` in the listings; resend cooldown in `account.get` (the release after open-pryv.io 2.0.0-rc.92, merged to master `26d17c9b`, not released; rows walked 2026-11-28)
+
+**Where the work lives**: open-pryv.io master `26d17c9b` (merged
+2026-11-28, after the 2.0.0-rc.92 tag); ships in the release after
+2.0.0-rc.92. Public issue: https://github.com/pryv/open-pryv.io/issues/174
+(the `origin` half). No `planned:` chip was queued and no proposal exists
+for these changes.
+
+**Change 1, delegation `origin`.** Each item of
+`delegations.listControlled` (`GET /{username}/delegations/controlled`,
+the accounts a delegate manages) and of `delegations.listDelegates` (`GET
+/{username}/delegations/delegates`, an account's delegates) carries a
+read-only `origin: 'created' | 'attached'`: `created` when the delegate
+created the account, `attached` when the account invited an existing
+delegate, whatever the status. The core sets it when the relationship is
+made, on both the anchor (controlled account) and the mirror (delegate);
+an `origin` sent by a client is ignored and every client write of a
+delegation record is refused. Relationships made before the release carry
+no stored value and are listed with the value of the rule `requestedAt ===
+activatedAt` (`created`), else `attached`, computed at read time (no
+storage migration: the records are events covered by their integrity
+hash); an invite made before the release gets `attached` stored when it
+is accepted. Code `components/delegation/src/{model,constants,createAccount,attach}.ts`
+(`originOf()`). Tests `[DLOR1]`..`[DLOR4]` (plugin units), `[DLOI1]`..`[DLOI4]`
+(API, both engines).
+
+**Change 2, `verificationCooldownUntil`.** Each entry of `account.emails[]`
+in the result of `account.get` and `account.update` carries
+`verificationCooldownUntil: number | null`: the time until which a new
+verification mail for that address is refused (`emails.resend` answers
+`invalid-operation` with `data.retryAfterSeconds` before it), `null` when
+no cooldown runs (never sent, last send failed, cooldown over or off,
+address proved). Computed at read time from the last send and the existing
+`account.emailVerification.resendCooldownMs`; the cooldown itself is
+unchanged, the field only shows it. The per-account daily budget of
+distinct addresses (`account-address-limit`) is not reflected. Code
+`components/business/src/emails/container.ts`,
+`components/api-server/src/schema/accountMethods.ts`. Tests `[EMCD1]`,
+`[EMCD2]`.
+
+**Walked 2026-11-28** (no tier change; `reviewed_at` unchanged; prose
+names "the release after open-pryv.io 2.0.0-rc.92, merged to master
+`26d17c9b`, not released"; prose only at the walk, test codes join
+`tests:` at the release):
+
+| Scope | Ref | What changed |
+|---|---|---|
+| gdpr | Art.8 | detail, parental-holder paragraph: the child sees in `delegations.listDelegates` how each guardian came to manage the account (`origin`, core-set, not client-writable; derived from timestamps for older relationships) |
+
+Also updated: `context/delegation-model.md` (new bullet "How a
+relationship was made, shown in the listings" in the handshake section,
+with the read-time rule for older relationships and its limit: a derived
+value, not a record made at the time), `docs/pryv-primitives.md`
+(`delegation`, Handshake bullet: both listings name the origin).
+
+Rows walked without a change:
+- `hipaa-privacy.164.502(g)` (personal representatives): it claims the
+  representative's authority, its audit attribution and its revocation by
+  the individual; how the relationship was made is not part of what it
+  states. Same for `gdpr.Art.7` (withdrawability of a delegate's
+  consents) and `gdpr.Art.32` ("Delegate-account control" bullet).
+- Access-control and identity rows citing delegation
+  (`hipaa-security.164.312(a)(1)`, `164.312(d)`, `164.312(b)`,
+  `soc2.CC6.1`, `CC6.2`, `CC6.3`, `iso-27001.A.5.15`, `A.5.16`): the token
+  class, detach gate, lineage and audit attribution are unchanged; the new
+  field grants and refuses nothing.
+- `gdpr.Art.15` (right of access): its detail lists the subject-side
+  reads of data, accesses and audit; it does not list the delegation
+  listings; the listing already named each delegate and its status,
+  `origin` adds how the relationship was made, which Art.8 now states.
+- `gdpr.Art.13` / `Art.14`, `gdpr.Art.30` (recipients derived from audit),
+  `soc2.P6.2`: they describe disclosure records and app recipients, not
+  delegate relationships; unchanged.
+- Email rows: `iso-27001.A.8.21` limits paragraph
+  (`registrationCodesPerIpPerHour`, `addressesPerAccountPerDay`,
+  `[MLBG1]`..`[MLBG3]`) and `context/rate-limiting-and-dos-protection.md`
+  ("Mail a caller can trigger"): they state the budgets, which are
+  unchanged; none cites the per-address resend cooldown, which the new
+  field only displays. `gdpr.Art.7`, `gdpr.Art.20` and `soc2.P6.1`, which
+  cite the `verification/email` event: unchanged (that event and
+  `verificationMethod` are not touched). The
+  identity-assurance claim left to the matrix owner under
+  `EMAIL-VERIFICATION` above is still not written; `[EMCD1]`, `[EMCD2]`
+  join the test codes available to it.
+- Section C: no "Known gap" clause names either field.
+
+Section B:
+- **B.1**: no new API method; two result fields added to existing methods
+  (`delegations.listControlled`, `delegations.listDelegates`,
+  `account.get`, `account.update`). No row cites these methods' result
+  shapes in `tests:` or `detail`, except the Art.8 addition above.
+- **B.4**: the `delegation` primitive entry gains the listing field
+  (above); no new primitive.
+- **B.7** (architectural): none; the delegation records stay plugin-owned
+  events, no storage migration.
+- **B.8** (token classes): none; who may call the listings is unchanged.
+- **B.11** (config keys, platform DB, backup behaviour): no new key
+  (`account.emailVerification.resendCooldownMs` exists and is cited by no
+  row); no platform DB change.
+- B.2, B.3, B.5, B.6, B.9, B.10: none.
+
+At release: replace "the release after open-pryv.io 2.0.0-rc.92, merged to
+master `26d17c9b`, not released" with the tag in `gdpr.Art.8`, the
+`delegation` primitive and `context/delegation-model.md`; add to `tests:`
+of `gdpr.Art.8` the codes `DLOR1`..`DLOR4` and `DLOI1`..`DLOI4` (as they
+appear in the test files, `[DLOR1]`..`[DLOR4]`, `[DLOI1]`..`[DLOI4]`);
+`EMCD1`, `EMCD2` (`[EMCD1]`, `[EMCD2]`) join no row (no row cites the
+cooldown), keep them listed here for the identity-assurance claim if it is
+taken up. If the release is rolled back, remove the Art.8 sentence, the context
+bullet and the primitive sentence.
+
 ## Section B: Trigger categories (no specific backlog slug yet)
 
 These work patterns commonly impact the matrix even without a queued

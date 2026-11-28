@@ -75,6 +75,23 @@ oversight by removing a co-delegate.
   email/password so the subject can later log in genuinely (and thus retain the
   power to detach). Useful for a guardian setting up an account on a
   dependant's behalf.
+- **How a relationship was made, shown in the listings.** From the release
+  after open-pryv.io 2.0.0-rc.92 (merged to master `26d17c9b`, not
+  released), each item of `delegations.listDelegates` (the controlled
+  account's view of its delegates) and of `delegations.listControlled` (the
+  accounts a delegate manages) carries a read-only `origin`: `created` when
+  the delegate created the account (create-from-delegate), `attached` when
+  the account invited an existing delegate, whatever the status (`invite`,
+  `active`, `stale`). The core sets it when the relationship is made; an
+  `origin` sent by a client is ignored, and no client can write a
+  delegation record `[DLOR1]`, `[DLOR2]`, `[DLOI1]`, `[DLOI2]`, `[DLOI4]`.
+  Relationships made before that release carry no stored value: the
+  listings answer the value of the rule `requestedAt === activatedAt`
+  (`created`), else `attached`, computed at read time with no record
+  rewritten, and an invite made before the release gets `attached` stored
+  when it is accepted `[DLOR3]`, `[DLOR4]`, `[DLOI3]`. For those older
+  relationships the value is derived from their timestamps, not recorded
+  when they were made.
 - **Cross-core, same platform.** Both roles work when the two accounts live on
   different cores of the same platform, as well as same-core. Control endpoints
   stay server-side; the delegate retrieves its token through a wrapper rather

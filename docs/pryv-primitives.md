@@ -1050,7 +1050,11 @@ lives in the controlled account's standard per-user storage.
   the only no-credential step is the operator-admin-key-gated invite, everything
   after rides forge-protected marker accesses. Create-from-delegate provisions a
   fresh controlled account (optional email/password seed). Same-core and
-  cross-core (same platform).
+  cross-core (same platform). From the release after open-pryv.io
+  2.0.0-rc.92 (merged to master `26d17c9b`, not released) both listings
+  (`delegations.listDelegates`, `delegations.listControlled`) name how each
+  relationship was made: a read-only `origin`, `created` or `attached`, set
+  by the core (derived from the timestamps for relationships made earlier).
 - **Attribution**: audit on the controlled account stamps `content.delegation`
   and attributes each delegate's actions under its own delegate-token stream
   (same-core + cross-core parity). `accessInfo` exposes an additive `delegation`
