@@ -1459,7 +1459,7 @@ rules hold; the one addition is the delegation grant guard's exemption for
 `[DDG04]`, which does not let a delegate publish an offer; their entries'
 dated "hard delete" wording is history and stays.
 
-### Cross-account consent: a second accept on the same scope replaces the first (MERGED on open-pryv.io master `42c6bd03`, 2.0.0-rc.90, not yet released; rows walked 2026-11-25)
+### Cross-account consent: a second accept on the same scope replaces the first (MERGED on open-pryv.io master `42c6bd03`, released 2026-11-26 in 2.0.0-rc.90; rows walked 2026-11-25)
 
 **Where the work lives**: open-pryv.io master `42c6bd03` (feature commits
 `b8d76459` and `8b3acea2`, merged by `13bda354`; to ship in the release
@@ -1521,8 +1521,9 @@ Section B:
   the event-type catalogue does not enumerate these values; re-walk
   `gdpr.Art.7` if a later catalogue version does.
 - B.3 to B.11: none.
-At release: replace "merged on master `42c6bd03`, not yet released" in the
-four rows and two context notes with the release name.
+Released 2026-11-26 in open-pryv.io 2.0.0-rc.90: the four rows and two
+context notes now read "Since open-pryv.io 2.0.0-rc.90 (merged on master
+`42c6bd03`)" (the "not yet released" was cleared 2026-11-28).
 
 ### `ACCOUNT-AUTO-DELETION` (DELETION SHIPPED in open-pryv.io 2.0.0-rc.66 `8521c8d5`, 2026-10-30; 14 deletion chips discharged and the Art.32 chip narrowed to its transfer half, rows walked 2026-10-30; TRANSFER MERGED to open-pryv.io master `2bd4778b` (2026-11-01), not released: 5 chips kept)
 

@@ -628,7 +628,7 @@ the grant.
     `[HR32]`, and `'peer-revoke'` when the requester withdraws
     (`revokeEventId` is the revocation's arrival in the person's inbox)
     `[CN60]`. Since open-pryv.io 2.0.0-rc.90 (merged
-    on master `42c6bd03`, not yet released) a relationship is one
+    on master `42c6bd03`) a relationship is one
     counterparty and one scope stream, and `by: 'replaced'` records a
     consent the person replaced by accepting a second invite of the same
     requester on the same scope: `withdrawal.replacedBy = {

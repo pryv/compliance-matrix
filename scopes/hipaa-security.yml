@@ -157,7 +157,7 @@ requirements:
       deleted, its members' accesses are deleted on the patient cores
       before the erasure, and no record is kept `[GA40]`. Since the
       release open-pryv.io 2.0.0-rc.90 (merged on master
-      `42c6bd03`, not yet released), an access is recorded `absent` only
+      `42c6bd03`), an access is recorded `absent` only
       when the patient's core confirmed it gone: a refused deletion
       stays `residual` (`peer-rejected`), and so does an access whose
       grant no longer authenticates (`grant-gone`), one made through an

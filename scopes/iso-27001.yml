@@ -1951,7 +1951,7 @@ requirements:
       recorded, retried by the retry loop and the periodic pass
       `[MR25]`, and bounded by the access's own expiry. Since the
       release open-pryv.io 2.0.0-rc.90 (merged on master
-      `42c6bd03`, not yet released), a patient keeps one grant per group
+      `42c6bd03`), a patient keeps one grant per group
       and scope: accepting the group's invite again replaces the earlier
       grant and ends the member accesses made through it, the earlier
       invite reads `revoked` with `replacedBy` on the group account, and
@@ -2050,8 +2050,8 @@ requirements:
       while `cmc.retryLoop.enabled` is `true` (the default) and cannot
       outlive the access's own expiry (at most
       `cmc.memberAccess.maxTtl`, 7 d by default). Since the release
-      open-pryv.io 2.0.0-rc.90 (merged on master `42c6bd03`, not
-      yet released), an access is recorded `absent` only when the
+      open-pryv.io 2.0.0-rc.90 (merged on master `42c6bd03`), an
+      access is recorded `absent` only when the
       patient's core confirmed it gone (a refusal or an access out of
       the group's reach stays `residual`, with its reason) `[CSA20]`,
       and the departing member keeps no access through an earlier grant
