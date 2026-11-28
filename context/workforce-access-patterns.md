@@ -229,7 +229,7 @@ anything.
    patient with the same permissions returns the same child while it
    has more than five minutes left; other permissions replace it
    `[GA11]`. Since open-pryv.io 2.0.0-rc.90 (merged
-   on master `42c6bd03`, not yet released), a member asking again after
+   on master `42c6bd03`), a member asking again after
    the patient accepted the group's invite a second time on the same
    scope gets a child through the current grant (named
    `cmc-member--<member>--<hash>-<8 hex characters>` when a child of the

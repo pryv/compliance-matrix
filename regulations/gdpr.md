@@ -651,7 +651,7 @@ open-pryv.io 2.0.0-rc.36 (`1420fe72`,
 https://github.com/pryv/open-pryv.io/issues/146); a delegation
 detach has recorded `by: 'delegation-detach'` since 2.0.0-rc.31
 (see below). Since open-pryv.io 2.0.0-rc.90
-(merged on master `42c6bd03`, not yet released) a relationship is
+(merged on master `42c6bd03`) a relationship is
 one counterparty and one scope stream: when the person accepts a
 second invite of the same requester on the same scope, the latest
 accept replaces the first, the earlier grant is deleted with the
