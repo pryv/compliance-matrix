@@ -616,7 +616,7 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation, CMC]
     config_keys: [cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl, cmc.memberAccess.ratePerMinute, cmc.memberAccess.mintBurst, cmc.memberAccess.askRatePerMinute, cmc.memberAccess.askBurst, cmc.memberAccess.maxInFlightPerMembership, cmc.memberAccess.allowNameOnly, cmc.retryLoop.enabled, oauth.clientRevokeCheckSeconds, oauth.audienceBoundSessions, adapterRoutes]
-    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10, MAAC, CMCGA, CMCMA, GA01, GA10, GA11, GA12, GA14, GA15, GA16, GA17, MA20, MA22, GA24, GA31, MB10, MB12, MB13, CNRP1, CNRP6, CNRP7, DSC05, ASA1, ASA2, ASA3, ASA6, CNM2B, RQ32, SMV1, SMV4, OE31, OSUB1, OSUB3, ACSW1, ACSW2, OACR1, OACR2, AL13, OPSE5, OPUE2, OPAL2, ORF1, OTX05, OTXE04, OTXE02]
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CN62, CN63, CN65, CH07, CH10, MAAC, CMCGA, CMCMA, GA01, GA10, GA11, GA12, GA14, GA15, GA16, GA17, MA20, MA22, GA24, GA31, MB10, MB12, MB13, CNRP1, CNRP6, CNRP7, DSC05, ASA1, ASA2, ASA3, ASA6, CNM2B, RQ32, SMV1, SMV4, OE31, OSUB1, OSUB3, ACSW1, ACSW2, OACR1, OACR2, AL13, OPSE5, OPUE2, OPAL2, ORF1, OTX05, OTXE04, OTXE02, WRHD, WRR1, WRP1, WRD1, WRFD, WRF1, WRF2, WRF3, WRF4, WRF5, SRC7, SRC8, SRD7, DLI1, DLI2, CRFS, CRF1, CRF2, CRF3, CRF4]
     overview: |
       Per-stream permissions are enforced at every API call; an access
       can read or write only the streams its `permissions[]` lists, at
@@ -730,9 +730,8 @@ requirements:
       into the target parent's inherited permissions, reaching accesses
       that had not been granted it.
 
-      **Writes on an event the access cannot read** (the release after
-      open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not
-      released). An event in several streams is hidden from an app or
+      **Writes on an event the access cannot read** (open-pryv.io
+      2.0.0-rc.92). An event in several streams is hidden from an app or
       shared access when one of its streams is held at `none` or
       `create-only` (own grant or inherited), or lies outside the forced
       streams of an access migrated from v1. Up to 2.0.0-rc.91
@@ -950,8 +949,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [encryption-at-rest-user-data, encryption-at-rest-secrets, letsEncrypt-integration]
-    config_keys: [CEV_ENABLED, letsEncrypt.atRestKey, storages.engines.postgresql.ssl]
-    tests: [ACMEINT, BUNDLEENC, CERTUTILS, AREV3]
+    config_keys: [CEV_ENABLED, letsEncrypt.atRestKey, storages.engines.postgresql.ssl, auth.accessTokensKey]
+    tests: [ACMEINT, BUNDLEENC, CERTUTILS, AREV3, TKPA1, TKPA2, TKPA3, TKPA4, TKPA5, TKPA6, TKBT1, TKBT2, TKBT3, TKBT4, TKAR, TKST1, TKST2, TKST3, TKST4, TKST5, TKST6, TKST7, TKST8, TKST9, TKSS1, TKSS2, TKSS3, TKSS4, TKSS5, TKMG1, TKMG2, TKMG3, TKMG4, TKMG5, TKMG6, TKMG7, TKMG8, TKTL1, TKTL2, TKTL3, TKTL4, TKTL5, TKTL6, TKTL7, TKSQ1, TKSQ2, TKSQ3, TKAP2, TKIN0, TKIN1, TKIN2, TKIN3, TKIN4, TKIN5, TKIN6, TKIN7, TKIN8, TKIN9, TKIM1, TKIR1, TKUP1, TKDL1, TKDL2, TKDL3, TKDL4, TKDL5, TKDN1, TKDN2, TKDN3, TKDN4, TKDN5, TKIA1, TKIA2, TKIA3, TKIA4]
     planned:
       - kind: feature
         summary: "End-to-end (server-blind) encryption via proxy re-encryption brings CMEK / BYOK to the Pryv layer"
@@ -991,14 +990,13 @@ requirements:
       observability tokens, cluster bootstrap bundles) remains on by
       default (`encryption-at-rest-secrets`).
 
-      Access tokens and personal session ids (the release after
-      open-pryv.io 2.0.0-rc.91; implemented, not released): the core no
-      longer stores them in clear but as a keyed hash plus an
+      Access tokens and personal session ids (from open-pryv.io
+      2.0.0-rc.92): the core no longer stores them in clear but as a keyed hash plus an
       AES-256-GCM encrypted copy, on by default with nothing to
       configure (keys from `auth.accessTokensKey`, else derived from
       `auth.adminAccessKey`), so a database dump no longer hands out a
       server-generated credential that reads ePHI. In the same release
-      (merged to master `9ba4429a`, not released) the stored
+      the stored
       `integrity` of each access, an unkeyed hash that covers its token,
       and the endpoint of a pending revoke notice to a peer platform are
       encrypted the same way, deleted accesses keep no token, and audit
@@ -1023,12 +1021,12 @@ requirements:
       core of a platform must reach from 2.0.0-rc.86 or later
       (2.0.0-rc.86 to rc.89 wrote them in the first version, so a core of
       the previous release kept reading them).
-      Access tokens and session ids at rest (the release after
-      open-pryv.io 2.0.0-rc.91): `open-pryv.io/components/business/src/accesses/tokenProtection.ts`
+      Access tokens and session ids at rest (open-pryv.io
+      2.0.0-rc.92): `open-pryv.io/components/business/src/accesses/tokenProtection.ts`
       (contract in `open-pryv.io/storages/interfaces/_shared/tokenProtection.ts`),
       the same version 2 envelope; operator tool `bin/access-tokens.js`
       (`status`, `rekey`, `unprotect`). Sealed access `integrity` and
-      pending revoke-notice endpoints (merged to master `9ba4429a`):
+      pending revoke-notice endpoints (same release):
       the same module, `open-pryv.io/storages/interfaces/_shared/deletionNoticeSeal.ts`,
       PostgreSQL migrations `20261127_120400` and `20261127_120500`.
 
@@ -1438,8 +1436,7 @@ requirements:
       `includeHistory`) and deletion records `[AIWF]`, `[AIWG]`,
       `[AIWK]`, `[AIWM]` (up to 2.0.0-rc.91 a copy returned without its
       token, as a deletion record is, verifies once a holder of the token
-      restores it; from the release after open-pryv.io 2.0.0-rc.91,
-      merged to master `9ba4429a`, not released, a deletion record
+      restores it; from open-pryv.io 2.0.0-rc.92 a deletion record
       keeps no token and its value is computed without it, so it
       verifies as returned `[AIWN]`); before, the value of an updated
       access was computed on the stored form and a client could not
@@ -1491,7 +1488,7 @@ requirements:
     pryv_primitives: [access, MFA, system-streams, delegation]
     docs: [customer-resources/mfa.md#assurance-level-of-each-method]
     config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, oauth.accessTokenTTL, oauth.refreshTokenTTL, oauth.refreshTokenAbsoluteTTL, oauth.dpop.clockSkewSeconds, oauth.dpop.keyRevokeCheckSeconds, oauth.signingKeys, oauth.idTokenTTL, oauth.stateKey, oauth.perUserIssuer, auth.passwordCheckConcurrency, auth.passwordCheckQueue]
-    tests: [MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3, CLIB2, PCLM1, PCLM2, OPCL2, OPCL3, OPCL4, TKMN1, SCTK2, SCTK3]
+    tests: [MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA13B, MA12A, MBKF1, PCS1, MCHK1, DCH02, DCH03, DCH11, CEPB1, CEPI1, CEDB1, PWSL1, OCAK2, OCAK7, OCAK14, OCAK23, OTPA1, OTPA3, OXD01, OXD04, OXN01, OREG17, OXSK1, OREG16, OPIS4, OPIS5, OPIS6, OPIU3, CLIB2, PCLM1, PCLM2, OPCL2, OPCL3, OPCL4, TKMN1, SCTK2, SCTK3, TKPA1, TKPA2, TKPA3, TKPA4, TKPA5, TKPA6, TKBT1, TKBT2, TKBT3, TKBT4, TKAR, TKST1, TKST2, TKST3, TKST4, TKST5, TKST6, TKST7, TKST8, TKST9, TKSS1, TKSS2, TKSS3, TKSS4, TKSS5, TKMG1, TKMG2, TKMG3, TKMG4, TKMG5, TKMG6, TKMG7, TKMG8, TKTL1, TKTL2, TKTL3, TKTL4, TKTL5, TKTL6, TKTL7, TKSQ1, TKSQ2, TKSQ3, TKAP2, TKIN0, TKIN1, TKIN2, TKIN3, TKIN4, TKIN5, TKIN6, TKIN7, TKIN8, TKIN9, TKIM1, TKIR1, TKUP1, TKDL1, TKDL2, TKDL3, TKDL4, TKDL5, TKDN1, TKDN2, TKDN3, TKDN4, TKDN5, TKIA1, TKIA2, TKIA3, TKIA4]
     planned:
       - kind: enhancement
         summary: "Reference MFA plugins (TOTP / WebAuthn) + primitive-catalogue doc surface the pluggability"
@@ -1602,14 +1599,13 @@ requirements:
       same shape as before `[SCTK2]`, `[SCTK3]`.
 
       **A stored token no longer authenticates whoever reads the
-      database (the release after open-pryv.io 2.0.0-rc.91; implemented,
-      not released).** Up to 2.0.0-rc.91 access tokens and personal
-      session ids sit in clear in the user-data store, so a database
-      dump or a stolen data file is a set of working credentials. From
-      this release the core stores a keyed hash (the lookup key) and an
-      encrypted copy instead; clients see no change. A dump then yields
-      no generated token. Without the companion change of the same
-      release (merged to master `9ba4429a`, not released), a
+      database (from open-pryv.io 2.0.0-rc.92).** Up to 2.0.0-rc.91
+      access tokens and personal session ids sit in clear in the
+      user-data store, so a database dump or a stolen data file is a set
+      of working credentials. From 2.0.0-rc.92 the core stores a keyed
+      hash (the lookup key) and an encrypted copy instead; clients see no
+      change. A dump then yields no generated token. Without the
+      companion change of the same release, a
       low-entropy token chosen by a caller, or a short legacy one, could
       still be tested offline against the access's stored `integrity`
       hash while access integrity is on (the default); with it, that

@@ -77,7 +77,7 @@ requirements:
     draft: true
     pryv_primitives: [access, permissions, system-streams, delegation, CMC]
     config_keys: [cmc.memberAccess.defaultTtl, cmc.memberAccess.minTtl, cmc.memberAccess.maxTtl, oauth.audienceBoundSessions]
-    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CMCGA, CMCMA, GA12, GA14, GA15, GA20, GA24, MB10, CNRP1, CNRP6, CNRP7, DSC05, ASA3, ASA6, SMV1, SMV4, SMV10, OE31, OSUB3, OACR1, AL13, OPUE2, OTX05, OTXE02]
+    tests: [AA01, AA02, ACCP, DCH01, DCH03, DCH12, DCH15, DCH16, DCH17, DCH18, DCH21, DCH23, OE27, CMCGA, CMCMA, GA12, GA14, GA15, GA20, GA24, MB10, CNRP1, CNRP6, CNRP7, DSC05, ASA3, ASA6, SMV1, SMV4, SMV10, OE31, OSUB3, OACR1, AL13, OPUE2, OTX05, OTXE02, WRHD, WRR1, WRP1, WRD1, WRFD, WRF1, WRF2, WRF3, WRF4, WRF5, SRC7, SRC8, SRD7, DLI1, DLI2, CRFS, CRF1, CRF2, CRF3, CRF4]
     overview: |
       Logical access control is enforced at the API surface by the
       access + permissions primitives; every read/write request is
@@ -150,9 +150,8 @@ requirements:
       granted to the moving access at a lower level travelled into the
       target parent's inherited permissions.
 
-      **Writes follow reads on events in several streams** (the release
-      after open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not
-      released). `events.update`, `events.delete` and
+      **Writes follow reads on events in several streams** (open-pryv.io
+      2.0.0-rc.92). `events.update`, `events.delete` and
       `events.deleteAttachment` refuse an event that `events.getOne`
       hides from the access (one of its streams at `none` or
       `create-only`, or outside an access's forced streams), with the
@@ -285,7 +284,7 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, permissions, stream]
-    tests: [AA01, AA02, ACCP, SMV1, SMV2, SMV3, SMV4, SMV5, SMV10]
+    tests: [AA01, AA02, ACCP, SMV1, SMV2, SMV3, SMV4, SMV5, SMV10, WRHD, WRR1, WRP1, WRD1, WRFD, WRF1, WRF2, WRF3, WRF4, WRF5, SRC7, SRC8, SRD7, DLI1, DLI2, CRFS, CRF1, CRF2, CRF3, CRF4]
     overview: |
       Per-stream permissions are the technical access-restriction
       primitive. Stream design (which data lives where) is the
@@ -305,9 +304,8 @@ requirements:
       held on the target parent. Renames and updates that keep the
       current `parentId` are unchanged.
 
-      **Writes on an event the access cannot read** (the release after
-      open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not
-      released). An event can sit in several streams. `events.getOne`
+      **Writes on an event the access cannot read** (open-pryv.io
+      2.0.0-rc.92). An event can sit in several streams. `events.getOne`
       hides it from an app or shared access when one of its streams is
       held at `none` or `create-only` (own grant or inherited), or, for
       an access migrated from v1 that carries forced streams, when the
@@ -342,8 +340,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [access, MFA, system-streams]
-    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, services.mfa.methods.sms.sendLimits, services.mfa.sessions.maxPendingPerUser, auth.passwordCheckConcurrency, auth.passwordCheckQueue]
-    tests: [MFAA, MA15A, MA15C, MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1, MLSX1, MACC2, PCLM1, PCLM2, PCLM3, OPCL2, TKMN1, SCTK1, SCTK2, SCTK3]
+    config_keys: [services.mfa.mode, services.mfa.attempts.backoff, auth.passwordAttempts, auth.passwordAttempts.perIp, services.mfa.methods.sms.sendLimits, services.mfa.sessions.maxPendingPerUser, auth.passwordCheckConcurrency, auth.passwordCheckQueue, auth.accessTokensKey]
+    tests: [MFAA, MA15A, MA15C, MA3A, MA4A, MA5A, MA5B, MA6A, MA7A, MA10A, MA11A, MA12A, MBKF1, PCS1, MCHK1, CEPB1, CEPI1, CEDB1, PWSL1, MSSL1, MSSL11, MCPU1, MLSX1, MACC2, PCLM1, PCLM2, PCLM3, OPCL2, TKMN1, SCTK1, SCTK2, SCTK3, TKPA1, TKPA2, TKPA3, TKPA4, TKPA5, TKPA6, TKBT1, TKBT2, TKBT3, TKBT4, TKAR, TKST1, TKST2, TKST3, TKST4, TKST5, TKST6, TKST7, TKST8, TKST9, TKSS1, TKSS2, TKSS3, TKSS4, TKSS5, TKMG1, TKMG2, TKMG3, TKMG4, TKMG5, TKMG6, TKMG7, TKMG8, TKTL1, TKTL2, TKTL3, TKTL4, TKTL5, TKTL6, TKTL7, TKSQ1, TKSQ2, TKSQ3, TKAP2, TKIN0, TKIN1, TKIN2, TKIN3, TKIN4, TKIN5, TKIN6, TKIN7, TKIN8, TKIN9, TKIM1, TKIR1, TKUP1, TKDL1, TKDL2, TKDL3, TKDL4, TKDL5, TKDN1, TKDN2, TKDN3, TKDN4, TKDN5, TKIA1, TKIA2, TKIA3, TKIA4]
     planned:
       - kind: enhancement
         summary: "Reference TOTP / WebAuthn plugins + AAL-tier mapping doc strengthen the A.8.5 evidence chain"
@@ -440,10 +438,10 @@ requirements:
       clients that check the format see no difference, and tokens
       already issued stay valid. Record ids keep their own generator.
 
-      **Access tokens and session ids at rest (the release after
-      open-pryv.io 2.0.0-rc.91; implemented, not released).** Up to
-      2.0.0-rc.91 the core stores access tokens and personal session ids
-      in clear and looks them up by that value. From this release each
+      **Access tokens and session ids at rest (open-pryv.io
+      2.0.0-rc.92).** Up to 2.0.0-rc.91 the core stores access tokens
+      and personal session ids in clear and looks them up by that value.
+      From 2.0.0-rc.92 each
       one is stored as a keyed hash (HMAC-SHA256 over the account id and
       the token, the only lookup key) plus an AES-256-GCM encrypted copy
       bound to the account and the hash, opened only when the access is
@@ -470,9 +468,8 @@ requirements:
         unprotect --yes` first, run with this image and the core stopped
         (it writes the tokens back in clear); `node bin/access-tokens.js
         status` counts the rows in clear, under the configured key and
-        under other keys (from the release after open-pryv.io
-        2.0.0-rc.91, merged to master `9ba4429a`, not released, also
-        the access `integrity` values and pending deletion notices,
+        under other keys (also the access `integrity` values and
+        pending deletion notices,
         which `rekey` and `unprotect` cover too).
       - Copies the upgrade cannot reach keep tokens in clear: dumps and
         backups taken before it, old row versions until vacuum (on
@@ -485,8 +482,7 @@ requirements:
       Tests `[TKPA]`, `[TKBT]`, `[TKAR]` (both engines, stored rows
       asserted), `[TKAP2]` (cache).
 
-      **The remaining token copies (the release after open-pryv.io
-      2.0.0-rc.91, merged to master `9ba4429a`, not released; the same
+      **The remaining token copies (open-pryv.io 2.0.0-rc.92, the same
       release as the paragraph above).** Without this change one copy
       was left: while access integrity is on
       (`integrity.isActive.accesses`, the default), each access row
@@ -1104,8 +1100,8 @@ requirements:
     pryv_effort_saved: high
     draft: true
     pryv_primitives: [letsEncrypt-integration, encryption-at-rest-secrets, multi-core-mTLS, backup-payload-encryption]
-    config_keys: [letsEncrypt.atRestKey]
-    tests: [ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, AREV3, BNEV1, BKSM4, SCTK1, SCTK2, CLCX1, CLCX2, CLCX3, WHSG1, WHSG8, WHSR5]
+    config_keys: [letsEncrypt.atRestKey, auth.accessTokensKey]
+    tests: [ACMEINT, ATRENC, BUNDLEENC, AREV1, AREV2, AREV3, BNEV1, BKSM4, SCTK1, SCTK2, CLCX1, CLCX2, CLCX3, WHSG1, WHSG8, WHSR5, TKPA1, TKPA2, TKPA3, TKPA4, TKPA5, TKPA6, TKBT1, TKBT2, TKBT3, TKBT4, TKAR, TKST1, TKST2, TKST3, TKST4, TKST5, TKST6, TKST7, TKST8, TKST9, TKSS1, TKSS2, TKSS3, TKSS4, TKSS5, TKMG1, TKMG2, TKMG3, TKMG4, TKMG5, TKMG6, TKMG7, TKMG8, TKTL1, TKTL2, TKTL3, TKTL4, TKTL5, TKTL6, TKTL7, TKSQ1, TKSQ2, TKSQ3, TKAP2]
     planned:
       - kind: feature
         summary: "End-to-end encryption adds a customer-key flow (CMEK / BYOK) to the cryptography catalogue"
@@ -1174,8 +1170,7 @@ requirements:
       (no overlap window); its custody on the receiving side is your
       integrators'.
 
-      **Changes in the release after open-pryv.io 2.0.0-rc.91
-      (implemented, not released).** Access tokens and personal session
+      **Changes in open-pryv.io 2.0.0-rc.92.** Access tokens and personal session
       ids at rest: an HMAC-SHA256 lookup hash and an AES-256-GCM copy in
       the version 2 envelope, its context binding the account id and the
       hash, under four keys derived by HKDF-SHA256 with distinct labels
@@ -1190,8 +1185,8 @@ requirements:
       hold different values of `auth.accessTokensKey`, and a lost key
       leaves every stored token unusable. Backups written by
       `bin/backup.js` keep tokens in clear. Operator steps and residuals:
-      A.8.5. In the same release (merged to master `9ba4429a`, not
-      released) two more keys derive from that key root, with their own
+      A.8.5. In the same release two more keys derive from that key
+      root, with their own
       labels (`access-integrity-enc-v1`, `outbound-credential-enc-v1`):
       the stored `integrity` of an access (an unkeyed hash over the
       access, token included) is sealed in the version 2 envelope, its
@@ -1819,7 +1814,7 @@ requirements:
     facilitation_mode: infrastructure
     draft: true
     pryv_primitives: [system-streams, MFA, encryption-at-rest-secrets, shared-secrets]
-    config_keys: [oauth.refreshRetireGraceSeconds, oauth.signingKeys, oauth.stateKey, sso.stateKey]
+    config_keys: [oauth.refreshRetireGraceSeconds, oauth.signingKeys, oauth.stateKey, sso.stateKey, auth.accessTokensKey]
     tests: [ORET1, ORL04, ORL12, OCAK14, OCAK2, OCAK7, OCAK23, OXK01, OXSK1, CKOC2, TKMN1, SCTK2, SCTK3]
     planned:
       - kind: enhancement
@@ -1902,9 +1897,8 @@ requirements:
       source, never from a non-cryptographic fallback `[SCTK2]`,
       `[SCTK3]`. See A.8.5.
 
-      **Access tokens and session ids at rest (the release after
-      open-pryv.io 2.0.0-rc.91; implemented, not released).** The core
-      stores each access token and personal session id as a keyed hash
+      **Access tokens and session ids at rest (from open-pryv.io
+      2.0.0-rc.92).** The core stores each access token and personal session id as a keyed hash
       plus an encrypted copy, no longer in clear. Add the key root to
       your key inventory: `auth.accessTokensKey` (optional, base64, 32
       bytes, YAML only, may differ between the cores of a platform),

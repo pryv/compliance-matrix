@@ -1543,7 +1543,7 @@ requirements:
     pryv_primitives: [event, stream, backup-restore, external-id-index, account-auto-deletion]
     config_keys: [storages.userAccountStorage.engine, user-account.delete, audit.onUserDelete, account.autoDeletion.enabled, account.autoDeletion.maxDeletionsPerPass, accountErasure.ledger.enabled, accountErasure.ledger.retentionDays, accountErasure.ledger.hmacKey]
     docs: [customer-resources/account-auto-deletion.md, customer-resources/backup.md]
-    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, ERMK5, PGUG1, PGUG3, PGUG6, PGUG9, CMCER6, ERLG3, ERLG4, ERLG5, ERLG6, ERLG7, ERLG8, ERLG9, ERLA1, ERLA2, ERLA3, ERLA4, ERLA5, ERLA6, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT1, ERLT2, ERLT3, ERLT4, ADCL3, ADCL5, ADCL6, ADCLH, ADCLI, ADCLR, ADCLS, ADCLQ, AADL1, AADL2, AADL3, AADL5, AADL6, AADL7, AADL9, AADLF, AARS5, AARSC, AARSD]
+    tests: [USAD, DKP1, DLN1, DLN4, DLLW1, DADL02, CN82, DLWH1, RPLC13, DADL08, BKCU1, BKIC4, GA40, MR28, XIDD2, XIDBK1, XIDBK2, ACST3, ACST4, ACST5, ACST10, ACST15A, ADSW8, ADSW12, ADSW16, ADSW17, ADSW19, ADSW27, BKDU1, RCRG1, RCRG3, RCCR1, RCCR2, RCCR3, ERMK1, ERMK3, ERMK5, PGUG1, PGUG3, PGUG6, PGUG9, CMCER6, ERLG3, ERLG4, ERLG5, ERLG6, ERLG7, ERLG8, ERLG9, ERLA1, ERLA2, ERLA3, ERLA4, ERLA5, ERLA6, ERLR1, ERLR2, ERLR3, ERLR4, ERLR5, ERLR6, ERLR7, ERLR8, ERLR9, ERLT1, ERLT2, ERLT3, ERLT4, ADCL3, ADCL5, ADCL6, ADCLH, ADCLI, ADCLR, ADCLS, ADCLQ, AADL1, AADL2, AADL3, AADL5, AADL6, AADL7, AADL9, AADLF, AARS5, AARSC, AARSD, PGAL1, PGAL2, PGAL3, PGAL4, PGAL5, PGAL6, PGAL7, PGAL8, PGAL9]
     overview: |
       Per-user erasure is a single API call (`system.users.delete`).
       Whether erasure extends to your backups depends on the storage
@@ -1836,11 +1836,11 @@ requirements:
       the erasure removes the index entry first and waits for the
       inserts in flight for that account to commit, so the data removal
       after it sees their rows `[PGUG3]` (up to 2.0.0-rc.91 each insert
-      held the index entry with a row lock; from the release after it,
-      a shared per-account lock that the index removal takes exclusive,
-      so concurrent writers of one account no longer contend on that
-      entry; same guarantee, implemented, not released; from that
-      release a tool that deletes from the users index with triggers
+      held the index entry with a row lock; from open-pryv.io
+      2.0.0-rc.92, a shared per-account lock that the index removal
+      takes exclusive, so concurrent writers of one account no longer
+      contend on that entry; same guarantee `[PGAL1]` to `[PGAL9]`; from
+      that release a tool that deletes from the users index with triggers
       off, `session_replication_role = replica` or `pg_restore
       --disable-triggers`, no longer waits for inserts in flight: run
       it with every process stopped). An erased account stays refused until it
@@ -2692,7 +2692,7 @@ requirements:
     pryv_primitives: [permissions, system-streams, randomAlias, letsEncrypt-integration, multi-core-mTLS, encryption-at-rest-user-data, encryption-at-rest-secrets, shared-secrets, backup-restore, MFA, data-residency, delegation, CMC, external-id-index, account-auto-deletion, webhooks]
     docs: [customer-resources/auth-oauth2.md, customer-resources/adapter-routes.md]
     config_keys: [hostedSites.<name>.hsts, storages.platform.integrityCheckIntervalMs, cmc.allowedPrivateHosts, cluster.allowInsecurePeerUrl, accesses.maxAliasesPerAccount, oauth.audienceBoundSessions, oauth.stateKey, oauth.perUserIssuer, oauth.clientMetadataDocuments.mode, adapterRoutes]
-    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3, WHSG2, WHSG5, WHSG6, WHSR1, CFE2, CFE5, CFE8, CFC3, CFC7]
+    tests: [HSHT, ACTY, BKSR, CN63, CN65, CH07, CH10, ESR1, ESR4, ESR6A, GA10, GA12, GA14, GA20, CN71, CN72, MB35, VC09, CN100, CN102, CNRP1, CNRP6, CNRP7, DSC05, DSU02, CNM2A, CNM2B, RQ32, ASA1, ASA6, SMV1, SMV10, PFR1, PFR2, PFR4, PFR5, PFR6, CO22, XIDN4, XIDG1, XIDFF1, XIDFF2, XIDFF3, XIDFF4, XIDFFS, XIDFF7, XIDFF9, XIDH1, XIDFC1, XIDFC4, XIDFR7, XIDBK1, ALRT1, BKAL1, AL12, SDB3, AL08, ACST3, ACST4, ACST5, ACST18, ACST15A, AL13, AL03, OPSE5, OPSE16, OPSE17, OE31, OSUB3, OPSE1, OXD08, OTX05, OCAK7, OPUE2, OPIU3, OCMD03B, OCMD03G, ADRI09, ADRU3, BKSM2, BKSM4, RSFC1, SKHA1, SKHA3, WHSG2, WHSG5, WHSG6, WHSR1, CFE2, CFE5, CFE8, CFC3, CFC7, WRHD, WRR1, WRP1, WRD1, WRFD, WRF1, WRF2, WRF3, WRF4, WRF5, SRC7, SRC8, SRD7, DLI1, DLI2, CRFS, CRF1, CRF2, CRF3, CRF4]
     planned:
       - kind: feature
         summary: "End-to-end encryption shifts encryption from Configurable infrastructure to a Pryv-managed primitive"
@@ -2871,9 +2871,8 @@ requirements:
           store-prefixed spelling of an account field was not
           recognised by them, so an access holding `contribute` on the
           email field could change the primary email (the
-          password-reset address) through the events API. From the
-          release after open-pryv.io 2.0.0-rc.91 (merged to master
-          `9ba4429a`, not released) `events.update`, `events.delete`
+          password-reset address) through the events API. From
+          open-pryv.io 2.0.0-rc.92 `events.update`, `events.delete`
           and `events.deleteAttachment` refuse an event that
           `events.getOne` hides from the access (one of its streams
           held at `none` or `create-only`, or outside an access's
@@ -3012,18 +3011,17 @@ requirements:
           An optional signature (passphrase or client-computed HMAC
           whose verifier secret never reaches the server) adds a
           second factor to the redemption.
-        - Access tokens at rest: IMPLEMENTED from the release after
-          open-pryv.io 2.0.0-rc.91 (implemented, not released; up to
-          2.0.0-rc.91 the core stores access tokens and personal
-          session ids in clear). Every access token and personal
+        - Access tokens at rest: IMPLEMENTED from open-pryv.io
+          2.0.0-rc.92 (up to 2.0.0-rc.91 the core stores access tokens
+          and personal session ids in clear). Every access token and personal
           session id is stored as a keyed hash (HMAC-SHA256, the only
           lookup key) plus an AES-256-GCM encrypted copy bound to its
           account, under keys derived from `auth.accessTokensKey` when
           set, else from `auth.adminAccessKey`; the keys never enter
           the database and clients see no change. A database dump or a
           stolen data file then holds no server-generated token in
-          clear. In the same release (merged to master `9ba4429a`,
-          not released) the copies next to the tokens go too: the
+          clear. In the same release the copies next to the tokens go
+          too: the
           stored `integrity` of an access (an unkeyed hash over the
           access, token included, against which a low-entropy token
           chosen by a caller, or a short legacy one, could be tested

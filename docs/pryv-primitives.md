@@ -24,14 +24,13 @@ A grant of permission to act on a user's data.
   open-pryv.io 2.0.0-rc.84 `[AUG1]`, `[AUG3]`), an `integrity` checksum
   (verifiable on the returned form also after an update since 2.0.0-rc.84
   `[AIWF]`; `usage` is not part of it).
-- **Stored form of the token** (the release after open-pryv.io
-  2.0.0-rc.91; implemented, not released): up to 2.0.0-rc.91 access
-  tokens and personal session ids are stored in clear; from the release
-  after it, as a keyed hash (HMAC-SHA256, the lookup key) plus an
-  AES-256-GCM encrypted copy, keys from `auth.accessTokensKey`, else
-  derived from `auth.adminAccessKey`; `accesses.get` still returns the
-  token. The `integrity` checksum covers the token; in the same
-  release (merged to master `9ba4429a`, not released) it is sealed
+- **Stored form of the token** (open-pryv.io 2.0.0-rc.92): up to
+  2.0.0-rc.91 access tokens and personal session ids are stored in
+  clear; from 2.0.0-rc.92, as a keyed hash (HMAC-SHA256, the lookup
+  key) plus an AES-256-GCM encrypted copy, keys from
+  `auth.accessTokensKey`, else derived from `auth.adminAccessKey`;
+  `accesses.get` still returns the token. The `integrity` checksum
+  covers the token; in the same release it is sealed
   at rest the same way (the returned value is unchanged), audit records
   of access creations carry the key only, and deleted accesses and
   their earlier versions keep no token, so a dump no longer lets a
@@ -220,9 +219,8 @@ The set of stream+level tuples carried by an access.
 - **Events in several streams**: reads hide an event from an app or
   shared access when one of its streams is held at `none` or
   `create-only` (own grant or inherited), or when it lies outside the
-  forced streams of an access migrated from v1. From the release after
-  open-pryv.io 2.0.0-rc.91 (merged to master `9ba4429a`, not
-  released) `events.update`, `events.delete` and
+  forced streams of an access migrated from v1. From open-pryv.io
+  2.0.0-rc.92 `events.update`, `events.delete` and
   `events.deleteAttachment` refuse such an event with the same
   `403 forbidden`; up to 2.0.0-rc.91 `contribute` on any one of its
   streams was enough to write it. Series appends and `streams.delete`
@@ -757,12 +755,11 @@ per-key purpose label (TLS certificate and ACME account keys: from
   account-transfer identity to the new id `[RSER16]`. The version 2
   envelope binds an authenticator (TOTP) secret to its purpose key, not
   to its account. Tests: `[AREV1]` to `[AREV3]`.
-- **Access tokens and session ids** (the release after open-pryv.io
-  2.0.0-rc.91; implemented, not released): the same version 2 envelope
-  holds the encrypted copy of each stored access token and personal
-  session id, in the user-data store, under keys derived from
-  `auth.accessTokensKey` (else `auth.adminAccessKey`). See `access`. In
-  the same release (merged to master `9ba4429a`, not released) it also
+- **Access tokens and session ids** (from open-pryv.io 2.0.0-rc.92):
+  the same version 2 envelope holds the encrypted copy of each stored
+  access token and personal session id, in the user-data store, under
+  keys derived from `auth.accessTokensKey` (else
+  `auth.adminAccessKey`). See `access`. In the same release it also
   holds each access's stored `integrity` value (bound to the account)
   and the endpoint of a pending revoke notice to a peer platform (bound
   to the notice), under two more keys derived from the same root.

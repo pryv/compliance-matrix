@@ -1954,16 +1954,19 @@ Section B:
 Released in open-pryv.io 2.0.0-rc.91 (2026-11-27): the eleven rows, the
 primitive and this entry name that release; merge SHA `803469b0`.
 
-### Access tokens and session ids at rest; PostgreSQL unindexed-user guard by advisory lock (the release after open-pryv.io 2.0.0-rc.91, merged to master `3aa9dd30`, not released; rows walked 2026-11-27)
+### Access tokens and session ids at rest; PostgreSQL unindexed-user guard by advisory lock (open-pryv.io 2.0.0-rc.92; rows walked 2026-11-27)
+
+**Merged 2026-11-27** to open-pryv.io master (`3aa9dd30`); **released
+2026-11-28** in open-pryv.io 2.0.0-rc.92 (tag on `0a69a4ef`).
 
 **Where the work lives**: open-pryv.io master `3aa9dd30` (merged
-2026-11-27, after the 2.0.0-rc.91 tag); both changes ship in the release
-after 2.0.0-rc.91. No `planned:` chip was queued and no proposal exists for
+2026-11-27, after the 2.0.0-rc.91 tag); both changes shipped in
+2.0.0-rc.92. No `planned:` chip was queued and no proposal exists for
 them.
 
 **Change 1, access tokens and personal session ids at rest.** Up to
-2.0.0-rc.91 they are stored in clear and looked up by value. From the
-release after it:
+2.0.0-rc.91 they are stored in clear and looked up by value. From
+2.0.0-rc.92:
 - Each one is stored as a keyed hash (HMAC-SHA256 over the account id and
   the token; the session hash without the account id), the only lookup
   key, plus an AES-256-GCM copy in the version 2 at-rest envelope, its
@@ -2021,8 +2024,9 @@ tests `[PGAL1]`..`[PGAL9]` (`storages/engines/postgresql/test/unindexed-user-gua
 `[PGUG*]` unchanged.
 
 **Walked 2026-11-27** (no tier change; `reviewed_at` unchanged; prose
-names "the release after open-pryv.io 2.0.0-rc.91", marked "implemented,
-not released"; prose only at the walk: the test codes and the config key
+named "the release after open-pryv.io 2.0.0-rc.91", marked "implemented,
+not released", and names "open-pryv.io 2.0.0-rc.92" since the release;
+prose only at the walk: the test codes and the config key
 join `tests:` / `config_keys:` at the release, as the branches are not on
 the open-pryv.io checkout the validator reads):
 
@@ -2073,24 +2077,29 @@ Section B:
 - B.1 (no new API method; `bin/access-tokens.js` is an operator tool), B.2,
   B.4 to B.10: none.
 
-At merge: record both merge SHAs here. At release: replace "the release
-after open-pryv.io 2.0.0-rc.91" and "implemented, not released" with the
-tag in the eight rows, the primitives and the three context notes; add
-`auth.accessTokensKey` to the `config_keys:` of `iso-27001.A.8.5`,
-`A.8.24`, `A.5.17` and `hipaa-security.164.312(a)(2)(iv)`; add to
-`tests:` the full codes as they appear in the test files (`TKPA*`,
-`TKBT*`, `TKAR*`, `TKST*`, `TKSS*`, `TKMG*`, `TKTL*`, `TKSQ*`, `TKAP2`)
-on `iso-27001.A.8.5`, `A.8.24`, `hipaa-security.164.312(a)(2)(iv)`,
-`164.312(d)`, and `PGAL1`..`PGAL9` on `gdpr.Art.17`. If the release is
-rolled back to a version before it (`bin/access-tokens.js unprotect`), put
-"stored in clear" back in these places.
+Released in open-pryv.io 2.0.0-rc.92 (2026-11-28): the eight rows, the
+primitives and the three context notes name that release; merge SHA
+`3aa9dd30`. `auth.accessTokensKey` joined the `config_keys:` of
+`iso-27001.A.8.5`, `A.8.24`, `A.5.17` and
+`hipaa-security.164.312(a)(2)(iv)`. Test codes added to `tests:` (full
+codes as in the test files): `TKPA1`..`TKPA6`, `TKBT1`..`TKBT4`, `TKAR`
+(no numbered children), `TKST1`..`TKST9`, `TKSS1`..`TKSS5`,
+`TKMG1`..`TKMG8`, `TKTL1`..`TKTL7`, `TKSQ1`..`TKSQ3`, `TKAP2` on
+`iso-27001.A.8.5`, `A.8.24`, `hipaa-security.164.312(a)(2)(iv)`,
+`164.312(d)`; `PGAL1`..`PGAL9` on `gdpr.Art.17` (also cited in its
+prose). If the release is rolled back to a version before it
+(`bin/access-tokens.js unprotect`), put "stored in clear" back in these
+places.
 
-### Token copies next to the tokens at rest; event writes follow event reads (the release after open-pryv.io 2.0.0-rc.91, merged to master `9ba4429a`, not released; rows walked 2026-11-27)
+### Token copies next to the tokens at rest; event writes follow event reads (open-pryv.io 2.0.0-rc.92; rows walked 2026-11-27)
+
+**Merged 2026-11-27** to open-pryv.io master (`9ba4429a`); **released
+2026-11-28** in open-pryv.io 2.0.0-rc.92 (tag on `0a69a4ef`).
 
 **Where the work lives**: open-pryv.io master `9ba4429a` (merged
-2026-11-27, after the 2.0.0-rc.91 tag, with the entry above); ships in the
-release after 2.0.0-rc.91. No `planned:` chip was queued and no proposal
-exists for these changes.
+2026-11-27, after the 2.0.0-rc.91 tag, with the entry above); shipped in
+2.0.0-rc.92. No `planned:` chip was queued and no proposal exists for
+these changes.
 
 **Change 1, the token copies left by the entry above.**
 - The stored `integrity` of an access is sealed at rest: `sealed:<kid>.`
@@ -2157,8 +2166,9 @@ reported per access by `bin/integrity-check.js`, `bin/access-tokens.js
 concurrency; not row-relevant.
 
 **Walked 2026-11-27** (no tier change; `reviewed_at` unchanged; prose
-names "the release after open-pryv.io 2.0.0-rc.91, merged to master
-`9ba4429a`, not released"; prose only at the walk, test codes join
+named "the release after open-pryv.io 2.0.0-rc.91, merged to master
+`9ba4429a`, not released", and names "open-pryv.io 2.0.0-rc.92" since the
+release; prose only at the walk, test codes join
 `tests:` at the release):
 
 | Scope | Ref | What changed |
@@ -2221,16 +2231,22 @@ Section B:
   need them.
 - B.2 to B.10: none (`baseStorage` interface unchanged by these changes).
 
-At release: replace "the release after open-pryv.io 2.0.0-rc.91, merged to
-master `9ba4429a`, not released" with the tag in the eleven rows, the
+Released in open-pryv.io 2.0.0-rc.92 (2026-11-28): the eleven rows, the
 three primitives and the four context notes (together with the entry
-above); add to `tests:` the full codes as they appear in the test files:
-`TKPA6`, `TKBT4`, `TKIN*`, `TKIM1`, `TKIR1`, `TKUP1`, `TKDL*`, `TKDN*`,
-`TKIA*` on `iso-27001.A.8.5`, `hipaa-security.164.312(a)(2)(iv)`,
-`164.312(d)`; `AIWN` stays on `hipaa-security.164.312(c)(1)`; `WRN*`,
-`WRC*`, `WRR1`, `WRP1`, `WRD1`, `WRF*`, `SRC7`, `SRC8`, `SRD7`, `DLI1`,
-`DLI2`, `CRF*` on `iso-27001.A.8.3`, `A.5.15`,
-`hipaa-security.164.312(a)(1)`, `soc2.CC6.3`, `gdpr.Art.32`. If the release
+above) name that release; merge SHA `9ba4429a`. Test codes added to
+`tests:` (full codes as in the test files): `TKPA6`, `TKBT4`,
+`TKIN0`..`TKIN9`, `TKIM1`, `TKIR1`, `TKUP1`, `TKDL1`..`TKDL5`,
+`TKDN1`..`TKDN5`, `TKIA1`..`TKIA4` on `iso-27001.A.8.5`,
+`hipaa-security.164.312(a)(2)(iv)`, `164.312(d)`; `AIWN` stays where it
+was, in the `tests:` of `hipaa-security.164.312(c)(2)` (the row whose
+detail holds the access paragraph the table above lists under (c)(1));
+`WRHD`, `WRR1`, `WRP1`, `WRD1`,
+`WRFD`, `WRF1`..`WRF5`, `SRC7`, `SRC8`, `SRD7`, `DLI1`, `DLI2`, `CRFS`,
+`CRF1`..`CRF4` on `iso-27001.A.8.3`, `A.5.15`,
+`hipaa-security.164.312(a)(1)`, `soc2.CC6.3`, `gdpr.Art.32`. The `WRN1`..`WRN9`
+and `WRC1`..`WRC9` cases are generated in a loop (their codes are not
+written in brackets in the test file, so the validator cannot resolve
+them): their suite code `WRHD` stands for them. If the release
 is rolled back (`bin/access-tokens.js unprotect` writes the integrity
 values and notice endpoints back in clear; dropped tokens stay dropped),
 restore the residual wording of the entry above.
